@@ -25,24 +25,50 @@ Documentation:            URL
 
 
 import genome
+import movement
 import numpy.random as r
 
+
+#------------------------------------
+# CLASSES ---------------------------
+#------------------------------------
 
 
 class Individual:
     def __init__(self, G, x, y, sex = None, age=0):
-        self.G = G                  #individual's x-ploid genotype
+        self.genome = G             #individual's x-ploid genome
         self.x = float(x)           #x coord
         self.y = float(y)           #y coord
-        self.sex = sex              #sex
+        if sex:
+            self.sex = sex          #set individual's sex to that supplied, if supplied
+        else:
+            self.sex = r.binomial(1, 0.5) #else, set it to a bernoulli r.v., p = 0.5;  0 --> female)
         self.age = age              #age
-        assert self.G.__class__.__name__ == 'Genome', "An individual's genome must be an instance of the genome.Genome class."
+        assert self.genome.__class__.__name__ == 'Genome', "An individual's genome must be an instance of the genome.Genome class."
         assert type(self.x) == float and self.x >= 0, "invalid value for x: %s, %s" % (str(self.x), type(self.x))
         assert type(self.y) == float and self.y >= 0, "invalid value for y: %s, %s" % (str(self.y), type(self.y))
         assert self.sex == None or self.sex in [0,1]
         assert type(self.age) == int
 
+    
+    #set movement.move as a method
+    def move(self, land):
+        movement.move(self, land)
 
+    
+    #function to increment age by one
+    def birthday(self):
+        self.age = self.age + 1
+
+
+
+
+
+
+
+#--------------------------------------
+# FUNCTIONS ---------------------------
+#--------------------------------------
 
 
 def create_individual(genomic_arch, dims=None, genomic_content = None, ploidy = None, parental_centerpoint = None, sex = None, age=0):
@@ -67,12 +93,17 @@ def create_individual(genomic_arch, dims=None, genomic_content = None, ploidy = 
     #LOOP FOR CREATION OF NEW OFFSPRING INDIVIDUALS
     else:
         assert parental_centerpoint <> None, "parental_centerpoint needed to create new offspring"
-        assert type(parental_centerpoint) in [tuple, list], "parental_centerpoint should be a tuple or a list"
-        assert parental_centerpoint[0] >= 0 and parental_centerpoint[1] >= 0, "parental_centerpoint coordinates must be >= 0"
+        assert parental_centerpoint.__class__.__name__ in ['tuple', 'list'], "parental_centerpoint should be a tuple or a list"
+        assert parental_centerpoint[0] >= 0 and parental_centerpoint[1] >= 0, "parental_centerpoint coordinates must be within landscape, but %s was provided" % str(parental_centerpoint)
         assert ploidy <> None, "ploidy needed to create new genome from genomic content, for assertions in genome.Genome class __init__ function"
 
-        G = genome.Genome(genomic_content, ploidy)
+
         x,y = dispersal.disperse(parental_centerpoint) #NOTE: needs to be written!
-        return Individual(G, x, y, sex = sex, age = age)
+
+
+        sex = r.binomail(1,0.5)  #NOTE: For now, sex randomly chosen at 50/50. Change if later decide to implement sex chroms!!!
+
+
+        return Individual(G, x, y, sex = sex, age = 0)
 
 

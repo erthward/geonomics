@@ -29,9 +29,9 @@ from numpy import random as r
 
 
 
-#----------------------------------
-# TYPES ---------------------------
-#----------------------------------
+#------------------------------------
+# CLASSES ---------------------------
+#------------------------------------
 
 
     
@@ -45,7 +45,7 @@ class Genomic_Architecture:
         self.p = p          #Dict of dominant (i.e. coded by '1', not '0') allele frequencies for all (numbered by keys) chromosomes in haploid genome
         self.s = s          #Dict of selection coefficients, for all chroms
         self.D = D          #Dict of linkage disequilibria (i.e. map distances) between each locus and the next, for all chroms (NOTE: because of this definition, the last value is forced to 0)
-        self.sex = False    #NOTE: For now, fixing this as False, but should be changeable later
+        self.sex = True 
         #NOTE: add assert statements here!
 
 
@@ -54,9 +54,9 @@ class Genomic_Architecture:
 
 class Genome:
     def __init__(self, G, ploidy):
-        self.G = G #dict of numbered i*j arrays, each subarray containing the biallelic genotype data for all j (for a diploid, 2) copies of chromosome i
-        assert list(set([type(a) for a in self.G.values()])) == [type(np.array([0]))], "G must be a dict of numpy.ndarray instances"
-        assert list(set([np.shape(a)[1] for a in self.G.values()])) == [ploidy] 
+        self.genome = G #dict of numbered i*j arrays, each subarray containing the biallelic genotype data for all j (for a diploid, 2) copies of chromosome i
+        assert list(set([type(a) for a in self.genome.values()])) == [type(np.array([0]))], "G must be a dict of numpy.ndarray instances"
+        assert list(set([np.shape(a)[1] for a in self.genome.values()])) == [ploidy] 
 
     #NOTE: should/could I create methods herein for mutation, crossing over, etc??
     #NOTE: need to ensure that size(G)[1] == n and that size of each subarray in G == x*l_c
@@ -88,7 +88,7 @@ def sim_G(p):
 
   
 #simulate selection coefficients
-def sim_s(l, alpha_s = 0.15, beta_s = 2):
+def sim_s(l, alpha_s = 0.0025, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 loci in 10,000 with s > .75; 0.025 gives ~85-115; 0.0025 gives ~5-15
     return r.beta(alpha_s, beta_s, l)
     #NOTE: For now, beta seems an intuitive and fine way to model this
     #For effectively no selection: Beta(1,1e5)
@@ -136,7 +136,7 @@ def build_genomic_arch(L, n, x = 2, sex = False, l_c = None):
             s[chrom] = sim_s(l_c[chrom])
             D[chrom] = sim_D(l_c[chrom])
             D[chrom][len(D[chrom])-1] = 0 #because each D value expresses linkage between that locus and the next, last value is forced to 0!
-        return Genomic_architecture(x, n, sum(l_c), l_c, p, s, D, False)
+        return Genomic_Architecture(x, n, sum(l_c), l_c, p, s, D, False)
 
 
 

@@ -25,6 +25,11 @@ Documentation:             URL
 
 import genome
 import individual
+import mating
+import dispersal
+
+import numpy as np
+from numpy import random as r
 import matplotlib as mpl
 
 
@@ -55,12 +60,65 @@ class Population:
         assert type(N) == int, "N must be an integer"
         assert type(self.individs) == dict, "self.individs must be a dictionary"
         assert list(set([i.__class__.__name__ for i in self.individs.values()])) == ['Individual'], "self.individs must be a dictionary containing only instances of the individual.Individual class"
-        assert self.genomic_arch.__class__.__name__ == 'Genomic_architecture', "self.genomic_arch must be an instance of the genome.Genomic_Architecture class"
+        assert self.genomic_arch.__class__.__name__ == 'Genomic_Architecture', "self.genomic_arch must be an instance of the genome.Genomic_Architecture class"
 
-    def show(self):
+    def show(self, land = None, color = 'black'):
+        if land:
+            land.show()
         x = [(ind.x) for ind in self.individs.values()]
         y = [(ind.y) for ind in self.individs.values()]
-        mpl.pyplot.plot(x,y, 'ko', scalex = False, scaley = False)
+        mpl.pyplot.plot(x,y, 'ko', scalex = False, scaley = False, color = color)
+
+
+    #method to move all individuals simultaneously
+    def move(self, land):
+        [ind.move(land) for ind in self.individs.values()];
+
+
+    #set mating.find_mates() as method
+    def find_mates(self, mating_radius, sex = True, repro_age = None):
+        return mating.find_mates(self, mating_radius, sex = sex, repro_age = repro_age)
+
+
+    #function for executing mating for a population
+    def mate(self, land, mating_radius, mu_dispersal, sigma_dispersal, sex = True, repro_age = None):
+
+        mating_pairs = self.find_mates(mating_radius, sex = sex, repro_age = repro_age)
+
+        print '\n\nMATING PAIRS:\n\n'
+        print mating_pairs
+
+        for pair in mating_pairs:
+
+            zygote = mating.mate(self, pair, self.genomic_arch)
+
+            parent_centroid_x = np.mean((self.individs[pair[0]].x, self.individs[pair[1]].x))
+            parent_centroid_y = np.mean((self.individs[pair[0]].y, self.individs[pair[1]].y))
+            offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dispersal)
+
+            sex = r.binomial(1, 0.5)
+
+            age = 0
+
+            offspring_num = max(self.individs.keys()) + 1
+
+            self.individs[offspring_num] = individual.Individual(zygote, offspring_x, offspring_y, sex, age)
+
+
+            
+
+
+
+    #method to increment all population's age by one
+    def birthday(self):
+        [ind.birthday() for ind in self.individs.values()];
+
+
+
+    def pickle(self, filename):
+        import cPickle as pickle
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
 
 
 

@@ -91,12 +91,6 @@ set_seed = True
 
 seed_num = 3
 
-sex = True                      #is this a sexual species?
-
-repro_age = (8, 5)           #age at sexual maturity (int or float for non-sexual species, tuple or list of two ints/floats for sexual species; set to 'None' to not make this an age-structured species
-
-move = True                     #is this a mobile species?
-
 T = 100                         #total model runtime
 
 L = 1e5                         #total number of loci
@@ -107,15 +101,29 @@ N = 100                         #total pop size
 
 dims = (1000,1000)              #dimensions of landscape  
 
-mu_movement = 3               #mean movement-distance (lognormal distribution)
+move = True                     #is this a mobile species?
 
-sigma_movement = 0.1            #sd of movement distance
+mu_direction = 0                #mu for von mises distribution selecting direction of movements
+
+kappa_direction = 0             #sigma for von mises distribution
+
+mu_distance = 4                 #mean movement-distance (lognormal distribution)
+
+sigma_distance = 0.1            #sd of movement distance
+
+sex = True                      #is this a sexual species?
+
+repro_age = (8, 5)           #age at sexual maturity (int or float for non-sexual species, tuple or list of two ints/floats for sexual species; set to 'None' to not make this an age-structured species
+
 
 mating_radius = 50              #radius of mate-searching area
 
 mu_dispersal = 5                #mean dispersal distance (lognormal distribution)
 
 sigma_dispersal = 0.4          #sd of dispersal distance
+
+
+size = [1] * T                  # float/int, or list/tuple of length T containing floats/ints, expressingthe target population size over model time as a ratio of the starting size (N)
 
 
 #########################
@@ -209,9 +217,14 @@ genomic_arch = genome.build_genomic_arch(L, n)
 
 
 
-pop = population.create_population(N, genomic_arch, dims, 0.2, 0.2, T) 
+pop = population.create_population(N = N, genomic_arch = genomic_arch, dims = dims, size = size, T = T) 
 
 
+
+
+
+#pickle initial pop, for later analysis
+pop.pickle('initial_pop.p')
 
 
 #------------------------------------------------#                         
@@ -224,7 +237,7 @@ pop = population.create_population(N, genomic_arch, dims, 0.2, 0.2, T)
 for t in range(1, burn_T):
     if move:
 
-        [movement.move(ind, land, mu_movement = mu_movement, sigma_movement = sigma_movement) for ind in pop.individs.values()];
+        [movement.move(ind, land, mu_direction = mu_direction, kappa_direction = kappa_direction, mu_distance = mu_distance, sigma_distance = sigma_distance) for ind in pop.individs.values()];
         
 
     
@@ -253,6 +266,10 @@ for t in range(1, burn_T):
     #add to ages
     pop.birthday()
 
+
+
+#pickle pop after burn-in, for later analysis
+pop.pickle('burnt_pop.p')
 
 
 #------------------------------------------------#                         

@@ -26,6 +26,7 @@ Documentation:            URL
 
 import genome
 import movement
+import numpy as np
 import numpy.random as r
 
 
@@ -36,30 +37,55 @@ import numpy.random as r
 
 class Individual:
     def __init__(self, G, x, y, sex = None, age=0):
+
         self.genome = G             #individual's x-ploid genome
+
         self.x = float(x)           #x coord
         self.y = float(y)           #y coord
+
         if sex:
             self.sex = sex          #set individual's sex to that supplied, if supplied
         else:
             self.sex = r.binomial(1, 0.5) #else, set it to a bernoulli r.v., p = 0.5;  0 --> female)
+
         self.age = age              #age
+
+        self.habitat = None
+
+
+
         assert self.genome.__class__.__name__ == 'Genome', "An individual's genome must be an instance of the genome.Genome class."
         assert type(self.x) == float and self.x >= 0, "invalid value for x: %s, %s" % (str(self.x), type(self.x))
         assert type(self.y) == float and self.y >= 0, "invalid value for y: %s, %s" % (str(self.y), type(self.y))
         assert self.sex == None or self.sex in [0,1]
         assert type(self.age) == int
 
-    
+
+
+
+
+    #####################
+    ### OTHER METHODS ###
+    #####################
+
+
     #set movement.move as a method
-    def move(self, land):
-        movement.move(self, land)
+    def move(self, land, mu_direction, kappa_direction, mu_distance, sigma_distance, resist_surf = None):
+        self.x, self.y = movement.move(self, land, mu_direction, kappa_direction, mu_distance, sigma_distance, resist_surf)
 
     
     #function to increment age by one
     def birthday(self):
         self.age = self.age + 1
 
+
+    #function to extract the habitat value for an individual's current raster cell
+    def query_habitat(self, land):
+        if self.habitat == None:
+            self.habitat = [np.nan] * land.num_rasters
+        for n in land.scapes.keys():
+            j, i = [int(coord) for coord in np.floor([self.x, self.y])]  #NOTE: j,i NOT i,j becuase the numpy array will be indexed i then j, i.e. vertical, then horizontal, which corresponds to y then x!!  
+            self.habitat[n] = land.scapes[n].raster[i,j]
 
 
 

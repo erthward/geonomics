@@ -72,7 +72,8 @@ def find_mates(pop, mating_radius, sex = True, repro_age = None):
     ######################################################
     #First, build cKDTree and create nearest-neighbor query:
 
-    points = np.array([[ind.x, ind.y] for ind in pop.individs.values()])
+    individs = [(i, [ind.x, ind.y], ind.sex, ind.age) for i, ind in pop.individs.items()]
+    points = np.array([ind[1] for ind in individs])
     tree = cKDTree(points, leafsize = 100)   #NOTE: Figure out how leafsize, and how to parameterize this in order to optimize speed for any given pop...
     query = tree.query(points, k = 2, distance_upper_bound = mating_radius)
     #query_2 = tree.query_ball_tree(other = tree, r = mating_radius) #alternative, using query_ball_tree() method
@@ -86,7 +87,7 @@ def find_mates(pop, mating_radius, sex = True, repro_age = None):
 
     if sex:
         #np.array of the sexes of all individuals
-        sexes = np.array([ind.sex for ind in pop.individs.values()])
+        sexes = np.array([ind[2] for ind in individs])
 
 
         #array of couplings for all females with nearest individual < mating_radius
@@ -119,7 +120,7 @@ def find_mates(pop, mating_radius, sex = True, repro_age = None):
 
     if repro_age <> None:
         #np.array of the ages of all individuals
-        ages = np.array([ind.age for ind in pop.individs.values()])
+        ages = np.array([ind[3] for ind in individs])
 
         if sex: #if sexual species, repro_age expected to be a tuple or list of numerics of length 2
 
@@ -156,13 +157,20 @@ def find_mates(pop, mating_radius, sex = True, repro_age = None):
 
         mates = available_pairs[mating_decisions]
 
+
+        #finally, link back to initially created structure, to get individuals' proper keys
+        keys = [i[0] for i in individs]
+
+        mates = np.array([[keys[mate] for mate in pair] for pair in mates])
+        
+
     
     else:
 
         mates = np.array([])
 
     ####################################################
-    #Return of array or arrays, each inner array containing a mating-pair
+    #Return an array or arrays, each inner array containing a mating-pair
     return mates
 
 
@@ -173,14 +181,20 @@ def find_mates(pop, mating_radius, sex = True, repro_age = None):
 
 
 #function for mating a chosen mating-pair
-def mate(pop, pair, genomic_arch):
-    zygote = {}
-    gametes = [gametogenesis.gametogenerate(pop.individs[i], genomic_arch) for i in pair]
-    for c in range(genomic_arch.n):
-        chromosome = np.vstack((gametes[0][c], gametes[1][c])).T
-        zygote[c] = chromosome
+def mate(pop, pair, genomic_arch, n_num_offspring = 1, p_num_offspring = 0.7):
+    offspring = []
+    num_offspring = r.negative_binomial(n_num_offspring, p_num_offspring) + 1
+    for n in range(num_offspring):
+        zygote = {}
+        gametes = [gametogenesis.gametogenerate(pop.individs[i], genomic_arch) for i in pair]
+        for c in range(genomic_arch.n):
+            chromosome = np.vstack((gametes[0][c], gametes[1][c])).T
+            zygote[c] = chromosome
 
-    return genome.Genome(zygote, genomic_arch.x)
+        offspring.append(genome.Genome(zygote, genomic_arch.x))
+
+    return offspring
+
 
 
 

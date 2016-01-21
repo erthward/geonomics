@@ -29,17 +29,63 @@ import numpy.random as r
 import matplotlib as mpl
 
 
+
+#------------------------------------
+# CLASSES ---------------------------
+#------------------------------------
+
+
 class Landscape:
     def __init__(self, dims, raster):
         self.dims = dims
         self.raster = raster
         assert type(self.dims) in [tuple, list], "dims must be expressed on a tuple or a list"
         assert type(self.raster) == np.ndarray, "raster should be a numpy.ndarray"
+
+
+    #####################
+    ### OTHER METHODS ###
+    #####################
+
+
     def show(self):
-        mpl.pyplot.imshow(self.raster)
+        cmap = 'terrain'
+        mpl.pyplot.imshow(self.raster, interpolation = 'nearest', cmap = cmap)
+        mpl.pyplot.colorbar()
 
 
 
+
+class Landscape_stack:
+    def __init__(self, raster_list):
+        self.scapes = dict(zip(range(len(raster_list)), raster_list))  
+        assert False not in [raster.__class__.__name__ == 'Landscape' for raster in raster_list], 'All landscapes supplied in raster_list must be of type landscape.Landscape.'
+        self.num_rasters = len(raster_list)
+        assert len(set([land.dims for land in self.scapes.values()])) == 1, 'Dimensions of all landscapes must be even.'
+        self.dims = self.scapes.values()[0].dims
+
+
+    def show(self):
+        cmaps = ['terrain', 'bone']
+        alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+        for n, scape in self.scapes.items():
+            mpl.pyplot.imshow(scape.raster, interpolation = 'nearest', alpha = alphas[n], cmap = cmaps[n])
+            mpl.pyplot.colorbar()
+
+
+
+
+
+
+
+
+
+
+
+
+#--------------------------------------
+# FUNCTIONS ---------------------------
+#--------------------------------------
 
 
 def random_surface(dims, n_test_pts, interp_method = "cubic", num_hab_types = 2):  #requires landscape to be square, such that dim = domain = range
@@ -65,8 +111,16 @@ def random_surface(dims, n_test_pts, interp_method = "cubic", num_hab_types = 2)
         I = I + np.abs(I.min())+(0.01*r.rand()) #NOTE: adding a small jitter to keep values from reaching == 0 or == 1, as would likely be the case with linear interpolation
         I = I/(I.max()+(0.01*r.rand()))
     if dims[0] <> dims[1]:
-        pass #NOTE: figure out how to get it to use the dims tuple to subset an approriate size if dims no equal
+        pass #NOTE: figure out how to get it to use the dims tuple to subset an approriate size if dims not equal
     return Landscape(dims,I)
+
+
+
+
+def build_scape_stack(num_scapes, dims, n_test_pts, interp_method = None, num_hab_types = 2):
+    if interp_method == None:
+        interp_method = ['cubic'] * num_scapes
+    return Landscape_stack([random_surface(dims, n_test_pts, interp_method = interp_method[n], num_hab_types = num_hab_types) for n in range(num_scapes)])
 
 
 

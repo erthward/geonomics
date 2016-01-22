@@ -27,10 +27,14 @@ import genome
 import individual
 import mating
 import dispersal
+import selection
+import mutation
 
 import numpy as np
 from numpy import random as r
 import matplotlib as mpl
+
+import sys
 
 #------------------------------------
 # CLASSES ---------------------------
@@ -45,40 +49,10 @@ class Population:
 
 
      
-    def __init__(self, N, individs, genomic_arch, size, birth_rate = None, death_rate = None, T = None): #NOTE: PROBABLY DELETE THE LAST THREE ARGS!!
+    def __init__(self, N, individs, genomic_arch, size, T): 
+
         self.N = [N]                                        #list to record population size at each step (with starting size as first entry)
         self.individs = individs                            #dict of all individuals, as instances of individual.Individual class
-
-
-
-
-
-##########################################################
-#NOTE: BEGIN SECTION TO PROBABLY DELETE!!
-
-        if birth_rate <> None:
-            if type(birth_rate) == float:
-                self.birth_rate = [birth_rate] * T              #birth rate, expressed as vector of T values, where T is total model runtime; can be input as constant value, or as vector varying over model
-            elif type(birth_rate) == list and len(birth_rate) == T:
-                self.birth_rate = birth_rate
-            else:
-                assert type(birth_rate) == list, "birth_rate should be expressed either as a floating point value between 0 and 1, or as a list of such values"
-                assert len(birth_rate) == T, "if expressing birth_rate as a list, list length must equal total model runtime"
-        if death_rate <> None:
-            if type(death_rate) == float:                       #death rate, handled same as birth rate
-                self.death_rate = [death_rate] * T              
-            elif type(death_rate) == list and len(death_rate) == T:
-                self.death_rate = death_rate
-            else:
-                assert type(death_rate) == list, "death_rate should be expressed either as a floating point value between 0 and 1, or as a list of such values"
-                assert len(death_rate) == T, "if expressing death_rate as a list, list length must equal total model runtime"
-
-
-#END SECTION TO PROBABLY DELETE
-##########################################################
-
-
-
 
 
         self.initial_size = len(self.individs)
@@ -118,30 +92,55 @@ class Population:
 
 
 
+    #method to increment all population's age by one
+    def birthday(self):
+        [ind.birthday() for ind in self.individs.values()];
+
+
+
     #method to extract habitat values at each individual's coordinates for each land.scapes raster
     def query_habitat(self, land):
         [ind.query_habitat(land) for ind in self.individs.values()];
  
 
+
+
+
     #method to move all individuals simultaneously
-    def move(self, land, mu_direction = 0, kappa_direction = 0, mu_distance = 4, sigma_distance = 0.1, resist_surf = None):
-        [ind.move(land, mu_direction, kappa_direction, mu_distance, sigma_distance, resist_surf) for ind in self.individs.values()];
+    def move(self, land, params, resist_surf = None):
+        [ind.move(land, params['mu_direction'], params['kappa_direction'], params['mu_distance'], params['sigma_distance'], resist_surf) for ind in self.individs.values()];
+
         self.query_habitat(land)
 
 
 
 
     #set mating.find_mates() as method
-    def court(self, mating_radius, sex = True, repro_age = None):
-        return mating.find_mates(self, mating_radius, sex = sex, repro_age = repro_age)
+    def court(self, params):
+
+        return mating.find_mates(self, params['mating_radius'], sex = params['sex'], repro_age = params['repro_age'])
+
 
 
 
 
     #function for executing mating for a population
-    def mate(self, land, mating_radius, mu_dispersal, sigma_dispersal, sex = True, repro_age = None):
+    def mate(self, land, params):
 
-        mating_pairs = self.court(mating_radius, sex = sex, repro_age = repro_age)
+        
+        
+        #pull necessary parameters from params dict
+        mating_radius = params['mating_radius']
+        mu_dispersal = params['mu_dispersal']
+        sigma_dispersal = params['sigma_dispersal']
+        sex = params['sex']
+        repro_age = params['repro_age']
+
+
+
+        mating_pairs = self.court(params)
+
+        num_offspring = 0
 
         for pair in mating_pairs:
 
@@ -152,35 +151,57 @@ class Population:
 
             
             for zygote in zygotes:
+
+                num_offspring += 1
                 
                 offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dispersal)
 
-
-                sex = r.binomial(1, 0.5)
+                if sex:
+                    offspring_sex = r.binomial(1, 0.5)
 
                 age = 0
 
                 offspring_key = max(self.individs.keys()) + 1
 
-                self.individs[offspring_key] = individual.Individual(zygote, offspring_x, offspring_y, sex, age)
+                self.individs[offspring_key] = individual.Individual(zygote, offspring_x, offspring_y, offspring_sex, age)
 
 
         #sample all individuals' habitat values, to initiate for offspring
         self.query_habitat(land)
 
+        print '\t%i individuals born' % num_offspring
 
 
 
-                
-
-
-            
 
 
 
-    #method to increment all population's age by one
-    def birthday(self):
-        [ind.birthday() for ind in self.individs.values()];
+    #method to carry out selection
+    def select(self, t, params):
+        selection.select(self, t, sigma_deaths = params['sigma_deaths'])
+
+
+
+
+
+
+    #method to carry out mutation
+    def mutate(self, params):
+        for ind in [ind for ind, individ in self.individs.items() if individ.age == 0]:
+            mutation.mutate(self.individs[ind], self.genomic_arch, alpha_mut_s = params['alpha_mut_s'], beta_mut_s = params['beta_mut_s'])
+
+
+
+
+
+    def check_extinct(self):
+        if len(self.individs.keys()) == 0:
+            print '\n\nYOUR POPULATION WENT EXTINCT!\n\n\t(Press <Enter> to exit.)'
+            raw_input()
+            sys.exit()
+    
+
+
 
 
     
@@ -212,6 +233,65 @@ class Population:
    
  
 
+    def get_habitat(self, individs = None):
+        if individs <> None:
+            return dict([(k, ind.habitat) for k, ind in self.individs.items() if k in individs])
+        else:
+            return dict([(k, ind.habitat) for k, ind in self.individs.items()])
+
+
+    
+
+    def get_genotype(self, chromosome, locus, format = 'mean', individs = None):
+
+        dom_funcs = { 0 : np.mean,                          #codominance
+                      1 : lambda x: np.ceil(np.mean(x)),    #dominant (with respect to relationship between allele 1 and habitat values -> 1
+                      2 : lambda x: np.floor(np.mean(x))    #recessive (with respect to relationship between allele 1 and habitat values -> 1
+                    }
+
+
+        if individs == None:
+            individs = range(len(self.genomic_arch.s[chromosome]))
+
+        if format == 'biallelic':
+            return dict([(i, self.individs[i].genome.genome[chromosome][locus, :]) for i in self.individs.keys() if i in individs]) 
+
+        elif format == 'mean':
+            return dict([(i, [dom_funcs[self.genomic_arch.dom[chromosome][locus]](self.individs[i].genome.genome[chromosome][locus,:]) ]) for i in self.individs.keys() if i in individs])
+
+
+
+
+    def get_dom(self, chromosome, locus):
+        return {locus: self.genomic_arch.dom[chromosome][locus]} 
+
+
+
+    def get_env_var(self, chromosome, locus):
+        return {locus: self.genomic_arch.env_var[chromosome][locus]} 
+
+
+
+
+
+    def get_coords(self, individs = None):
+        if individs <> None:
+            return dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items() if k in individs])
+        else:
+            return dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items()])
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def show(self, land = None, scape_num = None, color = 'black'):
         if land <> None:
@@ -240,48 +320,28 @@ class Population:
 
 
 
-    def get_habitat(self, individs = None):
-        if individs <> None:
-            return dict([(k, ind.habitat) for k, ind in self.individs.items() if k in individs])
+
+
+
+    def show_locus(self, chromosome, locus, land, scape_num = None):
+
+        if scape_num <> None  :
+            land.scapes[scape_num].show()
         else:
-            return dict([(k, ind.habitat) for k, ind in self.individs.items()])
+            land.show()
 
+        genotypes = self.get_genotype(chromosome, locus)
 
-    
+        colors = ['#ff4d4d', '#4d4dff', '#ac72ac']
 
-    def get_genotype(self, locus, chromosome_num, format = 'mean', individs = None):
+        for n, genotype in enumerate([0.0, 0.5, 1.0]):
+            inds = [i for i, g in genotypes.items() if g[0] == genotype]
+            coords = np.array([coord for coord in self.get_coords(inds).values()])
 
-        dom_funcs = { 0 : np.mean,                          #codominance
-                      1 : lambda x: np.ceil(np.mean(x)),    #dominant (with respect to relationship between allele 1 and habitat values -> 1
-                      2 : lambda x: np.floor(np.mean(x))    #recessive (with respect to relationship between allele 1 and habitat values -> 1
-                    }
-
-
-        if individs == None:
-            individs = range(len(self.genomic_arch.s[chromosome_num]))
-
-        if format == 'biallelic':
-            return dict([(i, self.individs[i].genome.genome[chromosome_num][locus, :]) for i in self.individs.keys() if i in individs]) 
-
-        elif format == 'mean':
-            return dict([(i, [dom_funcs[self.genomic_arch.dom[chromosome_num][locus]](self.individs[i].genome.genome[chromosome_num][locus,:]) ]) for i in self.individs.keys() if i in individs])
+            mpl.pyplot.plot([coord[0] for coord in coords], [coord[1] for coord in coords], 'o', markersize = 11, scalex = False, scaley = False, color = colors[n])
 
 
 
-
-    def get_dom(self, chromosome_num, locus):
-        return {locus: self.genomic_arch.dom[chromosome_num][locus]} 
-
-
-
-
-
-
-    def get_coords(self, individs = None):
-        if individs <> None:
-            return dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items() if k in individs])
-        else:
-            return dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items()])
 
 
 
@@ -295,13 +355,39 @@ class Population:
 
 
 
+
+
+
+
+
+
+
+
 #--------------------------------------
 # FUNCTIONS ---------------------------
 #--------------------------------------
 
 
 
-def create_population(N, genomic_arch, dims, size, land, birth_rate = None, death_rate = None, T = None):
+def create_population(genomic_arch, land, params):
+
+
+
+    #grab necessary params from params dict
+
+    N = params['N']
+
+    dims = params['dims']
+
+    size = params['size']
+
+    T = params['T']
+
+
+
+
+
+
     assert dims.__class__.__name__ in ['tuple', 'list'], "dims should be expressed as a tuple or a list"
     individs = dict()
     for i in range(N):
@@ -318,6 +404,12 @@ def create_population(N, genomic_arch, dims, size, land, birth_rate = None, deat
 
 
 
+
+
+
+
+
+#function for reading in a pickled pop
 def load_pickled_pop(filename):
     import cPickle
     with open(filename, 'rb') as f:

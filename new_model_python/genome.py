@@ -145,7 +145,31 @@ def set_l_c(L, n, even_chrom_sizes = True):
 
 #build the genomic architecture
 #NOTE: This will create the "template" for the genomic architecture of the hapolid genome that will then be used to simulate individuals and populations
-def build_genomic_arch(L, n, mu, land, x = 2, sex = False, l_c = None, allow_global_selection = False): 
+def build_genomic_arch(params, land):
+
+
+    #grab necessary parameters from the params dict
+
+    L = params['L']
+    n = params['n']
+    mu = params['mu']
+    x = params['x']
+
+
+
+
+    #NOTE: THIS SEEMS LIKE A VESTIGE FROM SOME PREVIOUS IDEA THAT IS NOW NOT CLEAR TO ME... INVESTIGATE, THEN LIKELY TEAR OUT
+    sex = params['sex']  #NOTE: HOW TO CHANGE THIS TO MAKE USE OF THE 'sex' PARAM IN params???
+    if True:
+        sex = False
+
+    l_c = None   #NOTE: OPERATIONALIZE UNEVEN CHROM LENGTHS??
+
+    allow_global_selection = False  #NOTE: OPERATIONALIZE GLOBALLY SELECTIVE LOCI??
+
+
+
+
     if l_c:
         pass #Allow provision of array of uneven chromosome lengths
     else:

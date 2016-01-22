@@ -41,7 +41,7 @@ import random
 
 
 
-def mutate(individ, genomic_arch, alpha_s = 25, beta_s = 0.5):
+def mutate(individ, genomic_arch, alpha_mut_s = 25, beta_mut_s = 0.5):
 
     #NOTE: should I incorporate the number of offspring produced in the following calculation? or should I make this a method of individuals, and do it once for every offspring?
 
@@ -66,7 +66,7 @@ def mutate(individ, genomic_arch, alpha_s = 25, beta_s = 0.5):
         individ.genome.genome[chrom][locus,:] = mutant
 
         #set selection coefficient to (probably, b/c drawn from right-heavy beta distribution) something highly advantageous
-        genomic_arch.s[chrom][locus] = r.beta(alpha_s, beta_s)
+        genomic_arch.s[chrom][locus] = r.beta(alpha_mut_s, beta_mut_s)
 
         #set locus to be non-neutral
         genomic_arch.non_neutral[chrom][locus] = True

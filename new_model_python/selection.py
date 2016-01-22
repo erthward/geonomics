@@ -155,7 +155,6 @@ def select(pop, t, sigma_deaths = 0.2):
 
     #draw number of deaths this timestep from a normal distribution centered on the overshoot
     num_deaths = int(np.round(r.normal(overshoot, sigma_deaths)))
-    print num_deaths
 
 
 
@@ -180,6 +179,9 @@ def select(pop, t, sigma_deaths = 0.2):
     if len(deaths) > num_deaths:
 
         deaths = deaths[:num_deaths]
+
+
+    print '\t%i individuals dead' % len(deaths)
     
     [pop.individs.pop(ind) for ind in deaths]
 

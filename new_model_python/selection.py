@@ -176,9 +176,9 @@ def select(pop, t, sigma_deaths = 0.2):
 
         deaths = list(set(deaths))
 
-    if len(deaths) > num_deaths:
+    #if len(deaths) > num_deaths:
 
-        deaths = deaths[:num_deaths]
+        #deaths = deaths[:num_deaths]
 
 
     print '\t%i individuals dead' % len(deaths)

@@ -1,0 +1,1 @@
+chrom: 0,locus: 47000,t: 61chrom: 0,locus: 56773,t: 70

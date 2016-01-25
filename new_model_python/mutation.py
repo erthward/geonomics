@@ -41,7 +41,7 @@ import random
 
 
 
-def mutate(individ, genomic_arch, alpha_mut_s = 25, beta_mut_s = 0.5):
+def mutate(pop, individ, genomic_arch, t, alpha_mut_s = 25, beta_mut_s = 0.5):
 
     #NOTE: should I incorporate the number of offspring produced in the following calculation? or should I make this a method of individuals, and do it once for every offspring?
 
@@ -53,7 +53,13 @@ def mutate(individ, genomic_arch, alpha_mut_s = 25, beta_mut_s = 0.5):
         chrom = r.randint(genomic_arch.n)
         locus = random.choice(np.array(range(genomic_arch.l_c[chrom]))[genomic_arch.non_neutral[chrom]])
 
-        print 'CHROM: %i, LOCUS: %i' % (chrom, locus)
+
+
+        #NOTE: Change this to something more generalizable in the main script
+        with open('./mutation_log.txt', 'a') as f:
+            f.write('chrom: %i,locus: %i,t: %i' % (chrom, locus, t))
+
+
 
         #set all of the current population's alleles at this locus to 0
         #NOTE: This is kind of a big CHEAT!! But for now seems to most obvious way to implement this, and shouldn't take a serious toll on the data on average...

@@ -37,6 +37,7 @@ import numpy as np
 from numpy import random as r
 import random
 import matplotlib as mpl
+import os
 
 
 
@@ -94,9 +95,14 @@ params = {
 
 'mu' : 10e-9,                    #genome-wide mutation rate
 
-'N' : 10,                        #total pop size
+'alpha_D' : 7e2,                #alpha for beta distribution of linkage values
 
-'dims' : (200,200),             #dimensions of landscape  
+'beta_D' : 7e3,                 #beta for beta distribution of linkage values
+
+
+'N' : 150,                        #total pop size
+
+'dims' : (1000,1000),             #dimensions of landscape  
 
 'num_scapes' : 1,               #number of landscapes desired
 
@@ -153,6 +159,11 @@ if params['set_seed']:
     random.seed(params['seed_num'])
     r.seed(params['seed_num'])
 
+
+
+
+#refresh mutation log
+os.system('touch ./mutation_log.txt')
 
 
 
@@ -219,7 +230,7 @@ def burn_in(land, pop, params):
 
     print '\n\nSTARTING BURN-IN.\n\t(Will run for %i timesteps.)\n\n' % params['burn_T']
 
-    pop.show(land = land)
+    pop.show(land = land, colorbar = True)
 
     for burn_t in range(params['burn_T']):
     
@@ -231,7 +242,7 @@ def burn_in(land, pop, params):
 
         pop.select(t = burn_t, params = params)
     
-        pop.mutate(params = params)
+        pop.mutate(params = params, t = burn_t)
     
         pop.check_extinct()
 
@@ -243,7 +254,7 @@ def burn_in(land, pop, params):
     
     print '\n\nBURN-IN FINISHED.\n\n'
 
-    pop.show(land = land)
+    pop.show(land = land, colorbar = False)
 
     #mpl.pyplot.close()
 

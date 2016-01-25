@@ -123,8 +123,8 @@ def sim_s(l, alpha_s = 0.0025, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 lo
 
 
 #simulate linkage values
-def sim_D(l, alpha_D = 3e3, beta_D = 7e3):
-    return 0.5 - r.beta(alpha_D, beta_D, l) 
+def sim_D(l, alpha_D = 7e2, beta_D = 7e3):
+    return r.beta(alpha_D, beta_D, l) 
     #NOTE: for now, using the Beta, which can be very flexibly parameterized
     #NOTE: current default alpha/beta vals, after being subtracted from 0.5 in sim_D function, will result in a tight distribution of D vals around 0.21 (~ 95% between 0.19 and 0.22)
     #NOTE: to essentially fix D at 0.5, Beta(1,1e7) will do...
@@ -154,6 +154,8 @@ def build_genomic_arch(params, land):
     n = params['n']
     mu = params['mu']
     x = params['x']
+    alpha_D = params['alpha_D']
+    beta_D = params['beta_D']
 
 
 
@@ -186,7 +188,7 @@ def build_genomic_arch(params, land):
             s[chrom] = sim_s(l_c[chrom])
             dom[chrom] = assign_dom(l_c[chrom])
             env_var[chrom] = assign_env_var(num_rasters = land.num_rasters, l = l_c[chrom], allow_global_selection = allow_global_selection)
-            D[chrom] = sim_D(l_c[chrom])
+            D[chrom] = sim_D(l_c[chrom], alpha_D, beta_D)
             D[chrom][len(D[chrom])-1] = 0 #because each D value expresses linkage between that locus and the next, last value is forced to 0!
         return Genomic_Architecture(x, n, sum(l_c), l_c, p, s, dom, env_var, D, mu, False)
 

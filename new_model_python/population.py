@@ -186,9 +186,9 @@ class Population:
 
 
     #method to carry out mutation
-    def mutate(self, params):
+    def mutate(self, params, t):
         for ind in [ind for ind, individ in self.individs.items() if individ.age == 0]:
-            mutation.mutate(self.individs[ind], self.genomic_arch, alpha_mut_s = params['alpha_mut_s'], beta_mut_s = params['beta_mut_s'])
+            mutation.mutate(self, self.individs[ind], self.genomic_arch, t, alpha_mut_s = params['alpha_mut_s'], beta_mut_s = params['beta_mut_s'])
 
 
 
@@ -293,16 +293,15 @@ class Population:
 
 
 
-    def show(self, land = None, scape_num = None, color = 'black'):
+    def show(self, land = None, scape_num = None, color = 'black', colorbar = True):
         if land <> None:
             if scape_num <> None  :
-                land.scapes[scape_num].show()
+                land.scapes[scape_num].show(colorbar = colorbar)
             else:
-                land.show()
+                land.show(colorbar = colorbar)
         x = [(ind.x) for ind in self.individs.values()]
         y = [(ind.y) for ind in self.individs.values()]
         coords = np.array(self.get_coords().values()) - 0.5  #NOTE: subtract 0.5 to line up the points with the plt.imshow() grid of the land; imshow plots each pixel centered on its index, but the points then plot against those indices, so wind up shifted +-1.5
-        print coords
         mpl.pyplot.plot([n[0] for n in coords], [n[1] for n in coords], 'ko', scalex = False, scaley = False, color = color)
 
 
@@ -332,7 +331,7 @@ class Population:
 
         genotypes = self.get_genotype(chromosome, locus)
 
-        colors = ['#ff4d4d', '#4d4dff', '#ac72ac']
+        colors = ['#ff4d4d', '#ac72ac', '#4d4dff'] # red = [0,0], purple = [0,1], blue = [1,1]
 
         for n, genotype in enumerate([0.0, 0.5, 1.0]):
             inds = [i for i, g in genotypes.items() if g[0] == genotype]

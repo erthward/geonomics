@@ -100,7 +100,7 @@ params = {
 'beta_D' : 7e3,                 #beta for beta distribution of linkage values
 
 
-'N' : 150,                        #total pop size
+'N' : 20,                        #total pop size
 
 'dims' : (1000,1000),             #dimensions of landscape  
 

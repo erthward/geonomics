@@ -110,7 +110,9 @@ def assign_env_var(num_rasters, l, allow_global_selection = True):
 
   
 #simulate selection coefficients
-def sim_s(l, alpha_s = 0.0025, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 loci in 10,000 with s > .75; 0.025 gives ~85-115; 0.0025 gives ~5-15
+def sim_s(l, alpha_s = 0.007, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 loci in 10,000 with s > .75; 0.025 gives ~85-115; 0.0025 gives ~5-15
+    #NOTE: See Thurman and Barrett (2016) for metaanalysis of s values in rela populations!
+
     s = r.beta(alpha_s, beta_s, l)
     s = np.array([0 if l < 0.001 else l for l in s])
     return s

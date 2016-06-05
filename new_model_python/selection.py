@@ -51,6 +51,7 @@ Documentation:              URL
 
 import numpy as np
 from numpy import random as r
+from scipy.spatial import cKDTree
 
 
 
@@ -133,7 +134,7 @@ def get_fitness(pop):
             fit = s * (1 - abs(hab - g))
 
             
-            #sum the foretold list of locus-specific fitnesses and add it to the individual's genome-wide rolling sum of locus-specific fitnesses
+            #sum the foregoing list of locus-specific fitnesses and add it to the individual's genome-wide rolling sum of locus-specific fitnesses
             sum_fit[i] = sum_fit[i] + sum(fit)
 
 
@@ -148,23 +149,54 @@ def get_fitness(pop):
 
 
 
-def select(pop, t, sigma_deaths = 0.2):
+def select(pop, t, params, sigma_deaths = 0.05, density_dependent_fitness = True):
 
     #number individuals exceeding 'carrying capacity' at this timestep (as dictated by pop.size)
     overshoot = pop.census() - (pop.size[t] * pop.initial_size)
 
     #draw number of deaths this timestep from a normal distribution centered on the overshoot
-    num_deaths = int(np.round(r.normal(overshoot, sigma_deaths)))
-
+    num_deaths = int(np.round(r.normal(overshoot, max(0.001, abs(sigma_deaths*overshoot)))))
 
 
     #get individuals' fitnesses
     fitness = get_fitness(pop)
+    max_fitness = max(fitness.values())
 
     #express as relative negative fitnesses (ratio of difference from max to max difference from max)
-    neg_fitness = [max(fitness.values()) - f for f in fitness.values()]
+    neg_fitness = [max_fitness - f for f in fitness.values()]
+    #NOTE: IS THIS NEXT STEP, WHICH CONSTRAINS ALL FITNESSES TO 0 < fit < 1, JUSTIFIED, GIVEN THAT THEY ARE OFTEN DRAMATICALLY DISPARATE AT THE BEGINNING AND NARROWLY SPREAD LATER ON?...
     rel_neg_fitness = [max(0.01, min(0.99, f/max(neg_fitness))) for f in neg_fitness]
 
+
+
+
+
+
+    #NOTE: TRYING TO IMPLEMENT DENSITY-DEPENDENT MORTALITY!
+    if density_dependent_fitness == True:
+        #create list of individs to match against list of points and list of neighbors
+        individs = pop.get_coords().keys()
+        #create list of points (as coords)
+        points = np.array(pop.get_coords().values())
+        #create cKDTree for the points
+        tree = cKDTree(points, leafsize = 100)
+        #create list of the count of neighbors within 5*mu_distance of each point, excluding both self and population census size (which indicates no available neighbors)
+        #NOTE: The 5*mu_distance threshold is an arbitrary value for now, based on the potential combined movement of each individual in a pair 2.5 standard deviations in opposite and approaching directions...
+        neighbor_counts = [len([neigh for neigh in i if (neigh != pop.census() and neigh != n)]) for n, i in enumerate(tree.query(points, k = pop.census(), distance_upper_bound = 5*params['mu_distance'])[1])]
+        
+        #now calculate a 'density fitness', as 1 minus the density of an individual relative to max density, and factor it directly into rel_neg_fitness (NOTE: density is never actually calculated as density proper, but this is irrelevant, as all individuals' counts would be divided by the same area (pi*(5*mu_distance)^2)  )
+        #print list(rel_neg_fitness)[:10]
+        rel_neg_fitness = (rel_neg_fitness + (1 - (np.array(neighbor_counts)/float(max(neighbor_counts))))) / 2.
+        #print list(rel_neg_fitness)[:10]
+        #raw_input()
+
+
+
+
+
+    
+    
+    
     deaths = []
 
     while len(deaths) < num_deaths:

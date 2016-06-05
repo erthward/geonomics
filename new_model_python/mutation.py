@@ -58,6 +58,11 @@ def mutate(pop, individ, genomic_arch, t, alpha_mut_s = 25, beta_mut_s = 0.5):
         #NOTE: Change this to something more generalizable in the main script
         with open('./mutation_log.txt', 'a') as f:
             f.write('chrom: %i,locus: %i,t: %i' % (chrom, locus, t))
+            
+            
+        
+        print 'MUTATION AT: chrom %i, locus %i' % (chrom, locus)
+        raw_input()
 
 
 

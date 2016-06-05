@@ -1,5 +1,5 @@
 #!/usr/bin/python 
-#population.jl
+#population.py
 
 '''
 ##########################################
@@ -33,6 +33,7 @@ import mutation
 import numpy as np
 from numpy import random as r
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 import sys
 
@@ -51,7 +52,7 @@ class Population:
      
     def __init__(self, N, individs, genomic_arch, size, T): 
 
-        self.N = [N]                                        #list to record population size at each step (with starting size as first entry)
+        self.N = []                                        #list to record population size at each step (with starting size as first entry)
         self.individs = individs                            #dict of all individuals, as instances of individual.Individual class
 
 
@@ -92,8 +93,11 @@ class Population:
 
 
 
-    #method to increment all population's age by one
+    #method to increment all population's age by one (also adds current pop size to tracking array)
     def birthday(self):
+        #add current pop size to pop.N (for later demographic analysis)
+        self.N.append(self.census())
+        #increment age of all individuals
         [ind.birthday() for ind in self.individs.values()];
 
 
@@ -156,14 +160,17 @@ class Population:
                 
                 offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dispersal)
 
-                if sex:
+                if sex == True:
                     offspring_sex = r.binomial(1, 0.5)
 
                 age = 0
 
                 offspring_key = max(self.individs.keys()) + 1
 
-                self.individs[offspring_key] = individual.Individual(zygote, offspring_x, offspring_y, offspring_sex, age)
+                if sex == True:
+                    self.individs[offspring_key] = individual.Individual(zygote, offspring_x, offspring_y, offspring_sex, age)
+                else:
+                    self.individs[offspring_key] = individual.Individual(zygote, offspring_x, offspring_y, age)
 
 
         #sample all individuals' habitat values, to initiate for offspring
@@ -178,7 +185,7 @@ class Population:
 
     #method to carry out selection
     def select(self, t, params):
-        selection.select(self, t, sigma_deaths = params['sigma_deaths'])
+        selection.select(self, t, params, sigma_deaths = params['sigma_deaths'], density_dependent_fitness = params['density_dependent_fitness'])
 
 
 
@@ -251,7 +258,8 @@ class Population:
 
 
         if individs == None:
-            individs = range(len(self.genomic_arch.s[chromosome]))
+            individs = self.individs.keys()
+            #individs = range(len(self.genomic_arch.s[chromosome]))
 
         if format == 'biallelic':
             return dict([(i, self.individs[i].genome.genome[chromosome][locus, :]) for i in self.individs.keys() if i in individs]) 
@@ -259,6 +267,13 @@ class Population:
         elif format == 'mean':
             return dict([(i, [dom_funcs[self.genomic_arch.dom[chromosome][locus]](self.individs[i].genome.genome[chromosome][locus,:]) ]) for i in self.individs.keys() if i in individs])
 
+
+    def get_fitness(self):
+        return selection.get_fitness(self)
+
+
+    def hist_fitness(self):
+        plt.hist(selection.get_fitness(self).values())
 
 
 
@@ -331,7 +346,8 @@ class Population:
 
         genotypes = self.get_genotype(chromosome, locus)
 
-        colors = ['#ff4d4d', '#ac72ac', '#4d4dff'] # red = [0,0], purple = [0,1], blue = [1,1]
+        colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] # COLORS TO MATCH LANDSCAPE PALETTE EXTREMES, BUT WITH HYBRID A MIX OF THE EXTREMES RATHER THAN THE YELLOW AT THE MIDDLE OF THE PALETTE, FOR NICER VIEWING: blue = [0,0], light blue = [0,1], white = [1,1]
+        #colors = ['#ff4d4d', '#ac72ac', '#4d4dff'] # red = [0,0], purple = [0,1], blue = [1,1]
 
         for n, genotype in enumerate([0.0, 0.5, 1.0]):
             inds = [i for i, g in genotypes.items() if g[0] == genotype]
@@ -339,6 +355,13 @@ class Population:
 
             mpl.pyplot.plot([coord[0] for coord in coords], [coord[1] for coord in coords], 'o', markersize = 11, scalex = False, scaley = False, color = colors[n])
 
+
+
+    #method for plotting a population pyramid
+    #NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS
+    def show_pyramid(self):
+        plt.hist([ind.age for ind in self.individs.values() if ind.sex == 0], orientation = 'horizontal', color = 'pink', alpha = 0.6)
+        plt.hist([ind.age for ind in self.individs.values() if ind.sex == 1], orientation = 'horizontal', color = 'skyblue', alpha = 0.6)
 
 
 

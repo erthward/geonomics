@@ -27,6 +27,7 @@ from scipy import interpolate
 import numpy as np
 import numpy.random as r
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 
 
@@ -49,6 +50,8 @@ class Landscape:
 
 
     def show(self, colorbar = True):
+        if plt.get_fignums():
+            colorbar = False
         cmap = 'terrain'
         mpl.pyplot.imshow(self.raster, interpolation = 'nearest', cmap = cmap)
         if colorbar:
@@ -66,12 +69,16 @@ class Landscape_Stack:
         self.dims = self.scapes.values()[0].dims
 
 
-    def show(self):
+    def show(self, colorbar = True):
+        if plt.get_fignums():
+            colorbar = False
         cmaps = ['terrain', 'bone']
         alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
         for n, scape in self.scapes.items():
             mpl.pyplot.imshow(scape.raster, interpolation = 'nearest', alpha = alphas[n], cmap = cmaps[n])
-            mpl.pyplot.colorbar()
+            if colorbar:
+                mpl.pyplot.colorbar()
+
 
 
 

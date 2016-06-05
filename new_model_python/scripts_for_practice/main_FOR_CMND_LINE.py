@@ -59,7 +59,7 @@ import os
 
 
 
-runtime = 500
+runtime = 5000
 
 
 
@@ -81,17 +81,19 @@ params = {
 
 'set_seed' : True,                  #set the seed (for reproducibility)?
 
-'seed_num' : 11,                    #number to seed random number generators
+'seed_num' : 111111,                    #number to seed random number generators
 
 'T' : runtime,                      #total model runtime
 
-'burn_T': 100,                     #total burn-in runtime
+'burn_T': 50,                     #total burn-in runtime
 
-'L' : 1e5,                         #total number of loci
+'L' : 5e2,                         #total number of loci
 
 'n' : 1,                           #number of chromosomes
 
 'x' : 2,                         #ploidy (for now, leave at 2 for diploidy)
+
+'n_traits' : 150,                 #number of traits to simulate
 
 'mu' : 10e-9,                    #genome-wide mutation rate
 
@@ -99,8 +101,7 @@ params = {
 
 'beta_D' : 7e3,                 #beta for beta distribution of linkage values
 
-
-'N' : 20,                        #total pop size
+'N' : 1000,                        #total pop size
 
 'dims' : (1000,1000),             #dimensions of landscape  
 
@@ -108,7 +109,7 @@ params = {
 
 'n_rand_pts' : 200*5,           #number of random coordinates to be used in generating the random landscapes
 
-
+#'interp_method' : ['nearest'],
 'interp_method' : ['linear'],   # list of interpolation methods for generation of random landscapes, 1 per landscape to be generated (as set by num_scapes)
 
 'move' : True,                     #is this a mobile species?
@@ -117,24 +118,26 @@ params = {
 
 'kappa_direction' : 0,             #kappa for von mises distribution
 
-'mu_distance' : 3,               #mean movement-distance (lognormal distribution)
+'mu_distance' : 0.5,               #mean movement-distance (lognormal distribution)
 
 'sigma_distance' : 0.1,            #sd of movement distance
 
-'sex' : True,                      #is this a sexual species?
+'sex' : False,                      #is this a sexual species?
 
-'repro_age' : (8, 5),          #age at sexual maturity (int or float for non-sexual species, tuple or list of two ints/floats for sexual species; set to 'None' to not make this an age-structured species
+'repro_age' : 5,          #age at sexual maturity (int or float for non-sexual species, tuple or list of two ints/floats for sexual species; set to 'None' to not make this an age-structured species
 
 
 'mating_radius' : 250,              #radius of mate-searching area
 
-'mu_dispersal' : 5,           #mean dispersal distance (lognormal distribution)
+'mu_dispersal' : 0.5,           #mean dispersal distance (lognormal distribution)
 
-'sigma_dispersal' : 0.4,          #sd of dispersal distance
+'sigma_dispersal' : 0.1,          #sd of dispersal distance
 
 'size' : 1,              # float/int, or list/tuple of length T containing floats/ints, expressing the target population size over model time as a ratio of the starting size (N)
 
 'sigma_deaths' : 0.2,              # std for the normal distribution used to choose the r.v. of deaths per timestep (mean of this distribution is the overshoot, as calculated from pop.size and pop.census())
+
+'density_dependent_fitness' : True, #should fitness be density dependent? (note: helps to avoid subpopulation 'clumping')
 
 'alpha_mut_s' : 25,                # alpha param for the beta distribution describing the highly advantageous selection coeffs for mutations
 
@@ -226,14 +229,14 @@ pop = population.create_population(genomic_arch = genomic_arch, land = land, par
 #---------#
 
 
-def burn_in(land, pop, params):
+def burn_in(pop, land, params):
 
     print '\n\nSTARTING BURN-IN.\n\t(Will run for %i timesteps.)\n\n' % params['burn_T']
 
-    pop.show(land = land, colorbar = True)
+    #pop.show(land = land, colorbar = True)
 
     for burn_t in range(params['burn_T']):
-    
+
         pop.birthday()
     
         pop.move(land = land, params = params)
@@ -254,7 +257,7 @@ def burn_in(land, pop, params):
     
     print '\n\nBURN-IN FINISHED.\n\n'
 
-    pop.show(land = land, colorbar = False)
+    #pop.show(land = land, colorbar = False)
 
     #mpl.pyplot.close()
 

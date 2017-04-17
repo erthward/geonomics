@@ -21,6 +21,14 @@ import gametogenesis
 import selection
 import mutation
 
+import numpy as np
+from numpy import random as r
+import random
+import matplotlib as mpl
+import os
+
+
+
 reload(landscape)
 reload(movement)
 reload(genome)
@@ -31,13 +39,6 @@ reload(recombination)
 reload(gametogenesis)
 reload(selection)
 reload(mutation)
-
-
-import numpy as np
-from numpy import random as r
-import random
-import matplotlib as mpl
-import os
 
 
 
@@ -65,11 +66,11 @@ runtime = 5000
 
 
 
-#########################
-      ###################
-# TEMP PARAMS FOR TESTING
-      ###################
-#########################
+#######################
+      #################
+      # SET TEMP PARAMS
+      #################
+#######################
 
 
 
@@ -81,7 +82,7 @@ params = {
 
 'set_seed' : True,                  #set the seed (for reproducibility)?
 
-'seed_num' : 111111,                    #number to seed random number generators
+'seed_num' : 1,                    #number to seed random number generators
 
 'T' : runtime,                      #total model runtime
 
@@ -101,9 +102,12 @@ params = {
 
 'beta_D' : 7e3,                 #beta for beta distribution of linkage values
 
-'N' : 1000,                        #total pop size
+'use_dom' : False,              #whether or not to use dominance (default to False)
+                                #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP
 
-'dims' : (1000,1000),             #dimensions of landscape  
+'N' : 100,                        #total pop size
+
+'dims' : (25,25),             #dimensions of landscape  
 
 'num_scapes' : 1,               #number of landscapes desired
 
@@ -114,24 +118,33 @@ params = {
 
 'move' : True,                     #is this a mobile species?
 
+'movement_surf' : True,       #use a landscape layer as a resistance surface, or habitat quality layer, to direct movement?
+#'movement_surf' : False,
+
+'movement_surf_scape_num' : 0,               #scape number to use as the movement surface
+
+'movement_surf_vonmises_kappa' : 2, #kappa value to use in the von Mises mixture distributions (KDEs) underlying resistance surface movement
+
+'movement_surf_gauss_KDE_bandwidth' : 0.2, #bandwidth value to use in the Gaussian KDEs that are created to approximate the von Mises mixture distributions (KDEs) underlying resistance surface movement
+
 'mu_direction' : 0,                #mu for von mises distribution defining movement directions
 
 'kappa_direction' : 0,             #kappa for von mises distribution
 
-'mu_distance' : 0.5,               #mean movement-distance (lognormal distribution)
+'mu_distance' : 0.01,               #mean movement-distance (lognormal distribution)
 
-'sigma_distance' : 0.1,            #sd of movement distance
+'sigma_distance' : 0.001,            #sd of movement distance
 
 'sex' : False,                      #is this a sexual species?
 
 'repro_age' : 5,          #age at sexual maturity (int or float for non-sexual species, tuple or list of two ints/floats for sexual species; set to 'None' to not make this an age-structured species
 
 
-'mating_radius' : 250,              #radius of mate-searching area
+'mating_radius' : 2,              #radius of mate-searching area
 
-'mu_dispersal' : 0.5,           #mean dispersal distance (lognormal distribution)
+'mu_dispersal' : 0.1,           #mean dispersal distance (lognormal distribution)
 
-'sigma_dispersal' : 0.1,          #sd of dispersal distance
+'sigma_dispersal' : 0.02,          #sd of dispersal distance
 
 'size' : 1,              # float/int, or list/tuple of length T containing floats/ints, expressing the target population size over model time as a ratio of the starting size (N)
 
@@ -151,10 +164,11 @@ params = {
 
 
 
-#########################
-      ###################
-      ###################
-#########################
+###############################
+      #########################
+      # CREATE MODEL COMPONENTS
+      #########################
+###############################
 
 
 #set seed, if requested
@@ -166,7 +180,7 @@ if params['set_seed']:
 
 
 #refresh mutation log
-os.system('touch ./mutation_log.txt')
+os.system('touch /home/ihavehands/Desktop/mutation_log.txt')
 
 
 
@@ -222,8 +236,16 @@ pop = population.create_population(genomic_arch = genomic_arch, land = land, par
      
      
 
+     
+######################
+      ################
+      # RUN MAIN MODEL
+      ################
+######################                                                                                                                                                         
+
+
 #plot starting pop
-                                                                                                                                                              
+
 #---------#
 # BURN IN #
 #---------#
@@ -236,6 +258,8 @@ def burn_in(pop, land, params):
     #pop.show(land = land, colorbar = True)
 
     for burn_t in range(params['burn_T']):
+
+        print(burn_t)
 
         pop.birthday()
     

@@ -110,6 +110,14 @@ def find_mates(pop, mating_radius, sex = True, repro_age = None):
 
 
 
+    ##############################################
+    #Check if any available pairs have been found thus far, proceed if so, otherwise return empty array of pairs
+    if len(available_pairs) == 0:
+        mates = np.array([])
+        return mates
+    else:
+        pass
+
 
 
     ###############################################
@@ -136,7 +144,7 @@ def find_mates(pop, mating_radius, sex = True, repro_age = None):
 
             assert repro_age.__class__.__name__ in ('int', 'float'), "For a non-sexual and age-structured species, the age at sexual maurity, 'repro_age', must be expressed as a single, non-iterable numeric (i.e.  float or integer); you have provided a:\n\t%s" % repro_age.__class__.__name__
 
-
+            
             yes_0 = np.array(ages[available_pairs[:,0]] >= repro_age)
             yes_1 = np.array(ages[available_pairs[:,1]] >= repro_age)
             available_pairs = available_pairs[yes_0 & yes_1]

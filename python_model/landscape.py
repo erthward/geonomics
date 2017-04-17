@@ -1,0 +1,272 @@
+#!/usr/bin/python
+#landscape.py
+
+'''
+##########################################
+
+Module name:          landscape
+
+
+Module contains:
+                      - definition of the Landscape type
+                      - function for creating a random landscape, based on input parameters
+                      - associated functions
+
+
+Author:               Drew Ellison Hart
+Email:                drew.hart@berkeley.edu
+Github:               URL
+Start date:           12-28-15
+Documentation:        URL
+
+
+##########################################
+'''
+
+from scipy import interpolate
+import numpy as np
+import numpy.random as r
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
+
+
+#------------------------------------
+# CLASSES ---------------------------
+#------------------------------------
+
+
+class Landscape:
+    def __init__(self, dims, raster):
+        self.dims = dims
+        self.raster = raster
+        assert type(self.dims) in [tuple, list], "dims must be expressed on a tuple or a list"
+        assert type(self.raster) == np.ndarray, "raster should be a numpy.ndarray"
+
+
+    #####################
+    ### OTHER METHODS ###
+    #####################
+
+
+    def show(self, colorbar = True, im_interp_method = 'nearest'):
+        if plt.get_fignums():
+            colorbar = False
+        cmap = 'terrain'
+        #TODO: REALLY GET TO THE BOTTOM OF THE RASTER-PLOTTING ISSUE!! 04/16/17: While working on the 
+            #pop-density raster function, I was plotting the results and realized that the function seemed to
+            #be working, but that the results seemed reflected about the diagonal. I am doing this, for the
+            #moment, as a TEMPORARY fix, but will have to make sure that I haven't already 'fixed' this (and
+            #forgotten) elsewhere, such that this is actually introducing more problems in the long-run
+        plt.imshow(self.raster.swapaxes(0,1), interpolation = im_interp_method, cmap = cmap)
+        if colorbar:
+            plt.colorbar()
+
+
+
+
+class Landscape_Stack:
+    def __init__(self, raster_list):
+        self.scapes = dict(zip(range(len(raster_list)), raster_list))  
+        assert False not in [raster.__class__.__name__ == 'Landscape' for raster in raster_list], 'All landscapes supplied in raster_list must be of type landscape.Landscape.'
+        self.num_rasters = len(raster_list)
+        assert len(set([land.dims for land in self.scapes.values()])) == 1, 'Dimensions of all landscapes must be even.'
+        self.dims = self.scapes.values()[0].dims
+        self.movement_surf = None
+
+
+    def show(self, scape_num = None, colorbar = True, im_interp_method = 'nearest'):
+        if plt.get_fignums():
+            colorbar = False
+        cmaps = ['terrain', 'bone']
+        alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+        if scape_num <> None:
+            plt.imshow(self.scapes[scape_num].raster.swapaxes(0,1), interpolation = im_interp_method, cmap = 'terrain')
+
+            if colorbar:
+                plt.colorbar()
+        else:
+            for n, scape in self.scapes.items():
+                plt.imshow(scape.raster.swapaxes(0,1), interpolation = im_interp_method, alpha = alphas[n], cmap = cmaps[n])
+                if colorbar:
+                    plt.colorbar()
+
+
+    def plot_movement_surf_vectors(self, params):
+        if params['movement_surf'] == True and self.movement_surf <> None:
+            import movement
+            movement.plot_movement_surf_vectors(self, params)
+        else:
+            print('\n\nThis Landscape_Stack appears to have no movement surface.\n\n')
+            pass
+
+
+
+    #method for pickling a landscape stack
+    def pickle(self, filename):
+        import cPickle
+        with open(filename, 'wb') as f:
+            cPickle.dump(self, f)
+
+
+
+
+
+
+
+
+
+
+
+
+
+#--------------------------------------
+# FUNCTIONS ---------------------------
+#--------------------------------------
+
+
+def random_surface(dims, n_rand_pts, interp_method = "cubic", num_hab_types = 2):  #requires landscape to be square, such that dim = domain = range
+    #NOTE: can use "nearest" interpolation to create random patches of habitat (by integer values); can change num_hab_types to > 2 to create a randomly multi-classed landscape
+    #NOTE: I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
+    #NOTE: This seems to generate decent, believable random rasters! 
+        # n_rand_pts/dim ratio:
+            # ~0.01-0.05 --> broad, simple gradients
+            # ~0.05-0.10 --> slightly more complex, occasionally landscape of low regions divided by a major high region (or vice versa)
+            # ~0.10-0.50 --> landscape can be broken up into numerous fragmented patches (though sometimes still relatively homogeneous, with one or two small, extremely different patches
+            # ~0.50-1.00 --> more highly fragmented version of above
+    max_dim = max(dims)
+    if interp_method == 'nearest':
+        vals = r.rand(n_rand_pts) * (num_hab_types-1)
+    else:
+        vals = r.rand(n_rand_pts)
+    pts = r.normal(max_dim/2, max_dim*2,[n_rand_pts,2]) #selects seed points from well outside the eventaul landscape, to ensure interpolation across area of interest
+    grid_x, grid_y = np.mgrid[1:max_dim:complex("%ij" % max_dim), 1:max_dim:complex("%ij" % max_dim)] #by this function's definition, the use of complex numbers in here specifies the number of steps desired
+    I = interpolate.griddata(pts, vals, (grid_x, grid_y), method = interp_method)
+    if interp_method == 'nearest':  #i.e., if being used to generate random habitat patches...
+        I = I.round().astype(float)
+    if interp_method == 'cubic':  #transform to constrain all values to 0 <= val <= 1
+        I = I + np.abs(I.min())+(0.01*r.rand()) #NOTE: adding a small jitter to keep values from reaching == 0 or == 1, as would likely be the case with linear interpolation
+        I = I/(I.max()+(0.01*r.rand()))
+    if dims[0] <> dims[1]:
+        pass #NOTE: figure out how to get it to use the dims tuple to subset an approriate size if dims not equal
+    return Landscape(dims,I)
+
+
+
+def defined_surface(dims, pts, vals, interp_method = "cubic", num_hab_types = 2):  #pts should be provided as n-by-2 Numpy array, vals as a 1-by-n Numpy array
+
+    #NOTE: There seem to be some serious issues with all of this code, because the resulting landscapes are not quite symmetrical; and making small tweaks (e.g. adding 5 to all input points' coordinates) doesn't just tweak the output landscape but instead completely gets ride of it; I have an intuition that it comes from the code that coerces all raster values to 0 <= val <= 1, becuase that doesn't look it does quite what I originally intended for it to do, but I'm not really sure... anyhow, for now it works for my initial testing purposes
+    
+
+    #NOTE: like the random_surface function, this also requires landscape to be square, but I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
+
+
+    #NOTE: if discrete habitat patches desired, values should still be fed in as proportions, and will then be multipled by num_hab_types to develop habitat class values
+    if interp_method == 'nearest':
+        vals = vals * (num_hab_types-1)
+
+
+    #add 0.5 to all pts, to center them with respect to the raster display, to make intended symmetry actually symmetrical
+    #pts = pts + 0.5
+
+
+    max_dim = max(dims)
+    grid_x, grid_y = np.mgrid[1:max_dim:complex("%ij" % max_dim), 1:max_dim:complex("%ij" % max_dim)]
+    I = interpolate.griddata(pts, vals, (grid_x, grid_y), method = interp_method)
+    if interp_method == 'nearest':  #i.e., if being used to generate random habitat patches...
+        I = I.round().astype(float)
+    if interp_method == 'cubic':  #transform to constrain all values to 0 <= val <= 1
+        I = I + np.abs(I.min())+(0.01*r.rand()) #NOTE: adding a small jitter to keep values from reaching == 0 or == 1, as would likely be the case with linear interpolation
+        I = I/(I.max()+(0.01*r.rand()))
+    if dims[0] <> dims[1]:
+        pass #NOTE: figure out how to get it to use the dims tuple to subset an approriate size if dims not equal
+    return Landscape(dims,I)
+
+
+
+
+def build_scape_stack(params, num_hab_types = 2):
+
+    #NOTE: If a multi-class (rather than binary) block-habitat raster would be of interest, would need to make num_hab_types customizable)
+
+
+    #grab necessary parameters from the params dict
+
+    if params['num_scapes'] == None:
+        num_scapes = 1
+    else:
+        num_scapes = params['num_scapes']
+
+
+    if params['interp_method'] == None:
+        interp_method = ['cubic'] * num_scapes
+    else:
+        interp_method = params['interp_method']
+
+
+    dims = params['dims']
+
+
+
+
+
+
+    #create rasters for random landscape, if params['rand_land'] == True
+    if params['rand_land'] == True:
+
+        n_rand_pts = params['n_rand_pts']
+
+        #if only a single integer provided for n_rand_pts, then use that for all landscape layers (i.e. scale of spatial heterogeneity will be roughly equal for all layers); otherwise, a list or tuple of n_rand_pts could create different scales of heterogeneity for different landscape layers
+        if type(n_rand_pts) == int:
+            n_rand_pts = [n_rand_pts] * num_scapes
+
+
+
+
+        land = Landscape_Stack([random_surface(dims, n_rand_pts[n], interp_method = interp_method[n], num_hab_types = num_hab_types) for n in range(num_scapes)])
+
+
+
+
+
+    #or create rasters for defined landscape, if params['rand_land'] == False
+    elif params['rand_land'] == False:
+
+        #get pts
+        pts = params['landscape_pt_coords']
+        #if only a single array of pts provided, multiply them into a list to use for each separate landscape layer
+        if type(pts) == np.ndarray:
+            pts = [pts]*num_scapes
+
+
+        #get vals
+        vals = params['landscape_pt_vals']
+
+
+        land = Landscape_Stack([defined_surface(dims, pts[n], vals[n], interp_method = interp_method[n], num_hab_types = num_hab_types) for n in range(num_scapes)])
+
+    
+
+    #create a movement surface, if params call for it  
+    #NOTE: THIS WILL TAKE A WHILE TO COMPUTER UP-FRONT!
+    if params['movement_surf'] == True:
+        import movement
+        land.movement_surf = movement.create_vonmises_KDE_array(land, params)   
+
+
+    return land
+
+
+
+
+
+
+
+
+#function for reading in a pickled landscape stack
+def load_pickled_scape_stack(filename):
+    import cPickle
+    with open(filename, 'rb') as f:
+        land = cPickle.load(f)
+
+    return land

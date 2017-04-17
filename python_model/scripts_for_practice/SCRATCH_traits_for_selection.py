@@ -1,3 +1,5 @@
+#scratch script used for trying to develop trait-level selection for polygenic traits
+
 #additional packages
 import operator
 

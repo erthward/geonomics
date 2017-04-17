@@ -54,15 +54,22 @@ class Genomic_Architecture:
 
 
 
+    #method for pickling a genomic architecture
+    def pickle(self, filename):
+        import cPickle
+        with open(filename, 'wb') as f:
+            cPickle.dump(self, f)
+
+
+
 
 
 class Genome:
     def __init__(self, G, ploidy):
-        self.genome = G #dict of numbered i*j arrays, each subarray containing the biallelic genotype data for all j (for a diploid, 2) copies of chromosome i
+        self.genome = G #dict of numbered i*j arrays, each subarray containing the genotype data for all j (for a diploid, 2) copies of chromosome i
         assert list(set([type(a) for a in self.genome.values()])) == [type(np.array([0]))], "G must be a dict of numpy.ndarray instances"
         assert list(set([np.shape(a)[1] for a in self.genome.values()])) == [ploidy] 
 
-    #NOTE: should/could I create methods herein for mutation, crossing over, etc??
     #NOTE: need to ensure that size(G)[1] == n and that size of each subarray in G == x*l_c
 
 
@@ -95,14 +102,32 @@ def sim_G(p):
 
 #randomly assign dominance types (0 = codominant, 1 = dominant, 2 = recessive)
 #NOTE: DOES 0-2 SUFFICE?? Do I need 3 = heterozygote dominance (or whatever that would be called)?
-def assign_dom(l, low = 0, high = 2):
-    return r.random_integers(low = low, high = high, size = l)
+def assign_dom(l, params, low = 0, high = 2):
+    use_dom = params['use_dom']
+    if use_dom:
+        dom = r.random_integers(low = low, high = high, size = l)
+    else:
+        dom = r.random_integers(low = 0, high = 0, size = l)
+
+    return dom
 
 
 
-#randomly assign selectivity of each locus to one of the eligible rasters (note: 0 = globally constant selection selective (i.e. selective advantage non-variable in space, i.e. fitness will not be contingent on any raster)
-def assign_env_var(num_rasters, l, allow_global_selection = True):
-    env_var = r.random_integers(low = not allow_global_selection, high = num_rasters, size = l)  #NOTE: 0's will be assigned in allow_global_selection = True, else 1 will be lowest number)
+
+#randomly assign selectivity of each locus to one of the eligible rasters (note: 0 = global selection (i.e.  selective advantage non-variable in space, i.e. fitness of alleles will not be contingent on any raster)
+def assign_env_var(num_rasters, l, allow_multiple_env_vars = False, allow_global_selection = True):
+
+
+    #if allow_multiple_env_vars, then highest env_var number will be the last landscape in the landscape_stack; otherwise, all env_var values will be either 1 (for the first raster) or 0 (for global selection if allow_global_selection = True)
+    if allow_multiple_env_vars == True:
+        high = num_rasters
+    else:
+        high = 1
+
+
+    env_var = r.random_integers(low = not allow_global_selection, high = high, size = l)  #NOTE: 0's will be assigned if allow_global_selection = True, else 1 will be lowest number)
+
+
     return env_var
 
 
@@ -111,7 +136,7 @@ def assign_env_var(num_rasters, l, allow_global_selection = True):
   
 #simulate selection coefficients
 def sim_s(l, alpha_s = 0.007, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 loci in 10,000 with s > .75; 0.025 gives ~85-115; 0.0025 gives ~5-15
-    #NOTE: See Thurman and Barrett (2016) for metaanalysis of s values in rela populations!
+    #NOTE: See Thurman and Barrett (2016) for metaanalysis of s values in real populations!
 
     s = r.beta(alpha_s, beta_s, l)
     s = np.array([0 if l < 0.001 else l for l in s])
@@ -147,7 +172,15 @@ def set_l_c(L, n, even_chrom_sizes = True):
 
 #build the genomic architecture
 #NOTE: This will create the "template" for the genomic architecture of the hapolid genome that will then be used to simulate individuals and populations
-def build_genomic_arch(params, land):
+def build_genomic_arch(params, land, allow_global_selection = False, allow_multiple_env_vars = False):
+
+
+
+
+    #NOTE: OPERATIONALIZE GLOBALLY SELECTIVE LOCI??
+    #NOTE: 04-09-17: Set allow_multiple_env_vars to default to False
+
+
 
 
     #grab necessary parameters from the params dict
@@ -167,9 +200,10 @@ def build_genomic_arch(params, land):
     if True:
         sex = False
 
+
+
     l_c = None   #NOTE: OPERATIONALIZE UNEVEN CHROM LENGTHS??
 
-    allow_global_selection = False  #NOTE: OPERATIONALIZE GLOBALLY SELECTIVE LOCI??
 
 
 
@@ -188,8 +222,8 @@ def build_genomic_arch(params, land):
         for chrom in range(n):
             p[chrom] = gen_allele_freqs(l_c[chrom])
             s[chrom] = sim_s(l_c[chrom])
-            dom[chrom] = assign_dom(l_c[chrom])
-            env_var[chrom] = assign_env_var(num_rasters = land.num_rasters, l = l_c[chrom], allow_global_selection = allow_global_selection)
+            dom[chrom] = assign_dom(l_c[chrom], params)
+            env_var[chrom] = assign_env_var(num_rasters = land.num_rasters, l = l_c[chrom], allow_global_selection = allow_global_selection, allow_multiple_env_vars = allow_multiple_env_vars)
             D[chrom] = sim_D(l_c[chrom], alpha_D, beta_D)
             D[chrom][len(D[chrom])-1] = 0 #because each D value expresses linkage between that locus and the next, last value is forced to 0!
         return Genomic_Architecture(x, n, sum(l_c), l_c, p, s, dom, env_var, D, mu, False)
@@ -208,5 +242,14 @@ def sim_genome(genomic_arch):
     return Genome(new_genome, genomic_arch.x)
 
 
+
+
+#method for loading a pickled genomic architecture
+def load_pickled_genomic_arch(filename):
+    import cPickle
+    with open(filename, 'rb') as f:
+        genomic_arch = cPickle.load(f)
+
+    return genomic_arch
 
 

@@ -72,8 +72,9 @@ class Individual:
 
 
     #set movement.move as a method
-    def move(self, land, mu_direction, kappa_direction, mu_distance, sigma_distance, resist_surf = None):
-        self.x, self.y = movement.move(self, land, mu_direction, kappa_direction, mu_distance, sigma_distance, resist_surf)
+    def move(self, land, params):
+        self.x, self.y = movement.move(self, land, params)
+        
 
     
     #function to increment age by one

@@ -44,7 +44,9 @@ def disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dis
     within_landscape = False
     while within_landscape == False:
 
-        direction = vonmises(mu_dir, kappa_dir)   #NOTE: For now, dispersal random and equally probable in all directions 
+        #NOTE: For now, dispersal random and equally probable in all directions, but I would love to
+        #operationalize an environmental layer that can be used here just like it is used in movement (for e.g.  wind or current dispersal)
+        direction = vonmises(mu_dir, kappa_dir)  
         distance = lognormal(mu_dispersal, sigma_dispersal)
 
         offspring_x = parent_centroid_x + np.cos(direction)*distance

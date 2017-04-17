@@ -87,7 +87,7 @@ from scipy.spatial import cKDTree
 
 
 
-def get_fitness(pop):
+def get_fitness(pop, norm_fit = False):  #If norm_fit == True, will normalize fitness values with respect to the max fitness value; otherwise, will leave them expressed with respect to the magnitude of the selection coefficients
 
 
     #dict of functions correpsonding to the various dominance types
@@ -118,7 +118,7 @@ def get_fitness(pop):
 
 
 
-            #filter list of each locus-respective selective environmental variables (i.e. raster numbers) associated with non-neutral loci
+            #filter list of each locus-respective selective environmental variable (i.e. raster numbers) associated with non-neutral loci
             env_var_non_neut = pop.genomic_arch.env_var[c][pop.genomic_arch.non_neutral[c]]
             #and use that to generate a list of each locus' current habitat value for its selective environmental variable
             hab = np.array([ind.habitat[env_var_non_neut[l] - 1] for l in range(len(env_var_non_neut))])  
@@ -137,14 +137,25 @@ def get_fitness(pop):
             #sum the foregoing list of locus-specific fitnesses and add it to the individual's genome-wide rolling sum of locus-specific fitnesses
             sum_fit[i] = sum_fit[i] + sum(fit)
 
+    if norm_fit == True:
+        sum_fit = normalize_fitness(pop, fit)
 
-
-    #finally, divide each individual's summed locus-specific fitnesses by genomic_arch.sum_s, yielding each individual's normalized, weighted-mean fitness
-    sum_fit = dict([(ind, fit/pop.genomic_arch.sum_s) for ind, fit in sum_fit.items()])
 
     assert False not in [(fitness <= 1 and fitness >= 0) for fitness in sum_fit.values()], 'Something went wrong! All individuals\' net fitness values should be between 0 and 1. Instead, returned:\n\n\t%s' % str(sum_fit)
 
+
     return sum_fit
+
+
+
+
+def normalize_fitness(pop, fit):
+    #divide each individual's summed locus-specific fitnesses by genomic_arch.sum_s, yielding each individual's normalized, weighted-mean fitness
+    norm_fit = dict([(ind, f/pop.genomic_arch.sum_s) for ind, f in fit.items()])
+
+    assert False not in [(fitness <= 1 and fitness >= 0) for fitness in norm_fit.values()], 'Something went wrong! All individuals\' net fitness values should be between 0 and 1. Instead, returned:\n\n\t%s' % str(norm_fit)
+
+    return norm_fit
 
 
 

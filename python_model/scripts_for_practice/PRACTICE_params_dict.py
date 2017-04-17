@@ -1,0 +1,101 @@
+#!/usr/bin/python
+
+import numpy as np
+
+params = {
+
+
+'set_seed' : True,                  #set the seed (for reproducibility)?
+
+'seed_num' : 5,                    #number to seed random number generators
+
+'T' : 5000,                      #total model runtime
+
+'burn_T': 30,                     #total burn-in runtime
+
+'L' : 5e1,                         #total number of loci
+
+'n' : 1,                           #number of chromosomes
+
+'x' : 2,                         #ploidy (for now, leave at 2 for diploidy)
+
+'n_traits' : 1,                 #number of traits to simulate
+
+'mu' : 10e-9,                    #genome-wide mutation rate
+
+'alpha_D' : 14.999e10,                #alpha for beta distribution of linkage values  #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333, with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
+
+'beta_D' : 15e10,                 #beta for beta distribution of linkage values
+
+'use_dom' : False,              #whether or not to use dominance (default to False)
+                                #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP
+
+'N' : 1000,                        #total pop size
+
+'dims' : (50,50),             #dimensions of landscape  
+
+'num_scapes' : 2,               #number of landscapes desired
+
+'rand_land' : False,        #whether or not to generate random landscapes
+#'rand_land' : False,
+
+'n_rand_pts' : 50,           #number of random coordinates to be used in generating random landscapes (only needed if rand_land = True)
+
+'landscape_pt_coords': np.array([[0,0], [0,100], [100,0], [50,40], [100,100], [30,0], [0,30], [70,100], [100,70]]),
+#coords of points to use to interpolate defined landscape layers (can be provided as either a single nx2 Numpy array, where n matches the number of points in landscape_pt_vals arrays, to be used as the points for each landscape layer, or a list or tuple of nx2 Numpy arrays, one for each landscape layer; only needed if rand_land = False)
+
+'landscape_pt_vals': [np.array([-0.5,0.5,0.5,0.5,1.5, -0.5, -0.5, 1.5, 1.5]), np.array([1.5,-0.5,-0.5,-0.5,1.5, 0.85, 0.85, 0.85, 0.85])],
+#point values to use to interpolate defined landscape layers (a list or tuple of 1xn Numpy arrays, where n matches the number of points in landscape_pt_coords arrays; only needed in rand_land = False)
+
+
+#'interp_method' : ['nearest'],
+'interp_method' : ['cubic', 'cubic'],   # list of interpolation methods for generation of random landscapes, 1 per landscape to be generated (as set by num_scapes)
+
+'move' : True,                     #is this a mobile species?
+
+'movement_surf' : True,       #use a landscape layer as a resistance surface, or habitat quality layer, to direct movement?
+#'movement_surf' : False,
+
+'movement_surf_scape_num' : 1,               #scape number to use as the movement surface
+
+'movement_surf_vonmises_kappa' : 2, #kappa value to use in the von Mises mixture distributions (KDEs) underlying resistance surface movement
+
+'movement_surf_gauss_KDE_bandwidth' : 0.2, #bandwidth value to use in the Gaussian KDEs that are created to approximate the von Mises mixture distributions (KDEs) underlying resistance surface movement
+
+'mu_direction' : 0,                #mu for von mises distribution defining movement directions
+
+'kappa_direction' : 0,             #kappa for von mises distribution
+
+'mu_distance' : 0.01,               #mean movement-distance (lognormal distribution)
+
+'sigma_distance' : 0.001,            #sd of movement distance
+
+'sex' : False,                      #is this a sexual species?
+
+'repro_age' : 0,          #age at sexual maturity (int or float for non-sexual species, tuple or list of two ints/floats for sexual species; set to 'None' to not make this an age-structured species
+
+
+'mating_radius' : 2,              #radius of mate-searching area
+
+'mu_dispersal' : 0.1,           #mean dispersal distance (lognormal distribution)
+
+'sigma_dispersal' : 0.02,          #sd of dispersal distance
+
+'size' : 1,              # float/int, or list/tuple of length T containing floats/ints, expressing the target population size over model time as a ratio of the starting size (N)
+
+'sigma_deaths' : 0.2,              # std for the normal distribution used to choose the r.v. of deaths per timestep (mean of this distribution is the overshoot, as calculated from pop.size and pop.census())
+
+'density_dependent_fitness' : True, #should fitness be density dependent? (note: helps to avoid subpopulation 'clumping')
+
+'alpha_mut_s' : 25,                # alpha param for the beta distribution describing the highly advantageous selection coeffs for mutations
+
+'beta_mut_s' : 0.5                # beta param for the beta distribution describing the highly advantageous selection coeffs for mutations
+
+
+
+}
+
+
+
+
+

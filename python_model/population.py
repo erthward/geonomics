@@ -111,8 +111,8 @@ class Population:
 
 
     #method to move all individuals simultaneously
-    def move(self, land, params, resist_surf = None):
-        [ind.move(land, params['mu_direction'], params['kappa_direction'], params['mu_distance'], params['sigma_distance'], resist_surf) for ind in self.individs.values()];
+    def move(self, land, params):
+        [ind.move(land, params) for ind in self.individs.values()];
 
         self.query_habitat(land)
 
@@ -296,6 +296,18 @@ class Population:
             return dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items()])
 
 
+    def get_x_coords(self, individs = None):
+        if individs <> None:
+            return dict([(k, (ind.x)) for k, ind in self.individs.items() if k in individs])
+        else:
+            return dict([(k, (ind.x)) for k, ind in self.individs.items()])
+
+
+    def get_y_coords(self, individs = None):
+        if individs <> None:
+            return dict([(k, (ind.y)) for k, ind in self.individs.items() if k in individs])
+        else:
+            return dict([(k, (ind.y)) for k, ind in self.individs.items()])
 
 
 
@@ -308,27 +320,34 @@ class Population:
 
 
 
-    def show(self, land = None, scape_num = None, color = 'black', colorbar = True):
+
+
+    def show(self, land = None, scape_num = None, color = 'black', colorbar = True, markersize = 8.5, im_interp_method = 'nearest', alpha = False):
         if land <> None:
             if scape_num <> None  :
-                land.scapes[scape_num].show(colorbar = colorbar)
+                land.scapes[scape_num].show(colorbar = colorbar, im_interp_method = im_interp_method)
             else:
-                land.show(colorbar = colorbar)
+                land.show(colorbar = colorbar, im_interp_method = im_interp_method)
         x = [(ind.x) for ind in self.individs.values()]
         y = [(ind.y) for ind in self.individs.values()]
         coords = np.array(self.get_coords().values()) - 0.5  #NOTE: subtract 0.5 to line up the points with the plt.imshow() grid of the land; imshow plots each pixel centered on its index, but the points then plot against those indices, so wind up shifted +-1.5
-        mpl.pyplot.plot([n[0] for n in coords], [n[1] for n in coords], 'ko', scalex = False, scaley = False, color = color)
+        if alpha == True:
+            alpha = 0.6
+        else:
+            alpha = 1.0
+            
+        mpl.pyplot.plot([n[0] for n in coords], [n[1] for n in coords], 'ko', scalex = False, scaley = False, color = color, markersize = markersize, alpha = alpha)
 
 
 
 
-    def show_individs(self, individs, land = None, scape_num = None, color = 'black'):
+    def show_individs(self, individs, land = None, scape_num = None, color = 'black', im_interp_method = 'nearest'):
         if land <> None and scape_num <> None:
-            ax = land.scapes[scape_num].show()
+            ax = land.scapes[scape_num].show(im_interp_method = im_interp_method)
 
         coords = dict([(k, (ind.x - 0.5, ind.y - 0.5)) for k, ind in self.individs.items() if k in individs]) #NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
         for k, coord_pair in coords.items():
-            ax = mpl.pyplot.plot(coord_pair[0], coord_pair[1], 'ko', scalex = False, scaley = False, color = color)
+            ax = mpl.pyplot.plot(coord_pair[0], coord_pair[1], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
             #NOTE: perhaps worth figuring out how to label with the individual number!!
 
 
@@ -337,12 +356,12 @@ class Population:
 
 
 
-    def show_locus(self, chromosome, locus, land, scape_num = None):
+    def show_locus(self, chromosome, locus, land, scape_num = None, im_interp_method = 'nearest'):
 
         if scape_num <> None  :
-            land.scapes[scape_num].show()
+            land.scapes[scape_num].show(im_interp_method = im_interp_method)
         else:
-            land.show()
+            land.show(im_interp_method = im_interp_method)
 
         genotypes = self.get_genotype(chromosome, locus)
 
@@ -353,7 +372,7 @@ class Population:
             inds = [i for i, g in genotypes.items() if g[0] == genotype]
             coords = np.array([coord for coord in self.get_coords(inds).values()])
 
-            mpl.pyplot.plot([coord[0] for coord in coords], [coord[1] for coord in coords], 'o', markersize = 11, scalex = False, scaley = False, color = colors[n])
+            mpl.pyplot.plot([coord[0] for coord in coords], [coord[1] for coord in coords], 'o', markersize = 11, scalex = False, scaley = False, color = colors[n], alpha = 0.8)
 
 
 

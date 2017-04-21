@@ -9,6 +9,7 @@ import movement
 import genome
 import individual
 import population
+import demography
 import mating
 import recombination
 import gametogenesis

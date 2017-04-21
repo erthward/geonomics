@@ -193,7 +193,7 @@ def select(pop, t, params, sigma_deaths = 0.05, density_dependent_fitness = True
         tree = cKDTree(points, leafsize = 100)
         #create list of the count of neighbors within 5*mu_distance of each point, excluding both self and population census size (which indicates no available neighbors)
         #NOTE: The 5*mu_distance threshold is an arbitrary value for now, based on the potential combined movement of each individual in a pair 2.5 standard deviations in opposite and approaching directions...
-        neighbor_counts = [len([neigh for neigh in i if (neigh != pop.census() and neigh != n)]) for n, i in enumerate(tree.query(points, k = pop.census(), distance_upper_bound = 5*params['mu_distance'])[1])]
+        neighbor_counts = [len([neigh for neigh in i if (neigh != pop.census() and neigh != n)]) for n, i in enumerate(tree.query(points, k = pop.census(), distance_upper_bound = 30*params['mu_distance'])[1])]
         
         #now calculate a 'density fitness', as 1 minus the density of an individual relative to max density, and factor it directly into rel_neg_fitness (NOTE: density is never actually calculated as density proper, but this is irrelevant, as all individuals' counts would be divided by the same area (pi*(5*mu_distance)^2)  )
         #print list(rel_neg_fitness)[:10]

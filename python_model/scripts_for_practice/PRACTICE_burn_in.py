@@ -15,15 +15,18 @@ def burn_in(pop, land, params):
 
 
     if multi_pop == False:
+        pop.set_K(pop.calc_density(land = land, set_N = False))
         for burn_t in range(params['burn_T']):
-
-            print('Timestep %i:' %burn_t)
+            print('Timestep %i:' % burn_t+1)
             pop.birthday()
-            pop.move(land = land, params = params)
-            pop.mate(land = land, params = params)
-            pop.select(t = burn_t, params = params)
+            pop.set_K(pop.calc_density(land = land, set_N = False))
             pop.mutate(params = params, t = burn_t)
-            pop.check_extinct()
+            pop.move(land = land, params = params)
+            pop.calc_density(land = land, window_width = max(1, params['mu_distance']), set_N = True)
+            demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, min_d = 0.1, max_d = 0.9)
+            #NOTE: Making the d_min and d_max values considerably more permissive than the default settings, just for the burn-in period, to allow for more pronounced shifts in spatial distribution of individs during the iterative algorithm without too much 'penalty'
+            #pop.select(t = burn_t, params = params)
+            #pop.check_extinct()
             print '\n\n%i timesteps run.  Current status:\n\n\t%i individuals\n\n' % (burn_t+1, pop.census())
             print '\n----------------------------------------------------------\n\n' 
 
@@ -32,10 +35,10 @@ def burn_in(pop, land, params):
         #mpl.pyplot.close()
 
 
-
+    #NOTE: NOT KEPT UP TO DATE WITH THE VERSION ABOVE!
     elif multi_pop == True:
         for burn_t in range(params['burn_T']):
-            print('Timestep %i:' %burn_t)
+            print('Timestep %i:' % burn_t+1)
             n = 1
             for p in pop:
                 print('\tPopulation %i:' % n)

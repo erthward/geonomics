@@ -250,6 +250,21 @@ def build_scape_stack(params, num_hab_types = 2):
     #create a movement surface, if params call for it  
     #NOTE: THIS WILL TAKE A WHILE TO COMPUTER UP-FRONT!
     if params['movement_surf'] == True:
+
+        #zero out all values less than the barrier_val, if it is provided in the params dict
+        if ('movement_surf_barrier_val' in params.keys()):
+            barrier = params['movement_surf_barrier_val']
+            try:
+                barrier = float(barrier)
+            except Error:
+                pass
+            if (type(barrier) == float) and (barrier > 0) and (barrier < 1):
+                movement_surf = land.scapes[params['movement_surf_scape_num']].raster
+                barrier_inds = movement_surf < barrier
+                movement_surf[barrier_inds] = 0
+                land.scapes[params['movement_surf_scape_num']].raster = surf
+                
+        #create the movement surface, and set it as the land.movement_surf attribute
         import movement
         land.movement_surf = movement.create_vonmises_KDE_array(land, params)   
 

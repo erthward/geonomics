@@ -29,11 +29,14 @@ import mating
 import dispersal
 import selection
 import mutation
+import landscape
 
 import numpy as np
 from numpy import random as r
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from scipy import interpolate
+from scipy.spatial import cKDTree
 
 import sys
 
@@ -52,7 +55,12 @@ class Population:
      
     def __init__(self, N, individs, genomic_arch, size, T): 
 
-        self.N = []                                        #list to record population size at each step (with starting size as first entry)
+        self.Nt = []                                        #list to record population size at each step (with starting size as first entry)
+
+        self.N = None                                       #slot to hold an landscape.Landscape object of the current population density 
+
+        self.K = None                                       #slot to hold an landscape.Landscape object of the local carrying capacity (i.e. 'target' dynamic equilibrium population density)
+
         self.individs = individs                            #dict of all individuals, as instances of individual.Individual class
 
 
@@ -92,11 +100,20 @@ class Population:
         return len(self.individs)
 
 
+    #method to set self.K
+    def set_K(self, K): #NOTE: Requires a landscape.Landscape instance
+        self.K = K
+
+
+    #method to set self.N
+    def set_N(self, N): #NOTE: Requires a landscape.Landscape instance
+        self.N = N
+
 
     #method to increment all population's age by one (also adds current pop size to tracking array)
     def birthday(self):
         #add current pop size to pop.N (for later demographic analysis)
-        self.N.append(self.census())
+        self.Nt.append(self.census())
         #increment age of all individuals
         [ind.birthday() for ind in self.individs.values()];
 
@@ -118,32 +135,25 @@ class Population:
 
 
 
-
-    #set mating.find_mates() as method
-    def court(self, params):
-
-        return mating.find_mates(self, params['mating_radius'], sex = params['sex'], repro_age = params['repro_age'])
-
+    #function for finding all the mating pairs in a population
+    def find_mating_pairs(self, land, params):
+        
+        mating_pairs = mating.find_mates(self, params) 
+        return(mating_pairs)
 
 
 
 
     #function for executing mating for a population
-    def mate(self, land, params):
+    def mate(self, land, params, mating_pairs):
 
-        
-        
         #pull necessary parameters from params dict
-        mating_radius = params['mating_radius']
         mu_dispersal = params['mu_dispersal']
         sigma_dispersal = params['sigma_dispersal']
         sex = params['sex']
         repro_age = params['repro_age']
 
-
-
-        mating_pairs = self.court(params)
-
+        
         num_offspring = 0
 
         for pair in mating_pairs:
@@ -151,7 +161,7 @@ class Population:
             parent_centroid_x = np.mean((self.individs[pair[0]].x, self.individs[pair[1]].x))
             parent_centroid_y = np.mean((self.individs[pair[0]].y, self.individs[pair[1]].y))
 
-            zygotes = mating.mate(self, pair, self.genomic_arch)
+            zygotes = mating.mate(self, pair, params)
 
             
             for zygote in zygotes:
@@ -176,7 +186,7 @@ class Population:
         #sample all individuals' habitat values, to initiate for offspring
         self.query_habitat(land)
 
-        print '\t%i individuals born' % num_offspring
+        print '\n\t%i individuals born' % num_offspring
 
 
 
@@ -208,6 +218,93 @@ class Population:
             sys.exit()
     
 
+
+
+    def calc_density(self, land, window_width = None, normalize_by = 'none', max_1 = False, min_0 = True, set_N = False):
+
+        '''
+        Calculate an interpolated raster of local population density, using a window size of window_width.
+        Valid values for normalize_by currently include 'census' and 'none'. If normalize_by = 'census', max_1 =
+        True will cause the output density raster to vary between 0 and 1, rather than between 0 and the current
+        max normalized density value. Window width will default to 1/10 of the larger raster dimension.
+        '''
+
+        #window width defaults to 1/10 the maximum landscape dimension
+        if window_width == None:
+            window_width = max(land.dims)*0.1
+
+        #shorthand
+        dims = land.dims
+
+        #get a list of pop's coord-tuples
+        c = self.get_coords().values() 
+
+        #make window_width a float, to avoid Py2 integer-division issues
+        window_width = float(window_width)
+        
+        #create meshgrid using window_width/2 as step size
+        grid_j, grid_i = np.mgrid[0:dims[0]:complex("%ij" % (dims[0]/(window_width/2))), 0:dims[1]:complex("%ij" % (dims[1]/(window_width/2)))]
+
+        #flatten the arrays, so that I can run over them in a single for loop
+        gj = grid_j.ravel()
+        gi = grid_i.ravel()
+
+        #make lists of tuples, of same length as gj, containing the window ll and ur coords
+        window_ll = [(max(gj[n]-window_width/2, 0), max(gi[n]-window_width/2, 0)) for n in range(len(gj))]   #constrain min window vals to 0
+        window_ur = [(min(gj[n]+window_width/2, land.dims[0]), min(gi[n]+window_width/2, land.dims[1])) for n in range(len(gj))] #constrain max window vals to each respective land dimension
+        assert len(window_ll) == len(gj)
+        assert len(window_ur) == len(gj)
+
+        #make a list of the sizes of each window
+        window_size = [(window_ur[n][0] - window_ll[n][0]) * (window_ur[n][1] - window_ll[n][1]) for n in range(len(gj))]#calculate size of this window (not always the same because of edge effects
+        assert len(window_size) == len(gj)
+        
+        #make a list of the counts of all individs within each window
+        window_ct = [len([ind for ind in range(len(c)) if (c[ind][0]>window_ll[n][0] and c[ind][0]<=window_ur[n][0]) and (c[ind][1]>window_ll[n][1] and c[ind][1]<=window_ur[n][1])]) for n in range(len(gj))] 
+        assert len(window_ct) == len(gj)
+
+        #divide window counts by window sizes
+        window_dens = [window_ct[n]/window_size[n] for n in range(len(window_ct))] #divide by window size
+        assert len(window_dens) == len(gj)
+
+        #if normalize_by == census, then divide each density by total pop census size
+        if normalize_by == 'census':
+            N = self.census()
+            window_dens = [dens/N for dens in window_dens]
+        elif normalize_by == 'none':
+            pass
+
+        else:  #POTENTIALLY ADD OTHER OPTIONS HERE, i.e. to normalize by starting size?
+            pass 
+
+        #interpolate resulting density vals to a grid equal in size to the landscape
+        new_gj, new_gi = np.mgrid[0:dims[0]:complex("%ij" % (dims[0])), 0:dims[1]:complex("%ij" % (dims[1]))]
+        dens = interpolate.griddata(zip(list(gj), list(gi)), window_dens, (new_gj, new_gi), method = 'cubic')
+
+
+
+        if normalize_by <> 'none':
+
+            #if max_1 == True, set max_val to dens.max(), such that the density raster output will be normalized to
+            #its own max, and thus vary between 0 and 1; else set to 1, and the output raster will vary between 0 and the current max value
+            if max_1 == True:
+                max_val = dens.max()
+            elif max_1 == False:
+                max_val = 1
+
+            #Use max_val to normalize the density raster to either 0 to its current max val or
+            #0 to 1, to make sure the interpolation didn't generate any values slightly outside this range
+            norm_factor = max_val - dens.min()
+            dens = (dens - dens.min())/norm_factor
+
+        if min_0 == True:
+            dens[dens<0] = 0
+
+        if set_N == True:
+            self.set_N(landscape.Landscape(dims, dens))
+        
+        else:
+            return(landscape.Landscape(dims, dens))
 
 
 
@@ -245,6 +342,16 @@ class Population:
             return dict([(k, ind.habitat) for k, ind in self.individs.items() if k in individs])
         else:
             return dict([(k, ind.habitat) for k, ind in self.individs.items()])
+
+
+
+
+
+    def get_age(self, individs = None):
+        if individs <> None:
+            return dict([(k, ind.age) for k, ind in self.individs.items() if k in individs])
+        else:
+            return dict([(k, ind.age) for k, ind in self.individs.items()])
 
 
     
@@ -351,6 +458,17 @@ class Population:
             #NOTE: perhaps worth figuring out how to label with the individual number!!
 
 
+    
+    
+    
+    def show_density(self, land, window_width = None, normalize_by = 'census', max_1 = False, color = 'black'):
+        dens = self.calc_density(land, window_width = window_width, normalize_by = normalize_by, max_1 = max_1)
+        ax = dens.show(im_interp_method = 'nearest')
+        c = self.get_coords()
+        ax = mpl.pyplot.plot([i[0] - 0.5 for i in c.values()], [i[1] - 0.5 for i in c.values()], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
+            #NOTE: perhaps worth figuring out how to label with the individual number!!
+
+
 
 
 
@@ -448,8 +566,6 @@ def create_population(genomic_arch, land, params):
 
 
 
-
-
 #function for reading in a pickled pop
 def load_pickled_pop(filename):
     import cPickle
@@ -457,6 +573,5 @@ def load_pickled_pop(filename):
         pop = cPickle.load(f)
     
     return pop
-    
 
 

@@ -62,6 +62,8 @@ params = {
 
 'movement_surf_gauss_KDE_bandwidth' : 0.2, #bandwidth value to use in the Gaussian KDEs that are created to approximate the von Mises mixture distributions (KDEs) underlying resistance surface movement
 
+'movement_surf_barrier_val' : 0.25,  #optional; value below which all values on the movement surface raster will be converted to zeroes, to create a stark barrier surrounded with very skewed von Mises mixture distributions (rather than the less stark barrier created by continual gradient interpolated landscapes)
+
 'mu_direction' : 0,                #mu for von mises distribution defining movement directions
 
 'kappa_direction' : 0,             #kappa for von mises distribution
@@ -74,6 +76,14 @@ params = {
 
 'repro_age' : 0,          #age at sexual maturity (int or float for non-sexual species, tuple or list of two ints/floats for sexual species; set to 'None' to not make this an age-structured species
 
+'dist_weighted_birth' : False,    #should the probability of birth be weighted by the distance between individuals in a pair?
+
+'r':0.5,                            #pop intrinsic growth rate
+
+'b' : 0.2,                         #population intrinsic birth rate (implemented as the probability that an identified potential mating pair successfully mates); 
+                                   #NOTE: this may later need to be re-implemented to allow for spatial variation in intrinsic rate (e.g. expression as a raster) and/or for density-dependent births as well as deaths
+
+'lambda_offspring': 2,               #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
 
 'mating_radius' : 2,              #radius of mate-searching area
 
@@ -90,12 +100,4 @@ params = {
 'alpha_mut_s' : 25,                # alpha param for the beta distribution describing the highly advantageous selection coeffs for mutations
 
 'beta_mut_s' : 0.5                # beta param for the beta distribution describing the highly advantageous selection coeffs for mutations
-
-
-
 }
-
-
-
-
-

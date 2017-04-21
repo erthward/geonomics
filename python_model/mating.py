@@ -54,7 +54,15 @@ import genome
 # FUNCTIONS -----------------------
 #----------------------------------
 
-def find_mates(pop, mating_radius, sex = True, repro_age = None):
+def find_mates(pop, params, sex = False, repro_age = None, dist_weighted_birth = False):
+
+    b = params['b']
+    mating_radius = params['mating_radius']
+    if 'sex' in params.keys():
+        sex = params['sex']
+    if 'repro_age' in params.keys():
+        repro_age = params['repro_age']
+    
 
 
 
@@ -123,7 +131,6 @@ def find_mates(pop, mating_radius, sex = True, repro_age = None):
     ###############################################
     # Then, operationalize age-structuing, if being used
 
-
         #NOTE: I have NOT restricted this so that each individual can only mate once per generation, but I should probably figure that out and add it here!
 
     if repro_age <> None:
@@ -160,17 +167,35 @@ def find_mates(pop, mating_radius, sex = True, repro_age = None):
     #if valid pairs exist:
     if len(available_pairs) > 0:
 
-        #binomial decision whether or not to mate with nearest male, as function of ratio: nn distance/mating_radius 
-        mating_decisions = np.array([r.binomial(n = 1, p = p) for p in 1-(query[0][available_pairs[:,0]][:,1]/mating_radius) ]) == 1
+        #if birth probability is not to be weighted by the distance between individuals in a pair
+        if dist_weighted_birth == False:
 
-        mates = available_pairs[mating_decisions]
+            #binomial decision whether or not to mate with nearest male, as function of ratio: nn distance/mating_radius 
+            mating_decisions = r.binomial(n = 1, p = b, size = available_pairs.shape[0]) == 1
+
+            mates = available_pairs[mating_decisions]
 
 
-        #finally, link back to initially created structure, to get individuals' proper keys
-        keys = [i[0] for i in individs]
+            #finally, link back to initially created structure, to get individuals' proper keys
+            keys = [i[0] for i in individs]
 
-        mates = np.array([[keys[mate] for mate in pair] for pair in mates])
-        
+            mates = np.array([[keys[mate] for mate in pair] for pair in mates])
+
+        #if birth probability is to be weighted by the distance btwn individs in a pair
+        elif dist_weighted_birth == True:
+ 
+            #binomial decision whether or not to mate with nearest male, as function of ratio: nn distance/mating_radius 
+            mating_decisions = np.array([r.binomial(n = 1, p = b) for p in 1-(query[0][available_pairs[:,0]][:,1]/mating_radius) ]) == 1
+
+            mates = available_pairs[mating_decisions]
+
+
+            #finally, link back to initially created structure, to get individuals' proper keys
+            keys = [i[0] for i in individs]
+
+            mates = np.array([[keys[mate] for mate in pair] for pair in mates])
+
+       
 
     
     else:
@@ -189,17 +214,29 @@ def find_mates(pop, mating_radius, sex = True, repro_age = None):
 
 
 #function for mating a chosen mating-pair
-def mate(pop, pair, genomic_arch, n_num_offspring = 1, p_num_offspring = 0.7):
+def mate(pop, pair, params):
+    lambda_offspring = params['lambda_offspring']
     offspring = []
-    num_offspring = r.negative_binomial(n_num_offspring, p_num_offspring) + 1
+    num_offspring = r.poisson(lambda_offspring-1+.0001) + 1  
+        #NOTE: Subtracting 1 from the input lambda then
+        #adding 1 to the resulting vector ensures that all pairs who were already determined to be giving birth
+        #will have at least one offspring (i.e. prevents draws of 0); adding .000001 to the input lambda prevents
+        #absolute fixation at 1 that results when input lambda is 0
+        #NOTE: This means that the deaths are actually not truly Poisson dispersed (actually underdispersed, I
+        #believe); I don't really see that this matters much, given that I don't even want to keep this simply
+        #a Poisson dist in the long-run (would rather change to neg binom, to allow overdispersion, with option
+        #to parameterize it to be equivalent to a Poisson), but even still I would need to use the
+        #(lambda-1) + 1 trick either way to avoid 0s, so that issue would remain; for now, minor, but should
+        #come back and think the theoretical implications/justification for this
+
     for n in range(num_offspring):
         zygote = {}
-        gametes = [gametogenesis.gametogenerate(pop.individs[i], genomic_arch) for i in pair]
-        for c in range(genomic_arch.n):
+        gametes = [gametogenesis.gametogenerate(pop.individs[i], pop.genomic_arch) for i in pair]
+        for c in range(pop.genomic_arch.n):
             chromosome = np.vstack((gametes[0][c], gametes[1][c])).T
             zygote[c] = chromosome
 
-        offspring.append(genome.Genome(zygote, genomic_arch.x))
+        offspring.append(genome.Genome(zygote, pop.genomic_arch.x))
 
     return offspring
 

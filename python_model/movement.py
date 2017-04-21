@@ -272,7 +272,7 @@ def plot_movement_surf_vectors(land, params):
        
 
         #now plot the arrow
-        plt.arrow(x, y, dx, dy, alpha = 0.75, color = 'black', head_width = 0.12, head_length = 0.16)
+        plt.arrow(x, y, dx, dy, alpha = 0.75, color = 'black', head_width = 0.24, head_length = 0.32)
 
 
     #call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation

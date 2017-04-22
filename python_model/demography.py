@@ -15,7 +15,7 @@ import mating
 '''Functions to control demography/population dynamics.'''
 
 
-def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', max_1 = False, min_0 = True):
+def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', min_0 = True, max_1 = False, max_val = None):
 
     '''
     Calculate an interpolated raster of local population density, using a window size of window_width.
@@ -97,6 +97,9 @@ def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', m
 
     if min_0 == True:
         dens[dens<0] = 0
+
+    if max_val <> None:
+        dens[dens>max_val] = max_val
     
     return(landscape.Landscape(dims, dens))
 
@@ -191,6 +194,11 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     #selection would be for individs landing in lowest-K cells. 1 seemed still very strong, but a bit more
     #permissive than the absurdly negative values that were produced by adding, say, 10e-1 or less; for now
     #leaving this as an arbitrary lower bound on K
+
+    #if params dict has a K_cap parameter, use this to set the max cell value for the K raster
+    if 'K_cap' in params.keys():
+        K[K>float(params['K_cap'])] = float(params['K_cap'])
+        print(K.max())
     assert K.min() >= 0
     assert True not in np.isnan(K)
     assert True not in np.isinf(K)
@@ -315,8 +323,9 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
         #and undesirable results/effects?... NEED TO PUT MORE THOUGHT INTO THIS LATER.
 
     death_probs = dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()])
-    hist(death_probs.values())
-    raw_input()
+
+    #plt.hist(death_probs.values(), bins = 50)
+    #raw_input()
 
     #If selection = True, then use the d raster and individuals' relative fitnesses to calculate
     #per-individual probabilities of death

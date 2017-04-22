@@ -220,7 +220,7 @@ class Population:
 
 
 
-    def calc_density(self, land, window_width = None, normalize_by = 'none', max_1 = False, min_0 = True, set_N = False):
+    def calc_density(self, land, window_width = None, normalize_by = 'none', min_0 = True, max_1 = False, max_val = None, set_N = False):
 
         '''
         Calculate an interpolated raster of local population density, using a window size of window_width.
@@ -299,6 +299,9 @@ class Population:
 
         if min_0 == True:
             dens[dens<0] = 0
+
+        if max_val <> None:
+            dens[dens>max_val] = max_val
 
         if set_N == True:
             self.set_N(landscape.Landscape(dims, dens))

@@ -92,10 +92,10 @@ class Landscape_Stack:
                     plt.colorbar()
 
 
-    def plot_movement_surf_vectors(self, params):
+    def plot_movement_surf_vectors(self, params, circle = False):
         if params['movement_surf'] == True and self.movement_surf <> None:
             import movement
-            movement.plot_movement_surf_vectors(self, params)
+            movement.plot_movement_surf_vectors(self, params, circle = circle)
         else:
             print('\n\nThis Landscape_Stack appears to have no movement surface.\n\n')
             pass
@@ -260,13 +260,14 @@ def build_scape_stack(params, num_hab_types = 2):
                 pass
             if (type(barrier) == float) and (barrier > 0) and (barrier < 1):
                 movement_surf = land.scapes[params['movement_surf_scape_num']].raster
-                barrier_inds = movement_surf < barrier
-                movement_surf[barrier_inds] = 0
-                land.scapes[params['movement_surf_scape_num']].raster = surf
+                movement_surf[movement_surf < barrier] = 0
+                land.scapes[params['movement_surf_scape_num']].raster = movement_surf
                 
         #create the movement surface, and set it as the land.movement_surf attribute
         import movement
-        land.movement_surf = movement.create_vonmises_KDE_array(land, params)   
+        import NEW_von_mises
+        land.movement_surf = NEW_von_mises.create_movement_surface(land, params)   
+        #land.movement_surf = movement.create_vonmises_KDE_array(land, params)   
 
 
     return land

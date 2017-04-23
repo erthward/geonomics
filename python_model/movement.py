@@ -23,8 +23,17 @@ Documentation:              URL
 '''
 
 import numpy as np
-from numpy.random import vonmises, lognormal, choice, gamma, wald
+from numpy import pi
+import numpy.random as r
+from numpy.random import vonmises as r_vonmises
+from numpy.random import lognormal, choice, gamma, wald
 import matplotlib.pyplot as plt
+from scipy.stats import vonmises as s_vonmises
+
+s_vonmises.a = -np.inf
+s_vonmises.b = np.inf
+
+
 
 
 #----------------------------------
@@ -56,7 +65,7 @@ def move(individual, land, params):
 
         #OLD NOTE: this should be a function that allows individuals' movements to be determined by some calculation on a resistance surface raster yet to figure this out; was thinking perhaps of surrounding the surface with a ring of cells with value 0, then calculating a Von Mises mixture distribution (a mixture of all 8 queen's neighbourhood cells) for each cell, then using that in each cell to choose the direction of an individual's movement...
         
-        direction = choice(land.movement_surf[int(np.floor(individual.y))][int(np.floor(individual.x))].sample(1)[0])  
+        direction = land.movement_surf[int(individual.y)][int(individual.x)]()
         #NOTE: Pretty sure that I don't need to constrain values output for the Gaussian KDE that is approximating the von Mises mixture distribution to 0<=val<=2*pi, because e.g. cos(2*pi + 1) = cos(1), etc...
         #NOTE: indexed out of movement_surf as y then x because becuase the list of lists (like a numpy array structure) is indexed i then j, i.e. vertical, then horizontal
 
@@ -71,7 +80,7 @@ def move(individual, land, params):
         sigma_distance = params['sigma_distance']
 
 
-        direction = vonmises(mu_direction, kappa_direction)
+        direction = r_vonmises(mu_direction, kappa_direction)
 
    
     #choose distance
@@ -92,154 +101,79 @@ def move(individual, land, params):
 
 
 
-####Set of functions for using the movement surface layer to create an array of Gaussian KDEs approximating
-    #von Mises mixture distributions, for implementing non-random probabilistic movement across a resistance-type surface
-
-    #NOTE: BASIC GIST OF THIS APPROACH:
-
-    #0.) include params determining what type of movement functions to use, and if this
-    #resistance/habitat-quality movement functionality is used, what layer to use to determine
-    #(AND IF GENOTYPE AT ANY LOCI SHOULD DETERMINE THE KDE ARRAY THAT APPLIES TO AN INDIVIDUAL??)
-
-    #1.) create KDE of samples drawn from vonmises KDE for each cell (ideally use not just queen's
-    #neighborhood but instead a 24-neighbor neighborhood (i.e. the 5x5 neighborhood minus the cell itself), or
-    #perhaps even an arbitrarily large neighborhood as determined from comparison between movement distance
-    #distribution and cell size?)
-
-    #2.) save all of the KDEs as an array 'underneath' the habitat quality or resistance surface array
-
-    #3.) make quick calls to the KDEs in order to draw random directions for the movement module
-
-
-
-
-
-#create vector of directions reflecting relative probabilities of each queen's-neighborhood cell, for use in KDE vonmises mixture approximation
-def create_representative_dirs_vector(dirs, probs):
-    #print probs
-    dirs_vector = []
-    for i in range(3):
-        for j in range(3):
-            dirs_vector.extend([dirs[i,j]]*int(round(probs[i,j]*1000)))
-    return dirs_vector
-
-
-
-
-
-#roundabout but for now best approach to a function for creating a vonmises mixture distribution 
-    #(a la http://stackoverflow.com/questions/28839246/scipy-gaussian-kde-and-circular-data)
-    #NOTE: I'm leaving the 'plot' and 'verbose' flags in here for now, in case useful for exploration/debugging
-
-def create_approx_vonmises_mixture_dist_KDE(queen_dirs, neigh, kappa, bandwidth, plot = None, verbose = None):
-    from numpy import pi
-    from scipy.interpolate import interp1d
-    from scipy.stats import vonmises, vonmises_line
-    from sklearn.neighbors.kde import KernelDensity
-
-
-    #create vector of dirs from queen's neighborhood of cells
-    data = create_representative_dirs_vector(queen_dirs, neigh)
-    from collections import Counter as C
-    #print len(data)
-    #print C(data)
-
-
-    #set limits for vonmises
-    vonmises.a = 0
-    vonmises.b = 2*pi
-    x_data = np.linspace(0,2*pi, 181) #radian intervals equiv to 2 degrees
-
-    kernels = []
-
-    for d in data:  #TODO:THERE'S LIKELY A MUCH BETTER/QUICKER WAY TO DO THIS THAN BY SUMMING SO MANY PDFs!!!  THIS IS LIKELY THE MAJOR SOURCE OF SLOWNESS
-        kernel = vonmises(kappa, loc=d)
-        kernel = kernel.pdf(x_data)
-        kernels.append(kernel)
-
-        if plot == True:
-            kernel /= kernel.max()
-            kernel *= .2
-            plt.plot(x_data, kernel, "grey", alpha = 0.5)
-
-    vonmises_kde = np.sum(kernels,axis = 0)
-    #print vonmises_kde
-    vonmises_kde = vonmises_kde / np.trapz(vonmises_kde, x = x_data)
-    f = interp1d(x_data, vonmises_kde)
+#Function to generate a simulative Von Mises mixture distribution sampler function
     
-    #now build large sample drawn from the KDE (i.e. vonmises mixture dist), 
-        #in lieu of a pseudorandom number generator based on the KDE, which I haven't yet figured out how to generate...
-        #a la http://stats.stackexchange.com/questions/82797/how-to-draw-random-samples-from-a-non-parametric-estimated-distribution
-    samp = [vonmises_line.rvs(kappa, loc = choice(data, replace = True)) for i in range(7000)]
-    #constrain all values to 0 <= val <= 2*pi
-    samp = [s - 2*pi if s > 2*pi else s for s in samp]
-    samp = [s + 2*pi if s < 0 else s for s in samp]
+    #Returns a lambda function that is a quick and reliable way to simulate draws from a Von Mises mixture distribution:
+    #1.) Chooses a direction by neighborhood-weighted probability
+    #2.) Makes a random draw from a Von Mises dist centered on the direction, with a kappa value set such that the net effect, when doing this a ton of times for a given neighborhood and then plotting the resulting histogram, gives the visually/heuristically satisfying approximation of a Von Mises mixture distribution
 
-
+def gen_von_mises_mix_sampler(neigh, dirs, kappa=12): 
+    #NOTE: Just visually, heuristically, kappa = 10 seemed like a perfect middle value (kappa ~3 gives too
+    #wide of a Von Mises variance and just chooses values around the entire circle regardless of neighborhood
+    #probability, whereas kappa ~20 produces noticeable reductions in probability of moving to directions
+    #between the 8 queen's neighborhood directions (i.e. doesn't simulate the mixing well enough), and would
+    #generate artefactual movement behavior); 12 also seemed to really well in generating probability valleys
+    #when tested on neighborhoods that should generate bimodal distributions
+    d = list(dirs.ravel())
+    n = list(neigh.ravel())
+    del d[4]
+    del n[4]
+    n = [i/float(sum(n)) for i in n]
+    s_vonmises.a = -np.inf
+    s_vonmises.b = np.inf
+    f = lambda: s_vonmises.rvs(kappa, loc = r.choice(d, 1, p = n), scale = 1)[0]
+    return(f)
     
 
-    #TODO: now figure out best computation/memory trade-off for storing this "pseudo-pseudorandom number generator" for each cell in the landscape, to be used in resistance surface-like movement
-    #NOTE: FOR NOW AT LEAST, I CAN JUST ESTIMATE A GAUSSIAN KDE BASED ON samp, CREATED ABOVE, THEN SAVE THAT KDE FOR EACH CELL, TO BE LATER USED TO DRAW A DIRECTION
-    kde = KernelDensity(kernel = 'gaussian', bandwidth = bandwidth)
-    fit = kde.fit(samp)
-
-    if plot == True:
-        plt.plot(x_data, vonmises_kde, c = 'plum', linewidth = 3)
-        hist(samp, normed = True, bins = 100, alpha = 0.5)
-        hist(fit.sample(1)[0], normed = True, bins = 100, alpha = 0.5)
+    #weighted_pdfs = np.array([s_vonmises.pdf(support[i,:], kappa, scale = 1, loc = d[i])*(n[i]/float(sum(n))).ravel() for i in range(len(d))])
+    #weighted_pdfs = np.array([s_vonmises.pdf(support, kappa, scale = 1, loc = d[i])*(n[i]/float(sum(n))).ravel() for i in range(len(d))])
 
 
-    if verbose == True:         #if the verbose tag is True, will vomit all these contents, for exploring/debugging the components
-        return f, data, kernels, fit
+    #mix_pdf = weighted_pdfs.sum(axis = 0)
 
-    else:
-        return fit
+    #return(mix_pdf)
 
 
 
 
+#Runs the Von Mises mixture sampler function (gen_von_mises_mix_sampler) across the entire landscape and returns an array-like (list of
+#lists) of the resulting lambda-function samplers
+
+def create_movement_surface(land, params, kappa = 12):
+
+    #queen_dirs = np.array([[5*pi/4, 3*pi/2, 7*pi/4],[pi, np.NaN, 0],[3*pi/4,pi/2,pi/4]])
+    queen_dirs = np.array([[-3*pi/4,-pi/2,-pi/4],[pi, np.NaN, 0],[3*pi/4,pi/2,pi/4]])
+
+    #support = np.linspace(s_vonmises.ppf(10e-13, 3, loc = 0), s_vonmises.ppf(1-10e-13, 3, loc = 0), 100000)
 
 
-#function for creating a raster of vonmises mixture approximation KDEs, for use in resistance-surface or habitat-quality movement
-def create_vonmises_KDE_array(land, params, plot = None):
-    from numpy import pi
-
-    #create array of radian directions corresponding to queen's neighborhood (0rad to right, increasing counter-clockwise) 
-        #NOTE: 04-07-17: I BELIEVE I MAY HAVE FOUND THE ROOT OF THE MOVEMENT ISSUE: Radians actually increase
-        #clockwise, not counterclockwise, so the way it was set up it was pushing corner individuals into the corners!
-    queen_dirs = np.array([[5*pi/4, 3*pi/2, 7*pi/4],[pi, np.NaN, 0],[3*pi/4,pi/2,pi/4]])
-
-    #copy raster, for use in creating KDE array
+    #grab the correct landscape raster
     rast = land.scapes[params['movement_surf_scape_num']].raster.copy()
-    rast[rast == 0] = 10e-4
 
-    #create raster of dimensions 2 greater than rast in each direction, then pad the margin that I added with zeros
-    embedded_rast = np.zeros(shape = [n+2 for n in rast.shape])#*np.NaN  
+    #create embedded raster (so that the edge probabilities are appropriately calculated)
+    embedded_rast = np.zeros(shape = [n+2 for n in rast.shape])
     embedded_rast[1:embedded_rast.shape[0]-1, 1:embedded_rast.shape[1]-1] = rast
     
-    #create list of lists, i.e. essentially an array, for storing KDEs
-    kde_array= [[None]*rast.shape[1] for i in range(rast.shape[0])]
 
+    #create list of lists (aping an array) for storage of resulting functions
+    movement_surf = [[None for j in range(land.dims[1])] for i in range(land.dims[0])]
 
-
-    #now loop over all cells in rast, but as embedded within nan_rast, and create and store a vonmises mixture approximation KDE for each
     for i in range(rast.shape[0]):
         for j in range(rast.shape[1]):
-            #print '\n\n###############\n\t%i, %i\n\n' %(i,j)
             neigh = embedded_rast[i:i+3, j:j+3].copy()
-            neigh[1,1] = 0
-            fit = create_approx_vonmises_mixture_dist_KDE(queen_dirs, neigh, params['movement_surf_vonmises_kappa'], params['movement_surf_gauss_KDE_bandwidth'])
-            kde_array[i][j] = fit
+            movement_surf[i][j] = gen_von_mises_mix_sampler(neigh, queen_dirs, kappa = kappa)
 
 
-    return kde_array
+    return(movement_surf)
+
+
 
 
 
 
 
 #function for plotting average unit vectors across the movement surface, for visualization (and for debugging the movement surface functions)
-def plot_movement_surf_vectors(land, params):
+def plot_movement_surf_vectors(land, params, circle = False):
 
     from numpy import pi, mean, sqrt, cos, sin, arctan
 
@@ -249,7 +183,7 @@ def plot_movement_surf_vectors(land, params):
     #define inner function for plotting a single cell's average unit vector
     def plot_one_cell(i,j):
         #draw sample of angles from the Gaussian KDE representing the von mises mixture distribution (KDE)
-        samp = land.movement_surf[i][j].sample()[0]
+        samp = [land.movement_surf[i][j]() for n in range(1000)]
 
         #create lists of the x and y (i.e. cos and sin) components of each angle in the sample
         x_vects = [cos(d) for d in samp]
@@ -262,20 +196,35 @@ def plot_movement_surf_vectors(land, params):
             #but then would subtract 0.5 to visually reconcile the offset between the plotting axes and the raster
         x,y = j,i
 
+        if circle == True: #NOTE: This was just an offhand thought while I was waiting for something else to
+            #compute. Doesn't work at all yet, but would be nice to get working. (Would plot circular
+            #distributions centered in each cell and scaled to unity, instead of the average vectors I
+            #currently have it plotting.)
+            x += j
+            y += i
 
-        #define the dx and dy distances used to the position the arrowhead
+            plt.plot(x,y, '.', color = 'black')
+
+
+        else:
+            #define the dx and dy distances used to the position the arrowhead
             #NOTE: multiply by sqrt(2)/2, to scale to the size of half of the diagonal of a cell
-        dx = mean(x_vects)*sqrt(2)/2
-        dy = mean(y_vects)*sqrt(2)/2        
-        #NOTE: need to invert the dy value, so that it will plot correctly on the inverted axes (remember that the axes are inverted because the raster is plotted using imshow, which displays raster rows starting with row 0 at the top and working downward)
-        #dy *= -1
+            dx = mean(x_vects)*sqrt(2)/2
+            dy = mean(y_vects)*sqrt(2)/2        
+            #NOTE: need to invert the dy value, so that it will plot correctly on the inverted axes (remember that the axes are inverted because the raster is plotted using imshow, which displays raster rows starting with row 0 at the top and working downward)
+            #dy *= -1
        
 
-        #now plot the arrow
-        plt.arrow(x, y, dx, dy, alpha = 0.75, color = 'black', head_width = 0.24, head_length = 0.32)
+            #now plot the arrow
+            plt.arrow(x, y, dx, dy, alpha = 0.75, color = 'black', head_width = 0.24, head_length = 0.32)
 
 
     #call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
     [[plot_one_cell(i,j) for i in range(len(land.movement_surf))] for j in range(len(land.movement_surf[0]))]
+
+
+
+
+
 
 

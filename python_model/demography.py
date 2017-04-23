@@ -162,10 +162,14 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
 
     #calc num_pairs raster (use the calc_pop_density function on the centroids of the mating pairs)
     pairs = pop.find_mating_pairs(pop, params)
+    print(pairs)
     p_x = [int(np.mean((pop.individs[pairs[i,0]].x, pop.individs[pairs[i,1]].x))) for i in range(pairs.shape[0])]
     p_y = [int(np.mean((pop.individs[pairs[i,0]].y, pop.individs[pairs[i,1]].y))) for i in range(pairs.shape[0])]
-    n_pairs = calc_pop_density(land, zip(p_x, p_y), max(1, params['mu_dispersal'])).raster
-    assert n_pairs.min() >= 0
+    n_pairs = calc_pop_density(land, zip(p_x, p_y), max(1, params['mu_dispersal']), min_0 = True).raster
+    n_pairs[np.isnan(n_pairs)] = 0
+    plt.imshow(n_pairs)
+    plt.colorbar()
+    assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())
     assert True not in np.isnan(n_pairs)
     assert True not in np.isinf(n_pairs)
 

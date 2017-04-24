@@ -60,7 +60,10 @@ class Landscape:
             #forgotten) elsewhere, such that this is actually introducing more problems in the long-run
         plt.imshow(self.raster.swapaxes(0,1), interpolation = im_interp_method, cmap = cmap)
         if colorbar:
-            plt.colorbar()
+            if self.raster.max() > 1:
+                plt.colorbar(boundaries=np.linspace(0,self.raster.max(),51))
+            else:
+                plt.colorbar(boundaries=np.linspace(0,1,51))
 
 
 
@@ -84,12 +87,21 @@ class Landscape_Stack:
             plt.imshow(self.scapes[scape_num].raster.swapaxes(0,1), interpolation = im_interp_method, cmap = 'terrain')
 
             if colorbar:
-                plt.colorbar()
+                if self.scapes[scape_num].raster.max() > 1:
+                    plt.colorbar(boundaries=np.linspace(0,self.scapes[scape_num].raster.max(),51))
+                else:
+                    plt.colorbar(boundaries=np.linspace(0,1,51))
+
+
         else:
             for n, scape in self.scapes.items():
                 plt.imshow(scape.raster.swapaxes(0,1), interpolation = im_interp_method, alpha = alphas[n], cmap = cmaps[n])
                 if colorbar:
-                    plt.colorbar()
+                    if self.scapes[n].raster.max() > 1:
+                        plt.colorbar(boundaries=np.linspace(0,self.scapes[n].raster.max(),51))
+                    else:
+                        plt.colorbar(boundaries=np.linspace(0,1,51))
+
 
 
     def plot_movement_surf_vectors(self, params, circle = False):
@@ -125,7 +137,7 @@ class Landscape_Stack:
 #--------------------------------------
 
 
-def random_surface(dims, n_rand_pts, interp_method = "cubic", num_hab_types = 2):  #requires landscape to be square, such that dim = domain = range
+def random_surface(dims, n_rand_pts, interp_method = "cubic", num_hab_types = 2, dist = 'beta', alpha = 0.05, beta = 0.05):  #requires landscape to be square, such that dim = domain = range
     #NOTE: can use "nearest" interpolation to create random patches of habitat (by integer values); can change num_hab_types to > 2 to create a randomly multi-classed landscape
     #NOTE: I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
     #NOTE: This seems to generate decent, believable random rasters! 
@@ -136,9 +148,15 @@ def random_surface(dims, n_rand_pts, interp_method = "cubic", num_hab_types = 2)
             # ~0.50-1.00 --> more highly fragmented version of above
     max_dim = max(dims)
     if interp_method == 'nearest':
-        vals = r.rand(n_rand_pts) * (num_hab_types-1)
+        if dist == 'unif':
+            vals = r.rand(n_rand_pts) * (num_hab_types-1)
+        elif dist == 'beta':
+            vals = r.beta(alpha, beta, n_rand_pts) * (num_hab_types-1)
     else:
-        vals = r.rand(n_rand_pts)
+        if dist == 'unif':
+            vals = r.rand(n_rand_pts)
+        elif dist == 'beta':
+            vals = r.beta(alpha, beta, n_rand_pts)
     pts = r.normal(max_dim/2, max_dim*2,[n_rand_pts,2]) #selects seed points from well outside the eventaul landscape, to ensure interpolation across area of interest
     grid_x, grid_y = np.mgrid[1:max_dim:complex("%ij" % max_dim), 1:max_dim:complex("%ij" % max_dim)] #by this function's definition, the use of complex numbers in here specifies the number of steps desired
     I = interpolate.griddata(pts, vals, (grid_x, grid_y), method = interp_method)
@@ -265,9 +283,7 @@ def build_scape_stack(params, num_hab_types = 2):
                 
         #create the movement surface, and set it as the land.movement_surf attribute
         import movement
-        import NEW_von_mises
-        land.movement_surf = NEW_von_mises.create_movement_surface(land, params)   
-        #land.movement_surf = movement.create_vonmises_KDE_array(land, params)   
+        land.movement_surf = movement.create_movement_surface(land, params)   
 
 
     return land

@@ -22,7 +22,7 @@ def burn_in(pop, land, params):
             pop.set_K(pop.calc_density(land = land, set_N = False, max_val = params['K_cap']))
             pop.mutate(params = params, t = burn_t)
             pop.move(land = land, params = params)
-            pop.calc_density(land = land, window_width = max(1, params['mu_distance']), set_N = True)
+            pop.calc_density(land = land, window_width = max(1.01, params['mu_distance']), set_N = True)
             demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, d_min = 0.1, d_max = 0.9)
             #NOTE: Making the d_min and d_max values considerably more permissive than the default settings, just for the burn-in period, to allow for more pronounced shifts in spatial distribution of individs during the iterative algorithm without too much 'penalty'
             #pop.select(t = burn_t, params = params)

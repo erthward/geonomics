@@ -7,7 +7,8 @@ params = {
 
 'set_seed' : True,                  #set the seed (for reproducibility)?
 
-'seed_num' : 5,                    #number to seed random number generators
+#'seed_num' : 5,                    #number to seed random number generators
+'seed_num' : 1,                    #number to seed random number generators
 
 'T' : 5000,                      #total model runtime
 
@@ -32,14 +33,14 @@ params = {
 
 'N' : 1000,                        #total pop size
 
-'dims' : (50,50),             #dimensions of landscape  
+'dims' : (100,100),             #dimensions of landscape  
 
 'num_scapes' : 2,               #number of landscapes desired
 
-'rand_land' : False,        #whether or not to generate random landscapes
+'rand_land' : True,        #whether or not to generate random landscapes
 #'rand_land' : False,
 
-'n_rand_pts' : 50,           #number of random coordinates to be used in generating random landscapes (only needed if rand_land = True)
+'n_rand_pts' : 11500,           #number of random coordinates to be used in generating random landscapes (only needed if rand_land = True)
 
 'landscape_pt_coords': np.array([[0,0], [0,100], [100,0], [50,40], [100,100], [30,0], [0,30], [70,100], [100,70]]),
 #coords of points to use to interpolate defined landscape layers (can be provided as either a single nx2 Numpy array, where n matches the number of points in landscape_pt_vals arrays, to be used as the points for each landscape layer, or a list or tuple of nx2 Numpy arrays, one for each landscape layer; only needed if rand_land = False)
@@ -49,7 +50,9 @@ params = {
 
 
 #'interp_method' : ['nearest'],
-'interp_method' : ['cubic', 'cubic'],   # list of interpolation methods for generation of random landscapes, 1 per landscape to be generated (as set by num_scapes)
+'interp_method' : ['linear', 'linear'],   # list of interpolation methods for generation of random landscapes, 1 per landscape to be generated (as set by num_scapes)
+
+'K_cap' : 2,                        #per-cell highest carrying capacity value to be reached during burn-in
 
 'move' : True,                     #is this a mobile species?
 
@@ -62,15 +65,15 @@ params = {
 
 'movement_surf_gauss_KDE_bandwidth' : 0.2, #bandwidth value to use in the Gaussian KDEs that are created to approximate the von Mises mixture distributions (KDEs) underlying resistance surface movement
 
-'movement_surf_barrier_val' : 0.25,  #optional; value below which all values on the movement surface raster will be converted to zeroes, to create a stark barrier surrounded with very skewed von Mises mixture distributions (rather than the less stark barrier created by continual gradient interpolated landscapes)
+#'movement_surf_barrier_val' : 0.25,  #optional; value below which all values on the movement surface raster will be converted to zeroes, to create a stark barrier surrounded with very skewed von Mises mixture distributions (rather than the less stark barrier created by continual gradient interpolated landscapes)
 
 'mu_direction' : 0,                #mu for von mises distribution defining movement directions
 
 'kappa_direction' : 0,             #kappa for von mises distribution
 
-'mu_distance' : 0.01,               #mean movement-distance (lognormal distribution)
+'mu_distance' : 0.2,               #mean movement-distance (lognormal distribution)
 
-'sigma_distance' : 0.001,            #sd of movement distance
+'sigma_distance' : 0.05,            #sd of movement distance
 
 'sex' : False,                      #is this a sexual species?
 
@@ -85,7 +88,7 @@ params = {
 
 'lambda_offspring': 2,               #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
 
-'mating_radius' : 2,              #radius of mate-searching area
+'mating_radius' : 1,              #radius of mate-searching area
 
 'mu_dispersal' : 0.1,           #mean dispersal distance (lognormal distribution)
 

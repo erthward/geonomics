@@ -121,7 +121,7 @@ def gen_von_mises_mix_sampler(neigh, dirs, kappa=12):
     n = [i/float(sum(n)) for i in n]
     s_vonmises.a = -np.inf
     s_vonmises.b = np.inf
-    f = lambda: s_vonmises.rvs(kappa, loc = r.choice(d, 1, p = n), scale = 1)[0]
+    f = lambda: s_vonmises.rvs(kappa, loc = r.choice(d, 1, p = n), scale = 1)
     return(f)
     
 

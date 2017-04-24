@@ -432,44 +432,59 @@ class Population:
 
 
 
-    def show(self, land = None, scape_num = None, color = 'black', colorbar = True, markersize = 8.5, im_interp_method = 'nearest', alpha = False):
-        if land <> None:
-            if scape_num <> None  :
-                land.scapes[scape_num].show(colorbar = colorbar, im_interp_method = im_interp_method)
-            else:
-                land.show(colorbar = colorbar, im_interp_method = im_interp_method)
-        x = [(ind.x) for ind in self.individs.values()]
-        y = [(ind.y) for ind in self.individs.values()]
-        coords = np.array(self.get_coords().values()) - 0.5  #NOTE: subtract 0.5 to line up the points with the plt.imshow() grid of the land; imshow plots each pixel centered on its index, but the points then plot against those indices, so wind up shifted +-1.5
-        if alpha == True:
-            alpha = 0.6
-        else:
-            alpha = 1.0
-            
-        mpl.pyplot.plot([n[0] for n in coords], [n[1] for n in coords], 'ko', scalex = False, scaley = False, color = color, markersize = markersize, alpha = alpha)
+    def show(self, land, scape_num = None, color = 'black', colorbar = True, markersize = 13, im_interp_method = 'nearest', alpha = False):
+		#if land <> None:
+		if scape_num <> None:
+			land.scapes[scape_num].show(colorbar = colorbar, im_interp_method = im_interp_method)
+		else:
+			land.show(colorbar = colorbar, im_interp_method = im_interp_method)
+
+		c = np.array(self.get_coords().values())
+        #NOTE: subtract 0.5 to line up the points with the plt.imshow() grid of the land; imshow plots each pixel centered on its index, but the points then plot against those indices, so wind up shifted +0.5 in each axis
+		x = c[:,0]-0.5
+		y = c[:,1]-0.5
+		if alpha == True:
+			alpha = 0.6
+		else:
+			alpha = 1.0
+	
+		plt.scatter(x,y, s = markersize, c = color, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
+        #mpl.pyplot.plot([n[0] for n in coords], [n[1] for n in coords], 'ko', scalex = False, scaley = False, color = color, markersize = markersize, alpha = alpha)
 
 
 
 
-    def show_individs(self, individs, land = None, scape_num = None, color = 'black', im_interp_method = 'nearest'):
-        if land <> None and scape_num <> None:
-            ax = land.scapes[scape_num].show(im_interp_method = im_interp_method)
 
-        coords = dict([(k, (ind.x - 0.5, ind.y - 0.5)) for k, ind in self.individs.items() if k in individs]) #NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
-        for k, coord_pair in coords.items():
-            ax = mpl.pyplot.plot(coord_pair[0], coord_pair[1], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
-            #NOTE: perhaps worth figuring out how to label with the individual number!!
+    def show_individs(self, individs, land, scape_num = None, color = 'black', im_interp_method = 'nearest'):
+		#if land <> None and scape_num <> None:
+		land.scapes[scape_num].show(im_interp_method = im_interp_method) 
+
+		#coords = dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items() if k in individs])
+		c = np.array(self.get_coords(inds).values())
+		#NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
+		x = c[:,0]-0.5
+		y = c[:,1]-0.5
+		plt.scatter(x,y, s = markersize, c = color, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
+        #NOTE: perhaps worth figuring out how to label with the individual number!!
+        #for k, coord_pair in coords.items():
+            #ax = mpl.pyplot.plot(coord_pair[0], coord_pair[1], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
 
 
     
     
     
     def show_density(self, land, window_width = None, normalize_by = 'census', max_1 = False, color = 'black'):
-        dens = self.calc_density(land, window_width = window_width, normalize_by = normalize_by, max_1 = max_1)
-        ax = dens.show(im_interp_method = 'nearest')
-        c = self.get_coords()
-        ax = mpl.pyplot.plot([i[0] - 0.5 for i in c.values()], [i[1] - 0.5 for i in c.values()], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
-            #NOTE: perhaps worth figuring out how to label with the individual number!!
+		dens = self.calc_density(land, window_width = window_width, normalize_by = normalize_by, max_1 = max_1)
+		dens.show(im_interp_method = 'nearest')
+		
+		c = np.array(self.get_coords().values())
+		#NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
+		x = c[:,0]-0.5
+		y = c[:,1]-0.5
+		plt.scatter(x,y, s = markersize, c = color, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
+        #ax = mpl.pyplot.plot([i[0] - 0.5 for i in c.values()], [i[1] - 0.5 for i in c.values()], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
+
+        #NOTE: perhaps worth figuring out how to label with the individual number!!
 
 
 
@@ -477,23 +492,28 @@ class Population:
 
 
 
-    def show_locus(self, chromosome, locus, land, scape_num = None, im_interp_method = 'nearest'):
+    def show_locus(self, chromosome, locus, land, scape_num = None, im_interp_method = 'nearest'): 
+		
 
-        if scape_num <> None  :
-            land.scapes[scape_num].show(im_interp_method = im_interp_method)
-        else:
-            land.show(im_interp_method = im_interp_method)
+		if scape_num <> None:
+			land.scapes[scape_num].show(im_interp_method = im_interp_method)
 
-        genotypes = self.get_genotype(chromosome, locus)
+		else:
+			land.show(im_interp_method = im_interp_method) 
+		
+		genotypes = self.get_genotype(chromosome, locus) 
 
-        colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] # COLORS TO MATCH LANDSCAPE PALETTE EXTREMES, BUT WITH HYBRID A MIX OF THE EXTREMES RATHER THAN THE YELLOW AT THE MIDDLE OF THE PALETTE, FOR NICER VIEWING: blue = [0,0], light blue = [0,1], white = [1,1]
-        #colors = ['#ff4d4d', '#ac72ac', '#4d4dff'] # red = [0,0], purple = [0,1], blue = [1,1]
+		colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] # COLORS TO MATCH LANDSCAPE PALETTE EXTREMES, BUT WITH HYBRID A MIX OF THE EXTREMES RATHER THAN THE YELLOW AT THE MIDDLE OF THE PALETTE, FOR NICER VIEWING: blue = [0,0], light blue = [0,1], white = [1,1]
+        #colors = ['#ff4d4d', '#ac72ac', '#4d4dff'] # red = [0,0], purple = [0,1], blue = [1,1] 
 
-        for n, genotype in enumerate([0.0, 0.5, 1.0]):
-            inds = [i for i, g in genotypes.items() if g[0] == genotype]
-            coords = np.array([coord for coord in self.get_coords(inds).values()])
-
-            mpl.pyplot.plot([coord[0] for coord in coords], [coord[1] for coord in coords], 'o', markersize = 11, scalex = False, scaley = False, color = colors[n], alpha = 0.8)
+		for n, genotype in enumerate([0.0, 0.5, 1.0]):
+			inds = [i for i, g in genotypes.items() if g[0] == genotype]
+			c = np.array(self.get_coords(inds).values())
+			x = c[:,0]-0.5
+			y = c[:,1]-0.5
+			plt.scatter(x,y, s = markersize, c = colors[n], alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
+    
+            #mpl.pyplot.plot([coord[0] for coord in coords], [coord[1] for coord in coords], 'o', markersize = 11, scalex = False, scaley = False, color = colors[n], alpha = 0.8)
 
 
 

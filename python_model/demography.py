@@ -199,7 +199,7 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     #if params dict has a K_cap parameter, use this to set the max cell value for the K raster
     if 'K_cap' in params.keys():
         K[K>float(params['K_cap'])] = float(params['K_cap'])
-        print(K.max())
+        #print(K.max())
     assert K.min() >= 0
     assert True not in np.isnan(K)
     assert True not in np.isinf(K)
@@ -295,7 +295,7 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     d[d>d_max] = d_max
 
 
-    assert d.min() >= 0, 'd.min() is %0.2f' % d.min()
+    assert d.min() >= 0, 'd.min() is %0.2f, at %s' % (d.min(), str(d.argmin()))
     assert d.max() <= 1, 'd.max() is %0.2f' % d.max()
     assert True not in np.isnan(d)
     assert True not in np.isinf(d)
@@ -310,6 +310,7 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
 
     #Now implement births
         #Feed the mating pairs and params['b'] to the mating functions, to produce and disperse zygotes
+    print pairs
     pop.mate(land, params, pairs)
 
     #Now implement deaths

@@ -12,7 +12,7 @@ params = {
 
 'T' : 5000,                      #total model runtime
 
-'burn_T': 30,                     #total burn-in runtime
+'burn_T': 20,                     #total burn-in runtime
 
 'L' : 5e1,                         #total number of loci
 
@@ -31,16 +31,16 @@ params = {
 'use_dom' : False,              #whether or not to use dominance (default to False)
                                 #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP
 
-'N' : 1000,                        #total pop size
+'N' : 500,                        #total pop size
 
-'dims' : (100,100),             #dimensions of landscape  
+'dims' : (20,20),             #dimensions of landscape  
 
 'num_scapes' : 2,               #number of landscapes desired
 
 'rand_land' : True,        #whether or not to generate random landscapes
 #'rand_land' : False,
 
-'n_rand_pts' : 11500,           #number of random coordinates to be used in generating random landscapes (only needed if rand_land = True)
+'n_rand_pts' : 100,           #number of random coordinates to be used in generating random landscapes (only needed if rand_land = True)
 
 'landscape_pt_coords': np.array([[0,0], [0,100], [100,0], [50,40], [100,100], [30,0], [0,30], [70,100], [100,70]]),
 #coords of points to use to interpolate defined landscape layers (can be provided as either a single nx2 Numpy array, where n matches the number of points in landscape_pt_vals arrays, to be used as the points for each landscape layer, or a list or tuple of nx2 Numpy arrays, one for each landscape layer; only needed if rand_land = False)
@@ -52,7 +52,7 @@ params = {
 #'interp_method' : ['nearest'],
 'interp_method' : ['linear', 'linear'],   # list of interpolation methods for generation of random landscapes, 1 per landscape to be generated (as set by num_scapes)
 
-'K_cap' : 2,                        #per-cell highest carrying capacity value to be reached during burn-in
+'K_cap' : 5,                        #per-cell highest carrying capacity value to be reached during burn-in
 
 'move' : True,                     #is this a mobile species?
 
@@ -71,9 +71,9 @@ params = {
 
 'kappa_direction' : 0,             #kappa for von mises distribution
 
-'mu_distance' : 0.2,               #mean movement-distance (lognormal distribution)
+'mu_distance' : 0.1,               #mean movement-distance (lognormal distribution)
 
-'sigma_distance' : 0.05,            #sd of movement distance
+'sigma_distance' : 0.5,            #sd of movement distance
 
 'sex' : False,                      #is this a sexual species?
 
@@ -86,13 +86,13 @@ params = {
 'b' : 0.2,                         #population intrinsic birth rate (implemented as the probability that an identified potential mating pair successfully mates); 
                                    #NOTE: this may later need to be re-implemented to allow for spatial variation in intrinsic rate (e.g. expression as a raster) and/or for density-dependent births as well as deaths
 
-'lambda_offspring': 2,               #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
+'lambda_offspring': 4,               #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
 
-'mating_radius' : 1,              #radius of mate-searching area
+'mating_radius' : 0.25,              #radius of mate-searching area
 
 'mu_dispersal' : 0.1,           #mean dispersal distance (lognormal distribution)
 
-'sigma_dispersal' : 0.02,          #sd of dispersal distance
+'sigma_dispersal' : 0.2,          #sd of dispersal distance
 
 'size' : 1,              # float/int, or list/tuple of length T containing floats/ints, expressing the target population size over model time as a ratio of the starting size (N)
 

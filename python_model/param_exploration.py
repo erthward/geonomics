@@ -126,7 +126,7 @@ def watch_movement(pop, land, scape_num, num_timesteps, params = None, mu_direct
 
         else:
             mpl.pyplot.plot((old_x, new_x), (old_y, new_y), '-', scalex = False, scaley = False, 
-            linewidth = linewidths[t], color = 'black', alpha = 0.5)
+            linewidth = linewidths[t], color = color, alpha = 0.5)
 
 
 

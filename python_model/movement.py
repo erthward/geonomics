@@ -65,7 +65,7 @@ def move(individual, land, params):
 
         #OLD NOTE: this should be a function that allows individuals' movements to be determined by some calculation on a resistance surface raster yet to figure this out; was thinking perhaps of surrounding the surface with a ring of cells with value 0, then calculating a Von Mises mixture distribution (a mixture of all 8 queen's neighbourhood cells) for each cell, then using that in each cell to choose the direction of an individual's movement...
         
-        direction = land.movement_surf[int(individual.y)][int(individual.x)]()
+        direction = land.movement_surf[int(individual.y)][int(individual.x)]()[0]
         #NOTE: Pretty sure that I don't need to constrain values output for the Gaussian KDE that is approximating the von Mises mixture distribution to 0<=val<=2*pi, because e.g. cos(2*pi + 1) = cos(1), etc...
         #NOTE: indexed out of movement_surf as y then x because becuase the list of lists (like a numpy array structure) is indexed i then j, i.e. vertical, then horizontal
 

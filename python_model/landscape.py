@@ -49,7 +49,7 @@ class Landscape:
     #####################
 
 
-    def show(self, colorbar = True, im_interp_method = 'nearest'):
+    def show(self, colorbar = True, im_interp_method = 'nearest', pop = False):
         if plt.get_fignums():
             colorbar = False
         cmap = 'terrain'
@@ -58,12 +58,35 @@ class Landscape:
             #be working, but that the results seemed reflected about the diagonal. I am doing this, for the
             #moment, as a TEMPORARY fix, but will have to make sure that I haven't already 'fixed' this (and
             #forgotten) elsewhere, such that this is actually introducing more problems in the long-run
-        plt.imshow(self.raster.swapaxes(0,1), interpolation = im_interp_method, cmap = cmap)
+        if pop == True:
+            plt.imshow(self.raster, interpolation = im_interp_method, cmap = cmap)
+        else:
+            plt.imshow(np.flipud(self.raster), interpolation = im_interp_method, cmap = cmap)
         if colorbar:
             if self.raster.max() > 1:
                 plt.colorbar(boundaries=np.linspace(0,self.raster.max(),51))
             else:
                 plt.colorbar(boundaries=np.linspace(0,1,51))
+
+
+
+    def zoom(self, min_i, max_i, min_j, max_j, colorbar = True, im_interp_method = 'nearest', pop = False):
+        if plt.get_fignums():
+            colorbar = False
+        cmap = 'terrain'
+        zoom_rast = np.array([row[min_j:max_j] for row in self.raster[min_i:max_i]]) 
+        if pop == True:
+            plt.imshow(zoom_rast, interpolation = im_interp_method, cmap = cmap)
+        else:
+            plt.imshow(np.flipud(zoom_rast), interpolation = im_interp_method, cmap = cmap)
+        if colorbar:
+            if zoom_rast.max() > 1:
+                plt.colorbar(boundaries=np.linspace(0,zoom_rast.max(),51))
+            else:
+                plt.colorbar(boundaries=np.linspace(0,1,51))
+
+
+
 
 
 
@@ -78,13 +101,18 @@ class Landscape_Stack:
         self.movement_surf = None
 
 
-    def show(self, scape_num = None, colorbar = True, im_interp_method = 'nearest'):
+
+    def show(self, scape_num = None, colorbar = True, im_interp_method = 'nearest', pop = False):
         if plt.get_fignums():
             colorbar = False
         cmaps = ['terrain', 'bone']
         alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
         if scape_num <> None:
-            plt.imshow(self.scapes[scape_num].raster.swapaxes(0,1), interpolation = im_interp_method, cmap = 'terrain')
+            if pop == True:
+                plt.imshow(self.scapes[scape_num].raster, interpolation = im_interp_method, cmap = 'terrain')
+            else:
+                plt.imshow(np.flipud(self.scapes[scape_num].raster), interpolation = im_interp_method, cmap = 'terrain')
+
 
             if colorbar:
                 if self.scapes[scape_num].raster.max() > 1:
@@ -95,12 +123,53 @@ class Landscape_Stack:
 
         else:
             for n, scape in self.scapes.items():
-                plt.imshow(scape.raster.swapaxes(0,1), interpolation = im_interp_method, alpha = alphas[n], cmap = cmaps[n])
+                if pop == True:
+                    plt.imshow(scape.raster, interpolation = im_interp_method, alpha = alphas[n], cmap = cmaps[n] )
+                else:
+                    plt.imshow(np.flipud(self.scapes[scape_num].raster), interpolation = im_interp_method, alpha = alphas[n], cmap = cmaps[n])
+
                 if colorbar:
                     if self.scapes[n].raster.max() > 1:
                         plt.colorbar(boundaries=np.linspace(0,self.scapes[n].raster.max(),51))
                     else:
                         plt.colorbar(boundaries=np.linspace(0,1,51))
+
+
+
+    def zoom(self, min_i, max_i, min_j, max_j, scape_num = None, colorbar = True, im_interp_method = 'nearest', pop = False):
+        if plt.get_fignums():
+            colorbar = False
+        cmaps = ['terrain', 'bone']
+        alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+        cmap = 'terrain'
+        if scape_num <> None:
+            zoom_rast = np.array([row[min_j:max_j] for row in self.scapes[scape_num].raster[min_i:max_i]]) 
+            if pop == True:
+                plt.imshow(zoom_rast, interpolation = im_interp_method, cmap = cmap)
+            else:
+                plt.imshow(np.flipud(zoom_rast), interpolation = im_interp_method, cmap = cmap)
+            if colorbar:
+                if zoom_rast.max() > 1:
+                    plt.colorbar(boundaries=np.linspace(0,zoom_rast.max(),51))
+                else:
+                    plt.colorbar(boundaries=np.linspace(0,1,51))
+        else:
+            for n, scape in self.scapes.items():
+                zoom_rast = np.array([row[min_j:max_j] for row in self.scapes[n].raster[min_i:max_i]]) 
+                if pop == True:
+                    plt.imshow(zoom_rast, interpolation = im_interp_method, alpha = alphas[n], cmap = cmaps[n] )
+                else:
+                    #NOTE: FIGURE OUT WHY FLIPUD SEEMED GOOD WHEN PLOTTING POP, BUT BAD FOR CIRC_HIST FN BELOW
+                    plt.imshow(np.flipud(zoom_rast), interpolation = im_interp_method, alpha = alphas[n], cmap = cmaps[n])
+
+                if colorbar:
+                    if zoom_rast.max() > 1:
+                        plt.colorbar(boundaries=np.linspace(0,zoom_rast.max(),51))
+                    else:
+                        plt.colorbar(boundaries=np.linspace(0,1,51))
+
+
+
 
 
 
@@ -111,6 +180,45 @@ class Landscape_Stack:
         else:
             print('\n\nThis Landscape_Stack appears to have no movement surface.\n\n')
             pass
+
+
+
+    def plot_vonmises_mix_circ_draws(self, i, j, params):
+        if self.movement_surf is None:
+            print('This landscape stack appears to have no movement surface layer. Function not valid.')
+            return
+        else:
+            scape_num = params['movement_surf_scape_num']
+            pts = [(np.cos(a), np.sin(a)) for a in [self.movement_surf[i][j]()[0] for n in range(1000)]]
+            plt.scatter([pt[0]*0.5+i for pt in pts], [pt[1]*0.5+j for pt in pts], color = 'red', alpha = 0.2)
+            self.scapes[scape_num].zoom(max(i-10, 0), min(i+10, self.dims[0]), max(j-10, 0), min(j+10, self.dims[1]))
+
+
+
+    def plot_vonmises_mix_hist(self, i, j):
+        if self.movement_surf is None:
+            print('This landscape stack appears to have no movement surface layer. Function not valid.')
+            return
+        else:
+            plt.hist([self.movement_surf[i][j]()[0] for n in range(10000)], bins = 100, normed = True, alpha = 0.5)
+
+
+    def plot_vonmises_mix_circ_hist(self, i, j, zoom, params, scale_fac = 4.5, color = 'black'):
+        if self.movement_surf is None:
+            print('This landscape stack appears to have no movement surface layer. Function not valid.')
+            return
+        else:
+            scape_num = params['movement_surf_scape_num']
+            v,a = np.histogram([self.movement_surf[i][j]()[0] for n in range(7500)], bins = 15)
+            v = v/float(v.sum())
+            a = [(a[n]+a[n+1])/2 for n in range(len(a)-1)]
+            x = [np.cos(a[n])*0.5 for n in range(len(a))]
+            y = [np.sin(a[n])*0.5 for n in range(len(a))]
+            x = np.array(x)*v*scale_fac
+            y = np.array(y)*v*scale_fac
+            [plt.plot((j,(j+x[n])), (i,(i+y[n])), linewidth = 2, color = color) for n in range(len(x))] 
+            self.scapes[scape_num].zoom(max(i-zoom, 0), min(i+zoom, self.dims[0]), max(j-zoom, 0), min(j+zoom, self.dims[1]), pop =True)
+
 
 
 

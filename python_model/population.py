@@ -156,6 +156,7 @@ class Population:
         
         num_offspring = 0
 
+
         for pair in mating_pairs:
 
             parent_centroid_x = np.mean((self.individs[pair[0]].x, self.individs[pair[1]].x))
@@ -401,23 +402,23 @@ class Population:
 
     def get_coords(self, individs = None):
         if individs <> None:
-            return dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items() if k in individs])
+            return dict([(k, (float(ind.x), float(ind.y))) for k, ind in self.individs.items() if k in individs])
         else:
-            return dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items()])
+            return dict([(k, (float(ind.x), float(ind.y))) for k, ind in self.individs.items()])
 
 
     def get_x_coords(self, individs = None):
         if individs <> None:
-            return dict([(k, (ind.x)) for k, ind in self.individs.items() if k in individs])
+            return dict([(k, (float(ind.x))) for k, ind in self.individs.items() if k in individs])
         else:
-            return dict([(k, (ind.x)) for k, ind in self.individs.items()])
+            return dict([(k, (float(ind.x))) for k, ind in self.individs.items()])
 
 
     def get_y_coords(self, individs = None):
         if individs <> None:
-            return dict([(k, (ind.y)) for k, ind in self.individs.items() if k in individs])
+            return dict([(k, (float(ind.y))) for k, ind in self.individs.items() if k in individs])
         else:
-            return dict([(k, (ind.y)) for k, ind in self.individs.items()])
+            return dict([(k, (float(ind.y))) for k, ind in self.individs.items()])
 
 
 
@@ -432,12 +433,12 @@ class Population:
 
 
 
-    def show(self, land, scape_num = None, color = 'black', colorbar = True, markersize = 13, im_interp_method = 'nearest', alpha = False):
+    def show(self, land, scape_num = None, color = 'black', colorbar = True, markersize = 25, im_interp_method = 'nearest', alpha = False):
 		#if land <> None:
 		if scape_num <> None:
-			land.scapes[scape_num].show(colorbar = colorbar, im_interp_method = im_interp_method)
+			land.scapes[scape_num].show(colorbar = colorbar, im_interp_method = im_interp_method, pop = True)
 		else:
-			land.show(colorbar = colorbar, im_interp_method = im_interp_method)
+			land.show(colorbar = colorbar, im_interp_method = im_interp_method, pop = True)
 
 		c = np.array(self.get_coords().values())
         #NOTE: subtract 0.5 to line up the points with the plt.imshow() grid of the land; imshow plots each pixel centered on its index, but the points then plot against those indices, so wind up shifted +0.5 in each axis
@@ -455,12 +456,12 @@ class Population:
 
 
 
-    def show_individs(self, individs, land, scape_num = None, color = 'black', im_interp_method = 'nearest'):
+    def show_individs(self, individs, land, scape_num = None, color = 'black', im_interp_method = 'nearest', markersize = 40, alpha = 0.5):
 		#if land <> None and scape_num <> None:
-		land.scapes[scape_num].show(im_interp_method = im_interp_method) 
+		land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True)
 
 		#coords = dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items() if k in individs])
-		c = np.array(self.get_coords(inds).values())
+		c = np.array(self.get_coords(individs).values())
 		#NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
 		x = c[:,0]-0.5
 		y = c[:,1]-0.5
@@ -475,7 +476,7 @@ class Population:
     
     def show_density(self, land, window_width = None, normalize_by = 'census', max_1 = False, color = 'black'):
 		dens = self.calc_density(land, window_width = window_width, normalize_by = normalize_by, max_1 = max_1)
-		dens.show(im_interp_method = 'nearest')
+		dens.show(im_interp_method = 'nearest', pop = True)
 		
 		c = np.array(self.get_coords().values())
 		#NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
@@ -496,10 +497,10 @@ class Population:
 		
 
 		if scape_num <> None:
-			land.scapes[scape_num].show(im_interp_method = im_interp_method)
+			land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True)
 
 		else:
-			land.show(im_interp_method = im_interp_method) 
+			land.show(im_interp_method = im_interp_method, pop = True)
 		
 		genotypes = self.get_genotype(chromosome, locus) 
 

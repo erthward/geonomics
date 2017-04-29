@@ -19,23 +19,29 @@ def burn_in(pop, land, params):
         #pop.set_K(pop.calc_density(land = land, set_N = False))
         #NOTE: Instead, just setting it statically to K_cap * the movement raster (which can be seen simultaneously as a 'hab qual' raster)
         import landscape 
-        pop.set_K(landscape.Landscape(land.dims, params['K_cap']*land.scapes[params['movement_surf_scape_num']].raster))
+        K = landscape.Landscape(land.dims, params['K_cap']*land.scapes[params['movement_surf_scape_num']].raster)
+        K.raster[K.raster<0.5] = 0.5
+        pop.set_K(K)
         for burn_t in range(params['burn_T']):
             print('Timestep %i:' % burn_t)
-            print('\tbirthday\n')
+            #print('\tbirthday\n')
             pop.birthday()
             #print('\tset_K\n')
             #NOTE: updating K was leading to runaway pop growth, so arresting it for the moment
             #pop.set_K(pop.calc_density(land = land, set_N = False, max_val = params['K_cap']))
-            print('\tmutate\n')
+            #print('\tmutate\n')
             pop.mutate(params = params, t = burn_t)
-            print('\tmove\n')
+            #print('\tmove\n')
             pop.move(land = land, params = params)
-            print('\tcalc_density\n')
-            pop.calc_density(land = land, set_N = True)#window_width = max(1.01, params['mu_distance']), set_N = True)
-            print('\tpop_dynamics\n')
-            demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, d_min = 0.1, d_max = 0.9)
+            #print('\tcalc_density\n')
+            #pop.calc_density(land = land, set_N = True)#window_width = max(1.01, params['mu_distance']), set_N = True)
+            #print('\tpop_dynamics\n')
+            demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, d_min = 0.1, d_max = 0.9, debug = False)
+            #NOTE: CAN SWITCH TO THIS LINE TO START POP-DYN DEBUGGING BEHAVIOR AT CERTAIN TIMESTEP
+            #demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, d_min = 0.1, d_max = 0.9, debug = burn_t >=40)
+
             #NOTE: Making the d_min and d_max values considerably more permissive than the default settings, just for the burn-in period, to allow for more pronounced shifts in spatial distribution of individs during the iterative algorithm without too much 'penalty'
+
             #pop.select(t = burn_t, params = params)
             #pop.check_extinct()
             print '\n\n%i timesteps run.  Current status:\n\n\t%i individuals\n\n' % (burn_t+1, pop.census())

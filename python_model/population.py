@@ -246,13 +246,15 @@ class Population:
         #create meshgrid using window_width/2 as step size
         grid_j, grid_i = np.mgrid[0:dims[0]:complex("%ij" % (dims[0]/(window_width/2))), 0:dims[1]:complex("%ij" % (dims[1]/(window_width/2)))]
 
+        #grid_j, grid_i = np.mgrid[0+(window_width/2):dims[0]-(window_width/2):complex("%ij" % (dims[0]/(window_width/2))), 0+(window_width/2):dims[1]-(window_width/2):complex("%ij" % (dims[1]/(window_width/2)))] 
+
         #flatten the arrays, so that I can run over them in a single for loop
         gj = grid_j.ravel()
         gi = grid_i.ravel()
 
         #make lists of tuples, of same length as gj, containing the window ll and ur coords
-        window_ll = [(max(gj[n]-window_width/2, 0), max(gi[n]-window_width/2, 0)) for n in range(len(gj))]   #constrain min window vals to 0
-        window_ur = [(min(gj[n]+window_width/2, land.dims[0]), min(gi[n]+window_width/2, land.dims[1])) for n in range(len(gj))] #constrain max window vals to each respective land dimension
+        window_ll = [(max(gj[n]-(window_width/2), 0), max(gi[n]-(window_width/2), 0)) for n in range(len(gj))]   #constrain min window vals to 0
+        window_ur = [(min(gj[n]+(window_width/2), land.dims[0]), min(gi[n]+(window_width/2), land.dims[1])) for n in range(len(gj))] #constrain max window vals to each respective land dimension
         assert len(window_ll) == len(gj)
         assert len(window_ur) == len(gj)
 
@@ -279,8 +281,8 @@ class Population:
             pass 
 
         #interpolate resulting density vals to a grid equal in size to the landscape
-        new_gj, new_gi = np.mgrid[0:dims[0]:complex("%ij" % (dims[0])), 0:dims[1]:complex("%ij" % (dims[1]))]
-        dens = interpolate.griddata(zip(list(gj), list(gi)), window_dens, (new_gj, new_gi), method = 'cubic')
+        new_gj, new_gi = np.mgrid[0:dims[0]-1:complex("%ij" % (dims[0])), 0:dims[1]-1:complex("%ij" % (dims[1]))]
+        dens = interpolate.griddata(np.array(zip(list(gi), list(gj))), window_dens, (new_gj, new_gi), method = 'cubic')
 
 
 

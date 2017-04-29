@@ -218,7 +218,6 @@ def mate(pop, pair, params):
     lambda_offspring = params['lambda_offspring']
     offspring = []
     num_offspring = r.poisson(lambda_offspring-1+.0001) + 1  
-    print num_offspring
         #NOTE: Subtracting 1 from the input lambda then
         #adding 1 to the resulting vector ensures that all pairs who were already determined to be giving birth
         #will have at least one offspring (i.e. prevents draws of 0); adding .000001 to the input lambda prevents

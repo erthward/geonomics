@@ -73,8 +73,8 @@ def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', m
         pass 
 
     #interpolate resulting density vals to a grid equal in size to the landscape
-    new_gj, new_gi = np.mgrid[0:dims[0]:complex("%ij" % (dims[0])), 0:dims[1]:complex("%ij" % (dims[1]))]
-    dens = interpolate.griddata(zip(list(gj), list(gi)), window_dens, (new_gj, new_gi), method = 'cubic')
+    new_gj, new_gi = np.mgrid[0:dims[0]-1:complex("%ij" % (dims[0])), 0:dims[1]-1:complex("%ij" % (dims[1]))]
+    dens = interpolate.griddata(np.array(zip(list(gi), list(gj))), window_dens, (new_gj, new_gi), method = 'cubic')
 
 
 
@@ -108,8 +108,10 @@ def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', m
 
 
 def logistic_eqxn(r, N, K):
-    dNdt = r*(1-(N/K))*N
+    dNdt = r*(1-(N/K))*N 
     return(dNdt)
+
+
 
 
 
@@ -138,7 +140,7 @@ def mort(land, pop, params, death_probs):
 
 
 
-def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage_d = None, d_min = 0.01, d_max = 0.99):
+def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage_d = None, d_min = 0.01, d_max = 0.99, births_before_deaths = True, debug = False):
     '''Generalized function for implementation population dynamics. Will carry out one round of mating and
     deaths, according to parameterization laid out in params dict.
 
@@ -156,45 +158,82 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
 
     '''
 
+    ##########################################
+    ####DEBUG OPTION, WHICH WILL PLOT THE RASTERS FOR EACH STEP OF THE PROCESS:
+    #debug = False
+    #debug = True
+    ##########################################
+
+
+
     #NOTE: Would be good to write in option to ONLY mate or ONLY die when the function is run (so that a pop could be run with mating every x timesteps but mortality each timestep, for example)
 
 
 
-    #calc num_pairs raster (use the calc_pop_density function on the centroids of the mating pairs)
+    ######calc num_pairs raster (use the calc_pop_density function on the centroids of the mating pairs)
     pairs = pop.find_mating_pairs(pop, params)
-    p_x = [int(np.mean((pop.individs[pairs[i,0]].x, pop.individs[pairs[i,1]].x))) for i in range(pairs.shape[0])]
-    p_y = [int(np.mean((pop.individs[pairs[i,0]].y, pop.individs[pairs[i,1]].y))) for i in range(pairs.shape[0])]
+
+
+    p_x = [float(np.mean((pop.individs[pairs[i,0]].x, pop.individs[pairs[i,1]].x))) for i in range(pairs.shape[0])]
+    p_y = [float(np.mean((pop.individs[pairs[i,0]].y, pop.individs[pairs[i,1]].y))) for i in range(pairs.shape[0])]
     n_pairs = calc_pop_density(land, zip(p_x, p_y), max(1, params['mu_dispersal']), min_0 = True).raster
     n_pairs[np.isnan(n_pairs)] = 0
     assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())  #NOTE: Has occasionally produced an assertion error here, though I'm not sure why yet...
+
+    #NOTE: I anticipate that using mu_dispersal as the density-calculating window should produce a slightly more realistic expectation
+    #of the expected number of births per cell in a few steps; using max(1, mu_dispersal) to avoid
+    #window_lengths <1 (needlessly computationally expensive)
+
     assert True not in np.isnan(n_pairs)
     assert True not in np.isinf(n_pairs)
 
+    if debug == True:
+        var = 'n_pairs'
+        pop.show(land,1)
+        plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
+        plt.colorbar()
+        print(var)
+        print(eval(var))
+        raw_input()
 
-    #NOTE: I anticipate that using mu_dispersal as the density-calculating window should produce a slightly more realistic expectation
-    #of the expected number of births per cell in a few steps; using max(1, mu_dispersal) because small
-    #window_lengths are needlessly computationally expensive
 
-    #get N raster
+
+
+    ######if births should happen before (and thus be included in the calculation of) deaths, then mate and disperse babies now
+    if births_before_deaths == True:
+        #Feed the mating pairs and params['b'] to the mating functions, to produce and disperse zygotes
+        pop.mate(land, params, pairs)
+
+
+
+
+    ######calc N raster, set it as pop.N, then get it  
+    #NOTE: 04/28/17 this way the N used to calculate density-dependent deaths this turn incorporates the babies born this turn, if births_before_deaths == True
+    pop.calc_density(land, set_N = True)
     N = pop.N.raster
     assert N.min() >= 0
     assert True not in np.isnan(N)
     assert True not in np.isinf(N)
 
 
-    #print('Plotting N')
-    #plt_N = landscape.Landscape(land.dims, N)
-    #pop.show(plt_N)
-    #raw_input()
+    if debug == True:
+        var = 'N'
+        pop.show(land,1)
+        plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
+        plt.colorbar()
+        print(var)
+        print(eval(var))
+        raw_input()
 
 
-    #get K raster
+
+    ######get K raster
     K = pop.K.raster
     K[K==0]=1  #values of 0 produce np.inf by division, so must avoid this
     #NOTE: Plotted dNdt against N for different values of K, to see how strong density-dependent
     #selection would be for individs landing in lowest-K cells. 1 seemed still very strong, but a bit more
     #permissive than the absurdly negative values that were produced by adding, say, 10e-1 or less; for now
-    #leaving this as an arbitrary lower bound on K
+    #leaving 1 as an arbitrary lower bound on K
 
     #if params dict has a K_cap parameter, use this to set the max cell value for the K raster
     if 'K_cap' in params.keys():
@@ -205,35 +244,48 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     assert True not in np.isinf(K)
 
 
-    #print('Plotting K')
-    #plt_K = landscape.Landscape(land.dims, K)
-    #pop.show(plt_K)
-    #raw_input()
-
-
-    #print('Plotting n_pairs')
-    #plt_n_pairs = landscape.Landscape(land.dims, n_pairs)
-    #pop.show(plt_n_pairs)
-    #raw_input()
+    if debug == True:
+        var = 'K'
+        pop.show(land,1)
+        plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
+        plt.colorbar()
+        print(var)
+        print(eval(var))
+        raw_input()
 
 
 
-    #use N, K, and params['r'] to calc dN/dt raster, according to the chosen pop growth eqxn
+    #NOTE: SMALL VALUES ON THE K RASTER TOTALLY SCREW UP DENSITY-DEPENDENCE BECAUSE 
+    #THEY GENERATE HUGE NEGATIVE dN/dt VALUES BY DIVISION; BRAINSTORM SOME MORE SOPHISTICATED, REALISTIC WAY TO HANDLE!
+    #Perhaps there can be a separate step after calculating dNdt where any  0-cells
+    #are convereted from the extremely negative numbers calcuated there to simply the
+    #negative of the number of individuals currently found there (n) minus n*cell
+    #value, so that the probability of individuals there dying winds up approaching
+    #1?... something like that
+
+
+
+    ######use N, K, and params['r'] to calc dN/dt raster, according to the chosen pop growth eqxn
         #NOTE: Currently, only option and default is basic logistic eqxn: dN/dt = r*(1-N/K)*N
     dNdt = calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic').raster
     dNdt[N == 0] = 0
     assert True not in np.isnan(dNdt)
     assert True not in np.isinf(dNdt), 'The following cells are infinite: \n\t%s' % str([i for i, n in enumerate(dNdt.ravel()) if np.isinf(n)])
 
+    if debug == True:
+        var = 'dNdt'
+        pop.show(land,1)
+        plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
+        plt.colorbar()
+        print(var)
+        print(eval(var))
+        print(eval(var).min())
+        print(eval(var).argmin())
+        raw_input()
 
-    #print('Plotting dNdt')
-    #plt_dNdt = landscape.Landscape(land.dims, dNdt)
-    #pop.show(plt_dNdt)
-    #raw_input()
 
 
-
-    #use n_pairs, params['b'] (i.e. probability that a pair gives birth), and params['lambda_offspring'] (i.e.
+    ######use n_pairs, params['b'] (i.e. probability that a pair gives birth), and params['lambda_offspring'] (i.e.
     #expected number of births per pair) to calculate the N_b raster (expected number of births in each cell)
     #according to N_b = b*E[N_b/pair]*n_pairs where E[N_b/pair] = lambda (b/c births Poission distributed)
         #NOTE: Would be good to in the future to use neg_binom dist to allow births to be modeled as Poisson
@@ -250,34 +302,41 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     assert N_b.min() >= 0
     assert True not in np.isnan(N_b)
     assert True not in np.isinf(N_b)
+ 
+    if debug == True:
+        var = 'N_b'
+        pop.show(land,1)
+        plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
+        plt.colorbar()
+        print(var)
+        print(eval(var))
+        raw_input()
 
-   
-    #print('Plotting N_b')
-    #plt_N_b = landscape.Landscape(land.dims, N_b)
-    #pop.show(plt_N_b)
-    #raw_input()
+  
 
-
-
-    #Use N_b - dN/dt to calculate N_d raster (expected number of deaths in each cell)
+    ######Use N_b - dN/dt to calculate N_d raster (expected number of deaths in each cell)
     N_d = N_b - dNdt
     assert True not in np.isnan(N_d)
     assert True not in np.isinf(N_d)
 
+    if debug == True:
+        var = 'N_d'
+        pop.show(land,1)
+        plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
+        plt.colorbar()
+        print(var)
+        print(eval(var))
+        raw_input()
+
    
-    #print('Plotting N_d')
-    #plt_N_d = landscape.Landscape(land.dims, N_d)
-    #pop.show(plt_N_d)
-    #raw_input()
 
-
-
-    #Use N_d/N to calculate d raster (probability of death of individuals in each cell)
+    ######Use N_d/N to calculate d raster (probability of death of individuals in each cell)
     #d = N_d/N
     #d[d<0] = 0
 
     #Instead of the above, just normalize N_d to use it as the raster of the probability of death of individuals in each cell
     d = (N_d - N_d.min())/(N_d.max() - N_d.min())
+
     #d = normalize(N_d, norm = 'l2') 
     #NOTE: the sklearn normalize function seems to tweak the distribution of relative
     #values a bit (but JUST a bit), so I should read about the normalization methods in detail later, but for
@@ -300,29 +359,42 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     assert True not in np.isnan(d)
     assert True not in np.isinf(d)
 
+    if debug == True:
+        var = 'd'
+        pop.show(land,1)
+        plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
+        plt.colorbar()
+        print(var)
+        print(eval(var))
+        raw_input()
 
-    #print('Plotting d')
-    #print('Max val: %0.2f' % d.max())
-    #plt_d = landscape.Landscape(land.dims, d)
-    #pop.show(plt_d)
-    #raw_input()
 
 
-    #Now implement births
+
+    ######If births should happen after (and thus not be included in the calculation of) deaths, then instead of having mated and dispersed babies up above, do it now
+    if births_before_deaths == False:
         #Feed the mating pairs and params['b'] to the mating functions, to produce and disperse zygotes
-    print pairs
-    pop.mate(land, params, pairs)
+        pop.mate(land, params, pairs)
 
-    #Now implement deaths
-        #NOTE: The way I'm looking at it now, calculating likely births from number of existing pairs, then
-        #calculating death raster, then having births take place, then having per-individual death probabilies
-        #determined and having deaths take place (such that newborns could also 
-        #immediately die after birth, based on the death raster calculated before they were born, and even
-        #based on individs who weren't their parents, assuming they dispersed across cell lines), which is what
-        #I'm doing currently, is the only obvious/reasonable way to do this. Of course there will always be an
-        #inherent rub between reality and discrete-time simulations because of the continuous/discrete time
-        #conflict. But in this case, is there any strong reason to CHANGE THIS? Or are there any foreseeable
-        #and undesirable results/effects?... NEED TO PUT MORE THOUGHT INTO THIS LATER.
+
+
+
+    ######Now implement deaths
+        #NOTE: 04/28/17: LEAVING THE FOLLOWING NOTE FOR NOW, BUT I ADDED THIS EARLIER, BEFORE TODAY ADDING THE
+        #births_before_deaths ARGUMENT THAT DEFAULTS TO False. The problem I overlooked in the setps that I
+        #laid out in the following NOTE is that I failed to realize that the probability of a baby's death
+        #would be based on the density of parents before it was born, such that deaths of babies would actually
+        #be artificially low, and I believe this is what was leading to my constant, inevitable exponential
+        #population dynamics
+            #NOTE: The way I'm looking at it now, calculating likely births from number of existing pairs, then
+            #calculating death raster, then having births take place, then having per-individual death probabilies
+            #determined and having deaths take place (such that newborns could also 
+            #immediately die after birth, based on the death raster calculated before they were born, and even
+            #based on individs who weren't their parents, assuming they dispersed across cell lines), which is what
+            #I'm doing currently, is the only obvious/reasonable way to do this. Of course there will always be an
+            #inherent rub between reality and discrete-time simulations because of the continuous/discrete time
+            #conflict. But in this case, is there any strong reason to CHANGE THIS? Or are there any foreseeable
+            #and undesirable results/effects?... NEED TO PUT MORE THOUGHT INTO THIS LATER.
 
     death_probs = dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()])
 
@@ -365,54 +437,6 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     else:
         pass
 
-
-
-
-###############################
-#NOTE: MOVE TO burn_in.py
-
-def burn_in(pop, land, params):
-
-    #NOTE: Still not totally clear to me how to get this to work, but I want to use some iterative process to
-    #get the model to empirically decide its own stable spatial population distribution based on its given
-    #parameterization and start conditions, and to break the burn-in only once it has reached that state. I am
-    #thinking that to do this I can use the previous timestep's population density as a local carrying capacity
-    #for density-dependent births/deaths, and that by iterating the opposing forces of movement
-    #to/through high-permeability areas and attrition in those areas because of density-dependence should reach
-    #a dynamic equilibrium, which the model can determine through assessment of a metric or metrics
-
-
-
-
-    #start the mean_dens array as just the starting pop density
-    mean_dens = calc_pop_density(land, pop)
-
-
-    #a while loop conditioned on burn == True, which will only switch to False once the stasis/stationarity criteria are determined to be met
-    #while burn == True:
-    for t in burn_T:
-
-        #calculate pop density array, which will function as the carrying capacity (K) in each step
-        K = calc_pop_density(land, pop)
-        
-        #calc local logistic growth rates
-
-        
-        #enact births and deaths, on basis of local logistic growth rates
-            #NOTE: Probably should not be using selection here, as I want this to determine the initial
-            #dynamic-equilibrium distribution on the basis of movement and density-dependence only
-
-
-        #recalculate mean_dens (using the formula I worked out on the board for updating a mean)
-        mean_dens = mean_dens + (1/(t+1))*(K-mean_dens)
-
-        #assess stationarity of pop density
-        
-        #if determined stationary, based on chosen metric(s), 
-            #set burn = False
-
-        #else
-            #repeat loop
 
 
 

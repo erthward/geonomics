@@ -7,12 +7,11 @@ params = {
 
 'set_seed' : True,                  #set the seed (for reproducibility)?
 
-#'seed_num' : 5,                    #number to seed random number generators
 'seed_num' : 1,                    #number to seed random number generators
 
 'T' : 5000,                      #total model runtime
 
-'burn_T': 20,                     #total burn-in runtime
+'burn_T': 60,                     #total burn-in runtime
 
 'L' : 5e1,                         #total number of loci
 
@@ -31,9 +30,9 @@ params = {
 'use_dom' : False,              #whether or not to use dominance (default to False)
                                 #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP
 
-'N' : 500,                        #total pop size
+'N' : 250,                        #total pop size
 
-'dims' : (20,20),             #dimensions of landscape  
+'dims' : (8,8),             #dimensions of landscape  
 
 'num_scapes' : 2,               #number of landscapes desired
 

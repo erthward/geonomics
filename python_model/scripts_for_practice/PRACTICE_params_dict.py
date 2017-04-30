@@ -51,7 +51,7 @@ params = {
 #'interp_method' : ['nearest'],
 'interp_method' : ['linear', 'linear'],   # list of interpolation methods for generation of random landscapes, 1 per landscape to be generated (as set by num_scapes)
 
-'K_cap' : 5,                        #per-cell highest carrying capacity value to be reached during burn-in
+'K_cap' : 40,                        #per-cell highest carrying capacity value to be reached during burn-in
 
 'move' : True,                     #is this a mobile species?
 
@@ -84,6 +84,10 @@ params = {
 
 'b' : 0.2,                         #population intrinsic birth rate (implemented as the probability that an identified potential mating pair successfully mates); 
                                    #NOTE: this may later need to be re-implemented to allow for spatial variation in intrinsic rate (e.g. expression as a raster) and/or for density-dependent births as well as deaths
+
+'d_min' : 0.01,                     #minimum neutral (i.e. non-selection driven) probability of death
+
+'d_max' : 0.90,                     #maximum neutral probability of death
 
 'lambda_offspring': 4,               #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
 

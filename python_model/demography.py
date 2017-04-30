@@ -140,7 +140,7 @@ def mort(land, pop, params, death_probs):
 
 
 
-def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage_d = None, d_min = 0.01, d_max = 0.99, births_before_deaths = True, debug = False):
+def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage_d = None, births_before_deaths = True, debug = None):
     '''Generalized function for implementation population dynamics. Will carry out one round of mating and
     deaths, according to parameterization laid out in params dict.
 
@@ -187,14 +187,18 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     assert True not in np.isnan(n_pairs)
     assert True not in np.isinf(n_pairs)
 
-    if debug == True:
+    if debug <> None:
+        fig = plt.figure()
+        plt.suptitle('TIMESTEP: %i' % debug)
         var = 'n_pairs'
-        pop.show(land,1)
+        plt.subplot(241)
+        plt.title(var)
+        pop.show(land,1, markersize = 8)
         plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
         plt.colorbar()
         print(var)
         print(eval(var))
-        raw_input()
+        #raw_input()
 
 
 
@@ -216,42 +220,46 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     assert True not in np.isinf(N)
 
 
-    if debug == True:
+    if debug <> None:
         var = 'N'
-        pop.show(land,1)
+        plt.subplot(242)
+        plt.title(var)
+        pop.show(land,1, markersize = 8)
         plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
         plt.colorbar()
         print(var)
         print(eval(var))
-        raw_input()
+        #raw_input()
 
 
 
     ######get K raster
     K = pop.K.raster
-    K[K==0]=1  #values of 0 produce np.inf by division, so must avoid this
+    #K[K==0]=1  #values of 0 produce np.inf by division, so must avoid this
     #NOTE: Plotted dNdt against N for different values of K, to see how strong density-dependent
     #selection would be for individs landing in lowest-K cells. 1 seemed still very strong, but a bit more
     #permissive than the absurdly negative values that were produced by adding, say, 10e-1 or less; for now
     #leaving 1 as an arbitrary lower bound on K
 
     #if params dict has a K_cap parameter, use this to set the max cell value for the K raster
-    if 'K_cap' in params.keys():
-        K[K>float(params['K_cap'])] = float(params['K_cap'])
+    #if 'K_cap' in params.keys():
+        #K[K>float(params['K_cap'])] = float(params['K_cap'])
         #print(K.max())
     assert K.min() >= 0
     assert True not in np.isnan(K)
     assert True not in np.isinf(K)
 
 
-    if debug == True:
+    if debug <> None:
         var = 'K'
-        pop.show(land,1)
+        plt.subplot(243)
+        plt.title(var)
+        pop.show(land,1, markersize = 8)
         plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
         plt.colorbar()
         print(var)
         print(eval(var))
-        raw_input()
+        #raw_input()
 
 
 
@@ -268,20 +276,27 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     ######use N, K, and params['r'] to calc dN/dt raster, according to the chosen pop growth eqxn
         #NOTE: Currently, only option and default is basic logistic eqxn: dN/dt = r*(1-N/K)*N
     dNdt = calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic').raster
-    dNdt[N == 0] = 0
+
+    #NOTE: cells where K<1 dramatically inflate negative dNdt values, so to control for this in a realistic way I
+    #force all cells where K<1 to take on either the calculated dNdt value or the negative value of N at that
+    #cell, whichever is higher
+    dNdt[K<1] = [max(dNdt[K<1][i], -N[K<1][i]) for i in range(len(dNdt[K<1]))]
+    assert False not in list(dNdt[K<1].ravel() >= -N[K<1].ravel()), 'dNdt[K<1] not >= -N[K<1]: \n\t%s' % str(dNdt[K<1].ravel() >= -N[K<1].ravel())
     assert True not in np.isnan(dNdt)
     assert True not in np.isinf(dNdt), 'The following cells are infinite: \n\t%s' % str([i for i, n in enumerate(dNdt.ravel()) if np.isinf(n)])
 
-    if debug == True:
+    if debug <> None:
         var = 'dNdt'
-        pop.show(land,1)
+        plt.subplot(244)
+        plt.title(var)
+        pop.show(land,1, markersize = 8)
         plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
         plt.colorbar()
         print(var)
         print(eval(var))
         print(eval(var).min())
         print(eval(var).argmin())
-        raw_input()
+        #raw_input()
 
 
 
@@ -303,14 +318,16 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     assert True not in np.isnan(N_b)
     assert True not in np.isinf(N_b)
  
-    if debug == True:
+    if debug <> None:
         var = 'N_b'
-        pop.show(land,1)
+        plt.subplot(245)
+        plt.title(var)
+        pop.show(land,1, markersize = 8)
         plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
         plt.colorbar()
         print(var)
         print(eval(var))
-        raw_input()
+        #raw_input()
 
   
 
@@ -319,14 +336,16 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     assert True not in np.isnan(N_d)
     assert True not in np.isinf(N_d)
 
-    if debug == True:
+    if debug <> None:
         var = 'N_d'
-        pop.show(land,1)
+        plt.subplot(246)
+        plt.title(var)
+        pop.show(land,1, markersize = 8)
         plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
         plt.colorbar()
         print(var)
         print(eval(var))
-        raw_input()
+        #raw_input()
 
    
 
@@ -335,7 +354,26 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     #d[d<0] = 0
 
     #Instead of the above, just normalize N_d to use it as the raster of the probability of death of individuals in each cell
-    d = (N_d - N_d.min())/(N_d.max() - N_d.min())
+    #NOTE: THIS ACTUALLY SEEMS LIKE A BAD APPROACH, BECAUSE IT FORCES THE SPATIAL DISTRIBUTION OF d TO MIRROR
+    #THE SPATIAL DISTRIBUTION OF RELATIVE dNdt AND N_b VALUES, but in reality d should be similarly high in low-K
+    #cells with low N and hi-K cells with hi N
+    #d = (N_d - N_d.min())/(N_d.max() - N_d.min())
+    #NOTE: Instead, calculate d as simply N_d/N, then control for some numerical artefacts that an inappropriate
+
+    #floor N_d to 0, since negative N_d values are not going to generate new individuals at this point, but will create wonky values in d
+    #N_d[N_d <= 0] = 0.0000001  
+    #divide N_d/N
+    d = N_d/N
+    #fix infinties if they arise (where N == 0)
+    d[np.isinf(d)] = 0
+    d[np.isnan(d)] = 0
+    d[d<0] = 0
+    #constrain to the min and max d values
+    d_min = params['d_min']
+    d_max = params['d_max']
+    d[d<d_min] = d_min
+    d[d>d_max] = d_max
+
 
     #d = normalize(N_d, norm = 'l2') 
     #NOTE: the sklearn normalize function seems to tweak the distribution of relative
@@ -350,8 +388,8 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     #that value, just to impose an arbitrary min and max mortality probability. (Feels wrong to have
     #certainty of death or survival in some locations.) So in that case, stick with my max-diff normalization,
     #then coercing the ends to the min and max probs
-    d[d<d_min] = d_min
-    d[d>d_max] = d_max
+    #d[d<d_min] = d_min
+    #d[d>d_max] = d_max
 
 
     assert d.min() >= 0, 'd.min() is %0.2f, at %s' % (d.min(), str(d.argmin()))
@@ -359,14 +397,16 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     assert True not in np.isnan(d)
     assert True not in np.isinf(d)
 
-    if debug == True:
+    if debug <> None:
         var = 'd'
-        pop.show(land,1)
+        plt.subplot(247)
+        plt.title(var)
+        pop.show(land,1, markersize = 8)
         plt.imshow(eval(var), interpolation = 'nearest', cmap = 'terrain')
         plt.colorbar()
         print(var)
         print(eval(var))
-        raw_input()
+        raw_input('\n\n\nPress <Enter> for next timestep...\n\n')
 
 
 

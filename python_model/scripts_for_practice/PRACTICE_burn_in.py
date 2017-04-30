@@ -36,8 +36,9 @@ def burn_in(pop, land, params):
             #print('\tcalc_density\n')
             #pop.calc_density(land = land, set_N = True)#window_width = max(1.01, params['mu_distance']), set_N = True)
             #print('\tpop_dynamics\n')
-            demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, d_min = 0.1, d_max = 0.9, debug = False)
-            #NOTE: CAN SWITCH TO THIS LINE TO START POP-DYN DEBUGGING BEHAVIOR AT CERTAIN TIMESTEP
+            demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True)
+            #demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, debug = burn_t)
+            #NOTE: CAN SWITCH TO THIS LINE TO START POP-DYN DEBUGGING BEHAVIOR AT CERTAIN TIMESTEP; FEED TIMESTEP IN FOR PLOT TITLES
             #demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, d_min = 0.1, d_max = 0.9, debug = burn_t >=40)
 
             #NOTE: Making the d_min and d_max values considerably more permissive than the default settings, just for the burn-in period, to allow for more pronounced shifts in spatial distribution of individs during the iterative algorithm without too much 'penalty'

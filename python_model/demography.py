@@ -10,6 +10,7 @@ from sklearn.preprocessing import normalize
 
 import landscape
 import mating
+import NEW_selection
 
 
 '''Functions to control demography/population dynamics.'''
@@ -112,6 +113,8 @@ def logistic_eqxn(r, N, K):
     return(dNdt)
 
 
+def logistic_soln(x0, r, t):
+        return(1/(1+((1/x0)-1)*np.e**(-1*r*t)))
 
 
 
@@ -275,7 +278,8 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
 
     ######use N, K, and params['r'] to calc dN/dt raster, according to the chosen pop growth eqxn
         #NOTE: Currently, only option and default is basic logistic eqxn: dN/dt = r*(1-N/K)*N
-    dNdt = calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic').raster
+    with np.errstate(divide='ignore', invalid='ignore'):
+        dNdt = calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic').raster
 
     #NOTE: cells where K<1 dramatically inflate negative dNdt values, so to control for this in a realistic way I
     #force all cells where K<1 to take on either the calculated dNdt value or the negative value of N at that
@@ -436,16 +440,33 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
             #conflict. But in this case, is there any strong reason to CHANGE THIS? Or are there any foreseeable
             #and undesirable results/effects?... NEED TO PUT MORE THOUGHT INTO THIS LATER.
 
-    death_probs = dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()])
 
     #plt.hist(death_probs.values(), bins = 50)
     #raw_input()
 
     #If selection = True, then use the d raster and individuals' relative fitnesses to calculate
     #per-individual probabilities of death
+    #NOTE: FOR NOW JUST USING A SINGLE LOCUS WITH DOMINANCE, BUT HERE IS WHERE I EVENTUALLY NEED TO IMPLEMENT FUNCTIONALITY
+    #FOR VARYING TYPES OF SELECTION (CODOMINANCE, OVERDOMINANCE, ETC), AN ARBITRARY NUMBER OF LOCI, AND A MAP
+    #OF THOSE LOCI ONTO TRAITS
     if selection == True:
-        pass
+        #NOTE: THIS ALL ASSUMES A SINGLE CHROM FOR NOW! (THE 0s IN THE INDEXING OF THE FOLLOWING LINES)
+        loci = [i for i,n in enumerate(pop.genomic_arch.non_neutral[0]) if n == True]
+        env = [pop.get_habitat(pop.get_env_var(0,locus)[locus]) for locus in loci]
+        gen = [pop.get_genotype(0,locus) for locus in loci]
+        s = [pop.genomic_arch.s[0][locus] for locus in loci]
     
+        #NOTE: THE ZERO-INDEXING IN THE FOLLOWING LINE WILL NEED TO BE REPLACED WHEN I WORK WITH >1 LOCUS!
+        d_ind = dict([(i, NEW_selection.get_prob_death(d[int(ind.y), int(ind.x)], env[0][i], gen[0][i], s[0])) for i,ind in pop.individs.items()])
+
+        print(d_ind.items()[0:20])
+        print('VS')
+        print(dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()]).items()[0:20])
+
+
+    elif selection == False:
+        d_ind = dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()])
+
     #If age_stage_d <> None then use the age_stage_d array, and pop.get_age(), and the d raster 
     #to calculate per-individual death probabilities
     if age_stage_d <> None:
@@ -453,7 +474,7 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
         
     #Feed the per-individual death probabilities into the deaths function, to generate deaths and cull
     #those individuals
-    num_deaths = mort(land, pop, params, death_probs)
+    num_deaths = mort(land, pop, params, d_ind)
 
     print '\n\t%i individuals dead' % num_deaths
 

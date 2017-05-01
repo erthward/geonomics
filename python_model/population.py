@@ -30,6 +30,7 @@ import dispersal
 import selection
 import mutation
 import landscape
+import demography
 
 import numpy as np
 from numpy import random as r
@@ -343,11 +344,17 @@ class Population:
    
  
 
-    def get_habitat(self, individs = None):
+    def get_habitat(self, scape_num = None, individs = None):
         if individs <> None:
-            return dict([(k, ind.habitat) for k, ind in self.individs.items() if k in individs])
+            if scape_num is None:
+                return dict([(k, ind.habitat) for k, ind in self.individs.items() if k in individs])
+            else:
+                return dict([(k, ind.habitat[scape_num]) for k, ind in self.individs.items() if k in individs])
         else:
-            return dict([(k, ind.habitat) for k, ind in self.individs.items()])
+            if scape_num is None:
+                return dict([(k, ind.habitat) for k, ind in self.individs.items()])
+            else:
+                return dict([(k, ind.habitat[scape_num]) for k, ind in self.individs.items()])
 
 
 
@@ -495,7 +502,7 @@ class Population:
 
 
 
-    def show_locus(self, chromosome, locus, land, scape_num = None, im_interp_method = 'nearest'): 
+    def show_locus(self, chromosome, locus, land, scape_num = None, im_interp_method = 'nearest', markersize = 65, alpha = 1): 
 		
 
 		if scape_num <> None:
@@ -525,6 +532,17 @@ class Population:
     def show_pyramid(self):
         plt.hist([ind.age for ind in self.individs.values() if ind.sex == 0], orientation = 'horizontal', color = 'pink', alpha = 0.6)
         plt.hist([ind.age for ind in self.individs.values() if ind.sex == 1], orientation = 'horizontal', color = 'skyblue', alpha = 0.6)
+
+
+
+
+    def show_pop_growth(self, params):
+        T = range(len(self.Nt))
+        x0 = params['N']/self.K.raster.sum() 
+        plt.plot(T, [demography.logistic_soln(x0,params['r'],t)*self.K.raster.sum() for t in T], color = 'red')
+        plt.plot(T, self.Nt, color = 'blue')
+        plt.xlabel('t')
+        plt.ylabel('N(t)')
 
 
 

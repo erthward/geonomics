@@ -20,7 +20,7 @@ def burn_in(pop, land, params):
         #NOTE: Instead, just setting it statically to K_cap * the movement raster (which can be seen simultaneously as a 'hab qual' raster)
         import landscape 
         K = landscape.Landscape(land.dims, params['K_cap']*land.scapes[params['movement_surf_scape_num']].raster)
-        K.raster[K.raster<0.5] = 0.5
+        #K.raster[K.raster<0.5] = 0.5
         pop.set_K(K)
         for burn_t in range(params['burn_T']):
             print('Timestep %i:' % burn_t)
@@ -36,10 +36,12 @@ def burn_in(pop, land, params):
             #print('\tcalc_density\n')
             #pop.calc_density(land = land, set_N = True)#window_width = max(1.01, params['mu_distance']), set_N = True)
             #print('\tpop_dynamics\n')
-            demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True)
-            #demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, debug = burn_t)
-            #NOTE: CAN SWITCH TO THIS LINE TO START POP-DYN DEBUGGING BEHAVIOR AT CERTAIN TIMESTEP; FEED TIMESTEP IN FOR PLOT TITLES
-            #demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, d_min = 0.1, d_max = 0.9, debug = burn_t >=40)
+            if burn_t < 0:
+                demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True)
+                #NOTE: CAN SWITCH TO THIS LINE TO START POP-DYN DEBUGGING BEHAVIOR AT CERTAIN TIMESTEP; FEED TIMESTEP IN FOR PLOT TITLES
+                #demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, debug = burn_t)
+            else:
+                demography.pop_dynamics(land = land, pop = pop, params = params, selection = True, burn_in = True)
 
             #NOTE: Making the d_min and d_max values considerably more permissive than the default settings, just for the burn-in period, to allow for more pronounced shifts in spatial distribution of individs during the iterative algorithm without too much 'penalty'
 

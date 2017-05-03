@@ -13,7 +13,7 @@ params = {
 
 'burn_T': 60,                     #total burn-in runtime
 
-'L' : 5e1,                         #total number of loci
+'L' : 1,                         #total number of loci
 
 'n' : 1,                           #number of chromosomes
 
@@ -30,7 +30,7 @@ params = {
 'use_dom' : False,              #whether or not to use dominance (default to False)
                                 #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP
 
-'N' : 250,                        #total pop size
+'N' : 500,                        #total pop size
 
 'dims' : (100,100),             #dimensions of landscape  
 

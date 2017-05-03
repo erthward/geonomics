@@ -83,6 +83,17 @@ class Population:
         #Add other demographic parameters?? Other stuff in general??
 
 
+        self.heterozygote_effects = {
+                0: lambda g: [np.ceil(np.mean(g[i,])) for i in range(g.shape[0])],  
+                    #relative fitness of homozygous 1 = relative fitness of heterozygote, i.e. 1 = 1-hs
+                0.5: lambda g: [np.mean(g[i,]) for i in range(g.shape[0])],
+                    #relative fitness of heterozygote halfway between homozygotes, i.e 1-hs = 1-s/2
+                1: lambda g: [np.floor(np.mean(g[i,])) for i in range(g.shape[0])]
+                    #relative fitness of homozygous 0 = relative fitness of heterozygote, i.e. 1-hs = 1-s
+                                    }
+
+
+
 
         assert type(N) == int, "N must be an integer"
         assert type(self.individs) == dict, "self.individs must be a dictionary"
@@ -369,23 +380,22 @@ class Population:
 
     
 
-    def get_genotype(self, chromosome, locus, format = 'mean', individs = None):
-
-        dom_funcs = { 0 : np.mean,                          #codominance
-                      1 : lambda x: np.ceil(np.mean(x)),    #dominant (with respect to relationship between allele 1 and habitat values -> 1
-                      2 : lambda x: np.floor(np.mean(x))    #recessive (with respect to relationship between allele 1 and habitat values -> 1
-                    }
-
+    def get_genotype(self, chromosome, locus, return_format = 'mean', individs = None, override_h = None):
 
         if individs == None:
             individs = self.individs.keys()
             #individs = range(len(self.genomic_arch.s[chromosome]))
 
-        if format == 'biallelic':
+        if return_format == 'biallelic':
             return dict([(i, self.individs[i].genome.genome[chromosome][locus, :]) for i in self.individs.keys() if i in individs]) 
 
-        elif format == 'mean':
-            return dict([(i, [dom_funcs[self.genomic_arch.dom[chromosome][locus]](self.individs[i].genome.genome[chromosome][locus,:]) ]) for i in self.individs.keys() if i in individs])
+        elif return_format == 'mean':
+            if override_h <> None:
+                h = override_h
+            else:
+                h = self.genomic_arch.h[chromosome][locus]
+            return dict(zip(individs, self.heterozygote_effects[h](np.array([ind.genome.genome[0][0,] for i, ind in self.individs.items() if i in individs]))))
+
 
 
     def get_fitness(self):
@@ -502,26 +512,28 @@ class Population:
 
 
 
-    def show_locus(self, chromosome, locus, land, scape_num = None, im_interp_method = 'nearest', markersize = 65, alpha = 1): 
-		
-
-		if scape_num <> None:
-			land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True)
-
-		else:
-			land.show(im_interp_method = im_interp_method, pop = True)
-		
-		genotypes = self.get_genotype(chromosome, locus) 
-
-		colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] # COLORS TO MATCH LANDSCAPE PALETTE EXTREMES, BUT WITH HYBRID A MIX OF THE EXTREMES RATHER THAN THE YELLOW AT THE MIDDLE OF THE PALETTE, FOR NICER VIEWING: blue = [0,0], light blue = [0,1], white = [1,1]
+    def show_locus(self, chromosome, locus, land, scape_num = None, im_interp_method = 'nearest', markersize = 65, alpha = 1, override_h = True):
+        if scape_num <> None:
+            land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
+        
+        else:
+            land.show(im_interp_method = im_interp_method, pop = True)
+        
+        if override_h == True:
+            genotypes = self.get_genotype(chromosome, locus, override_h = 0.5)
+        else:
+            genotypes = self.get_genotype(chromosome, locus)
+            
+        colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] # COLORS TO MATCH LANDSCAPE PALETTE EXTREMES, BUT WITH HYBRID A MIX OF THE EXTREMES RATHER THAN THE YELLOW AT THE MIDDLE OF THE PALETTE, FOR NICER VIEWING: blue = [0,0], light blue = [0,1], white = [1,1]
         #colors = ['#ff4d4d', '#ac72ac', '#4d4dff'] # red = [0,0], purple = [0,1], blue = [1,1] 
-
-		for n, genotype in enumerate([0.0, 0.5, 1.0]):
-			inds = [i for i, g in genotypes.items() if g[0] == genotype]
-			c = np.array(self.get_coords(inds).values())
-			x = c[:,0]-0.5
-			y = c[:,1]-0.5
-			plt.scatter(x,y, s = markersize, c = colors[n], alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
+        for n, genotype in enumerate([0.0, 0.5, 1.0]):
+            inds = [i for i, g in genotypes.items() if np.atleast_1d(g)[0] == genotype]
+            #plot if there are any individuals of this genotype 
+            if len(inds) >=1:
+                c = np.array(self.get_coords(inds).values())
+                x = c[:,0]-0.5
+                y = c[:,1]-0.5
+                plt.scatter(x,y, s = markersize, c = colors[n], alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
     
             #mpl.pyplot.plot([coord[0] for coord in coords], [coord[1] for coord in coords], 'o', markersize = 11, scalex = False, scaley = False, color = colors[n], alpha = 0.8)
 

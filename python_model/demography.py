@@ -446,8 +446,7 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
 
     #If selection = True, then use the d raster and individuals' relative fitnesses to calculate
     #per-individual probabilities of death
-    #NOTE: FOR NOW JUST USING A SINGLE LOCUS WITH DOMINANCE, BUT HERE IS WHERE I EVENTUALLY NEED TO IMPLEMENT FUNCTIONALITY
-    #FOR VARYING TYPES OF SELECTION (CODOMINANCE, OVERDOMINANCE, ETC), AN ARBITRARY NUMBER OF LOCI, AND A MAP
+    #NOTE: FOR NOW JUST USING A SINGLE LOCUS, BUT LATER NEED TO IMPLEMENT FOR AN ARBITRARY NUMBER OF LOCI, AND A MAP
     #OF THOSE LOCI ONTO TRAITS
     if selection == True:
         #NOTE: THIS ALL ASSUMES A SINGLE CHROM FOR NOW! (THE 0s IN THE INDEXING OF THE FOLLOWING LINES)
@@ -457,11 +456,12 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
         s = [pop.genomic_arch.s[0][locus] for locus in loci]
     
         #NOTE: THE ZERO-INDEXING IN THE FOLLOWING LINE WILL NEED TO BE REPLACED WHEN I WORK WITH >1 LOCUS!
+        #NOTE: SHOULD COME UP WITH A WAY TO CALL get_prob_death once, since it can be run vectorized
         d_ind = dict([(i, NEW_selection.get_prob_death(d[int(ind.y), int(ind.x)], env[0][i], gen[0][i], s[0])) for i,ind in pop.individs.items()])
 
-        print(d_ind.items()[0:20])
-        print('VS')
-        print(dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()]).items()[0:20])
+        #print(d_ind.items()[0:20])
+        #print('VS')
+        #print(dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()]).items()[0:20])
 
 
     elif selection == False:

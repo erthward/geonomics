@@ -3,8 +3,9 @@
 
 '''Defines the burn-in function.'''
 
+from collections import Counter as C
 
-def burn_in(pop, land, params): 
+def burn_in(pop, land, params, het, maf): 
     print '\n\nSTARTING BURN-IN.\n\t(Will run for %i timesteps.)\n\n' % params['burn_T']
     #pop.show(land = land, colorbar = True)
 
@@ -24,6 +25,9 @@ def burn_in(pop, land, params):
         pop.set_K(K)
         for burn_t in range(params['burn_T']):
             print('Timestep %i:' % burn_t)
+            cts = C(pop.get_genotype(0,0).values())
+            het.append(cts[0.5]/float(pop.census()))
+            maf.append((cts[1]*2 + cts[0.5])/(2.*pop.census()))
             #print('\tbirthday\n')
             pop.birthday()
             #print('\tset_K\n')
@@ -36,7 +40,7 @@ def burn_in(pop, land, params):
             #print('\tcalc_density\n')
             #pop.calc_density(land = land, set_N = True)#window_width = max(1.01, params['mu_distance']), set_N = True)
             #print('\tpop_dynamics\n')
-            if burn_t < 0:
+            if burn_t < 500:
                 demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True)
                 #NOTE: CAN SWITCH TO THIS LINE TO START POP-DYN DEBUGGING BEHAVIOR AT CERTAIN TIMESTEP; FEED TIMESTEP IN FOR PLOT TITLES
                 #demography.pop_dynamics(land = land, pop = pop, params = params, selection = False, burn_in = True, debug = burn_t)

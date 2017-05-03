@@ -7,11 +7,6 @@ import numpy as np
 
 
 
-#Get genotype
-#NOTE: Incorporate h here, so that dominance, overdominance, codominance, etcetera can be modeled...
-
-
-
 
 
 
@@ -40,7 +35,7 @@ def get_prob_death(d,e,g,s):
     #print('s')
     #print(s)
     #c is the correction factor used to ensure that the resulting mortalities 
-    c = -1*s/(2-s)
+    #c = -1*s/(2-s)
     #print('c')
     #print(c)
     #get the relative viabilities
@@ -56,22 +51,25 @@ def get_prob_death(d,e,g,s):
     #thus the competitive environment changes...
 
     #get the scaled differential that will be used to calculate mortalities
-    diff = ((0.5-w)/0.5)*c
+    #diff = ((0.5-w)/0.5)*c
     #print('diff')
     #print(diff)
     #calculate mortalities
-    d_ind = d*(1+diff)
+    #NOTE: Instead of using c and diff above, using the simpler method suggested by Rasmus after meeting on 05/01/17
+    #d_ind = d*(1+diff)
+    d_ind = 1- (1-d)*(1 - w*s)
     #print('mort')
     #print(mort)
     
     #Check that the ratio of the min to max mortalities equals 1 - (ratio of max to min genotype values)*s
-    assert np.allclose(d_ind.min()/d_ind.max(), 1-((max(g) - min(g))*s))
+    #assert np.allclose(d_ind.min()/d_ind.max(), 1-((max(g) - min(g))*s))
 
     #Now, tweak it if need be to ensure that it stays between 0 and 1
     #NOTE: NEED TO CONSIDER IF THERE IS A BETTER, LESS BIASING WAY OF DOING THIS
-    d_ind = np.array([max(min(0.999999, val), 0.000001) for val in d_ind])
-    print('mort again')
-    print(d_ind)
+    d_ind = np.array([max(min(0.999999, val), 0.000001) for val in np.atleast_1d(d_ind)])
+    #d_ind = np.array(max(min(0.999999, d_ind), 0.000001))
+    #print('mort again')
+    #print(d_ind)
 
 
 

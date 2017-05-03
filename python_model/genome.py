@@ -37,16 +37,16 @@ from numpy import random as r
     
 
 class Genomic_Architecture:
-    def __init__(self, x, n, L, l_c, p, s, dom, env_var, D, mu, sex):
+    def __init__(self, x, n, L, l_c, p, s, h, env_var, D, mu, sex):
         self.x = x              #ploidy (NOTE: for now will be 2 by default; later could consider enabling polyploidy)
         self.n = n              #haploid number of chromosomes
         self.L = L              #total length (i.e. number of markers)
         self.l_c = l_c          #length of each chromosome
-        self.p = p              #Dict of dominant (i.e. coded by '1', not '0') allele frequencies for all (numbered by keys) chromosomes in haploid genome
+        self.p = p              #Dict of allele frequencies for the 1-alleles for all (numbered by keys) chromosomes in haploid genome
         self.s = s              #Dict of selection coefficients, for all chroms
         self.non_neutral = dict([(c, self.s[c] <> 0) for c in self.s.keys()])  #np.array for quick subsetting of only non-neutral loci, for use in selection and mutation modules
         self.sum_s =     sum([sum(self.s[c][self.non_neutral[c]]) for c in self.s.keys()])  #sum of all selection coefficients; to save on computation in weighted sum used in selection module
-        self.dom = dom          #Dict of dominance types for all loci, for all chroms
+        self.h = h          #Dict of heterozygous effects for all loci, for all chroms
         self.env_var = env_var  #Dict of the environmental variables for which all loci on all chroms are selective
         self.D = D              #Dict of linkage disequilibria (i.e. map distances) between each locus and the next, for all chroms (NOTE: because of this definition, the last value is forced to 0)
         self.mu = mu            #genome-wide mutation rate  #NOTE: should I allow this to be declared as a dictionary of mutation rates along all the chromosomes, to allow for heterogeneous mutation rates across the genome???
@@ -100,16 +100,13 @@ def sim_G(p):
 
 
 
-#randomly assign dominance types (0 = codominant, 1 = dominant, 2 = recessive)
-#NOTE: DOES 0-2 SUFFICE?? Do I need 3 = heterozygote dominance (or whatever that would be called)?
-def assign_dom(l, params, low = 0, high = 2):
-    use_dom = params['use_dom']
-    if use_dom:
-        dom = r.random_integers(low = low, high = high, size = l)
-    else:
-        dom = r.random_integers(low = 0, high = 0, size = l)
-
-    return dom
+#randomly assign heterozygous effects, choosing from either 0, 0.5, or 1,
+#where 0 = allele 1 (A1) dominant, 0.5 = codominant, 1 = A1 recessive, i.e.
+#relative fitnesses: A1A1 = 1, A1A2 = 1-hs, A2A2 = 1-s
+#NOTE: Should be able to also implement negative h values here, for overdominance
+def assign_h(l, params, low = 0, high = 2):
+    h  = r.randint(low = 0, high = 3, size = l)/2.   #NOTE: Pythonic style, so high is exclusive, hence high = 3
+    return h
 
 
 
@@ -139,7 +136,7 @@ def sim_s(l, alpha_s = 0.007, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 loc
     #NOTE: See Thurman and Barrett (2016) for metaanalysis of s values in real populations!
 
     s = r.beta(alpha_s, beta_s, l)
-    s = np.array([0 if l < 0.001 else l for l in s])
+    s = np.array([0.0 if l < 0.001 else l for l in s])
     return s
     #NOTE: For now, beta seems an intuitive and fine way to model this
     #For effectively no selection: Beta(1,1e5)
@@ -216,17 +213,17 @@ def build_genomic_arch(params, land, allow_global_selection = False, allow_multi
         l_c = set_l_c(L, n)
         p = dict()
         s = dict()
-        dom = dict()
+        h = dict()
         env_var = dict()
         D = dict()
         for chrom in range(n):
             p[chrom] = gen_allele_freqs(l_c[chrom])
             s[chrom] = sim_s(l_c[chrom])
-            dom[chrom] = assign_dom(l_c[chrom], params)
+            h[chrom] = assign_h(l_c[chrom], params)
             env_var[chrom] = assign_env_var(num_rasters = land.num_rasters, l = l_c[chrom], allow_global_selection = allow_global_selection, allow_multiple_env_vars = allow_multiple_env_vars)
             D[chrom] = sim_D(l_c[chrom], alpha_D, beta_D)
             D[chrom][len(D[chrom])-1] = 0 #because each D value expresses linkage between that locus and the next, last value is forced to 0!
-        return Genomic_Architecture(x, n, sum(l_c), l_c, p, s, dom, env_var, D, mu, False)
+        return Genomic_Architecture(x, n, sum(l_c), l_c, p, s, h, env_var, D, mu, False)
 
 
 

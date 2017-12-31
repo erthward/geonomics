@@ -37,7 +37,7 @@ from numpy import random as r
     
 
 class Genomic_Architecture:
-    def __init__(self, x, n, L, l_c, p, s, h, env_var, D, mu, sex):
+    def __init__(self, x, n, L, l_c, p, s, h, env_var, r, mu, sex):
         self.x = x              #ploidy (NOTE: for now will be 2 by default; later could consider enabling polyploidy)
         self.n = n              #haploid number of chromosomes
         self.L = L              #total length (i.e. number of markers)
@@ -48,7 +48,7 @@ class Genomic_Architecture:
         self.sum_s =     sum([sum(self.s[c][self.non_neutral[c]]) for c in self.s.keys()])  #sum of all selection coefficients; to save on computation in weighted sum used in selection module
         self.h = h          #Dict of heterozygous effects for all loci, for all chroms
         self.env_var = env_var  #Dict of the environmental variables for which all loci on all chroms are selective
-        self.D = D              #Dict of linkage disequilibria (i.e. map distances) between each locus and the next, for all chroms (NOTE: because of this definition, the last value is forced to 0)
+        self.r = r              #Dict of recombination rates between each locus and the next, for all chroms (NOTE: first will be forced to 1/float(x), to effect independent segregation of chroms, after which recomb occurs as a crossing-over path down the chroms
         self.mu = mu            #genome-wide mutation rate  #NOTE: should I allow this to be declared as a dictionary of mutation rates along all the chromosomes, to allow for heterogeneous mutation rates across the genome???
         self.sex = True 
 
@@ -111,18 +111,27 @@ def assign_h(l, params, low = 0, high = 2):
 
 
 
-#randomly assign selectivity of each locus to one of the eligible rasters (note: 0 = global selection (i.e.  selective advantage non-variable in space, i.e. fitness of alleles will not be contingent on any raster)
-def assign_env_var(num_rasters, l, allow_multiple_env_vars = False, allow_global_selection = True):
+#randomly assign selectivity of each locus to one of the eligible rasters 
+    #NOTE: Original idea was that 0 = global selection (i.e.  selective advantage non-variable in space, i.e.
+    #fitness of alleles will not be contingent on any raster), but got rid of that on 11/19/17
+def assign_env_var(num_rasters, l, params, allow_multiple_env_vars = True):
 
 
-    #if allow_multiple_env_vars, then highest env_var number will be the last landscape in the landscape_stack; otherwise, all env_var values will be either 1 (for the first raster) or 0 (for global selection if allow_global_selection = True)
+    #if allow_multiple_env_vars, then highest env_var number will be the last landscape in the landscape_stack 
     if allow_multiple_env_vars == True:
         high = num_rasters
     else:
         high = 1
 
+    possible_vars = range(high)
 
-    env_var = r.random_integers(low = not allow_global_selection, high = high, size = l)  #NOTE: 0's will be assigned if allow_global_selection = True, else 1 will be lowest number)
+    if ('movement_surf' in params.keys()):
+        if params['movement_surf'] == True:
+            exclude_var = params['movement_surf_scape_num']
+            possible_vars.remove(exclude_var)
+
+    
+    env_var = r.choice(possible_vars, size = l, replace = True)
 
 
     return env_var
@@ -147,11 +156,11 @@ def sim_s(l, alpha_s = 0.007, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 loc
 
 
 #simulate linkage values
-def sim_D(l, alpha_D = 7e2, beta_D = 7e3):
-    return r.beta(alpha_D, beta_D, l) 
+def sim_r(l, alpha_r = 7e2, beta_r = 7e3):
+    return np.array([min(0.5, n) for n in r.beta(alpha_r, beta_r, l)])
     #NOTE: for now, using the Beta, which can be very flexibly parameterized
-    #NOTE: current default alpha/beta vals, after being subtracted from 0.5 in sim_D function, will result in a tight distribution of D vals around 0.21 (~ 95% between 0.19 and 0.22)
-    #NOTE: to essentially fix D at 0.5, Beta(1,1e7) will do...
+    #NOTE: current default alpha/beta vals, after being subtracted from 0.5 in sim_r function, will result in a tight distribution of r vals around 0.21 (~ 95% between 0.19 and 0.22)
+    #NOTE: to essentially fix r at 0.5, Beta(1,1e7) will do...
     #NOTE: Ideally, would be good to look into to developing some sort of mixture distribution to reasonably and flexibly model map-distance values...
 
 
@@ -169,15 +178,12 @@ def set_l_c(L, n, even_chrom_sizes = True):
 
 #build the genomic architecture
 #NOTE: This will create the "template" for the genomic architecture of the hapolid genome that will then be used to simulate individuals and populations
-def build_genomic_arch(params, land, allow_global_selection = False, allow_multiple_env_vars = False):
+def build_genomic_arch(params, land, allow_multiple_env_vars = True):
 
 
 
 
-    #NOTE: OPERATIONALIZE GLOBALLY SELECTIVE LOCI??
-    #NOTE: 04-09-17: Set allow_multiple_env_vars to default to False
-
-
+    #NOTE: 11/19/17: DO I STILL WANT TO OPERATIONALIZE GLOBALLY SELECTIVE LOCI??
 
 
     #grab necessary parameters from the params dict
@@ -186,8 +192,8 @@ def build_genomic_arch(params, land, allow_global_selection = False, allow_multi
     n = params['n']
     mu = params['mu']
     x = params['x']
-    alpha_D = params['alpha_D']
-    beta_D = params['beta_D']
+    alpha_r = params['alpha_r']
+    beta_r = params['beta_r']
 
 
 
@@ -215,15 +221,15 @@ def build_genomic_arch(params, land, allow_global_selection = False, allow_multi
         s = dict()
         h = dict()
         env_var = dict()
-        D = dict()
+        r = dict()
         for chrom in range(n):
             p[chrom] = gen_allele_freqs(l_c[chrom])
             s[chrom] = sim_s(l_c[chrom])
             h[chrom] = assign_h(l_c[chrom], params)
-            env_var[chrom] = assign_env_var(num_rasters = land.num_rasters, l = l_c[chrom], allow_global_selection = allow_global_selection, allow_multiple_env_vars = allow_multiple_env_vars)
-            D[chrom] = sim_D(l_c[chrom], alpha_D, beta_D)
-            D[chrom][len(D[chrom])-1] = 0 #because each D value expresses linkage between that locus and the next, last value is forced to 0!
-        return Genomic_Architecture(x, n, sum(l_c), l_c, p, s, h, env_var, D, mu, False)
+            env_var[chrom] = assign_env_var(num_rasters = land.num_rasters, l = l_c[chrom], params = params, allow_multiple_env_vars = allow_multiple_env_vars)
+            r[chrom] = sim_r(l_c[chrom], alpha_r, beta_r)
+            r[chrom][0] = 1/float(x) #setting first val to 1/float(x) effects independent segregation of chroms, after which recombination occurs along the chrom according to defined recomb rates (r)
+        return Genomic_Architecture(x, n, sum(l_c), l_c, p, s, h, env_var, r, mu, False)
 
 
 

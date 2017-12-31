@@ -16,6 +16,8 @@ def get_viability(e, g):
     #the absolute value of the difference between the env value and the genotype
     return(np.abs(e-np.array(g)))
 
+
+
 #Get the vector of mortalities (probabilies of death) for a given density-dependent Pr(death) at a cell, the
 #environmental value at that cell, a list of genotypes at a certain locus for the individuals found there, and the selection
 #coefficient at that locus
@@ -24,7 +26,6 @@ def get_viability(e, g):
     #that cell, and diff is a correction factor, centered on a 0.5 difference between genotype and environ and
     #scaled so that the ratio of min to max possibile viabilities at this cell == 1-s, per common diploid
     #popgen theory
-
 def get_prob_death(d,e,g,s):
     #print('e')
     #print(e)

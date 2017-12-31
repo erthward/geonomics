@@ -5,6 +5,10 @@
 dictionary.'''
 
 
+import numpy.random as r
+import landscape, genome, population
+
+
 #set seed, if requested
 if params['set_seed']: 
     random.seed(params['seed_num'])

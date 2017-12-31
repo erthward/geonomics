@@ -41,7 +41,7 @@ import numpy.random as r
 
 
 def recombine(chromosome_num, genomic_arch):
-    recombination = r.binomial(1, genomic_arch.D[chromosome_num]) #determine all recombination events (i.e. 1's)
+    recombination = r.binomial(1, genomic_arch.r[chromosome_num]) #determine all recombination events (i.e. 1's)
     recombination = np.cumsum(recombination)%2 #determine a recombination 'path' down the genome array (i.e. which col to pull from each row)
 
     return recombination

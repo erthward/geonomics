@@ -38,6 +38,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from scipy.spatial import cKDTree
+from collections import Counter as C
 
 import sys
 
@@ -57,6 +58,10 @@ class Population:
     def __init__(self, N, individs, genomic_arch, size, T): 
 
         self.Nt = []                                        #list to record population size at each step (with starting size as first entry)
+
+        self.het = []                                       #list to record population heterozygosity at each step (with starting het as first entry)
+
+        self.maf = []                                       #list to record population major allele (i.e. the 1 allele) freq at each step (with starting freq as first entry)
 
         self.N = None                                       #slot to hold an landscape.Landscape object of the current population density 
 
@@ -123,9 +128,13 @@ class Population:
 
 
     #method to increment all population's age by one (also adds current pop size to tracking array)
-    def birthday(self):
+    def birthday(self, metrics = False):
         #add current pop size to pop.N (for later demographic analysis)
         self.Nt.append(self.census())
+        if metrics == True:
+            cts = C(self.get_genotype(0,0).values())
+            self.het.append(cts[0.5]/float(self.census()))
+            self.maf.append((cts[1]*2 + cts[0.5])/(2.*self.census()))
         #increment age of all individuals
         [ind.birthday() for ind in self.individs.values()];
 
@@ -226,9 +235,11 @@ class Population:
 
     def check_extinct(self):
         if len(self.individs.keys()) == 0:
-            print '\n\nYOUR POPULATION WENT EXTINCT!\n\n\t(Press <Enter> to exit.)'
-            raw_input()
-            sys.exit()
+            print '\n\nYOUR POPULATION WENT EXTINCT!\n\n'
+            return(1)
+            #sys.exit()
+        else:
+            return(0)
     
 
 
@@ -394,7 +405,7 @@ class Population:
                 h = override_h
             else:
                 h = self.genomic_arch.h[chromosome][locus]
-            return dict(zip(individs, self.heterozygote_effects[h](np.array([ind.genome.genome[0][0,] for i, ind in self.individs.items() if i in individs]))))
+            return dict(zip(individs, self.heterozygote_effects[h](np.array([ind.genome.genome[chromosome][locus,] for i, ind in self.individs.items() if i in individs]))))
 
 
 
@@ -493,7 +504,7 @@ class Population:
     
     
     
-    def show_density(self, land, window_width = None, normalize_by = 'census', max_1 = False, color = 'black'):
+    def show_density(self, land, window_width = None, normalize_by = 'census', max_1 = False, color = 'black', markersize = 40):
 		dens = self.calc_density(land, window_width = window_width, normalize_by = normalize_by, max_1 = max_1)
 		dens.show(im_interp_method = 'nearest', pop = True)
 		

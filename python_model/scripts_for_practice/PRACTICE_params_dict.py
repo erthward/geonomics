@@ -9,11 +9,11 @@ params = {
 
 'seed_num' : 2,                    #number to seed random number generators
 
-'T' : 5000,                      #total model runtime
+'T' : 200,                      #total model runtime
 
 'burn_T': 60,                     #total burn-in runtime
 
-'L' : 1,                         #total number of loci
+'L' : 20,                         #total number of loci
 
 'n' : 1,                           #number of chromosomes
 
@@ -23,9 +23,9 @@ params = {
 
 'mu' : 10e-9,                    #genome-wide mutation rate
 
-'alpha_D' : 14.999e10,                #alpha for beta distribution of linkage values  #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333, with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
+'alpha_r' : 0.5,                #alpha for beta distribution of linkage values  #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333, with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
 
-'beta_D' : 15e10,                 #beta for beta distribution of linkage values
+'beta_r' : 5,                 #beta for beta distribution of linkage values
 
 'use_dom' : False,              #whether or not to use dominance (default to False)
                                 #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP

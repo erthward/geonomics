@@ -285,6 +285,7 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     #force all cells where K<1 to take on either the calculated dNdt value or the negative value of N at that
     #cell, whichever is higher
     dNdt[K<1] = [max(dNdt[K<1][i], -N[K<1][i]) for i in range(len(dNdt[K<1]))]
+    #dNdt[np.isnan(dNdt)] = 0
     assert False not in list(dNdt[K<1].ravel() >= -N[K<1].ravel()), 'dNdt[K<1] not >= -N[K<1]: \n\t%s' % str(dNdt[K<1].ravel() >= -N[K<1].ravel())
     assert True not in np.isnan(dNdt)
     assert True not in np.isinf(dNdt), 'The following cells are infinite: \n\t%s' % str([i for i, n in enumerate(dNdt.ravel()) if np.isinf(n)])
@@ -479,15 +480,17 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     print '\n\t%i individuals dead' % num_deaths
 
     #Check if extinct
-        #If so, will return that information and exit
-    pop.check_extinct()
+    extinct = pop.check_extinct()
+        
+
 
     #Age the population NOTE: SHOULD THIS HAPPEN LATER, SO THAT NEWBORN ACTUALLY LIVE THROUGH ONE FULL CYCLE?
     #pop.birthday()
 
+    return(extinct)
     #If burn_in == True:
-    if burn_in == True:
-        pass
+    #if burn_in == True:
+    #    pass
         #Update pop.K
         #Run the burn_in functions to update the running metrics, and assess stationarity, and return decision
         #of whether or not stationarity has been achieved
@@ -495,8 +498,8 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
         #return decision
         
     #Else exit
-    else:
-        pass
+    #else:
+        #pass
 
 
 

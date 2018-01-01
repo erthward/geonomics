@@ -484,9 +484,6 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
         
 
 
-    #Age the population NOTE: SHOULD THIS HAPPEN LATER, SO THAT NEWBORN ACTUALLY LIVE THROUGH ONE FULL CYCLE?
-    #pop.birthday()
-
     return(extinct)
     #If burn_in == True:
     #if burn_in == True:

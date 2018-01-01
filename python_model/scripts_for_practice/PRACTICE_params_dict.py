@@ -111,15 +111,17 @@ params = {
 
 'stats' : {                      #dictionary defining which stats to be calculated, and parameters on their calculation (including frequency, in timesteps, of collection)
                                  #valid stats include:
+                                    # 'Nt'  : population census size
                                     # 'het' : heterozygosity
-                                    # 'maf' : minor allele frequency
-                                    # 'ld'  : linkage disequilibrium
+                                    # 'MAF' : minor allele frequency
+                                    # 'LD'  : linkage disequilibrium
+        'Nt' : {'calc' : True, 'freq': 1},
 
         'het' : {'calc' : True, 'freq': 1},
 
-        'maf' : {'calc' : True, 'freq': 1},
+        'MAF' : {'calc' : True, 'freq': 1},
         
-        'ld'  : {'calc' : True, 'freq': 1}
+        'LD'  : {'calc' : True, 'freq': 1}
 
         }
 

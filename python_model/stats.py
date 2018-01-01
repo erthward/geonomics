@@ -30,9 +30,10 @@ class Stats:
 
         #create a dictionary to link the stats' names in the params dicts to the functions to be called by
         #them (defined in the FUNCTIONS section of this script)
-        self.function_dict = {'het': calc_het,
-                              'maf': calc_maf,
-                              'ld':  calc_ld
+        self.function_dict = {  'Nt': calc_Nt,
+                                'ld':  calc_LD,
+                                'het': calc_het,
+                                'maf': calc_MAF
                               }
 
 
@@ -92,11 +93,15 @@ def create_stats_object(params):
 
 #TODO: 
     # ALL OF THIS WOULD NEED TO BE REVAMPED TO ALLOW FOR MORE THAN ONE CHROMOSOME
-    # Move the het and maf functions that are embedded in population.birthday right now into here instead
+
+
+def calc_Nt(pop):
+    Nt = pop.census()
+    return(Nt)
 
 
 
-def calc_ld(pop, plot = False):
+def calc_LD(pop, plot = False):
     
     #TODO: I should also include (either as an alternative within this fn, or as separate fn) the option to calculate D'
 
@@ -155,16 +160,16 @@ def calc_het(pop):
 
     
 
-def calc_maf(pop):
+def calc_MAF(pop):
     two_N = 2*float(pop.census())
-    maf = []
+    MAF = []
     for l in range(pop.genomic_arch.L):
         cts = C(pop.get_genotype(0,l).values())
-        maf_l = (cts[1.0]*2 + cts[0.5])/two_N
-        if maf_l >0.5:
-            maf_l = 1-maf_l
-        maf.append(maf_l)
-    return(maf)
+        MAF_l = (cts[1.0]*2 + cts[0.5])/two_N
+        if MAF_l >0.5:
+            MAF_l = 1-MAF_l
+        MAF.append(MAF_l)
+    return(MAF)
 
 
 

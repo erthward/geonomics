@@ -78,7 +78,7 @@ class Individual:
 
     
     #function to increment age by one
-    def birthday(self):
+    def increment_age_stage(self):
         self.age = self.age + 1
 
 

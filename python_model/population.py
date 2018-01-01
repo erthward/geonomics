@@ -57,11 +57,7 @@ class Population:
      
     def __init__(self, N, individs, genomic_arch, size, T): 
 
-        self.Nt = []                                        #list to record population size at each step (with starting size as first entry)
-
-
-
-        self.N = None                                       #slot to hold an landscape.Landscape object of the current population density 
+        self.N = None                                       #slot to hold a landscape.Landscape object of the current population density 
 
         self.K = None                                       #slot to hold an landscape.Landscape object of the local carrying capacity (i.e. 'target' dynamic equilibrium population density)
 
@@ -126,11 +122,10 @@ class Population:
 
 
     #method to increment all population's age by one (also adds current pop size to tracking array)
-    def birthday(self):
-        #add current pop size to pop.N (for later demographic analysis)
-        self.Nt.append(self.census())
+    def increment_age_stage(self):
+        
         #increment age of all individuals
-        [ind.birthday() for ind in self.individs.values()];
+        [ind.increment_age_stage() for ind in self.individs.values()];
 
 
 
@@ -553,11 +548,11 @@ class Population:
 
 
 
-    def show_pop_growth(self, params):
-        T = range(len(self.Nt))
+    def show_pop_growth(self, params, stats):
+        T = range(len(stats.Nt))
         x0 = params['N']/self.K.raster.sum() 
-        plt.plot(T, [demography.logistic_soln(x0,params['r'],t)*self.K.raster.sum() for t in T], color = 'red')
-        plt.plot(T, self.Nt, color = 'blue')
+        plt.plot(T, [demography.logistic_soln(x0, params['r'], t)*self.K.raster.sum() for t in T], color = 'red')
+        plt.plot(T, stats.Nt, color = 'blue')
         plt.xlabel('t')
         plt.ylabel('N(t)')
 

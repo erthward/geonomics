@@ -16,6 +16,7 @@ import gametogenesis
 import selection
 import mutation
 import param_exploration as pe
+import stats
 
 import numpy as np
 from numpy import random as r

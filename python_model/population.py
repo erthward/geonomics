@@ -59,9 +59,7 @@ class Population:
 
         self.Nt = []                                        #list to record population size at each step (with starting size as first entry)
 
-        self.het = []                                       #list to record population heterozygosity at each step (with starting het as first entry)
 
-        self.maf = []                                       #list to record population major allele (i.e. the 1 allele) freq at each step (with starting freq as first entry)
 
         self.N = None                                       #slot to hold an landscape.Landscape object of the current population density 
 
@@ -128,13 +126,9 @@ class Population:
 
 
     #method to increment all population's age by one (also adds current pop size to tracking array)
-    def birthday(self, metrics = False):
+    def birthday(self):
         #add current pop size to pop.N (for later demographic analysis)
         self.Nt.append(self.census())
-        if metrics == True:
-            cts = C(self.get_genotype(0,0).values())
-            self.het.append(cts[0.5]/float(self.census()))
-            self.maf.append((cts[1]*2 + cts[0.5])/(2.*self.census()))
         #increment age of all individuals
         [ind.birthday() for ind in self.individs.values()];
 
@@ -391,7 +385,7 @@ class Population:
 
     
 
-    def get_genotype(self, chromosome, locus, return_format = 'mean', individs = None, override_h = None):
+    def get_genotype(self, chromosome, locus, return_format = 'mean', individs = None, by_dominance = None):
 
         if individs == None:
             individs = self.individs.keys()
@@ -401,10 +395,10 @@ class Population:
             return dict([(i, self.individs[i].genome.genome[chromosome][locus, :]) for i in self.individs.keys() if i in individs]) 
 
         elif return_format == 'mean':
-            if override_h <> None:
-                h = override_h
-            else:
+            if by_dominance == True:
                 h = self.genomic_arch.h[chromosome][locus]
+            else:
+                h = 0.5
             return dict(zip(individs, self.heterozygote_effects[h](np.array([ind.genome.genome[chromosome][locus,] for i, ind in self.individs.items() if i in individs]))))
 
 

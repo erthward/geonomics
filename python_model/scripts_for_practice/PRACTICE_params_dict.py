@@ -13,7 +13,7 @@ params = {
 
 'burn_T': 60,                     #total burn-in runtime
 
-'L' : 20,                         #total number of loci
+'L' : 1000,                         #total number of loci
 
 'n' : 1,                           #number of chromosomes
 
@@ -105,5 +105,23 @@ params = {
 
 'alpha_mut_s' : 25,                # alpha param for the beta distribution describing the highly advantageous selection coeffs for mutations
 
-'beta_mut_s' : 0.5                # beta param for the beta distribution describing the highly advantageous selection coeffs for mutations
+'beta_mut_s' : 0.5,                # beta param for the beta distribution describing the highly advantageous selection coeffs for mutations
+
+
+
+'stats' : {                      #dictionary defining which stats to be calculated, and parameters on their calculation (including frequency, in timesteps, of collection)
+                                 #valid stats include:
+                                    # 'het' : heterozygosity
+                                    # 'maf' : minor allele frequency
+                                    # 'ld'  : linkage disequilibrium
+
+        'het' : {'calc' : True, 'freq': 1},
+
+        'maf' : {'calc' : True, 'freq': 1},
+        
+        'ld'  : {'calc' : True, 'freq': 1}
+
+        }
+
+
 }

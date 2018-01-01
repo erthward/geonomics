@@ -1,79 +1,170 @@
 #!/usr/bin/python
 #stats.py
 
-'''Functions for calculating common population-genetic statistics, and for doing so for specified stats at specified time
-intervals during model run according params-dict contents.'''
+'''
+Functions for creating a Stats object, and for calculating those statistics at 
+#specified frequencies and with specified arguments, according to the contents 
+of the params-dict's ['stats'] section.
+'''
 
-
-
-#TODO: 
-    # Turn the LD code below into functions: r2 and D' matrix functions
-    # Move the het and maf functions that are embedded in population.birthday right now into here instead
-    # Crosswalk this with arguments in params_dict (for which stats to calculate, and at what timsteps or freq)
 
 
 
 
 from __future__ import division
+import numpy as np
 from scipy.stats.stats import pearsonr
+from collections import Counter as C
+import matplotlib.pyplot as plt
 import time
 
-populome = np.array([pop.individs[i].genome.genome[0] for i in pop.individs.keys()])
-n = shape(populome)[0] #num individs
-x = shape(populome)[2] #ploidy
-N = n*x
-L = pop.genomic_arch.L
-
-r2_mat = np.zeros([L]*2)-1
-alt_r2_mat = np.zeros([L]*2)-1
-
-#first approach
-start_1 = time.time()
-for i in range(L):
-    for j in range(i+1, L):
-        loc_i_f1 = sum(populome[:,i,:])/(N)  #calculates freq of allele 1 at locus i
-        loc_j_f1 = sum(populome[:,j,:])/(N)  #calculates freq of allele 1 at locus j
-        loc_ij_f11 = sum(populome[:,[i,j],:].sum(axis = 1) ==2)/N #calculates freq of chroms with 1_1 haplotype at loci i and j
-        D_1_1 = loc_ij_f11 - (loc_i_f1 * loc_j_f1)
-        r2 = D_1_1**2/(loc_i_f1*(1-loc_i_f1)*loc_j_f1*(1-loc_j_f1))
-        r2_mat[i,j] = r2
-end_1 = time.time()
 
 
+#------------------------------------
+# CLASSES ---------------------------
+#------------------------------------
 
+class Stats:
+    def __init__(self, params):
+
+
+        #create a dictionary to link the stats' names in the params dicts to the functions to be called by
+        #them (defined in the FUNCTIONS section of this script)
+        self.function_dict = {'het': calc_het,
+                              'maf': calc_maf,
+                              'ld':  calc_ld
+                              }
+
+
+        #create a Stats.stats object, where all of the stats calculated will be stored
+        self.stats = {}
+        for stat, stat_params in params['stats'].items():
+            if stat_params['calc'] == True:
+                self.stats[stat] = {'data': [np.nan]*int(np.floor(params['T']/float(stat_params['freq']))),
+                                    'freq': stat_params['freq'],
+                                    #create tuple of other, stat-specific parameters, 
+                                    #to later be unpacked as arguments to the appropriate stat function
+                                    'other_params': dict([(k,v) for k,v in stat_params.items() if k not in ['calc', 'freq']])
+                                    }
+
+
+
+    #create a master method, to be called each timestep, which will make a list of all stats that need to be
+    #calculated that timestep (based on the calculation-frequencies provided in the params dicts),
+    #and then calls the functions to calculate them all and adds the results to self.stats
+    def calc_stats(self, pop, t):
+
+        calc_list = []
+
+        for stat,params in self.stats.items():
+            if t%params['freq'] == 0:
+                calc_list.append(stat)
+
+        for stat in calc_list:
+            #if 'other_params' in self.stats[stat].keys():
+            self.stats[stat]['data'][t] = self.function_dict[stat](pop, **self.stats[stat]['other_params'])
+            #else:
+                #self.stats[stat]['data'][t] = self.function_dict[stat](pop)
+
+
+
+
+
+
+
+
+
+
+#--------------------------------------
+# FUNCTIONS ---------------------------
+#--------------------------------------
+
+
+#create the Stats object
+def create_stats_object(params):
+    return(Stats(params))
+
+
+
+
+
+
+
+#TODO: 
+    # ALL OF THIS WOULD NEED TO BE REVAMPED TO ALLOW FOR MORE THAN ONE CHROMOSOME
+    # Move the het and maf functions that are embedded in population.birthday right now into here instead
+
+
+
+def calc_ld(pop, plot = False):
+    
+    #TODO: I should also include (either as an alternative within this fn, or as separate fn) the option to calculate D'
+
+
+    #TODO: I keep getting errors like the following, which could just be due to divison of small
+        #floating-point numbers, but I should figure out exactly what's going on and be sure everything checks out:
+                # stats.py:117: RuntimeWarning: invalid value encountered in double_scalars
+
+    populome = np.array([pop.individs[i].genome.genome[0] for i in pop.individs.keys()])
+    n = np.shape(populome)[0] #num individs
+    x = np.shape(populome)[2] #ploidy
+    N = n*x
+    L = pop.genomic_arch.L
+    assert L == np.shape(populome)[1], "The length of the 1th dimension of populome doesn't equal pop.genomic_arch.L"
+
+    r2_mat = np.zeros([L]*2)-1 # -1 serves as a 'no data' value here
+
+    for i in range(L):
+        for j in range(i+1, L):
+            f1_i = np.sum(populome[:,i,:], axis = None)/(N)  #calculates freq of allele 1 at locus i
+            f1_j = np.sum(populome[:,j,:], axis = None)/(N)  #calculates freq of allele 1 at locus j
+            f11_ij = float(np.sum(populome[:,[i,j],:].sum(axis = 1) ==2, axis = None))/(N) #calculates freq of chroms with 1_1 haplotype at loci i and j
+            D_1_1 = f11_ij - (f1_i * f1_j)
+            r2 = (D_1_1**2)/(f1_i*(1-f1_i)*f1_j*(1-f1_j))
+            r2_mat[i,j] = r2
+
+
+    if plot == True:
+        fig = plt.figure()
+
+        ax = fig.add_subplot(1,2,1)
+        #plot of LD matrix
+
+        plt.imshow(np.clip(r2_mat, a_min = 0, a_max = None), interpolation = 'nearest')
+
+        ax = fig.add_subplot(1,2,2)
+
+        #plot of mean linkage values
+        r2_list = [r2_mat[0,1]]
+        for i in range(1,L-1):
+            r2_list.append(np.mean([r2_mat[i-1,i], r2_mat[i,i+1]]))
+        r2_list.append(r2_mat[L-2,L-1])
         
-#alternate for calculating
-start_2 = time.time()
-for i in range(L):
-    for j in range(i+1, L):
-        g_i = list(populome[:,i,0])+list(populome[:,i,1]) #for locus i, concatenate list of second chroms to end of list of first chroms
-        g_j = list(populome[:,j,0])+list(populome[:,j,1]) #for locus j, do the same
-        alt_r2 = pearsonr(g_i, g_j)[0]**2
-        alt_r2_mat[i,j] = alt_r2
-end_2 = time.time()
+        plt.scatter(range(L), r2_list, c = 'red', marker = 'o', s=25)
 
-
-
-print('FIRST APPROACH: %0.4f s' % (end_1-start_1))
-print('SECOND APPROACH: %0.4f s' % (end_2-start_2))
-print('SPEED APPROACH 2 IS %0.4fx SPEED APPROACH 1' % ((end_1-start_1)/(end_2-start_2)))
-
-
-assert round(r2,5) == round(alt_r2, 5), 'ERROR: Appears the two estimations of r^2 differ at less than 5 sig digits precision.'
+    return(r2_mat)
+        
 
 
 
 
-#plot of LD matrix
-plt.imshow(np.clip(r2_mat, a_min = 0, a_max = None), interpolation = 'nearest')
+def calc_het(pop):
+    N = float(pop.census())
+    het = [C(pop.get_genotype(0,l).values())[0.5]/N for l in range(pop.genomic_arch.L)]
+    return(het)
+
+    
+
+def calc_maf(pop):
+    two_N = 2*float(pop.census())
+    maf = []
+    for l in range(pop.genomic_arch.L):
+        cts = C(pop.get_genotype(0,l).values())
+        maf_l = (cts[1.0]*2 + cts[0.5])/two_N
+        if maf_l >0.5:
+            maf_l = 1-maf_l
+        maf.append(maf_l)
+    return(maf)
 
 
-
-#plot of mean linkage values
-r2_list = [r2_mat[0,1]]
-for i in range(1,L-1):
-    r2_list.append(mean([r2_mat[i-1,i], r2_mat[i,i+1]]))
-r2_list.append(r2_mat[L-2,L-1])
-
-plt.scatter(range(L), r2_list, c = 'red', marker = 'o', s=25)
 

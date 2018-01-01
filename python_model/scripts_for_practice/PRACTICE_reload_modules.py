@@ -16,5 +16,6 @@ reload(gametogenesis)
 reload(selection)
 reload(mutation)
 reload(pe)
+reload(stats)
 
 

@@ -27,8 +27,23 @@ params = {
 
 'beta_r' : 5,                 #beta for beta distribution of linkage values
 
+'alpha_mut_s' : 25,                # alpha param for the beta distribution describing the highly advantageous selection coeffs for mutations
+
+'beta_mut_s' : 0.5,                # beta param for the beta distribution describing the highly advantageous selection coeffs for mutations
+
 'use_dom' : False,              #whether or not to use dominance (default to False)
                                 #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP
+
+'pleiotropy' : False,           #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?)
+
+'traits' : {'num': 2,           #number of traits to simulate
+            'scape_num': [1,2], #list of the landscape numbers to be used for selection on each trait 
+                                #(i.e.  list length should equal value of 'num' on previous line, as should lengths of subsequent lists)
+            's' : [0.1, 0.1],   #selection coefficient for trait
+            'num_loci': [1,100], #number of loci assigned to trait
+            'alpha_dist_sigma': [0.25,0.0025],  #NOTE: for sigma = 0.25, one average locus is enough to generate an optimum genotype; for 0.025, 10 loci; and so on linearly
+            'fitness_fn_gamma': [1,1] #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
+            },
 
 'N' : 500,                        #total pop size
 
@@ -80,7 +95,7 @@ params = {
 
 'dist_weighted_birth' : False,    #should the probability of birth be weighted by the distance between individuals in a pair?
 
-'r':0.5,                            #pop intrinsic growth rate
+'R':0.5,                            #pop intrinsic growth rate
 
 'b' : 0.2,                         #population intrinsic birth rate (implemented as the probability that an identified potential mating pair successfully mates); 
                                    #NOTE: this may later need to be re-implemented to allow for spatial variation in intrinsic rate (e.g. expression as a raster) and/or for density-dependent births as well as deaths
@@ -102,12 +117,6 @@ params = {
 'sigma_deaths' : 0.2,              # std for the normal distribution used to choose the r.v. of deaths per timestep (mean of this distribution is the overshoot, as calculated from pop.size and pop.census())
 
 'density_dependent_fitness' : True, #should fitness be density dependent? (note: helps to avoid subpopulation 'clumping')
-
-'alpha_mut_s' : 25,                # alpha param for the beta distribution describing the highly advantageous selection coeffs for mutations
-
-'beta_mut_s' : 0.5,                # beta param for the beta distribution describing the highly advantageous selection coeffs for mutations
-
-
 
 'stats' : {                      #dictionary defining which stats to be calculated, and parameters on their calculation (including frequency, in timesteps, of collection)
                                  #valid stats include:

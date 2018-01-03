@@ -22,7 +22,6 @@ Documentation:            URL
 '''
 
 
-#NOTE: shouldn't need to import these here, right? since they're imported in main.py...
 import numpy as np    
 from numpy import random as r
 
@@ -37,20 +36,61 @@ from numpy import random as r
     
 
 class Genomic_Architecture:
-    def __init__(self, x, n, L, l_c, p, s, h, env_var, r, mu, sex):
+    def __init__(self, trait_dict, x, n, L, l_c, p, s, h, pleiotropy, env_var, r, mu, sex):
         self.x = x              #ploidy (NOTE: for now will be 2 by default; later could consider enabling polyploidy)
         self.n = n              #haploid number of chromosomes
         self.L = L              #total length (i.e. number of markers)
         self.l_c = l_c          #length of each chromosome
         self.p = p              #Dict of allele frequencies for the 1-alleles for all (numbered by keys) chromosomes in haploid genome
         self.s = s              #Dict of selection coefficients, for all chroms
-        self.non_neutral = dict([(c, self.s[c] <> 0) for c in self.s.keys()])  #np.array for quick subsetting of only non-neutral loci, for use in selection and mutation modules
-        self.sum_s =     sum([sum(self.s[c][self.non_neutral[c]]) for c in self.s.keys()])  #sum of all selection coefficients; to save on computation in weighted sum used in selection module
+        self.pleiotropy  = pleiotropy  #True/False regarding whether to allow a locus to affect the phenotype of more than one trait; defaults to False
+        self.non_neutral = np.zeros([L]) #array to keep track of all loci that influence the phenotype of at least one trait
         self.h = h          #Dict of heterozygous effects for all loci, for all chroms
         self.env_var = env_var  #Dict of the environmental variables for which all loci on all chroms are selective
         self.r = r              #Dict of recombination rates between each locus and the next, for all chroms (NOTE: first will be forced to 1/float(x), to effect independent segregation of chroms, after which recomb occurs as a crossing-over path down the chroms
         self.mu = mu            #genome-wide mutation rate  #NOTE: should I allow this to be declared as a dictionary of mutation rates along all the chromosomes, to allow for heterogeneous mutation rates across the genome???
         self.sex = True 
+        self.traits = trait_dict
+
+    
+   
+    #method for drawing an effect size to a locus (or optionally, multiple)
+    def draw_alpha(self, trait_num, n = 1):
+        return (r.normal(0, self.traits[trait_num]['alpha_dist_sigma'], n))
+
+    
+    #method for assigning loci to traits 
+    def assign_loci_to_trait(self, trait_num, mutational = False, locs = None):
+
+        if mutational == False:  #i.e. if this is not the result of a point mutation, but instead either an initial setup or somehow manually introduced
+            #number of loci to be assigned
+            n = self.traits[trait_num]['num_loci']
+        else:
+            n = 1
+
+        #if locations provided manually, use those
+        if locs <> None:
+            loci = np.array(locs)
+            assert len(np.shape(loci)) == 1, 'Object containing loci provided manually is not of dimension 1'
+        #otherwise choose loci randomly, either allowing pleiotropy or not
+        elif self.pleiotropy == False:
+            loci = r.choice(np.where(self.non_neutral == False)[0], size = n, replace = False)
+        elif self.pleiotropy == True:
+            loci = r.choice(range(self.L), size = n, replace = False)
+
+        #choose effects from a Gaussian dist with mean 0 and sigma provided by trait params (as per e.g.  Yeaman and Whitlock 2011)
+        effects = self.draw_alpha(trait_num, n)
+
+        #check that loci and effects are of equal length
+        assert len(loci) == len(effects), 'Lengths of the two arrays containing the new trait loci and their effects are not equal.'
+
+        #add these loci to the trait's 'loci' array
+        self.traits[trait_num]['loci'] = np.array(list(self.traits[trait_num]['loci']) + list(loci))
+        #and add their effects to the 'alpha' array
+        self.traits[trait_num]['alpha'] = np.array(list(self.traits[trait_num]['alpha']) + list(effects))
+
+        #and and these loci to self.non-neutral, to keep track of all loci underlying any traits (for purpose of avoiding pleiotropy)
+        self.non_neutral[loci] = 1
 
 
 
@@ -155,6 +195,22 @@ def sim_s(l, alpha_s = 0.007, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 loc
 
 
 
+
+def construct_trait_dict(traits_params):
+    trait_dict = {}
+    #for each trait, create a dict with the params
+    for t in range(traits_params['num']):
+        curr_trait_dict = dict([(k,v[t]) for k,v in traits_params.items() if k <> 'num'])
+        #use the params to create additional necessary dict components, including:
+        #loci assigned to the trait (initially empty, will be filled by calling a Genomic_Architecture method after genomic_arch is created)
+        curr_trait_dict['loci'] = []
+        #effect sizes of those loci (also initally empty)
+        curr_trait_dict['alpha'] = []
+        trait_dict[t] = curr_trait_dict
+    return(trait_dict)
+
+
+
 #simulate linkage values
 def sim_r(l, alpha_r = 7e2, beta_r = 7e3):
     return np.array([min(0.5, n) for n in r.beta(alpha_r, beta_r, l)])
@@ -177,7 +233,7 @@ def set_l_c(L, n, even_chrom_sizes = True):
 
 
 #build the genomic architecture
-#NOTE: This will create the "template" for the genomic architecture of the hapolid genome that will then be used to simulate individuals and populations
+#NOTE: This will create the "template" for the genomic architecture that will then be used to simulate individuals and populations
 def build_genomic_arch(params, land, allow_multiple_env_vars = True):
 
 
@@ -194,6 +250,9 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
     x = params['x']
     alpha_r = params['alpha_r']
     beta_r = params['beta_r']
+    pleiotropy = params['pleiotropy']
+
+    trait_dict = construct_trait_dict(params['traits'])
 
 
 
@@ -229,7 +288,14 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
             env_var[chrom] = assign_env_var(num_rasters = land.num_rasters, l = l_c[chrom], params = params, allow_multiple_env_vars = allow_multiple_env_vars)
             r[chrom] = sim_r(l_c[chrom], alpha_r, beta_r)
             r[chrom][0] = 1/float(x) #setting first val to 1/float(x) effects independent segregation of chroms, after which recombination occurs along the chrom according to defined recomb rates (r)
-        return Genomic_Architecture(x, n, sum(l_c), l_c, p, s, h, env_var, r, mu, False)
+        genomic_arch = Genomic_Architecture(trait_dict, x, n, sum(l_c), l_c, p, s, h, pleiotropy, env_var, r, mu, False)
+        
+        #add the loci and effect sizes for each of the traits
+        for trait_num in genomic_arch.traits.keys():
+            genomic_arch.assign_loci_to_trait(trait_num, mutational = False, locs = None)
+
+        return Genomic_Architecture(trait_dict, x, n, sum(l_c), l_c, p, s, h, pleiotropy, env_var, r, mu, False)
+
 
 
 

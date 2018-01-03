@@ -10,10 +10,16 @@ from sklearn.preprocessing import normalize
 
 import landscape
 import mating
-import NEW_selection
+import selection
 
 
 '''Functions to control demography/population dynamics.'''
+
+
+
+
+
+
 
 
 def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', min_0 = True, max_1 = False, max_val = None):
@@ -126,7 +132,7 @@ def calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic'):
     #NOTE: For now this is the only option and the default, but could easily offer other equations later if desired
     if pop_growth_eq == 'logistic':
         #use logistic eqxn, with pop intrinsic growth rate from params['r'], to generate current growth-rate raster
-        dNdt = logistic_eqxn(params['r'], N, K)
+        dNdt = logistic_eqxn(params['R'], N, K)
     
     return(landscape.Landscape(dims, dNdt))
 
@@ -184,7 +190,7 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())  #NOTE: Has occasionally produced an assertion error here, though I'm not sure why yet...
 
     #NOTE: I anticipate that using mu_dispersal as the density-calculating window should produce a slightly more realistic expectation
-    #of the expected number of births per cell in a few steps; using max(1, mu_dispersal) to avoid
+    #of the number of births per cell in a few steps; using max(1, mu_dispersal) to avoid
     #window_lengths <1 (needlessly computationally expensive)
 
     assert True not in np.isnan(n_pairs)
@@ -458,7 +464,7 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
     
         #NOTE: THE ZERO-INDEXING IN THE FOLLOWING LINE WILL NEED TO BE REPLACED WHEN I WORK WITH >1 LOCUS!
         #NOTE: SHOULD COME UP WITH A WAY TO CALL get_prob_death once, since it can be run vectorized
-        d_ind = dict([(i, NEW_selection.get_prob_death(d[int(ind.y), int(ind.x)], env[0][i], gen[0][i], s[0])) for i,ind in pop.individs.items()])
+        d_ind = dict([(i, selection.get_prob_death(d[int(ind.y), int(ind.x)], env[0][i], gen[0][i], s[0])) for i,ind in pop.individs.items()])
 
         #print(d_ind.items()[0:20])
         #print('VS')

@@ -511,16 +511,16 @@ class Population:
 
 
 
-
-    def show_locus(self, chromosome, locus, land, scape_num = None, im_interp_method = 'nearest', markersize = 65, alpha = 1, override_h = True):
+    #method for plotting individuals colored by their genotype at a given locus
+    def show_genotype(self, chromosome, locus, land, scape_num = None, im_interp_method = 'nearest', markersize = 65, alpha = 1, by_dominance = True):
         if scape_num <> None:
             land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
         
         else:
             land.show(im_interp_method = im_interp_method, pop = True)
         
-        if override_h == True:
-            genotypes = self.get_genotype(chromosome, locus, override_h = 0.5)
+        if by_dominance == True:
+            genotypes = self.get_genotype(chromosome, locus, by_dominance = 0.5)
         else:
             genotypes = self.get_genotype(chromosome, locus)
             
@@ -535,8 +535,36 @@ class Population:
                 y = c[:,1]-0.5
                 plt.scatter(x,y, s = markersize, c = colors[n], alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
     
-            #mpl.pyplot.plot([coord[0] for coord in coords], [coord[1] for coord in coords], 'o', markersize = 11, scalex = False, scaley = False, color = colors[n], alpha = 0.8)
 
+
+
+    #convenience method for calling selection.get_phenotype() on this pop
+    def get_phenotype(self, trait, individs = None):
+        if individs <> None:
+            return({i:v for i,v in selection.get_phenotype(self, trait).items() if i in individs})
+        else:
+            return(selection.get_phenotype(self, trait))
+
+
+
+    #method for plotting individuals colored by their phenotypes for a given trait
+    def show_phenotype(self, trait, land, im_interp_method = 'nearest', markersize = 65, alpha = 1):
+
+        land.scapes[self.genomic_arch.traits[trait].scape_num].show(im_interp_method = im_interp_method, pop = True) 
+        from matplotlib.colors import LinearSegmentedColormap 
+        colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] 
+            # colors to match landscape palette extremes, but with hybrid a mix of the extremes 
+            #rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0],
+            #light blue = [0,1], white = [1,1]
+        cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
+
+        inds = self.individs.keys()
+        c = np.array(self.get_coords(inds).values())
+        x = c[:,0]-0.5
+        y = c[:,1]-0.5
+        z = self.get_phenotype(trait)
+        plt.scatter(x,y, s = markersize, c = [z[i] for i in inds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
+    
 
 
     #method for plotting a population pyramid

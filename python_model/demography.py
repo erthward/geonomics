@@ -16,7 +16,9 @@ import selection
 '''Functions to control demography/population dynamics.'''
 
 
-
+#TODO:
+    # - probably soon get rid of all the debug and print statements in the pop_dynamics function soon!
+    # - also probably get rid of any optional arguments fed into if statements that I wound up not using?
 
 
 
@@ -139,7 +141,7 @@ def calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic'):
 
 
 
-def mort(land, pop, params, death_probs):
+def kill(land, pop, params, death_probs):
     deaths = [i for i, p in death_probs.items() if bool(r.binomial(1, p, 1)) == True]
 
     [pop.individs.pop(ind) for ind in deaths]
@@ -149,12 +151,12 @@ def mort(land, pop, params, death_probs):
 
 
 
-def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage_d = None, births_before_deaths = True, debug = None):
+def pop_dynamics(land, pop, params, with_selection = True, burn_in = False, age_stage_d = None, births_before_deaths = False, debug = None):
     '''Generalized function for implementation population dynamics. Will carry out one round of mating and
-    deaths, according to parameterization laid out in params dict.
+    death, according to parameterization laid out in params dict.
 
 
-       If selection == False, only density-dependent death will occur.
+       If with_selection == False, only density-dependent death will occur.
 
        If age_stage_d <> None, an nx2 Numpy array should be provided, with column 1 listing the ages or
        stages and column 2 stipulating the relative probabilites of death for each age or stage (i.e. must be
@@ -180,7 +182,7 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
 
 
     ######calc num_pairs raster (use the calc_pop_density function on the centroids of the mating pairs)
-    pairs = pop.find_mating_pairs(pop, params)
+    pairs = pop.find_mating_pairs(land, params)
 
 
     p_x = [float(np.mean((pop.individs[pairs[i,0]].x, pop.individs[pairs[i,1]].x))) for i in range(pairs.shape[0])]
@@ -319,8 +321,8 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
 
         #NOTE: Does it matter that I'm not attempting to account for the fact that pairs will disperse out of
         #the cell? Almost certainly a larger effect with increasing dispersal-kernel distance. But nonetheless,
-        #would it even make sense (and even BE TRACTABLE) to calculate it any other way? My intuition is NO, but worth considering
-        #further later on...
+        #would it even make sense (and even BE TRACTABLE) to calculate it any other way? My intuition is NO, but 
+        #worth considering further later on...
 
         #NOTE: Currently, birth rate is intrinsic to the species and cannot be made a function of density or
         #spatial fitness. Might be worth adding this at some point in the future though.
@@ -422,15 +424,10 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
 
 
 
-    ######If births should happen after (and thus not be included in the calculation of) deaths, then instead of having mated and dispersed babies up above, do it now
-    if births_before_deaths == False:
-        #Feed the mating pairs and params['b'] to the mating functions, to produce and disperse zygotes
-        pop.mate(land, params, pairs)
-
-
-
-
-    ######Now implement deaths
+    ######If births should happen after (and thus not be included in the calculation of) deaths, then instead
+         #of having mated and dispersed babies up above, do it now (i.e. now that the d raster has been calculated)
+         #(see following 2 NOTE)
+        
         #NOTE: 04/28/17: LEAVING THE FOLLOWING NOTE FOR NOW, BUT I ADDED THIS EARLIER, BEFORE TODAY ADDING THE
         #births_before_deaths ARGUMENT THAT DEFAULTS TO False. The problem I overlooked in the setps that I
         #laid out in the following NOTE is that I failed to realize that the probability of a baby's death
@@ -447,43 +444,44 @@ def pop_dynamics(land, pop, params, selection = True, burn_in = False, age_stage
             #conflict. But in this case, is there any strong reason to CHANGE THIS? Or are there any foreseeable
             #and undesirable results/effects?... NEED TO PUT MORE THOUGHT INTO THIS LATER.
 
+    if births_before_deaths == False:
+        #Feed the mating pairs and params['b'] to the mating functions, to produce and disperse zygotes
+        pop.mate(land, params, pairs)
 
-    #plt.hist(death_probs.values(), bins = 50)
-    #raw_input()
 
-    #If selection = True, then use the d raster and individuals' relative fitnesses to calculate
+
+    ######Now implement deaths
+
+    #If with_selection = True, then use the d raster and individuals' relative fitnesses to calculate
     #per-individual probabilities of death
     #NOTE: FOR NOW JUST USING A SINGLE LOCUS, BUT LATER NEED TO IMPLEMENT FOR AN ARBITRARY NUMBER OF LOCI, AND A MAP
     #OF THOSE LOCI ONTO TRAITS
-    if selection == True:
-        #NOTE: THIS ALL ASSUMES A SINGLE CHROM FOR NOW! (THE 0s IN THE INDEXING OF THE FOLLOWING LINES)
-        loci = [i for i,n in enumerate(pop.genomic_arch.non_neutral[0]) if n == True]
-        env = [pop.get_habitat(pop.get_env_var(0,locus)[locus]) for locus in loci]
-        gen = [pop.get_genotype(0,locus) for locus in loci]
-        s = [pop.genomic_arch.s[0][locus] for locus in loci]
+    if with_selection == True:
     
-        #NOTE: THE ZERO-INDEXING IN THE FOLLOWING LINE WILL NEED TO BE REPLACED WHEN I WORK WITH >1 LOCUS!
-        #NOTE: SHOULD COME UP WITH A WAY TO CALL get_prob_death once, since it can be run vectorized
-        d_ind = dict([(i, selection.get_prob_death(d[int(ind.y), int(ind.x)], env[0][i], gen[0][i], s[0])) for i,ind in pop.individs.items()])
+        d_ind = selection.get_prob_death(pop, {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()})
 
         #print(d_ind.items()[0:20])
         #print('VS')
         #print(dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()]).items()[0:20])
 
-
-    elif selection == False:
-        d_ind = dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()])
+    elif with_selection == False:
+        d_ind = {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()}
+        assert np.alltrue(d_ind.values() >= 0)
+        assert np.alltrue(d_ind.values() <= 1)
 
     #If age_stage_d <> None then use the age_stage_d array, and pop.get_age(), and the d raster 
     #to calculate per-individual death probabilities
     if age_stage_d <> None:
         pass
         
-    #Feed the per-individual death probabilities into the deaths function, to generate deaths and cull
-    #those individuals
-    num_deaths = mort(land, pop, params, d_ind)
+
+    #Feed the per-individual death probabilities into the kill function, which will probabilistically generate deaths
+    #and cull those individuals, and will return the number of deaths
+    num_deaths = kill(land, pop, params, d_ind)
 
     print '\n\t%i individuals dead' % num_deaths
+
+
 
     #Check if extinct
     extinct = pop.check_extinct()

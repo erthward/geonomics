@@ -19,8 +19,6 @@ params = {
 
 'x' : 2,                         #ploidy (for now, leave at 2 for diploidy)
 
-'n_traits' : 1,                 #number of traits to simulate
-
 'mu' : 10e-9,                    #genome-wide mutation rate
 
 'alpha_r' : 0.5,                #alpha for beta distribution of linkage values  #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333, with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
@@ -37,10 +35,10 @@ params = {
 'pleiotropy' : False,           #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?)
 
 'traits' : {'num': 2,           #number of traits to simulate
-            'scape_num': [1,2], #list of the landscape numbers to be used for selection on each trait 
+            'scape_num': [0,1], #list of the landscape numbers to be used for selection on each trait 
                                 #(i.e.  list length should equal value of 'num' on previous line, as should lengths of subsequent lists)
             's' : [0.1, 0.1],   #selection coefficient for trait
-            'num_loci': [1,100], #number of loci assigned to trait
+            'n': [1,100], #number of loci assigned to trait
             'alpha_dist_sigma': [0.25,0.0025],  #NOTE: for sigma = 0.25, one average locus is enough to generate an optimum genotype; for 0.025, 10 loci; and so on linearly
             'fitness_fn_gamma': [1,1] #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
             },

@@ -238,7 +238,9 @@ def create_recomb_array(params):
         len(recomb_array) == L, "Length of recomb_array provided not equal to params['L']."
 
         #NOTE: #Always necessary to set the first locus r = 1/ploidy, to ensure independent assortment of homologous chromosomes
-        recomb_array[0] = 1/params['x'] 
+        recomb_array[0] = 0.5
+        #NOTE: for now, obligate diploidy
+        #recomb_array[0] = 1/params['x'] 
 
         return(recomb_array)
 
@@ -268,7 +270,9 @@ def create_recomb_array(params):
 
 
         #NOTE: #Always necessary to set the first locus r = 0.5, to ensure independent assortment of homologous chromosomes
-        recomb_array[0] = 1/params['x']
+        recomb_array[0] = 0.5
+        #NOTE: for now, obligate diploidy
+        #recomb_array[0] = 1/params['x']
 
 
         return(recomb_array, sorted(l_c))

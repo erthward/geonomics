@@ -61,6 +61,8 @@ class Population:
 
         self.K = None                                       #slot to hold an landscape.Landscape object of the local carrying capacity (i.e. 'target' dynamic equilibrium population density)
 
+        self.Nt = []
+
         self.individs = individs                            #dict of all individuals, as instances of individual.Individual class
 
 
@@ -119,6 +121,11 @@ class Population:
     #method to set self.N
     def set_N(self, N): #NOTE: Requires a landscape.Landscape instance
         self.N = N
+
+
+    #method to append current pop size to the pop.Nt list
+    def set_Nt(self):
+        self.Nt.append(self.census())
 
 
     #method to increment all population's age by one (also adds current pop size to tracking array)
@@ -525,9 +532,13 @@ class Population:
 
 
     #method for plotting individuals colored by their phenotypes for a given trait
-    def show_phenotype(self, trait, land, im_interp_method = 'nearest', markersize = 65, alpha = 1):
+    def show_phenotype(self, trait, land, scape_num = None, im_interp_method = 'nearest', markersize = 65, alpha = 1):
+    
+        if scape_num <> None:
+            land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
+        else:
+            land.scapes[self.genomic_arch.traits[trait].scape_num].show(im_interp_method = im_interp_method, pop = True) 
 
-        land.scapes[self.genomic_arch.traits[trait].scape_num].show(im_interp_method = im_interp_method, pop = True) 
         from matplotlib.colors import LinearSegmentedColormap 
         colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] 
             # colors to match landscape palette extremes, but with hybrid a mix of the extremes 

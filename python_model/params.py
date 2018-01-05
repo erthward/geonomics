@@ -9,9 +9,9 @@ params = {
 
 'seed_num' : 2,                    #number to seed random number generators
 
-'T' : 200,                      #total model runtime
+'T' : 100,                      #total model runtime
 
-'burn_T': 60,                     #total burn-in runtime
+'burn_T_min': 50,                     #total burn-in runtime
 
 'L' : 1000,                         #total number of loci
 

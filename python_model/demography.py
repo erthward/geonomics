@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #demography.py
 
+from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy import random as r
@@ -116,13 +117,13 @@ def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', m
 
 
 
-def logistic_eqxn(r, N, K):
-    dNdt = r*(1-(N/K))*N 
+def logistic_eqxn(R, N, K):
+    dNdt = R*(1-(N/K))*N 
     return(dNdt)
 
 
-def logistic_soln(x0, r, t):
-        return(1/(1+((1/x0)-1)*np.e**(-1*r*t)))
+def logistic_soln(x0, R, t):
+        return(1/(1+((1/x0)-1)*np.e**(-1*R*t)))
 
 
 
@@ -466,8 +467,8 @@ def pop_dynamics(land, pop, params, with_selection = True, burn_in = False, age_
 
     elif with_selection == False:
         d_ind = {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()}
-        assert np.alltrue(d_ind.values() >= 0)
-        assert np.alltrue(d_ind.values() <= 1)
+        assert np.alltrue(np.array(d_ind.values()) >= 0)
+        assert np.alltrue(np.array(d_ind.values()) <= 1)
 
     #If age_stage_d <> None then use the age_stage_d array, and pop.get_age(), and the d raster 
     #to calculate per-individual death probabilities

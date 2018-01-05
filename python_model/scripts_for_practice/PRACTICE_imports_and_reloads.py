@@ -14,6 +14,7 @@ import mating
 import gametogenesis
 import selection
 import mutation
+import burn_in
 import param_exploration as pe
 import stats
 
@@ -34,6 +35,7 @@ reload(mating)
 reload(gametogenesis)
 reload(selection)
 reload(mutation)
+reload(burn_in)
 reload(pe)
 reload(stats)
 

@@ -56,7 +56,7 @@ class Individual:
 
 
 
-        assert self.genome.__class__.__name__ == 'Genome', "An individual's genome must be an instance of the genome.Genome class."
+        assert type(self.genome) == np.ndarray, "An individual's genome must be an instance of numpy.ndarray."
         assert type(self.x) == float and self.x >= 0, "invalid value for x: %s, %s" % (str(self.x), type(self.x))
         assert type(self.y) == float and self.y >= 0, "invalid value for y: %s, %s" % (str(self.y), type(self.y))
         assert self.sex == None or self.sex in [0,1]
@@ -102,7 +102,8 @@ class Individual:
 
 def create_individual(genomic_arch, dims=None, genomic_content = None, ploidy = None, parental_centerpoint = None, sex = None, age=0):
     '''Create a new individual from:
-            - either an instance of genome.Genomic_Architecture (i.e. for newly simulated individual) or both the genomic architecture and an instance of genome.Genome (e.g. for new offspring) (one of the two must be provided),
+            - either an instance of genome.Genomic_Architecture (i.e. for newly simulated individual) or both
+              the genomic architecture and a numpy.ndarray of genetic content (e.g. for new offspring) (one of the two must be provided),
             - x and y-coordinates
             - sex
             - age.
@@ -124,7 +125,7 @@ def create_individual(genomic_arch, dims=None, genomic_content = None, ploidy = 
         assert parental_centerpoint <> None, "parental_centerpoint needed to create new offspring"
         assert parental_centerpoint.__class__.__name__ in ['tuple', 'list'], "parental_centerpoint should be a tuple or a list"
         assert parental_centerpoint[0] >= 0 and parental_centerpoint[1] >= 0, "parental_centerpoint coordinates must be within landscape, but %s was provided" % str(parental_centerpoint)
-        assert ploidy <> None, "ploidy needed to create new genome from genomic content, for assertions in genome.Genome class __init__ function"
+        assert ploidy <> None, "ploidy needed to create new genome from genomic content"
 
 
         x,y = dispersal.disperse(parental_centerpoint) #NOTE: needs to be written!

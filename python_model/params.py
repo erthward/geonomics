@@ -15,7 +15,9 @@ params = {
 
 'L' : 1000,                         #total number of loci
 
-'n' : 1,                           #number of chromosomes
+'l_c': [100,200,500,200],         #list of chromosome lengths for all chromosomes to be simulated (if only a single chromosome to be simulated, unnecessary argument)
+
+'recomb_array' : None,           #predetermined linkage map to use for the simulated loci (optional)
 
 'x' : 2,                         #ploidy (for now, leave at 2 for diploidy)
 
@@ -115,6 +117,12 @@ params = {
 'sigma_deaths' : 0.2,              # std for the normal distribution used to choose the r.v. of deaths per timestep (mean of this distribution is the overshoot, as calculated from pop.size and pop.census())
 
 'density_dependent_fitness' : True, #should fitness be density dependent? (note: helps to avoid subpopulation 'clumping')
+
+
+'custom_fns' : {'recomb_rate_fn': None  #if provided, must be a function that returns a single recombination rate value (r) when called
+            
+               },
+
 
 'stats' : {                      #dictionary defining which stats to be calculated, and parameters on their calculation (including frequency, in timesteps, of collection)
                                  #valid stats include:

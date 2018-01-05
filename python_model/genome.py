@@ -46,10 +46,9 @@ class Trait:
 
 
 class Genomic_Architecture:
-    def __init__(self, x, n, L, l_c, r, mu, p, trait_dict, h, pleiotropy, sex):
+    def __init__(self, x, L, l_c, r, mu, p, trait_dict, h, pleiotropy, sex):
         self.x = x              #ploidy (NOTE: for now will be 2 by default; later could consider enabling polyploidy)
         self.L = L              #total length (i.e. number of markers)
-        self.n = n              #haploid number of chromosomes
         self.l_c = l_c          #length of each chromosome
         self.p = p              #Dict of allele frequencies for the 1-alleles for all (numbered by keys) chromosomes in haploid genome
         self.pleiotropy  = pleiotropy  #True/False regarding whether to allow a locus to affect the phenotype of more than one trait; defaults to False
@@ -111,15 +110,6 @@ class Genomic_Architecture:
 
 
 
-
-
-class Genome:
-    def __init__(self, G, ploidy):
-        self.genome = G #dict of numbered i*j arrays, each subarray containing the genotype data for all j (for a diploid, 2) copies of chromosome i
-        assert list(set([type(a) for a in self.genome.values()])) == [type(np.array([0]))], "G must be a dict of numpy.ndarray instances"
-        assert list(set([np.shape(a)[1] for a in self.genome.values()])) == [ploidy] 
-
-    #NOTE: need to ensure that size(G)[1] == n and that size of each subarray in G == x*l_c
 
 
 
@@ -217,23 +207,100 @@ def construct_traits(traits_params):
 
 
 #simulate linkage values
-def sim_r(l, alpha_r = 7e2, beta_r = 7e3):
-    return np.array([min(0.5, n) for n in r.beta(alpha_r, beta_r, l)])
+def draw_r(params, recomb_rate_fn = None):
+    
+    #use custom recomb_fn, if provided
+    if recomb_rate_fn <> None:
+        recomb_array = np.array([max(0,min(0.5, recomb_rate_fn())) for locus in range(L)])
+        return(recomb_array)
+
+    #otherwise, use default function with either default or custom param vals
+    else: 
+        L = params['L']
+
+        param_vals = {'alpha_r': 7e2, 'beta_r': 7e3}
+
+        for param in ['alpha_r', 'beta_r']:
+            if (param in params.keys() and params[param] <> None):
+                param_vals[param] = params[param]
+       
+        recomb_array = np.array([max(0,min(0.5, recomb_rate)) for recomb_rate in r.beta(a = param_vals['alpha_r'], b = param_vals['beta_r'], size = L)])
     #NOTE: for now, using the Beta, which can be very flexibly parameterized
     #NOTE: current default alpha/beta vals, after being subtracted from 0.5 in sim_r function, will result in a tight distribution of r vals around 0.21 (~ 95% between 0.19 and 0.22)
     #NOTE: to essentially fix r at 0.5, Beta(1,1e7) will do...
     #NOTE: Ideally, would be good to look into to developing some sort of mixture distribution to reasonably and flexibly model map-distance values...
 
+        return(recomb_array)
 
 
-#set chromosome lengths
-def set_l_c(L, n, even_chrom_sizes = True):
-    if not even_chrom_sizes:
-        None #NOTE: Instead, if command-line arg provided, allow it to use user-supplied array stipulating of chromosome lengths
-        return l_c
+
+
+def get_chrom_breakpoints(l_c, L):
+
+    breakpoints = np.array([0]+list(np.cumsum(sorted(l_c))[:-1]))
+
+    assert np.alltrue(np.diff(np.array(list(breakpoints) + [L])) == np.array(sorted(l_c))), 'The breakpoints assigned will not produce chromosomes of the correct length'
+
+    return(breakpoints)
+
+
+
+
+def create_recomb_array(params):
+
+
+    #get L (num of loci) and l_c (if provided; num of loci per chromsome) from params dict
+    L = params['L']
+    if ('l_c' in params.keys() and params['l_c'] <> None and len(params['l_c']) > 1):
+        l_c = params['l_c']
+        #and if l_c provided, check chrom lenghts sum to total number of loci
+        assert sum(l_c) == L, 'The chromosome lengths provided do not sum to the number of loci provided.'
     else:
-        l_c = [int(round(L/n)) for i in range(n)]
-        return l_c
+        l_c = [L]
+
+
+    #if params['recomb_array'] (i.e a linkage map) manually provided (will break if not a list, tuple, or np.array), 
+    #then set that as the recomb_array, and check that len(recomb_array) == L
+    if ('recomb_array' in params.keys() and params['recomb_array'] <> None):
+        recomb_array = np.array(params['recomb_array'])
+        len(recomb_array) == L, "Length of recomb_array provided not equal to params['L']."
+
+        #NOTE: #Always necessary to set the first locus r = 1/ploidy, to ensure independent assortment of homologous chromosomes
+        recomb_array[0] = 1/params['x'] 
+
+        return(recomb_array)
+
+    
+    #otherwise, create recomb array
+    else:
+
+        #if a custom recomb_fn is provided, grab it
+        if ('recomb_rate_fn' in params['custom_fns'] and params['custom_fns']['recomb_rate_fn'] <> None):
+            recomb_rate_fn = params['custom_fns']
+            assert callable(recomb_rate_fn), "The recomb_rate_fn provided in params['custom_fns'] appear not to be defined properly as a callable function."
+            #then call the draw_r() function for each locus, using custom recomb_fn
+            recomb_array = draw_r(params, recomb_fn = recomb_rate_fn)
+
+
+
+        #otherwise, use the default draw_r function to draw recomb rates
+        else:
+            recomb_array = draw_r(params) 
+
+
+        #if more than one chromosome (i.e. if l_c provided in params dict and of length >1), 
+        #set recomb rate at the appropriate chrom breakpoints to 0.5
+        if len(l_c) >1:
+            bps = get_chrom_breakpoints(l_c, L)
+            recomb_array[bps] = 0.5
+
+
+        #NOTE: #Always necessary to set the first locus r = 0.5, to ensure independent assortment of homologous chromosomes
+        recomb_array[0] = 1/params['x']
+
+
+        return(recomb_array, sorted(l_c))
+
 
 
 
@@ -242,20 +309,15 @@ def set_l_c(L, n, even_chrom_sizes = True):
 def build_genomic_arch(params, land, allow_multiple_env_vars = True):
 
 
-
-
     #NOTE: 11/19/17: DO I STILL WANT TO OPERATIONALIZE GLOBALLY SELECTIVE LOCI??
 
 
     #grab necessary parameters from the params dict
-
     L = params['L']
-    n = params['n']
     mu = params['mu']
     x = params['x']
-    alpha_r = params['alpha_r']
-    beta_r = params['beta_r']
     pleiotropy = params['pleiotropy']
+
 
     trait_dict = construct_traits(params['traits'])
 
@@ -269,37 +331,25 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
 
 
 
-    l_c = None   #NOTE: OPERATIONALIZE UNEVEN CHROM LENGTHS??
-
-
-
-
-
-    if l_c:
-        pass #Allow provision of array of uneven chromosome lengths
-    else:
     #NOTE: x = ploidy, for now set to 2 (i.e.  diploidy)
     #NOTE: how to operationalize sexuality?! for now defaults to False
-        l_c = set_l_c(L, n)
-        p = dict()
-        s = dict()
-        h = dict()
-        env_var = dict()
-        r = dict()
-        for chrom in range(n):
-            p[chrom] = gen_allele_freqs(l_c[chrom])
-            s[chrom] = sim_s(l_c[chrom])
-            h[chrom] = assign_h(l_c[chrom], params)
-            env_var[chrom] = assign_env_var(num_rasters = land.num_rasters, l = l_c[chrom], params = params, allow_multiple_env_vars = allow_multiple_env_vars)
-            r[chrom] = sim_r(l_c[chrom], alpha_r, beta_r)
-            r[chrom][0] = 1/float(x) #setting first val to 1/float(x) effects independent segregation of chroms, after which recombination occurs along the chrom according to defined recomb rates (r)
-        genomic_arch = Genomic_Architecture(x, n, sum(l_c), l_c, r, mu, p, trait_dict, h, pleiotropy, sex = True)
-        
-        #add the loci and effect sizes for each of the traits
-        for trait_num in genomic_arch.traits.keys():
-            genomic_arch.assign_loci_to_trait(trait_num, mutational = False, locs = None)
 
-        return(genomic_arch)
+    p = gen_allele_freqs(L)  
+        #TODO: DECIDE HOW TO OPERATIONALIZE MUTATIONS; PERHAPS WANT TO CREATE A BUNCH OF p=0 LOCI HERE, AS MUTATIONAL TARGETS FOR LATER?
+
+    h = assign_h(L, params)
+
+    r, l_c = create_recomb_array(params)
+
+    genomic_arch = Genomic_Architecture(x, L, l_c, r, mu, p, trait_dict, h, pleiotropy, sex = True)
+   
+
+    #add the loci and effect sizes for each of the traits
+    for trait_num in genomic_arch.traits.keys():
+        genomic_arch.assign_loci_to_trait(trait_num, mutational = False, locs = None)
+
+
+    return(genomic_arch)
 
 
 
@@ -307,13 +357,14 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
 
 #simulate genome
 def sim_genome(genomic_arch):
-    new_genome = dict()
-    for chrom in range(genomic_arch.n):
-        chromosome = np.ones([genomic_arch.l_c[chrom], genomic_arch.x])*999 #if for some reason any loci are not properly set to either 0 or 1, they will stick out as 999's
-        for copy in range(genomic_arch.x):
-            chromosome[:,copy] = sim_G(genomic_arch.p[chrom])
-        new_genome[chrom] = chromosome
-    return Genome(new_genome, genomic_arch.x)
+    new_genome = np.ones([genomic_arch.L, genomic_arch.x])*999 #if for some reason any loci are not properly set to either 0 or 1, they will stick out as 999's
+    for homologue in range(genomic_arch.x):
+        new_genome[:,homologue] = sim_G(genomic_arch.p)
+
+    assert type(new_genome) == np.ndarray, "A new genome must be an instance of numpy.ndarray"
+    assert np.shape(new_genome) == (genomic_arch.L, genomic_arch.x), "A new genome must wind up with shape = (L, ploidy)."
+
+    return(new_genome)
 
 
 
@@ -325,5 +376,6 @@ def load_pickled_genomic_arch(filename):
         genomic_arch = cPickle.load(f)
 
     return genomic_arch
+
 
 

@@ -1,8 +1,8 @@
 #!/usr/bin/python
-#PRACTICE_imports.py
 
-'''Imports all the necessary pacakges.'''
+#imports_and_reloads.py
 
+'''Import and reload all modules, to call when working on the command line.'''
 
 import landscape
 import movement
@@ -23,3 +23,19 @@ from numpy import random as r
 import random
 import matplotlib as mpl
 import os
+
+
+reload(landscape)
+reload(movement)
+reload(genome)
+reload(individual)
+reload(population)
+reload(demography)
+reload(mating)
+reload(recombination)
+reload(gametogenesis)
+reload(selection)
+reload(mutation)
+reload(pe)
+reload(stats)
+

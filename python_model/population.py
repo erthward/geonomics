@@ -172,10 +172,10 @@ class Population:
             parent_centroid_x = np.mean((self.individs[pair[0]].x, self.individs[pair[1]].x))
             parent_centroid_y = np.mean((self.individs[pair[0]].y, self.individs[pair[1]].y))
 
-            zygotes = mating.mate(self, pair, params)
+            new_genomes = mating.mate(self, pair, params)
 
             
-            for zygote in zygotes:
+            for new_genome in new_genomes:
 
                 num_offspring += 1
                 
@@ -189,24 +189,15 @@ class Population:
                 offspring_key = max(self.individs.keys()) + 1
 
                 if sex == True:
-                    self.individs[offspring_key] = individual.Individual(zygote, offspring_x, offspring_y, offspring_sex, age)
+                    self.individs[offspring_key] = individual.Individual(new_genome, offspring_x, offspring_y, offspring_sex, age)
                 else:
-                    self.individs[offspring_key] = individual.Individual(zygote, offspring_x, offspring_y, age)
+                    self.individs[offspring_key] = individual.Individual(new_genome, offspring_x, offspring_y, age)
 
 
         #sample all individuals' habitat values, to initiate for offspring
         self.query_habitat(land)
 
         print '\n\t%i individuals born' % num_offspring
-
-
-
-
-
-
-    #method to carry out selection
-    def select(self, t, params):
-        selection.select(self, t, params, sigma_deaths = params['sigma_deaths'], density_dependent_fitness = params['density_dependent_fitness'])
 
 
 
@@ -326,7 +317,8 @@ class Population:
 
 
 
-    
+   
+   #TODO: DEFUNCT; EITHER REVAMP OR JUST DELETE
 
     #function to discover loci above, below, or between threshold selection coefficients
     def find_loci(self, min_s=None, max_s = None):
@@ -358,14 +350,14 @@ class Population:
     def get_habitat(self, scape_num = None, individs = None):
         if individs <> None:
             if scape_num is None:
-                return dict([(k, ind.habitat) for k, ind in self.individs.items() if k in individs])
+                return {k: ind.habitat for k, ind in self.individs.items() if k in individs}
             else:
-                return dict([(k, ind.habitat[scape_num]) for k, ind in self.individs.items() if k in individs])
+                return {k: ind.habitat[scape_num] for k, ind in self.individs.items() if k in individs}
         else:
             if scape_num is None:
-                return dict([(k, ind.habitat) for k, ind in self.individs.items()])
+                return {k: ind.habitat for k, ind in self.individs.items()}
             else:
-                return dict([(k, ind.habitat[scape_num]) for k, ind in self.individs.items()])
+                return {k: ind.habitat[scape_num] for k, ind in self.individs.items()}
 
 
 
@@ -373,28 +365,39 @@ class Population:
 
     def get_age(self, individs = None):
         if individs <> None:
-            return dict([(k, ind.age) for k, ind in self.individs.items() if k in individs])
+            return {k: ind.age for k, ind in self.individs.items() if k in individs}
         else:
-            return dict([(k, ind.age) for k, ind in self.individs.items()])
+            return {k: ind.age for k, ind in self.individs.items()}
 
 
     
 
-    def get_genotype(self, chromosome, locus, return_format = 'mean', individs = None, by_dominance = None):
+    def get_genotype(self, locus, return_format = 'mean', individs = None, by_dominance = False):
 
         if individs == None:
             individs = self.individs.keys()
             #individs = range(len(self.genomic_arch.s[chromosome]))
 
         if return_format == 'biallelic':
-            return dict([(i, self.individs[i].genome.genome[chromosome][locus, :]) for i in self.individs.keys() if i in individs]) 
+            return {i: self.individs[i].genome[locus, :] for i in self.individs.keys() if i in individs}
 
         elif return_format == 'mean':
             if by_dominance == True:
-                h = self.genomic_arch.h[chromosome][locus]
+                h = self.genomic_arch.h[locus]
             else:
                 h = 0.5
-            return dict(zip(individs, self.heterozygote_effects[h](np.array([ind.genome.genome[chromosome][locus,] for i, ind in self.individs.items() if i in individs]))))
+            return dict(zip(individs, self.heterozygote_effects[h](np.array([ind.genome[locus,] for i, ind in self.individs.items() if i in individs]))))
+
+
+
+
+
+    #convenience method for calling selection.get_phenotype() on this pop
+    def get_phenotype(self, trait, individs = None):
+        if individs <> None:
+            return({i:v for i,v in selection.get_phenotype(self, trait).items() if i in individs})
+        else:
+            return(selection.get_phenotype(self, trait))
 
 
 
@@ -407,46 +410,30 @@ class Population:
 
 
 
-    def get_dom(self, chromosome, locus):
-        return {locus: self.genomic_arch.dom[chromosome][locus]} 
-
-
-
-    def get_env_var(self, chromosome, locus):
-        return {locus: self.genomic_arch.env_var[chromosome][locus]} 
-
-
+    def get_dom(self, locus):
+        return {locus: self.genomic_arch.h[locus]} 
 
 
 
     def get_coords(self, individs = None):
         if individs <> None:
-            return dict([(k, (float(ind.x), float(ind.y))) for k, ind in self.individs.items() if k in individs])
+            return({k: (float(ind.x), float(ind.y)) for k, ind in self.individs.items() if k in individs})
         else:
-            return dict([(k, (float(ind.x), float(ind.y))) for k, ind in self.individs.items()])
+            return({k: (float(ind.x), float(ind.y)) for k, ind in self.individs.items()})
 
 
     def get_x_coords(self, individs = None):
         if individs <> None:
-            return dict([(k, (float(ind.x))) for k, ind in self.individs.items() if k in individs])
+            return({k: (float(ind.x)) for k, ind in self.individs.items() if k in individs})
         else:
-            return dict([(k, (float(ind.x))) for k, ind in self.individs.items()])
+            return({k: (float(ind.x)) for k, ind in self.individs.items()})
 
 
     def get_y_coords(self, individs = None):
         if individs <> None:
-            return dict([(k, (float(ind.y))) for k, ind in self.individs.items() if k in individs])
+            return({k: (float(ind.y)) for k, ind in self.individs.items() if k in individs})
         else:
-            return dict([(k, (float(ind.y))) for k, ind in self.individs.items()])
-
-
-
-
-
-
-
-
-
+            return({k: (float(ind.y)) for k, ind in self.individs.items()})
 
 
 
@@ -512,7 +499,7 @@ class Population:
 
 
     #method for plotting individuals colored by their genotype at a given locus
-    def show_genotype(self, chromosome, locus, land, scape_num = None, im_interp_method = 'nearest', markersize = 65, alpha = 1, by_dominance = True):
+    def show_genotype(self, locus, land, scape_num = None, im_interp_method = 'nearest', markersize = 65, alpha = 1, by_dominance = False):
         if scape_num <> None:
             land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
         
@@ -520,9 +507,9 @@ class Population:
             land.show(im_interp_method = im_interp_method, pop = True)
         
         if by_dominance == True:
-            genotypes = self.get_genotype(chromosome, locus, by_dominance = 0.5)
+            genotypes = self.get_genotype(locus, by_dominance = True)
         else:
-            genotypes = self.get_genotype(chromosome, locus)
+            genotypes = self.get_genotype(locus)
             
         colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] # COLORS TO MATCH LANDSCAPE PALETTE EXTREMES, BUT WITH HYBRID A MIX OF THE EXTREMES RATHER THAN THE YELLOW AT THE MIDDLE OF THE PALETTE, FOR NICER VIEWING: blue = [0,0], light blue = [0,1], white = [1,1]
         #colors = ['#ff4d4d', '#ac72ac', '#4d4dff'] # red = [0,0], purple = [0,1], blue = [1,1] 
@@ -535,16 +522,6 @@ class Population:
                 y = c[:,1]-0.5
                 plt.scatter(x,y, s = markersize, c = colors[n], alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
     
-
-
-
-    #convenience method for calling selection.get_phenotype() on this pop
-    def get_phenotype(self, trait, individs = None):
-        if individs <> None:
-            return({i:v for i,v in selection.get_phenotype(self, trait).items() if i in individs})
-        else:
-            return(selection.get_phenotype(self, trait))
-
 
 
     #method for plotting individuals colored by their phenotypes for a given trait
@@ -587,21 +564,10 @@ class Population:
 
 
 
-
-
-
-
     def pickle(self, filename):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)
-
-
-
-
-
-
-
 
 
 

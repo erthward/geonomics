@@ -91,9 +91,6 @@ def create_stats_object(params):
 
 
 
-#TODO: 
-    # ALL OF THIS WOULD NEED TO BE REVAMPED TO ALLOW FOR MORE THAN ONE CHROMOSOME
-
 
 def calc_Nt(pop):
     Nt = pop.census()
@@ -110,7 +107,7 @@ def calc_LD(pop, plot = False):
         #floating-point numbers, but I should figure out exactly what's going on and be sure everything checks out:
                 # stats.py:117: RuntimeWarning: invalid value encountered in double_scalars
 
-    populome = np.array([pop.individs[i].genome.genome[0] for i in pop.individs.keys()])
+    populome = np.array([pop.individs[i].genome for i in pop.individs.keys()])
     n = np.shape(populome)[0] #num individs
     x = np.shape(populome)[2] #ploidy
     N = n*x

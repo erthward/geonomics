@@ -11,7 +11,6 @@ import individual
 import population
 import demography
 import mating
-import recombination
 import gametogenesis
 import selection
 import mutation
@@ -32,7 +31,6 @@ reload(individual)
 reload(population)
 reload(demography)
 reload(mating)
-reload(recombination)
 reload(gametogenesis)
 reload(selection)
 reload(mutation)

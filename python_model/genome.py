@@ -121,20 +121,20 @@ class Genomic_Architecture:
 
 #function for choosing a random number from a Bernoulli distribution of an arbitrary p value
 #(to be mapped to allele frequencies in order to generate genotypes)
-def rand_bern(prob):
+def draw_rand_bern(prob):
     return r.binomial(1,prob)
 
 
 
 #generate allele_freqs
-def gen_allele_freqs(l):
+def draw_allele_freqs(l):
     return r.beta(1,1,l)
 
 
 
 #simulate genotypes
-def sim_G(p): 
-    return [rand_bern(freq) for freq in p]
+def draw_genotype(p): 
+    return [draw_rand_bern(freq) for freq in p]
 
 
 
@@ -143,44 +143,16 @@ def sim_G(p):
 #where 0 = allele 1 (A1) dominant, 0.5 = codominant, 1 = A1 recessive, i.e.
 #relative fitnesses: A1A1 = 1, A1A2 = 1-hs, A2A2 = 1-s
 #NOTE: Should be able to also implement negative h values here, for overdominance
-def assign_h(l, params, low = 0, high = 2):
+def draw_h(l, params, low = 0, high = 2):
     h  = r.randint(low = 0, high = 3, size = l)/2.   #NOTE: Pythonic style, so high is exclusive, hence high = 3
     return h
 
 
 
-
-#randomly assign selectivity of each locus to one of the eligible rasters 
-    #NOTE: Original idea was that 0 = global selection (i.e.  selective advantage non-variable in space, i.e.
-    #fitness of alleles will not be contingent on any raster), but got rid of that on 11/19/17
-def assign_env_var(num_rasters, l, params, allow_multiple_env_vars = True):
-
-
-    #if allow_multiple_env_vars, then highest env_var number will be the last landscape in the landscape_stack 
-    if allow_multiple_env_vars == True:
-        high = num_rasters
-    else:
-        high = 1
-
-    possible_vars = range(high)
-
-    if ('movement_surf' in params.keys()):
-        if params['movement_surf'] == True:
-            exclude_var = params['movement_surf_scape_num']
-            possible_vars.remove(exclude_var)
-
-    
-    env_var = r.choice(possible_vars, size = l, replace = True)
-
-
-    return env_var
-
-
-
-
-  
+#NOTE: DEH 01-04-18: Now that I implemented trait architecture, this is not being used, so basically defunct,
+#but leaving in case I decide there's interest in simulating monogenic selection at numerous distinct loci
 #simulate selection coefficients
-def sim_s(l, alpha_s = 0.007, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 loci in 10,000 with s > .75; 0.025 gives ~85-115; 0.0025 gives ~5-15
+def draw_s(l, alpha_s = 0.007, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 loci in 10,000 with s > .75; 0.025 gives ~85-115; 0.0025 gives ~5-15
     #NOTE: See Thurman and Barrett (2016) for metaanalysis of s values in real populations!
 
     s = r.beta(alpha_s, beta_s, l)
@@ -334,10 +306,10 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
     #NOTE: x = ploidy, for now set to 2 (i.e.  diploidy)
     #NOTE: how to operationalize sexuality?! for now defaults to False
 
-    p = gen_allele_freqs(L)  
+    p = draw_allele_freqs(L)  
         #TODO: DECIDE HOW TO OPERATIONALIZE MUTATIONS; PERHAPS WANT TO CREATE A BUNCH OF p=0 LOCI HERE, AS MUTATIONAL TARGETS FOR LATER?
 
-    h = assign_h(L, params)
+    h = draw_h(L, params)
 
     r, l_c = create_recomb_array(params)
 
@@ -359,7 +331,7 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
 def sim_genome(genomic_arch):
     new_genome = np.ones([genomic_arch.L, genomic_arch.x])*999 #if for some reason any loci are not properly set to either 0 or 1, they will stick out as 999's
     for homologue in range(genomic_arch.x):
-        new_genome[:,homologue] = sim_G(genomic_arch.p)
+        new_genome[:,homologue] = draw_genotype(genomic_arch.p)
 
     assert type(new_genome) == np.ndarray, "A new genome must be an instance of numpy.ndarray"
     assert np.shape(new_genome) == (genomic_arch.L, genomic_arch.x), "A new genome must wind up with shape = (L, ploidy)."

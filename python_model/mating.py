@@ -230,13 +230,12 @@ def mate(pop, pair, params):
         #come back and think the theoretical implications/justification for this
 
     for n in range(num_offspring):
-        zygote = {}
+        #generate a gamete for each member of mating pair
         gametes = [gametogenesis.gametogenerate(pop.individs[i], pop.genomic_arch) for i in pair]
-        for c in range(pop.genomic_arch.n):
-            chromosome = np.vstack((gametes[0][c], gametes[1][c])).T
-            zygote[c] = chromosome
-
-        offspring.append(genome.Genome(zygote, pop.genomic_arch.x))
+        #stack the gametes and transpose, to create the new individual's new_genome array
+        new_genome = np.vstack((gametes[0], gametes[1])).T
+        #append the new_genome to the list of offspring
+        offspring.append(new_genome)
 
     return offspring
 

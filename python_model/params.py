@@ -25,7 +25,7 @@ params = {
 
 'alpha_r' : 0.5,                #alpha for beta distribution of linkage values  #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333, with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
 
-'beta_r' : 5,                 #beta for beta distribution of linkage values
+'beta_r' : 400,                 #beta for beta distribution of linkage values
 
 'alpha_mut_s' : 25,                # alpha param for the beta distribution describing the highly advantageous selection coeffs for mutations
 
@@ -37,7 +37,7 @@ params = {
 'pleiotropy' : False,           #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?)
 
 'traits' : {'num': 2,           #number of traits to simulate
-            'scape_num': [0,1], #list of the landscape numbers to be used for selection on each trait 
+            'scape_num': [0,0], #list of the landscape numbers to be used for selection on each trait 
                                 #(i.e.  list length should equal value of 'num' on previous line, as should lengths of subsequent lists)
             's' : [0.1, 0.1],   #selection coefficient for trait
             'n': [1,100], #number of loci assigned to trait
@@ -45,7 +45,7 @@ params = {
             'fitness_fn_gamma': [1,1] #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
             },
 
-'N' : 500,                        #total pop size
+'N' : 1000,                        #total pop size
 
 'dims' : (100,100),             #dimensions of landscape  
 

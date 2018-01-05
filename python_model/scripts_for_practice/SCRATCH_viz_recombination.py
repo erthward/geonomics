@@ -1,18 +1,18 @@
 #!/usr/bin/python
 
 
-def vis_recomb(individ, chrom_num, genomic_arch):
+def viz_recomb(individ, genomic_arch):
 
     import numpy as np
     import gametogenesis
     import matplotlib.pyplot as plt
 
-    g = list(individ.genome.genome[chrom_num][:,0])
+    g = list(individ.genome[:,0])
     n_loc = len(g)
     chrom_plot_width = int(0.025*n_loc)
     cmap = 'cool'
 
-    recomb_g = list(gametogenesis.gametogenerate(individ, genomic_arch)[chrom_num])
+    recomb_g = list(gametogenesis.gametogenerate(individ, genomic_arch))
 
     fig = plt.figure()
 
@@ -32,5 +32,5 @@ def vis_recomb(individ, chrom_num, genomic_arch):
     plt.yticks([],[])
     plt.xticks([],[])
 
-    plt.plot(range(len(pop.genomic_arch.r[0][1:])), max(plt.ylim())-pop.genomic_arch.r[0][1:]*max(plt.ylim())*3, linewidth = 3) #exclude first value, which is always 0.5 to effectuate separation of homologous chromosomes
+    plt.plot(range(len(pop.genomic_arch.r[1:])), max(plt.ylim())-pop.genomic_arch.r[1:]*max(plt.ylim())*3, linewidth = 3) #exclude first value, which is always 0.5 to effectuate separation of homologous chromosomes
 

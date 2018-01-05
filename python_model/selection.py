@@ -12,7 +12,7 @@ def get_phenotype(pop, trait):
 
     #for all individuals, multiply genotype by 2*alpha (because genotype is sum of 2 alleles, each with effect size alpha) 
     #at all loci, sum across loci, then add to 0.5 (the null phenotypic value), yielding an array of all individuals' phenotypes
-    phenotypes = [0.5 + sum(pop.individs[i].genome.genome[0][pop.genomic_arch.traits[trait].loci,:].sum(axis = 1)*(2*pop.genomic_arch.traits[trait].alpha)) for i in inds]
+    phenotypes = [0.5 + sum(pop.individs[i].genome[pop.genomic_arch.traits[trait].loci,:].sum(axis = 1)*(2*pop.genomic_arch.traits[trait].alpha)) for i in inds]
 
     #TODO: THIS SEEMS TO BE PRODUCE STRANGELY RIGHT OR LEFT SHIFTED HISTOGRAMS OF PHENOTYPES WHEN I EXPECTED THEM
     #TO BE CENTERED ON 0.5... GO THROUGH THE MATH SLOWLY AGAIN TO SEE IF THERE'S A BUG...

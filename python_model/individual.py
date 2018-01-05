@@ -38,9 +38,9 @@ import numpy.random as r
 
 
 class Individual:
-    def __init__(self, G, x, y, sex = None, age=0):
+    def __init__(self, new_genome, x, y, sex = None, age=0):
 
-        self.genome = G             #individual's x-ploid genome
+        self.genome = new_genome             #individual's x-ploid genome
 
         self.x = float(x)           #x coord
         self.y = float(y)           #y coord
@@ -76,7 +76,6 @@ class Individual:
         self.x, self.y = movement.move(self, land, params)
         
 
-    
     #function to increment age by one
     def increment_age_stage(self):
         self.age = self.age + 1
@@ -100,24 +99,24 @@ class Individual:
 #--------------------------------------
 
 
-def create_individual(genomic_arch, dims=None, genomic_content = None, ploidy = None, parental_centerpoint = None, sex = None, age=0):
+def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0):
     '''Create a new individual from:
             - either an instance of genome.Genomic_Architecture (i.e. for newly simulated individual) or both
-              the genomic architecture and a numpy.ndarray of genetic content (e.g. for new offspring) (one of the two must be provided),
+              the genomic architecture and a numpy.ndarray genome (e.g. for new offspring) (one of the two must be provided),
             - x and y-coordinates
             - sex
             - age.
             '''
 
     #LOOP FOR SIMULATION OF NEW INDIVIDUALS FOR STARTING POPULATION
-    if genomic_content == None:
-        assert dims <> None, "landscape dims required to simulate a new individual"
+    if new_genome == None:
+        assert dims <> None, "landscape dims required to simulate a new individual without reproduction"
         #use genome.sim_genome and genomic_arch variable to simulate individual's genome
-        G = genome.sim_genome(genomic_arch)
+        new_genome = genome.sim_genome(genomic_arch)
          
         #randomly assign individual a valid starting location
         x,y = r.rand(2)*dims
-        return Individual(G, x, y, sex = sex, age = age)
+        return Individual(new_genome, x, y, sex = sex, age = age)
 
 
     #LOOP FOR CREATION OF NEW OFFSPRING INDIVIDUALS
@@ -134,6 +133,6 @@ def create_individual(genomic_arch, dims=None, genomic_content = None, ploidy = 
         sex = r.binomail(1,0.5)  #NOTE: For now, sex randomly chosen at 50/50. Change if later decide to implement sex chroms!!!
 
 
-        return Individual(G, x, y, sex = sex, age = 0)
+        return Individual(new_genome, x, y, sex = sex, age = 0)
 
 

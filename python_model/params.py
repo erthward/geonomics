@@ -9,13 +9,13 @@ params = {
 
 'seed_num' : 2,                    #number to seed random number generators
 
-'T' : 100,                      #total model runtime
+'T' : 15,                      #total model runtime
 
 'burn_T_min': 50,                     #total burn-in runtime
 
-'L' : 1000,                         #total number of loci
+'L' : 500,                         #total number of loci
 
-'l_c': [100,200,500,200],         #list of chromosome lengths for all chromosomes to be simulated (if only a single chromosome to be simulated, unnecessary argument)
+'l_c': [100,250,150],         #list of chromosome lengths for all chromosomes to be simulated (if only a single chromosome to be simulated, unnecessary argument)
 
 'recomb_array' : None,           #predetermined linkage map to use for the simulated loci (optional)
 
@@ -36,18 +36,18 @@ params = {
 
 'pleiotropy' : False,           #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?)
 
-'traits' : {'num': 2,           #number of traits to simulate
-            'scape_num': [0,0], #list of the landscape numbers to be used for selection on each trait 
+'traits' : {'num': 1,           #number of traits to simulate
+            'scape_num': [0], #list of the landscape numbers to be used for selection on each trait 
                                 #(i.e.  list length should equal value of 'num' on previous line, as should lengths of subsequent lists)
-            's' : [0.1, 0.1],   #selection coefficient for trait
-            'n': [1,100], #number of loci assigned to trait
-            'alpha_dist_sigma': [0.25,0.0025],  #NOTE: for sigma = 0.25, one average locus is enough to generate an optimum genotype; for 0.025, 10 loci; and so on linearly
-            'fitness_fn_gamma': [1,1] #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
+            's' : [0.1],   #selection coefficient for trait
+            'n': [3], #number of loci assigned to trait
+            'alpha_dist_sigma': [0.25],  #NOTE: for sigma = 0.25, one average locus is enough to generate an optimum genotype; for 0.025, 10 loci; and so on linearly
+            'fitness_fn_gamma': [1] #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
             },
 
-'N' : 1000,                        #total pop size
+'N' : 500,                        #total pop size
 
-'dims' : (100,100),             #dimensions of landscape  
+'dims' : (50,50),             #dimensions of landscape  
 
 'num_scapes' : 2,               #number of landscapes desired
 

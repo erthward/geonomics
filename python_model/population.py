@@ -416,6 +416,10 @@ class Population:
         plt.hist(selection.get_fitness(self).values())
 
 
+    def get_single_trait_fitness(self, trait):
+        return selection.get_single_trait_fitness(self, trait)
+
+
 
     def get_dom(self, locus):
         return {locus: self.genomic_arch.h[locus]} 
@@ -533,6 +537,8 @@ class Population:
 
     #method for plotting individuals colored by their phenotypes for a given trait
     def show_phenotype(self, trait, land, scape_num = None, im_interp_method = 'nearest', markersize = 65, alpha = 1):
+
+        from collections import OrderedDict as OD
     
         if scape_num <> None:
             land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
@@ -546,13 +552,118 @@ class Population:
             #light blue = [0,1], white = [1,1]
         cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
 
-        inds = self.individs.keys()
-        c = np.array(self.get_coords(inds).values())
-        x = c[:,0]-0.5
-        y = c[:,1]-0.5
+
+        c = self.get_coords()
         z = self.get_phenotype(trait)
-        plt.scatter(x,y, s = markersize, c = [z[i] for i in inds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
+
+        data = OD({i: (c[i][0]-0.5, c[i][1]-0.5, z[i]) for i in self.individs.keys()}).values()
+        
+
+        plt.scatter([i[0] for i in data], [i[1] for i in data], s = markersize, c = [i[2] for i in data], cmap = cmap, alpha = alpha)
+        plt.xlim(-0.6, land.dims[1]-0.4)
+        plt.ylim(-0.6, land.dims[0]-0.4)
+        #plt.scatter(x,y, s = markersize, c = [z[i] for i in inds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
     
+
+
+
+    #method for plotting individuals colored and sized by their overall fitnesses
+    def show_fitness(self, land, scape_num = None, im_interp_method = 'nearest', min_markersize = 60, alpha = 1):
+    
+        from collections import OrderedDict as OD
+
+        if scape_num <> None:
+            land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
+        else:
+            land.scapes[land.movement_surf_scape_num].show(im_interp_method = im_interp_method, pop = True) 
+
+        from matplotlib.colors import LinearSegmentedColormap 
+        colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] 
+            # colors to match landscape palette extremes, but with hybrid a mix of the extremes 
+            #rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0],
+            #light blue = [0,1], white = [1,1]
+        cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
+
+        #get all individs' coords
+        c = self.get_coords()
+
+        #get all individs' fitness values
+        w = self.get_fitness()
+
+        #calc minimum possible fitness
+        min_fit = np.product([1-t.s for t in self.genomic_arch.traits.values()])
+
+        #generate an evenly spaced range of the possible fitness values
+        fit_vals = np.linspace(min_fit, 1, 50)
+        
+        #use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
+        markersize_differentials = {i:3*np.abs(fit_vals-w[i]).argmin() for i in self.individs.keys()}
+
+        data = OD({i: (c[i][0]-0.5, c[i][1]-0.5, w[i], markersize_differentials[i]) for i in self.individs.keys()}).values()
+
+        plt.scatter([i[0] for i in data], [i[1] for i in data], s = [min_markersize + i[3] for i in data], c = [i[2] for i in data], cmap = cmap, alpha = alpha)
+        plt.xlim(-0.6, land.dims[1]-0.4)
+        plt.ylim(-0.6, land.dims[0]-0.4)
+       
+        #plt.scatter(x,y, s = [min_markersize + diff for diff in markersize_differentials] , c = [fits[i] for i in inds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
+ 
+
+
+    #method for plotting individuals colored by their phenotypes for a given trait, sized by their fitness
+    def show_single_trait_fitness(self, trait, land, scape_num = None, im_interp_method = 'nearest', min_markersize = 60, alpha = 1):
+
+        from collections import OrderedDict as OD
+    
+        if scape_num <> None:
+            land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
+        else:
+            land.scapes[self.genomic_arch.traits[trait].scape_num].show(im_interp_method = im_interp_method, pop = True) 
+
+        from matplotlib.colors import LinearSegmentedColormap 
+        colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] 
+            # colors to match landscape palette extremes, but with hybrid a mix of the extremes 
+            #rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0],
+            #light blue = [0,1], white = [1,1]
+        cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
+        
+        #get all individs' coords
+        c = self.get_coords()
+
+        #calc minimum possible fitness
+        min_fit = 1 - self.genomic_arch.traits[trait].s
+
+        #generate an evenly spaced range of the possible fitness values
+        fit_vals = np.linspace(min_fit, 1, 50)
+        
+        #get all individs' fitness values
+        w = self.get_single_trait_fitness(trait)
+
+
+        #use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
+        markersize_differentials = {i:3*np.abs(fit_vals-w[i]).argmin() for i in self.individs.keys()}
+
+
+        z = self.get_phenotype(trait)
+
+
+        data = OD({i: (c[i][0]-0.5, c[i][1]-0.5, w[i], z[i], markersize_differentials[i]) for i in self.individs.keys()}).values()
+
+      
+        #separate colormap to color marker edges from black (fit = 1) to white (fit = 0) through red
+        inside_marker_cmap = mpl.cm.get_cmap('RdYlGn')
+        #norm = mpl.colors.Normalize(vmin = min_fit, vmax = 1)
+        #inside_color = [inside_marker_cmap(norm(fits[i])) for i in inds]
+
+
+        plt.scatter([i[0] for i in data], [i[1] for i in data], s = [min_markersize + i[4] for i in data], c = [i[3] for i in data], cmap = cmap, alpha = alpha)
+        plt.scatter([i[0] for i in data], [i[1] for i in data], s = min_markersize/3 , c = [i[2] for i in data], cmap = inside_marker_cmap)
+        plt.xlim(-0.6, land.dims[1]-0.4)
+        plt.ylim(-0.6, land.dims[0]-0.4)
+ 
+        #plt.scatter(x,y, s = [min_markersize + diff for diff in markersize_differentials] , c = [z[i] for i in inds], cmap = cmap, alpha = alpha)
+        #plt.scatter(x,y, s = min_markersize/3 , c = [fits[i] for i in inds], cmap = inside_marker_cmap)
+ 
+
 
 
     #method for plotting a population pyramid
@@ -564,13 +675,21 @@ class Population:
 
 
 
-    def show_pop_growth(self, params, stats):
-        T = range(len(stats.Nt))
+    def show_pop_growth(self, params):
+        T = range(len(self.Nt))
         x0 = params['N']/self.K.raster.sum() 
-        plt.plot(T, [demography.logistic_soln(x0, params['r'], t)*self.K.raster.sum() for t in T], color = 'red')
-        plt.plot(T, stats.Nt, color = 'blue')
+        plt.plot(T, [demography.logistic_soln(x0, params['R'], t)*self.K.raster.sum() for t in T], color = 'red')
+        plt.plot(T, self.Nt, color = 'blue')
         plt.xlabel('t')
         plt.ylabel('N(t)')
+
+
+
+#method to plot (or add to an open plot) individuals' IDs
+    def plot_ind_ids(self):
+        [plt.text(v[0]-0.5, v[1]-0.5, i) for i,v in self.get_coords().items()]
+
+
 
 
 
@@ -634,5 +753,8 @@ def load_pickled_pop(filename):
         pop = cPickle.load(f)
     
     return pop
+
+
+
 
 

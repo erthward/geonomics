@@ -62,9 +62,12 @@ class Genomic_Architecture:
 
     
    
-    #method for drawing an effect size to a locus (or optionally, multiple)
-    def draw_alpha(self, trait_num, n = 1):
-        return (r.normal(0, self.traits[trait_num].alpha_dist_sigma, n))
+    #method for drawing an effect size for one or many loci 
+    def draw_alpha(self, trait_num, n):
+        alpha = r.normal(0, self.traits[trait_num].alpha_dist_sigma, n)
+        if n == 1:
+            alpha = np.abs(alpha)
+        return(alpha)
 
     
     #method for assigning loci to traits 

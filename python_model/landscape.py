@@ -99,6 +99,7 @@ class Landscape_Stack:
         assert len(set([land.dims for land in self.scapes.values()])) == 1, 'Dimensions of all landscapes must be even.'
         self.dims = self.scapes.values()[0].dims
         self.movement_surf = None
+        self.movement_surf_scape_num = None
 
 
 
@@ -392,6 +393,7 @@ def build_scape_stack(params, num_hab_types = 2):
         #create the movement surface, and set it as the land.movement_surf attribute
         import movement
         land.movement_surf = movement.create_movement_surface(land, params)   
+        land.movement_surf_scape_num = params['movement_surf_scape_num']
 
 
     return land

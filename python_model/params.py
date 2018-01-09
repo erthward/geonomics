@@ -4,7 +4,6 @@ import numpy as np
 
 params = {
 
-
 'set_seed' : True,                  #set the seed (for reproducibility)?
 
 'seed_num' : 2,                    #number to seed random number generators
@@ -56,6 +55,15 @@ params = {
 
 'n_rand_pts' : 2600,           #number of random coordinates to be used in generating random landscapes (only needed if rand_land = True)
 
+'islands' : True,           #create habitat islands (outside which individuals cannot move without dying)?
+
+'island_val' : 0.1,              #if greater than 0 (and of course less than 1), the value will be used to
+                               #create habitat islands in a random landscape (i.e. all cells less than this 
+                               #value will be made completely uninhabitable)
+
+'island_mask' : None,         #pointer to a pickled numpy array, where 0s mask cells outside viable habitat (i.e. outside 'islands'); to use, provide filepath here and set params['island_val'] = 0
+
+
 'landscape_pt_coords': np.array([[0,0], [0,100], [100,0], [50,40], [100,100], [30,0], [0,30], [70,100], [100,70]]),
 #coords of points to use to interpolate defined landscape layers (can be provided as either a single nx2 Numpy array, where n matches the number of points in landscape_pt_vals arrays, to be used as the points for each landscape layer, or a list or tuple of nx2 Numpy arrays, one for each landscape layer; only needed if rand_land = False)
 
@@ -73,13 +81,11 @@ params = {
 'movement_surf' : True,       #use a landscape layer as a resistance surface, or habitat quality layer, to direct movement?
 #'movement_surf' : False,
 
-'movement_surf_scape_num' : 1,               #scape number to use as the movement surface
+'n_movement_surf_scape' : 1,               #scape number to use as the movement surface
 
 'movement_surf_vonmises_kappa' : 2, #kappa value to use in the von Mises mixture distributions (KDEs) underlying resistance surface movement
 
 'movement_surf_gauss_KDE_bandwidth' : 0.2, #bandwidth value to use in the Gaussian KDEs that are created to approximate the von Mises mixture distributions (KDEs) underlying resistance surface movement
-
-#'movement_surf_barrier_val' : 0.25,  #optional; value below which all values on the movement surface raster will be converted to zeroes, to create a stark barrier surrounded with very skewed von Mises mixture distributions (rather than the less stark barrier created by continual gradient interpolated landscapes)
 
 'mu_direction' : 0,                #mu for von mises distribution defining movement directions
 
@@ -122,6 +128,39 @@ params = {
 'custom_fns' : {'recomb_rate_fn': None  #if provided, must be a function that returns a single recombination rate value (r) when called
             
                },
+
+
+
+
+
+
+
+'data' : {                      #dictionary defining the data to be collected, the sampling strategy to use, the timesteps for collection, and other parameters
+
+        'sampling_scheme' : ['random'],  # can be 'all', 'random', 'point', or 'transect'
+        'sampling_args' : {'number':50
+                            },
+        
+                                #args to be unpacked into sampling function (see docstring of sample_data function in data module for details)
+        'freq': 15,               #can be an integer (in which case data will be collected every that many timesteps, plus at the end)
+                                  #or a list of specific timesteps
+
+        'include_land': False,    #if True, will save the Landscape_Stack object each time other data is saved (probably only useful if land is changing in some way not manually coded by the user)
+
+        'gen_data_format': 'VCF',  #can be 'VCF', 'FASTA', or 'ms'
+
+        'geo_data_format': ['CSV', 'Geotiff'],
+                                 #1st argument for points, 2nd for raster; 
+                                 #currently 1.) CSV, Shapefile and 2.) Geotiff available
+
+        'run_name': 'test',                #a name for this parameterization and run (used to name the data_directory and files)
+        'write_intermittent': True,
+        'drop_after_write': True
+        },
+
+
+
+
 
 
 'stats' : {                      #dictionary defining which stats to be calculated, and parameters on their calculation (including frequency, in timesteps, of collection)

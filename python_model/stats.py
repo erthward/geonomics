@@ -1,13 +1,28 @@
 #!/usr/bin/python
 #stats.py
 
+
 '''
-Functions for creating a Stats object, and for calculating those statistics at 
-#specified frequencies and with specified arguments, according to the contents 
-of the params-dict's ['stats'] section.
-'''
+##########################################
+
+Module name:              stats
+
+Module contents:          - definition of Stats class (i.e. structured container 
+                            for stats calculated during model run)
+                          - definition of functions for calculating various stats, 
+                            at specified frequencies and with specified arguments, 
+                            according to the contents of the params['stats'] section
 
 
+Author:                   Drew Ellison Hart
+Email:                    drew.hart@berkeley.edu
+Github:                   URL
+Start date:               01-01-18
+Documentation:            URL
+
+
+##########################################
+'''
 
 
 
@@ -167,6 +182,5 @@ def calc_MAF(pop):
             MAF_l = 1-MAF_l
         MAF.append(MAF_l)
     return(MAF)
-
 
 

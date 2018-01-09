@@ -4,7 +4,7 @@ execfile('./scripts_for_practice/PRACTICE_imports_and_reloads.py')
 
 
 
-pop.set_K(land.scapes[params['movement_surf_scape_num']])
+pop.set_K(land.scapes[params['n_movement_surf_scape']])
 
 pop.genomic_arch.traits[0].s = 0.1
 
@@ -20,7 +20,7 @@ def burn():
     t = 0
     while break_burn_in == False:
     	print('###############\n\n TIMESTEP %i\n' % t)
-    	pop.increment_age_stage()
+    	pop.increment_age_stage(burn = True)
     	pop.mutate(params,t);pop.set_Nt()
     	pop.move(land, params) 
     	extinct = demography.pop_dynamics(land, pop, params, with_selection = False) 
@@ -36,7 +36,7 @@ def burn():
 def main(T):
     for t in range(T):
 	    print('###############\n\n TIMESTEP %i\n' % t)
-	    pop.increment_age_stage()
+	    pop.increment_age_stage(burn = False)
 	    pop.mutate(params,t);pop.set_Nt()
 	    pop.move(land, params)
 	    extinct = demography.pop_dynamics(land, pop, params, with_selection = True) 

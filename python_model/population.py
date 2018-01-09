@@ -57,6 +57,10 @@ class Population:
      
     def __init__(self, N, individs, genomic_arch, size, T): 
 
+        self.t = None                                       #attribute to keep of track of number of timesteps the population has evolved
+                                                            #NOTE: This way, if model is stopped, changes are made, then it is run further,
+                                                            #this makes it easy to continue tracking from the beginning
+
         self.N = None                                       #slot to hold a landscape.Landscape object of the current population density 
 
         self.K = None                                       #slot to hold an landscape.Landscape object of the local carrying capacity (i.e. 'target' dynamic equilibrium population density)
@@ -129,10 +133,14 @@ class Population:
 
 
     #method to increment all population's age by one (also adds current pop size to tracking array)
-    def increment_age_stage(self):
+    def increment_age_stage(self, burn = False):
         
         #increment age of all individuals
         [ind.increment_age_stage() for ind in self.individs.values()];
+
+        #add 1 to pop.t
+        if burn == False:  #as long as this is not during burn-in, pop.t will increment 
+            pop.t += 1
 
 
 
@@ -575,7 +583,7 @@ class Population:
         if scape_num <> None:
             land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
         else:
-            land.scapes[land.movement_surf_scape_num].show(im_interp_method = im_interp_method, pop = True) 
+            land.scapes[land.n_movement_surf_scape].show(im_interp_method = im_interp_method, pop = True) 
 
         from matplotlib.colors import LinearSegmentedColormap 
         colors = ['#3C22B4', '#80A6FF', '#FFFFFF'] 

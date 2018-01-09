@@ -150,7 +150,7 @@ def create_movement_surface(land, params, kappa = 12):
 
 
     #grab the correct landscape raster
-    rast = land.scapes[params['movement_surf_scape_num']].raster.copy()
+    rast = land.scapes[params['n_movement_surf_scape']].raster.copy()
 
     #create embedded raster (so that the edge probabilities are appropriately calculated)
     embedded_rast = np.zeros(shape = [n+2 for n in rast.shape])
@@ -180,7 +180,7 @@ def plot_movement_surf_vectors(land, params, circle = False):
     from numpy import pi, mean, sqrt, cos, sin, arctan
 
     #plot movement surface raster
-    land.show(scape_num = params['movement_surf_scape_num'])
+    land.show(scape_num = params['n_movement_surf_scape'])
 
     #define inner function for plotting a single cell's average unit vector
     def plot_one_cell(i,j):

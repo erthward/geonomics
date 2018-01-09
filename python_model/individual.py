@@ -84,7 +84,7 @@ class Individual:
     #function to extract the habitat value for an individual's current raster cell
     def query_habitat(self, land):
         if self.habitat == None:
-            self.habitat = [np.nan] * land.num_rasters
+            self.habitat = [np.nan] * land.n_scapes
         for n in land.scapes.keys():
             j, i = [int(coord) for coord in np.floor([self.x, self.y])]  #NOTE: j,i NOT i,j becuase the numpy array will be indexed i then j, i.e. vertical, then horizontal, which corresponds to y then x!!  
             self.habitat[n] = land.scapes[n].raster[i,j]

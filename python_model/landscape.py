@@ -40,6 +40,8 @@ class Landscape:
     def __init__(self, dims, raster):
         self.dims = dims
         self.raster = raster
+        self.island_mask = False
+        self.mask_island_vals = False
         assert type(self.dims) in [tuple, list], "dims must be expressed on a tuple or a list"
         assert type(self.raster) == np.ndarray, "raster should be a numpy.ndarray"
 
@@ -52,16 +54,20 @@ class Landscape:
     def show(self, colorbar = True, im_interp_method = 'nearest', pop = False):
         if plt.get_fignums():
             colorbar = False
-        cmap = 'terrain'
+        cmap = plt.cm.terrain
+        vmin = 0
+        if self.mask_island_vals == True:
+            cmap.set_under(color = 'black')
+            vmin = 1e-7
         #TODO: REALLY GET TO THE BOTTOM OF THE RASTER-PLOTTING ISSUE!! 04/16/17: While working on the 
             #pop-density raster function, I was plotting the results and realized that the function seemed to
             #be working, but that the results seemed reflected about the diagonal. I am doing this, for the
             #moment, as a TEMPORARY fix, but will have to make sure that I haven't already 'fixed' this (and
             #forgotten) elsewhere, such that this is actually introducing more problems in the long-run
         if pop == True:
-            plt.imshow(self.raster, interpolation = im_interp_method, cmap = cmap)
+            plt.imshow(self.raster, interpolation = im_interp_method, cmap = cmap, vmin = vmin)
         else:
-            plt.imshow(np.flipud(self.raster), interpolation = im_interp_method, cmap = cmap)
+            plt.imshow(np.flipud(self.raster), interpolation = im_interp_method, cmap = cmap, vmin = vmin)
         if colorbar:
             if self.raster.max() > 1:
                 plt.colorbar(boundaries=np.linspace(0,self.raster.max(),51))
@@ -95,11 +101,12 @@ class Landscape_Stack:
     def __init__(self, raster_list):
         self.scapes = dict(zip(range(len(raster_list)), raster_list))  
         assert False not in [raster.__class__.__name__ == 'Landscape' for raster in raster_list], 'All landscapes supplied in raster_list must be of type landscape.Landscape.'
-        self.num_rasters = len(raster_list)
+        self.n_scapes = len(raster_list)
         assert len(set([land.dims for land in self.scapes.values()])) == 1, 'Dimensions of all landscapes must be even.'
         self.dims = self.scapes.values()[0].dims
         self.movement_surf = None
-        self.movement_surf_scape_num = None
+        self.n_movement_surf_surf = None
+        self.n_island_mask_scape = None
 
 
 
@@ -108,11 +115,19 @@ class Landscape_Stack:
             colorbar = False
         cmaps = ['terrain', 'bone']
         alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+
         if scape_num <> None:
+
+            cmap = plt.cm.terrain
+            vmin = 0
+            if self.scapes[scape_num].mask_island_vals == True:
+                cmap.set_under(color = 'black')
+                vmin = 1e-7
+
             if pop == True:
-                plt.imshow(self.scapes[scape_num].raster, interpolation = im_interp_method, cmap = 'terrain')
+                plt.imshow(self.scapes[scape_num].raster, interpolation = im_interp_method, cmap = cmap, vmin = vmin)
             else:
-                plt.imshow(np.flipud(self.scapes[scape_num].raster), interpolation = im_interp_method, cmap = 'terrain')
+                plt.imshow(np.flipud(self.scapes[scape_num].raster), interpolation = im_interp_method, cmap = cmap, vmin = vmin)
 
 
             if colorbar:
@@ -189,7 +204,7 @@ class Landscape_Stack:
             print('This landscape stack appears to have no movement surface layer. Function not valid.')
             return
         else:
-            scape_num = params['movement_surf_scape_num']
+            scape_num = params['n_movement_surf_scape']
             pts = [(np.cos(a), np.sin(a)) for a in [self.movement_surf[i][j]()[0] for n in range(1000)]]
             plt.scatter([pt[0]*0.5+i for pt in pts], [pt[1]*0.5+j for pt in pts], color = 'red', alpha = 0.2)
             self.scapes[scape_num].zoom(max(i-10, 0), min(i+10, self.dims[0]), max(j-10, 0), min(j+10, self.dims[1]))
@@ -209,7 +224,7 @@ class Landscape_Stack:
             print('This landscape stack appears to have no movement surface layer. Function not valid.')
             return
         else:
-            scape_num = params['movement_surf_scape_num']
+            scape_num = params['n_movement_surf_scape']
             v,a = np.histogram([self.movement_surf[i][j]()[0] for n in range(7500)], bins = 15)
             v = v/float(v.sum())
             a = [(a[n]+a[n+1])/2 for n in range(len(a)-1)]
@@ -246,7 +261,7 @@ class Landscape_Stack:
 #--------------------------------------
 
 
-def random_surface(dims, n_rand_pts, interp_method = "cubic", num_hab_types = 2, dist = 'beta', alpha = 0.05, beta = 0.05):  #requires landscape to be square, such that dim = domain = range
+def random_surface(dims, n_rand_pts, interp_method = "cubic", island_val = 0, num_hab_types = 2, dist = 'beta', alpha = 0.05, beta = 0.05):  #requires landscape to be square, such that dim = domain = range
     #NOTE: can use "nearest" interpolation to create random patches of habitat (by integer values); can change num_hab_types to > 2 to create a randomly multi-classed landscape
     #NOTE: I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
     #NOTE: This seems to generate decent, believable random rasters! 
@@ -276,6 +291,7 @@ def random_surface(dims, n_rand_pts, interp_method = "cubic", num_hab_types = 2,
         I = I/(I.max()+(0.01*r.rand()))
     if dims[0] <> dims[1]:
         pass #NOTE: figure out how to get it to use the dims tuple to subset an approriate size if dims not equal
+
     return Landscape(dims,I)
 
 
@@ -372,36 +388,70 @@ def build_scape_stack(params, num_hab_types = 2):
 
         land = Landscape_Stack([defined_surface(dims, pts[n], vals[n], interp_method = interp_method[n], num_hab_types = num_hab_types) for n in range(num_scapes)])
 
-    
+   
 
+
+    #if params['island_val'] > 0, then use the movement_surf raster to create T/F mask-raster, added as an
+    #additional landscape, to be used to kill all individuals straying off 'islands'
+    
     #create a movement surface, if params call for it  
     #NOTE: THIS WILL TAKE A WHILE TO COMPUTER UP-FRONT!
     if params['movement_surf'] == True:
 
-        #zero out all values less than the barrier_val, if it is provided in the params dict
-        if ('movement_surf_barrier_val' in params.keys()):
-            barrier = params['movement_surf_barrier_val']
-            try:
-                barrier = float(barrier)
-            except Error:
-                pass
-            if (type(barrier) == float) and (barrier > 0) and (barrier < 1):
-                movement_surf = land.scapes[params['movement_surf_scape_num']].raster
-                movement_surf[movement_surf < barrier] = 0
-                land.scapes[params['movement_surf_scape_num']].raster = movement_surf
+        land.n_movement_surf_scape = params['n_movement_surf_scape']
+
+        if params['islands'] == True:
+
+            if params['island_val'] > 0:
+                iv = params['island_val']
+         
+                #zero out the appropriate parts of the movement raster
+                movement_rast = land.scapes[land.n_movement_surf_scape].raster
+                #zero out the appropriate parts of the movement raster (but not exactly 0, because 
+                #creates divison-by-zero problems in the pop_dynamics calculations)
+                movement_rast[movement_rast < iv] = 1e-8
+               
+
+            elif ('island_mask' in params.keys() and params['island_mask'] <> None):
+                im_file = params['island_mask']
+                ma = np.loads(im_file)
+                assert type(ma) == np.ndarray, "The pickled file located at the path provided in params['island_mask'] does not appear to be a numpy ndarray."
+
+                #get the movement raster scape number
+                movement_rast = land.scapes[land.n_movement_surf_scape].raster
+                #zero out the appropriate parts of the movement raster (but not exactly 0, because 
+                #creates divison-by-zero problems in the pop_dynamics calculations)
+                movement_rast[ma == 0] = 1e-8
                 
+               
+            #replace the movement_surf_scape raster with the updated raster with all outside-habitat values set to 1e-8
+            land.scapes[land.n_movement_surf_scape].raster = movement_rast
+            #set the Landscape.mask_island_vals flag on the movement surf to True, for plotting purposes
+            land.scapes[land.n_movement_surf_scape].mask_island_vals  = True
+
+
+            #then create an island mask and add as the last landscape (to use to quickly cull individuals outside the 'islands')
+            island_mask = create_island_mask(dims, land.scapes[land.n_movement_surf_scape].raster)
+            island_mask.island_mask = True  #set Lanscape.island_mask attribute to True
+            land.scapes[land.n_scapes] = island_mask #set as the last scape
+            land.n_island_mask_scape = land.n_scapes #the Landscape_Stack n_island_mask_scape attribute to last scape num
+            land.n_scapes += 1 #then increment total scape nums by 1
+
+
+
+ 
         #create the movement surface, and set it as the land.movement_surf attribute
         import movement
         land.movement_surf = movement.create_movement_surface(land, params)   
-        land.movement_surf_scape_num = params['movement_surf_scape_num']
 
-
+   
     return land
 
 
 
-
-
+def create_island_mask(dims, scape):
+    mask = np.ma.masked_less_equal(scape,1e-8).mask
+    return Landscape(dims,mask)
 
 
 

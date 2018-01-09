@@ -470,6 +470,13 @@ def pop_dynamics(land, pop, params, with_selection = True, burn_in = False, age_
         assert np.alltrue(np.array(d_ind.values()) >= 0)
         assert np.alltrue(np.array(d_ind.values()) <= 1)
 
+    
+    if params['island_val'] > 0:
+        d_ind.update({i:1 for i,v in pop.get_habitat(land.n_island_mask_scape).items() if v})
+        print('\n\tINDIVIDS KILLED OUTSIDE ISLANDS: %i\n' % len({i:1 for i,v in pop.get_habitat(land.n_island_mask_scape).items() if v}))
+        
+    
+
     #If age_stage_d <> None then use the age_stage_d array, and pop.get_age(), and the d raster 
     #to calculate per-individual death probabilities
     if age_stage_d <> None:

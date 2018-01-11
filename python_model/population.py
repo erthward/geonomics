@@ -57,15 +57,19 @@ class Population:
      
     def __init__(self, N, individs, genomic_arch, size, T): 
 
-        self.t = None                                       #attribute to keep of track of number of timesteps the population has evolved
+        self.it = None                                      #attribute to keep track of iteration number this pop is being used for
+                                                            #(optional; will be set by the iteration.py module if called)
+
+        self.t = 0                                          #attribute to keep of track of number of timesteps the population has evolved
                                                             #NOTE: This way, if model is stopped, changes are made, then it is run further,
                                                             #this makes it easy to continue tracking from the beginning
 
-        self.N = None                                       #slot to hold a landscape.Landscape object of the current population density 
+        self.N = None                                       #attribute to hold a landscape.Landscape object of the current population density 
 
-        self.K = None                                       #slot to hold an landscape.Landscape object of the local carrying capacity (i.e. 'target' dynamic equilibrium population density)
+        self.K = None                                       #attribute to hold an landscape.Landscape object of the local carrying capacity (i.e. 'target' dynamic equilibrium population density)
 
-        self.Nt = []
+        self.Nt = []                                        #list to record population size (appended each time 
+                                                            #pop.increment_age_stage() is called)
 
         self.individs = individs                            #dict of all individuals, as instances of individual.Individual class
 
@@ -140,14 +144,7 @@ class Population:
 
         #add 1 to pop.t
         if burn == False:  #as long as this is not during burn-in, pop.t will increment 
-            pop.t += 1
-
-
-
-    #method to extract habitat values at each individual's coordinates for each land.scapes raster
-    def query_habitat(self, land):
-        [ind.query_habitat(land) for ind in self.individs.values()];
- 
+            self.t += 1
 
 
 
@@ -156,7 +153,7 @@ class Population:
     def move(self, land, params):
         [ind.move(land, params) for ind in self.individs.values()];
 
-        self.query_habitat(land)
+        self.set_habitat(land)
 
 
 
@@ -210,7 +207,7 @@ class Population:
 
 
         #sample all individuals' habitat values, to initiate for offspring
-        self.query_habitat(land)
+        self.set_habitat(land)
 
         print '\n\t%i individuals born' % num_offspring
 
@@ -332,47 +329,55 @@ class Population:
 
 
 
-   
-   #TODO: DEFUNCT; EITHER REVAMP OR JUST DELETE
-
-    #function to discover loci above, below, or between threshold selection coefficients
-    def find_loci(self, min_s=None, max_s = None):
-        assert min_s<> None or max_s <> None, "No parameters provided. Must provide at least one value (either a max or min)."
-        if max_s and not min_s:
-            loci = dict([(i, np.array(range(len(self.genomic_arch.s[i])))[self.genomic_arch.s[i] <= max_s]) for i in range(len(self.genomic_arch.s))])
-            #print "\n%i loci found\n" % sum([len(chrom_set) for chrom_set in loci.values()])
-            return loci
+    #NOTE: DEH 01-11-18: Reformatting the habitat-getting approach
+        #1.) determined a 10x-faster way of setting hab vals of individs
+        #2.) Changed query_habitat() to set_habitat()
+        #2.) creating separate set functions for whole pop (usually called this way, so avoids conditional
+             #tests) and for scape_num and/or individ-specific calls (and ditto for the get functions)
 
 
-        elif min_s and not max_s:
-            loci = dict([(i, np.array(range(len(self.genomic_arch.s[i])))[self.genomic_arch.s[i] >= min_s]) for i in range(len(self.genomic_arch.s))])
-            #print "\n%i loci found\n" % sum([len(chrom_set) for chrom_set in loci.values()])
-            return loci
+    #method for setting all individs' habitat attributes to match current locations
+    def set_habitat(self, land, scape_num = None, individs = None):
+        hab = {i:[sc.raster[int(ind.y), int(ind.x)] for sc in land.scapes.values()] for i,ind in self.individs.items()}
+        for i,v in self.individs.items(): 
+            v.habitat = hab[i]
  
-
-        else:
-            loci = dict([(i, np.array(range(len(self.genomic_arch.s[i])))[np.array(self.genomic_arch.s[i] >= min_s) & np.array(self.genomic_arch.s[i] <= max_s)]) for i in range(len(self.genomic_arch.s))])
-            #print "\n%i loci found\n" % sum([len(chrom_set) for chrom_set in loci.values()])
-            return loci
- 
-
-   
-
-
-   
- 
-
-    def get_habitat(self, scape_num = None, individs = None):
-        if individs <> None:
+    #if scape_num and individs args set to None, does same as set_habitat()
+    def set_habitat_by_land_ind(self, land, scape_num = None, individs = None):
+        if individs is None:
             if scape_num is None:
-                return {k: ind.habitat for k, ind in self.individs.items() if k in individs}
+                hab = {i:[sc.raster[int(ind.y), int(ind.x)] for sc in land.scapes.values()] for i,ind in self.individs.items()}
             else:
-                return {k: ind.habitat[scape_num] for k, ind in self.individs.items() if k in individs}
+                hab = {i:land.scapes[scape_num].raster[int(ind.y), int(ind.x)] for i,ind in self.individs.items()}
         else:
             if scape_num is None:
-                return {k: ind.habitat for k, ind in self.individs.items()}
+                hab = {i:[sc.raster[int(ind.y), int(ind.x)] for sc in land.scapes.values()] for i,ind in self.individs.items() if i in individs}
             else:
-                return {k: ind.habitat[scape_num] for k, ind in self.individs.items()}
+                hab = {i:land.scapes[scape_num].raster[int(ind.y), int(ind.x)] for i,ind in self.individs.items() if i in individs}
+
+        for i,v in self.individs.items(): 
+            v.habitat = hab[i]
+
+
+    #method to get all individs' habitat values
+    def get_habitat(self):
+        return({i: ind.habitat for i, ind in self.individs.items()})
+
+
+    #is both args set to None, does same as get_habitat
+    def get_habitat_by_land_ind(self, scape_num = None, individs = None):
+        if individs is None:
+            if scape_num is None:
+                return({i: ind.habitat for i, ind in self.individs.items()})
+            else:
+                return({i: ind.habitat[scape_num] for i, ind in self.individs.items()})
+        else:
+            if scape_num is None:
+                return({i: ind.habitat for i, ind in self.individs.items() if i in individs})
+            else:
+                return({i: ind.habitat[scape_num] for i, ind in self.individs.items() if i in individs})
+
+
 
 
 
@@ -597,9 +602,9 @@ class Population:
 
         #get all individs' fitness values
         w = self.get_fitness()
-
+        
         #calc minimum possible fitness
-        min_fit = np.product([1-t.s for t in self.genomic_arch.traits.values()])
+        min_fit = np.product([1-np.atleast_2d(t.phi).min() for t in self.genomic_arch.traits.values()])
 
         #generate an evenly spaced range of the possible fitness values
         fit_vals = np.linspace(min_fit, 1, 50)
@@ -638,7 +643,7 @@ class Population:
         c = self.get_coords()
 
         #calc minimum possible fitness
-        min_fit = 1 - self.genomic_arch.traits[trait].s
+        min_fit = 1 - np.atleast_2d(self.genomic_arch.traits[trait].phi).min()
 
         #generate an evenly spaced range of the possible fitness values
         fit_vals = np.linspace(min_fit, 1, 50)
@@ -659,8 +664,6 @@ class Population:
       
         #separate colormap to color marker edges from black (fit = 1) to white (fit = 0) through red
         inside_marker_cmap = mpl.cm.get_cmap('RdYlGn')
-        #norm = mpl.colors.Normalize(vmin = min_fit, vmax = 1)
-        #inside_color = [inside_marker_cmap(norm(fits[i])) for i in inds]
 
 
         plt.scatter([i[0] for i in data], [i[1] for i in data], s = [min_markersize + i[4] for i in data], c = [i[3] for i in data], cmap = cmap, alpha = alpha)
@@ -745,7 +748,7 @@ def create_population(genomic_arch, land, params):
     
 
     #get initial habitat values
-    pop.query_habitat(land)
+    pop.set_habitat(land)
 
     return pop
 

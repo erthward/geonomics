@@ -40,6 +40,10 @@ import random
 #--------------------------------------
 
 
+def est_total_num_mutations(params, pop):
+    est_total_num_muts = int(params['mu'] * params['L'] * sum(pop.K.raster) * params['T'])
+    return(est_total_num_muts)
+
 
 def mutate(pop, individ, genomic_arch, t, alpha_mut_s = 25, beta_mut_s = 0.5):
 

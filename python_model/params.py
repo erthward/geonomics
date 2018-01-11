@@ -12,15 +12,15 @@ params = {
 
 'burn_T_min': 50,                     #total burn-in runtime
 
-'L' : 500,                         #total number of loci
+'L' : 50,                         #total number of loci
 
-'l_c': [100,250,150],         #list of chromosome lengths for all chromosomes to be simulated (if only a single chromosome to be simulated, unnecessary argument)
+'l_c': [50],     #chromosome lengths
 
 'recomb_array' : None,           #predetermined linkage map to use for the simulated loci (optional)
 
 'x' : 2,                         #ploidy (for now, leave at 2 for diploidy)
 
-'mu' : 10e-9,                    #genome-wide mutation rate
+'mu' : 10e-9,                    #genome-wide mutation rate, per base per generation
 
 'alpha_r' : 0.5,                #alpha for beta distribution of linkage values  #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333, with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
 
@@ -35,13 +35,16 @@ params = {
 
 'pleiotropy' : False,           #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?)
 
-'traits' : {'num': 1,           #number of traits to simulate
-            'scape_num': [0], #list of the landscape numbers to be used for selection on each trait 
+'traits' : {'num': 2,           #number of traits to simulate
+            'scape_num': [0,0], #list of the landscape numbers to be used for selection on each trait 
                                 #(i.e.  list length should equal value of 'num' on previous line, as should lengths of subsequent lists)
-            's' : [0.1],   #selection coefficient for trait
-            'n': [3], #number of loci assigned to trait
-            'alpha_dist_sigma': [0.25],  #NOTE: for sigma = 0.25, one average locus is enough to generate an optimum genotype; for 0.025, 10 loci; and so on linearly
-            'fitness_fn_gamma': [1] #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
+
+            'phi' : [0,np.triu(np.ones((50,50))*0.1)],   #phenotypic selection coefficient for trait; for each trait, can either be a numeric value, or can be an array of spatially-contingent s values of dimensions equal to land.dims
+            'n': [1,1], #number of loci assigned to trait
+            'alpha_dist_sigma': [0.5, 0.5],  #NOTE: for sigma = 0.5, one average locus is enough to generate an both optimum genotypes; for 0.025, 10 loci should (on average, but depends of course on the random sample of alphas drawn!); and so on linearly
+            'fitness_fn_gamma': [1, 1], #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
+
+            'univ_advant' : [False, True] #is the phenotype unviersally advantageous? if so, phenotypes closer to 1 will have higher fitness at all locations
             },
 
 'N' : 500,                        #total pop size

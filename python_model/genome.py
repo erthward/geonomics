@@ -34,15 +34,24 @@ from numpy import random as r
 
 
 class Trait:
-    def __init__(self, s, n, scape_num, alpha_dist_sigma, fitness_fn_gamma):
-        self.s = s
+    def __init__(self, phi, n, scape_num, alpha_dist_sigma, fitness_fn_gamma, univ_advant):
+        self.phi = phi
         self.n = n
         self.scape_num = scape_num
         self.alpha_dist_sigma = alpha_dist_sigma
         self.fitness_fn_gamma = fitness_fn_gamma
+        self.univ_advant = univ_advant
 
         self.loci = np.array([])
         self.alpha = np.array([])
+
+
+    def get_phi(self, pop):
+        if type(self.phi) in (float, int):
+            phi = self.phi
+            return({i:phi for i in pop.individs.keys()})
+        else:
+            return(get_phi(pop, self.phi))
 
 
 class Genomic_Architecture:
@@ -345,6 +354,11 @@ def sim_genome(genomic_arch):
 
     return(new_genome)
 
+
+
+#function for getting phi when it is spatiall variable
+def get_phi(pop, phi_rast):
+    return({i:phi_rast[int(ind.y), int(ind.x)] for i,ind in pop.individs.items()})
 
 
 

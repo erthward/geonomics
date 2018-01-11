@@ -35,15 +35,20 @@ def get_phenotype(pop, trait):
 
 #NOTE: I HAVE A FEELING IF I THINK ABOUT THIS FUNCTION AND THE SERIES OF FUNCTIONS IN THIS MODULE THAT IT FITS
       #INTO, THERE WOULD BE A GOOD WAY TO SPEED IT UP
+
+#TODO: DEH 01-11-18: Added ability to use spatially varying phenotypic selection coefficient, but curious if 
+#it would be faster to add a conditional check of whether or not a given trait's phi is a single value, and to
+#only calculate as phi[i]*(np.abs(hab[i][scape_num]... if it isn't??
 def get_fitness(pop):
     fit_dict = dict(zip(pop.individs.keys(),[1]*pop.census()))
-    for t in pop.genomic_arch.traits.keys():
-        s = pop.genomic_arch.traits[t].s
-        gamma = pop.genomic_arch.traits[t].fitness_fn_gamma
-        scape_num = pop.genomic_arch.traits[t].scape_num
+    hab = pop.get_habitat()
+    for t,trt in pop.genomic_arch.traits.items():
+        phi = trt.get_phi(pop)
+        gamma = trt.fitness_fn_gamma
+        scape_num = trt.scape_num
         z = get_phenotype(pop, t)
-        hab = pop.get_habitat(scape_num)
-        w = dict([(i, 1 - s*(np.abs(hab[i] - z_val)**gamma)) for i,z_val in z.items()])
+        univ_advant = trt.univ_advant
+        w = {i:1 - phi[i]*(np.abs((hab[i][scape_num]**(not univ_advant)) - z_val)**gamma) for i,z_val in z.items()}
         fit_dict = {i : w_val *fit_dict[i] for i, w_val in w.items()}
     return(fit_dict)
 
@@ -52,12 +57,14 @@ def get_fitness(pop):
 #NOTE: I HAVE A FEELING IF I THINK ABOUT THIS FUNCTION AND THE SERIES OF FUNCTIONS IN THIS MODULE THAT IT FITS
       #INTO, THERE WOULD BE A GOOD WAY TO SPEED IT UP
 def get_single_trait_fitness(pop, trait):
-    s = pop.genomic_arch.traits[trait].s
-    gamma = pop.genomic_arch.traits[trait].fitness_fn_gamma
-    scape_num = pop.genomic_arch.traits[trait].scape_num
+    hab = pop.get_habitat_by_land_ind(scape_num = scape_num)
+    trt = pop.genomic_arch.traits[trait]
+    phi = trt.get_phi(pop)
+    gamma = trt.fitness_fn_gamma
+    scape_num = trt.scape_num
     z = get_phenotype(pop, trait)
-    hab = pop.get_habitat(scape_num)
-    w = dict([(i, 1 - s*(np.abs(hab[i] - z_val)**gamma)) for i,z_val in z.items()])
+    univ_advant = trt.univ_advant
+    w = {i:1 - phi[i]*(np.abs((hab[i]**(not univ_advant)) - z_val)**gamma) for i,z_val in z.items()}
     return(w)
 
 

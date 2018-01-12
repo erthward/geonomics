@@ -21,9 +21,10 @@ def burn():
     while break_burn_in == False:
     	print('###############\n\n TIMESTEP %i\n' % t)
     	pop.increment_age_stage(burn = True)
-    	pop.mutate(params,t);pop.set_Nt()
+    	#pop.mutate(params,t)
+        pop.set_Nt()
     	pop.move(land, params) 
-    	extinct = demography.pop_dynamics(land, pop, params, with_selection = False) 
+    	extinct = demography.pop_dynamics(land, pop, params, with_selection = False, burn = True) 
     	t +=1
     	if extinct == 1: 
     		break 
@@ -33,13 +34,21 @@ def burn():
     print('~~~~~~~~~~~~~~~~\n\n\n\t\tBURN-IN COMPLETE\n\n\n~~~~~~~~~~~~~~~~~~')
         
 
-def main(T):
-    for t in range(T):
-	    print('###############\n\n TIMESTEP %i\n' % t)
-	    pop.increment_age_stage(burn = False)
-	    pop.mutate(params,t);pop.set_Nt()
-	    pop.move(land, params)
-	    extinct = demography.pop_dynamics(land, pop, params, with_selection = True) 
-	    if extinct == 1: 
-	    	break
+def main(T, reassign_genomes = False):
+    if reassign_genomes == True:
+        print('\n\nReassigning genomes...\n\n')
+        genome.reassign_genomes(pop, params)
+    for t in range(T): 
+        print('###############\n\n TIMESTEP %i\n' % t)
+        pop.increment_age_stage(burn = False)
+        pop.set_Nt()
+        pop.move(land, params)
+        extinct = demography.pop_dynamics(land, pop, params, with_selection = True) 
+        if extinct == 1: 
+            break
+        pop.mutate(log = False)
+
+
+
+
 

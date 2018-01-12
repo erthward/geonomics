@@ -233,6 +233,7 @@ def mate(pop, pair, params, n_offspring, gamete_recomb_paths):
         #come back and think the theoretical implications/justification for this
     for n in range(n_offspring):
         #generate a gamete for each member of mating pair
+        #paths, gamete_recomb_paths = [gamete_recomb_paths[:,0], gamete_recomb_paths[:,1]], gamete_recomb_paths[:,2:]
         paths = [gamete_recomb_paths.pop() for i in range(2)]
         gametes = [gametogenesis.gametogenerate(pop.individs[i], paths.pop()) for i in pair]
         #stack the gametes and transpose, to create the new individual's new_genome array

@@ -40,61 +40,54 @@ import random
 #--------------------------------------
 
 
-def est_total_num_mutations(params, pop):
-    est_total_num_muts = int(params['mu'] * params['L'] * sum(pop.K.raster) * params['T'])
-    return(est_total_num_muts)
+def estimate_total_num_mutations(params, pop):
+    #NOTE: this would actually be a pretty poor estimate, because mutations will occur in new individuals, not some static population
+    #est = int(params['mu'] * params['L'] * sum(pop.K.raster) * params['T'])
+
+    mean_births = np.mean(pop.n_births[-params['burn_T_min']:])
+    est = mean_births * pop.genomic_arch.L * pop.T * pop.genomic_arch.mu
+
+    #give a decent overestimate
+
+    est = int(2.5 * est)
+
+    return(est)
 
 
-def mutate(pop, individ, genomic_arch, t, alpha_mut_s = 25, beta_mut_s = 0.5):
+def mutate(pop, log = False):
 
-    #NOTE: should I incorporate the number of offspring produced in the following calculation? or should I make this a method of individuals, and do it once for every offspring?
+    newborns = {i:v.age for i,v in pop.individs.items() if v.age == 0}
 
-    mutation = r.binomial(1, genomic_arch.mu*genomic_arch.L)
+    mutation = r.binomial(1, pop.genomic_arch.mu*pop.genomic_arch.L*len(newborns))
 
 
-    if mutation:
-        #randomly choose a locus from among the neutral loci
-        locus = random.choice(np.array(range(genomic_arch.L))[genomic_arch.non_neutral])
+    if mutation == 1:
+        #randomly choose an individual
+        ind = r.choice(newborns.keys(), 1)
+        #randomly choose a locus from among the mutables
+        shuffle(pop.genomic_arch.mutables)
+        loc = pop.genomic_arch.mutables.pop()
+        #randomly choose a chromosome
+        chrom = r.binomial(1,0.5)
 
+        #then mutate this individual at this locus
+        pop.individual[ind].genome[loc,chrom] = 1
 
 
         #NOTE: Change this to something more generalizable in the main script
-        with open('./mutation_log.txt', 'a') as f:
-            f.write('locus: %i,t: %i' % (locus, t))
+        if log == True:
+            with open('./mutation_log.txt', 'a') as f:
+                f.write('locus: %i,t: %i' % (locus, t))
             
-            
-        
-        print 'MUTATION AT: locus %i' % (locus)
-        raw_input()
+        print 'MUTATION:\n\t INDIVIDUAL %i,  LOCUS %i\n\t timestep %i\n\n' % (ind, locus, pop.t)
 
 
-
-        #set all of the current population's alleles at this locus to 0
-        #NOTE: This is a huge cheat! But for now seems to most obvious way to implement this
-            #DEH 12-04-18: and shouldn't matter much because I am going to overhaul the whole mutation approach and module
-        for ind in pop.individs.values():
-            ind.genome[locus,:] = [0,0]
-
-        #insert mutant in offspring's genome
-        mutant = [0,1]
-        r.shuffle(mutant)
-        individ.genome[locus,:] = mutant
-
-        ###NOTE DEH 12-04-18: This is now completely obsolete
-        ###set selection coefficient to (probably, b/c drawn from right-heavy beta distribution) something highly advantageous
-        ###genomic_arch.s[chrom][locus] = r.beta(alpha_mut_s, beta_mut_s)
-
-        ###set locus to be non-neutral
-        ###genomic_arch.non_neutral[chrom][locus] = True
-        
+       
         
 
 
 
-
-
-#NOTE: use the above to write a function that INTENTIONALLY introduces a mutation
-   
+#NOTE: write a function that allows user to INTENTIONALLY introduce a mutation
 def introduce_mutation(pop):
     pass
 

@@ -67,6 +67,7 @@ class Genomic_Architecture:
         self.r_lookup = None    #The recombination lookup object will be assigned here; used to speed up large
                                 #quantities of binomial draws needed for recombination
         self.mu = mu            #genome-wide mutation rate  #NOTE: should I allow this to be declared as a dictionary of mutation rates along all the chromosomes, to allow for heterogeneous mutation rates across the genome???
+        self.mutables = None    #after burn-in, will be set to an array containing eligible loci for mutation
         self.sex = sex
 
         self.traits = trait_dict
@@ -111,7 +112,7 @@ class Genomic_Architecture:
         #and add their effects to the 'alpha' array
         self.traits[trait_num].alpha = np.array(list(self.traits[trait_num].alpha) + list(effects))
 
-        #and and these loci to self.non-neutral, to keep track of all loci underlying any traits (for purpose of avoiding pleiotropy)
+        #and add these loci to self.non-neutral, to keep track of all loci underlying any traits (for purpose of avoiding pleiotropy)
         self.non_neutral[loci] = 1
 
 
@@ -398,7 +399,7 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
 
 #simulate genome
 def sim_genome(genomic_arch):
-    new_genome = np.ones([genomic_arch.L, genomic_arch.x])*999 #if for some reason any loci are not properly set to either 0 or 1, they will stick out as 999's
+    new_genome = np.ones([genomic_arch.L, genomic_arch.x], dtype = np.int8)*9 #if for some reason any loci are not properly set to either 0 or 1, they will stick out as 9s
     for homologue in range(genomic_arch.x):
         new_genome[:,homologue] = draw_genotype(genomic_arch.p)
 
@@ -409,9 +410,35 @@ def sim_genome(genomic_arch):
 
 
 
-#function for getting phi when it is spatiall variable
+
+#function to reassign genomes after burn-in
+def reassign_genomes(pop, params):
+    import mutation
+
+    #use mean n_births at tail end of burn-in to estimate number of mutations, and randomly choose set of neutral loci 
+    #of that length to go into pop.genomic_arch.mutable slot
+    n_muts = mutation.estimate_total_num_mutations(params, pop)
+    muts = r.choice(np.where(pop.genomic_arch.non_neutral == 1)[0], n_muts, replace = False)
+    pop.genomic_arch.mutables = list(muts)
+
+    #set those loci's p values to 0 (i.e. non-segregating)
+    pop.genomic_arch.p[muts] = 0
+    
+    #now reassign genotypes to all individuals, using genomic_arch.p
+    for ind in pop.individs.keys():
+        pop.individs[ind].genome = sim_genome(pop.genomic_arch)
+
+       
+
+
+
+#function for getting phi when it is spatially variable
 def get_phi(pop, phi_rast):
     return({i:phi_rast[int(ind.y), int(ind.x)] for i,ind in pop.individs.items()})
+
+
+
+
 
 
 

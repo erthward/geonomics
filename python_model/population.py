@@ -58,6 +58,8 @@ class Population:
      
     def __init__(self, N, individs, genomic_arch, size, T): 
 
+        self.T = T
+
         self.it = None                                      #attribute to keep track of iteration number this pop is being used for
                                                             #(optional; will be set by the iteration.py module if called)
 
@@ -71,6 +73,10 @@ class Population:
 
         self.Nt = []                                        #list to record population size (appended each time 
                                                             #pop.increment_age_stage() is called)
+
+        self.n_births = []                                  #tracker of number of births each time pop.mate is called
+
+        self.n_deaths = []                                  #tracker of number of deaths each time demography.pop_dynamics is called
 
         self.individs = individs                            #dict of all individuals, as instances of individual.Individual class
 
@@ -168,7 +174,7 @@ class Population:
 
 
     #function for executing mating for a population
-    def mate(self, land, params, mating_pairs):
+    def mate(self, land, params, mating_pairs, burn = False):
 
         #pull necessary parameters from params dict
         mu_dispersal = params['mu_dispersal']
@@ -180,8 +186,10 @@ class Population:
 
         num_births = mating.determine_num_births(len(mating_pairs), params)
         total_births = sum(num_births)
+        self.n_births.append(total_births)
 
-        recombinants = gametogenesis.recombine(self.genomic_arch.r_lookup, 2*total_births)
+        if burn == False:
+            recombinants = gametogenesis.recombine(self.genomic_arch.r_lookup, 2*total_births)
 
         for pair in mating_pairs:
 
@@ -192,11 +200,13 @@ class Population:
             n_offspring = num_births.pop()
             n_gametes = 2*n_offspring
 
-            gamete_recomb_paths, recombinants = np.split(recombinants[:,0:n_gametes], n_gametes, axis = 1), recombinants[:,n_gametes:]
-            new_genomes = mating.mate(self, pair, params, n_offspring, gamete_recomb_paths)
+            #gamete_recomb_paths, recombinants = recombinants[:,0:n_gametes], recombinants[:,n_gametes:]
+            if burn == False:
+                gamete_recomb_paths, recombinants = [i.flatten() for i in np.hsplit(recombinants[:,0:n_gametes], n_gametes)], recombinants[:,n_gametes:]
+                new_genomes = mating.mate(self, pair, params, n_offspring, gamete_recomb_paths)
 
             
-            for new_genome in new_genomes:
+            for n in range(n_offspring):
 
                 
                 offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dispersal)
@@ -208,10 +218,17 @@ class Population:
 
                 offspring_key = max(self.individs.keys()) + 1
 
-                if sex == True:
-                    self.individs[offspring_key] = individual.Individual(new_genome, offspring_x, offspring_y, offspring_sex, age)
-                else:
-                    self.individs[offspring_key] = individual.Individual(new_genome, offspring_x, offspring_y, age)
+                if burn == False:
+                    if sex == True:
+                        self.individs[offspring_key] = individual.Individual(new_genomes[n], offspring_x, offspring_y, offspring_sex, age)
+                    else:
+                        self.individs[offspring_key] = individual.Individual(new_genomes[n], offspring_x, offspring_y, age)
+
+                elif burn == True:
+                    if sex == True:
+                        self.individs[offspring_key] = individual.Individual(np.array([0]), offspring_x, offspring_y, offspring_sex, age)
+                    else:
+                        self.individs[offspring_key] = individual.Individual(np.array([0]), offspring_x, offspring_y, age)
 
 
         #sample all individuals' habitat values, to initiate for offspring
@@ -225,9 +242,8 @@ class Population:
 
 
     #method to carry out mutation
-    def mutate(self, params, t):
-        for ind in [ind for ind, individ in self.individs.items() if individ.age == 0]:
-            mutation.mutate(self, self.individs[ind], self.genomic_arch, t, alpha_mut_s = params['alpha_mut_s'], beta_mut_s = params['beta_mut_s'])
+    def mutate(self, log = False):
+        mutation.mutate(self)
 
 
 
@@ -727,7 +743,7 @@ class Population:
 
 
 
-def create_population(genomic_arch, land, params):
+def create_population(genomic_arch, land, params, burn = False):
 
 
 
@@ -740,10 +756,6 @@ def create_population(genomic_arch, land, params):
     size = params['size']
 
     T = params['T']
-
-
-
-
 
 
     assert dims.__class__.__name__ in ['tuple', 'list'], "dims should be expressed as a tuple or a list"

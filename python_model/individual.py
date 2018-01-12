@@ -90,7 +90,7 @@ class Individual:
 #--------------------------------------
 
 
-def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0):
+def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0, burn =False):
     '''Create a new individual from:
             - either an instance of genome.Genomic_Architecture (i.e. for newly simulated individual) or both
               the genomic architecture and a numpy.ndarray genome (e.g. for new offspring) (one of the two must be provided),
@@ -100,18 +100,8 @@ def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None,
             '''
 
     #LOOP FOR SIMULATION OF NEW INDIVIDUALS FOR STARTING POPULATION
-    if new_genome == None:
-        assert dims <> None, "landscape dims required to simulate a new individual without reproduction"
-        #use genome.sim_genome and genomic_arch variable to simulate individual's genome
-        new_genome = genome.sim_genome(genomic_arch)
-         
-        #randomly assign individual a valid starting location
-        x,y = r.rand(2)*dims
-        return Individual(new_genome, x, y, sex = sex, age = age)
 
-
-    #LOOP FOR CREATION OF NEW OFFSPRING INDIVIDUALS
-    else:
+    if new_genome <> None:
         assert parental_centerpoint <> None, "parental_centerpoint needed to create new offspring"
         assert parental_centerpoint.__class__.__name__ in ['tuple', 'list'], "parental_centerpoint should be a tuple or a list"
         assert parental_centerpoint[0] >= 0 and parental_centerpoint[1] >= 0, "parental_centerpoint coordinates must be within landscape, but %s was provided" % str(parental_centerpoint)
@@ -125,5 +115,23 @@ def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None,
 
 
         return Individual(new_genome, x, y, sex = sex, age = 0)
+
+
+    elif new_genome == None:
+        assert dims <> None, "landscape dims required to simulate a new individual without reproduction"
+        
+        #randomly assign individual a valid starting location
+        x,y = r.rand(2)*dims
+
+        if burn == False:
+
+            #use genome.sim_genome and genomic_arch variable to simulate individual's genome
+            new_genome = genome.sim_genome(genomic_arch)
+         
+            return Individual(new_genome, x, y, sex = sex, age = age)
+        
+        elif burn == True:
+
+            return(Individual(new_genome = np.array([0]), x=x, y=y, sex = sex, age = age))
 
 

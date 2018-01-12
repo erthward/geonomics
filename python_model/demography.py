@@ -152,7 +152,7 @@ def kill(land, pop, params, death_probs):
 
 
 
-def pop_dynamics(land, pop, params, with_selection = True, burn_in = False, age_stage_d = None, births_before_deaths = False, debug = None):
+def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_stage_d = None, births_before_deaths = False, debug = None):
     '''Generalized function for implementation population dynamics. Will carry out one round of mating and
     death, according to parameterization laid out in params dict.
 
@@ -218,7 +218,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn_in = False, age_
     ######if births should happen before (and thus be included in the calculation of) deaths, then mate and disperse babies now
     if births_before_deaths == True:
         #Feed the mating pairs and params['b'] to the mating functions, to produce and disperse zygotes
-        pop.mate(land, params, pairs)
+        pop.mate(land, params, pairs, burn)
 
 
 
@@ -447,7 +447,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn_in = False, age_
 
     if births_before_deaths == False:
         #Feed the mating pairs and params['b'] to the mating functions, to produce and disperse zygotes
-        pop.mate(land, params, pairs)
+        pop.mate(land, params, pairs, burn)
 
 
 
@@ -486,6 +486,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn_in = False, age_
     #Feed the per-individual death probabilities into the kill function, which will probabilistically generate deaths
     #and cull those individuals, and will return the number of deaths
     num_deaths = kill(land, pop, params, d_ind)
+    pop.n_deaths.append(num_deaths)
 
     print '\n\t%i individuals dead' % num_deaths
 

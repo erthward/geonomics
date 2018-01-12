@@ -211,13 +211,16 @@ def find_mates(pop, params, sex = False, repro_age = None, dist_weighted_birth =
 
 
 
+def determine_num_births(num_pairs, params):
+    lambda_offspring = params['lambda_offspring']
+    num_births = [r.poisson(lambda_offspring-1+.0001) + 1 for i in range(num_pairs)]
+    return(num_births)
+
 
 
 #function for mating a chosen mating-pair
-def mate(pop, pair, params):
-    lambda_offspring = params['lambda_offspring']
+def mate(pop, pair, params, n_offspring, gamete_recomb_paths):
     offspring = []
-    num_offspring = r.poisson(lambda_offspring-1+.0001) + 1  
         #NOTE: Subtracting 1 from the input lambda then
         #adding 1 to the resulting vector ensures that all pairs who were already determined to be giving birth
         #will have at least one offspring (i.e. prevents draws of 0); adding .000001 to the input lambda prevents
@@ -228,10 +231,10 @@ def mate(pop, pair, params):
         #to parameterize it to be equivalent to a Poisson), but even still I would need to use the
         #(lambda-1) + 1 trick either way to avoid 0s, so that issue would remain; for now, minor, but should
         #come back and think the theoretical implications/justification for this
-
-    for n in range(num_offspring):
+    for n in range(n_offspring):
         #generate a gamete for each member of mating pair
-        gametes = [gametogenesis.gametogenerate(pop.individs[i], pop.genomic_arch) for i in pair]
+        paths = [gamete_recomb_paths.pop() for i in range(2)]
+        gametes = [gametogenesis.gametogenerate(pop.individs[i], paths.pop()) for i in pair]
         #stack the gametes and transpose, to create the new individual's new_genome array
         new_genome = np.vstack((gametes[0], gametes[1])).T
         #append the new_genome to the list of offspring

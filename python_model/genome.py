@@ -64,6 +64,8 @@ class Genomic_Architecture:
         self.non_neutral = np.zeros([L]) #array to keep track of all loci that influence the phenotype of at least one trait
         self.h = h          #Dict of heterozygous effects for all loci, for all chroms
         self.r = r              #Dict of recombination rates between each locus and the next, for all chroms (NOTE: first will be forced to 1/float(x), to effect independent segregation of chroms, after which recomb occurs as a crossing-over path down the chroms
+        self.r_lookup = None    #The recombination lookup object will be assigned here; used to speed up large
+                                #quantities of binomial draws needed for recombination
         self.mu = mu            #genome-wide mutation rate  #NOTE: should I allow this to be declared as a dictionary of mutation rates along all the chromosomes, to allow for heterogeneous mutation rates across the genome???
         self.sex = sex
 
@@ -111,6 +113,12 @@ class Genomic_Architecture:
 
         #and and these loci to self.non-neutral, to keep track of all loci underlying any traits (for purpose of avoiding pleiotropy)
         self.non_neutral[loci] = 1
+
+
+    #method for creating and assigning the r_lookup attribute
+    def create_r_lookup(self):
+        self.r_lookup = create_recomb_lookup_array(self)
+
 
 
 
@@ -292,6 +300,48 @@ def create_recomb_array(params):
 
 
 
+#function to create a lookup array, for raster recombination of larger numbers of loci on the fly
+    #NOTE: size argument ultimately determines the minimum distance between probabilities (i.e. recombination rates)
+    #that can be modeled this way
+def create_recomb_lookup_array(genomic_arch, size = 10000):
+    
+    #TODO: May need to work on this section below, to provide ability to create a list of lookup arrays, in case where number of loci being
+    #modeled exceeds possible memory allotment for a single np.ndarray
+    #then would loop over them by using int(locus/L) to increment along the list
+
+
+    #determine how many arrays would be needed on this system for the given amount of loci
+    #max_loci_per_array = 0
+    #max_val = 100000
+    #for i in [100, 1000, 10000, 100000]:
+    #    try: 
+    #        x = np.zeros([i,10000], dtype = np.int8)
+    #    except MemoryError:
+    #        max_val = i
+    #        break
+    #num_arrays = int(np.ceil(L/float(max_val))) 
+    #arrays = [max_val] * num_arrays
+    #arrays[-1] = pop.genomic_arch.L - max_val*(num_arrays)-1
+
+    #las = []
+    #for n in range(num_arrays):
+        #r_slice = genomic_arch.r[n*max_val:(n*max_val + max_val)]
+    la = np.zeros((len(genomic_arch.r),size), dtype = np.int8)
+
+    for i, rate in enumerate(genomic_arch.r):
+        la[i,0:int(round(size*rate))] = 1
+        #las.append(la)
+
+    #if len(las) >1:
+        #return(las)
+   #else:
+        #return(las[0])
+    return(la)
+
+
+
+
+
 #build the genomic architecture
 #NOTE: This will create the "template" for the genomic architecture that will then be used to simulate individuals and populations
 def build_genomic_arch(params, land, allow_multiple_env_vars = True):
@@ -335,6 +385,9 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
     #add the loci and effect sizes for each of the traits
     for trait_num in genomic_arch.traits.keys():
         genomic_arch.assign_loci_to_trait(trait_num, mutational = False, locs = None)
+
+    #create the r_lookup attribute
+    genomic_arch.create_r_lookup()
 
 
     return(genomic_arch)

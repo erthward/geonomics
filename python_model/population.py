@@ -26,6 +26,7 @@ Documentation:             URL
 import genome
 import individual
 import mating
+import gametogenesis
 import dispersal
 import selection
 import mutation
@@ -175,21 +176,28 @@ class Population:
         sex = params['sex']
         repro_age = params['repro_age']
 
-        
-        num_offspring = 0
+       
 
+        num_births = mating.determine_num_births(len(mating_pairs), params)
+        total_births = sum(num_births)
+
+        recombinants = gametogenesis.recombine(self.genomic_arch.r_lookup, 2*total_births)
 
         for pair in mating_pairs:
 
             parent_centroid_x = np.mean((self.individs[pair[0]].x, self.individs[pair[1]].x))
             parent_centroid_y = np.mean((self.individs[pair[0]].y, self.individs[pair[1]].y))
 
-            new_genomes = mating.mate(self, pair, params)
+
+            n_offspring = num_births.pop()
+            n_gametes = 2*n_offspring
+
+            gamete_recomb_paths, recombinants = np.split(recombinants[:,0:n_gametes], n_gametes, axis = 1), recombinants[:,n_gametes:]
+            new_genomes = mating.mate(self, pair, params, n_offspring, gamete_recomb_paths)
 
             
             for new_genome in new_genomes:
 
-                num_offspring += 1
                 
                 offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dispersal)
 
@@ -209,7 +217,7 @@ class Population:
         #sample all individuals' habitat values, to initiate for offspring
         self.set_habitat(land)
 
-        print '\n\t%i individuals born' % num_offspring
+        print '\n\t%i individuals born' % (total_births)
 
 
 

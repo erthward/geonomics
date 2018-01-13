@@ -140,8 +140,8 @@ params = {
 
 'data' : {                      #dictionary defining the data to be collected, the sampling strategy to use, the timesteps for collection, and other parameters
 
-        'sampling_scheme' : ['random'],  # can be 'all', 'random', 'point', or 'transect'
-        'sampling_args' : {'number':50
+        'sampling_scheme' : 'random',  # can be 'all', 'random', 'point', or 'transect'
+        'sampling_args' : {'n':50
                             },
         
                                 #args to be unpacked into sampling function (see docstring of sample_data function in data module for details)

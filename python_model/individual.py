@@ -111,7 +111,7 @@ def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None,
         x,y = dispersal.disperse(parental_centerpoint) #NOTE: needs to be written!
 
 
-        sex = r.binomail(1,0.5)  #NOTE: For now, sex randomly chosen at 50/50. Change if later decide to implement sex chroms!!!
+        sex = r.binomial(1,0.5)  #NOTE: For now, sex randomly chosen at 50/50. Change if later decide to implement sex chroms!!!
 
 
         return Individual(new_genome, x, y, sex = sex, age = 0)

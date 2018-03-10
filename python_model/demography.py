@@ -88,7 +88,7 @@ def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', m
 
 
 
-    if normalize_by <> 'none':
+    if normalize_by != 'none':
 
         #if max_1 == True, set max_val to dens.max(), such that the density raster output will be normalized to
         #its own max, and thus vary between 0 and 1; else set to 1, and the output raster will vary between 0 and the current max value
@@ -108,7 +108,7 @@ def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', m
     if min_0 == True:
         dens[dens<0] = 0
 
-    if max_val <> None:
+    if max_val != None:
         dens[dens>max_val] = max_val
     
     return(landscape.Landscape(dims, dens))
@@ -159,7 +159,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
        If with_selection == False, only density-dependent death will occur.
 
-       If age_stage_d <> None, an nx2 Numpy array should be provided, with column 1 listing the ages or
+       If age_stage_d != None, an nx2 Numpy array should be provided, with column 1 listing the ages or
        stages and column 2 stipulating the relative probabilites of death for each age or stage (i.e. must be
        a discrete probability distribution, i.e. sum to 1). NOTE: THIS ISN'T IMPLEMENTED YET!
 
@@ -199,7 +199,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     assert True not in np.isnan(n_pairs)
     assert True not in np.isinf(n_pairs)
 
-    if debug <> None:
+    if debug != None:
         fig = plt.figure()
         plt.suptitle('TIMESTEP: %i' % debug)
         var = 'n_pairs'
@@ -232,7 +232,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     assert True not in np.isinf(N)
 
 
-    if debug <> None:
+    if debug != None:
         var = 'N'
         plt.subplot(242)
         plt.title(var)
@@ -262,7 +262,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     assert True not in np.isinf(K)
 
 
-    if debug <> None:
+    if debug != None:
         var = 'K'
         plt.subplot(243)
         plt.title(var)
@@ -299,7 +299,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     assert True not in np.isnan(dNdt)
     assert True not in np.isinf(dNdt), 'The following cells are infinite: \n\t%s' % str([i for i, n in enumerate(dNdt.ravel()) if np.isinf(n)])
 
-    if debug <> None:
+    if debug != None:
         var = 'dNdt'
         plt.subplot(244)
         plt.title(var)
@@ -332,7 +332,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     assert True not in np.isnan(N_b)
     assert True not in np.isinf(N_b)
  
-    if debug <> None:
+    if debug != None:
         var = 'N_b'
         plt.subplot(245)
         plt.title(var)
@@ -350,7 +350,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     assert True not in np.isnan(N_d)
     assert True not in np.isinf(N_d)
 
-    if debug <> None:
+    if debug != None:
         var = 'N_d'
         plt.subplot(246)
         plt.title(var)
@@ -411,7 +411,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     assert True not in np.isnan(d)
     assert True not in np.isinf(d)
 
-    if debug <> None:
+    if debug != None:
         var = 'd'
         plt.subplot(247)
         plt.title(var)
@@ -477,9 +477,9 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
         
     
 
-    #If age_stage_d <> None then use the age_stage_d array, and pop.get_age(), and the d raster 
+    #If age_stage_d != None then use the age_stage_d array, and pop.get_age(), and the d raster 
     #to calculate per-individual death probabilities
-    if age_stage_d <> None:
+    if age_stage_d != None:
         pass
         
 

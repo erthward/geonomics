@@ -52,7 +52,6 @@ s_vonmises.b = np.inf
 
 
 def move(individual, land, params):
-    
 
     from numpy import sin, cos
 
@@ -93,12 +92,9 @@ def move(individual, land, params):
 
 
     #determine new coordinates
-    new_x = min(max(individual.x + cos(direction)*distance, 0), land.dims[0]-0.001)
-    new_y = min(max(individual.y + sin(direction)*distance, 0), land.dims[1]-0.001)
+    individual.x = min(max(individual.x + cos(direction)*distance, 0), land.dims[0]-0.001)
+    individual.y = min(max(individual.y + sin(direction)*distance, 0), land.dims[1]-0.001)
 
-    
-    #return new coordinates
-    return new_x, new_y
 
 
 
@@ -118,9 +114,12 @@ def gen_von_mises_mix_sampler(neigh, dirs, kappa=12):
     #when tested on neighborhoods that should generate bimodal distributions
     d = list(dirs.ravel())
     n = list(neigh.ravel())
+    # print(d)
+    # print(n)
     del d[4]
     del n[4]
-    n = [i/float(sum(n)) for i in n]
+    sum_n = float(sum(n))
+    n = [i / sum_n for i in n]
     s_vonmises.a = -np.inf
     s_vonmises.b = np.inf
     f = lambda: s_vonmises.rvs(kappa, loc = r.choice(d, 1, p = n), scale = 1)
@@ -176,7 +175,6 @@ def create_movement_surface(land, params, kappa = 12):
 
 #function for plotting average unit vectors across the movement surface, for visualization (and for debugging the movement surface functions)
 def plot_movement_surf_vectors(land, params, circle = False):
-
     from numpy import pi, mean, sqrt, cos, sin, arctan
 
     #plot movement surface raster
@@ -185,11 +183,12 @@ def plot_movement_surf_vectors(land, params, circle = False):
     #define inner function for plotting a single cell's average unit vector
     def plot_one_cell(i,j):
         #draw sample of angles from the Gaussian KDE representing the von mises mixture distribution (KDE)
-        samp = [land.movement_surf[i][j]() for n in range(1000)]
+        #jason: changed from 1000 to 100 
+        samp =  np.array([land.movement_surf[i][j]() for n in range(100)])
 
         #create lists of the x and y (i.e. cos and sin) components of each angle in the sample
-        x_vects = [cos(d) for d in samp]
-        y_vects = [sin(d) for d in samp]
+        x_vects = cos(samp)
+        y_vects = sin(samp)
            
 
 
@@ -198,7 +197,7 @@ def plot_movement_surf_vectors(land, params, circle = False):
             #but then would subtract 0.5 to visually reconcile the offset between the plotting axes and the raster
         x,y = j,i
 
-        if circle == True: #NOTE: This was just an offhand thought while I was waiting for something else to
+        if circle: #NOTE: This was just an offhand thought while I was waiting for something else to
             #compute. Doesn't work at all yet, but would be nice to get working. (Would plot circular
             #distributions centered in each cell and scaled to unity, instead of the average vectors I
             #currently have it plotting.)
@@ -211,8 +210,8 @@ def plot_movement_surf_vectors(land, params, circle = False):
         else:
             #define the dx and dy distances used to the position the arrowhead
             #NOTE: multiply by sqrt(2)/2, to scale to the size of half of the diagonal of a cell
-            dx = mean(x_vects)*sqrt(2)/2
-            dy = mean(y_vects)*sqrt(2)/2        
+            dx = mean(x_vects)/sqrt(2)
+            dy = mean(y_vects)/sqrt(2)       
             #NOTE: need to invert the dy value, so that it will plot correctly on the inverted axes (remember that the axes are inverted because the raster is plotted using imshow, which displays raster rows starting with row 0 at the top and working downward)
             #dy *= -1
        

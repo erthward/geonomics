@@ -1,6 +1,7 @@
 execfile('./params.py')
-execfile('./scripts_for_practice/PRACTICE_create_land_genomic_arch_pop.py')
 execfile('./scripts_for_practice/PRACTICE_imports_and_reloads.py')
+execfile('./scripts_for_practice/PRACTICE_create_land_genomic_arch_pop.py')
+
 
 
 

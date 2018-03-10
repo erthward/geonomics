@@ -73,12 +73,12 @@ class Individual:
 
     #set movement.move as a method
     def move(self, land, params):
-        self.x, self.y = movement.move(self, land, params)
+        movement.move(self, land, params)
         
 
     #function to increment age by one
     def increment_age_stage(self):
-        self.age = self.age + 1
+        self.age += 1
 
 
 
@@ -101,11 +101,11 @@ def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None,
 
     #LOOP FOR SIMULATION OF NEW INDIVIDUALS FOR STARTING POPULATION
 
-    if new_genome <> None:
-        assert parental_centerpoint <> None, "parental_centerpoint needed to create new offspring"
+    if new_genome != None:
+        assert parental_centerpoint != None, "parental_centerpoint needed to create new offspring"
         assert parental_centerpoint.__class__.__name__ in ['tuple', 'list'], "parental_centerpoint should be a tuple or a list"
         assert parental_centerpoint[0] >= 0 and parental_centerpoint[1] >= 0, "parental_centerpoint coordinates must be within landscape, but %s was provided" % str(parental_centerpoint)
-        assert ploidy <> None, "ploidy needed to create new genome from genomic content"
+        assert ploidy != None, "ploidy needed to create new genome from genomic content"
 
 
         x,y = dispersal.disperse(parental_centerpoint) #NOTE: needs to be written!
@@ -118,7 +118,7 @@ def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None,
 
 
     elif new_genome == None:
-        assert dims <> None, "landscape dims required to simulate a new individual without reproduction"
+        assert dims != None, "landscape dims required to simulate a new individual without reproduction"
         
         #randomly assign individual a valid starting location
         x,y = r.rand(2)*dims

@@ -56,20 +56,20 @@ def watch_movement(pop, land, scape_num, num_timesteps, params = None, mu_direct
         return None
 
     #if a params dictionary was fed in, copy it as toy_params
-    if params <> None:
+    if params != None:
         toy_params = copy.deepcopy(params)
 
 
         #then override existing values in params dictionary, if a new value has been entered for trial
-        if mu_direction <> None:
+        if mu_direction != None:
             toy_params['mu_direction'] = mu_direction
-        if kappa_direction <> None:
+        if kappa_direction != None:
             toy_params['kappa_direction'] = kappa_direction
-        if mu_distance  <> None:
+        if mu_distance  != None:
             toy_params['mu_distance'] = mu_distance 
-        if sigma_distance <> None:
+        if sigma_distance != None:
             toy_params['sigma_distance'] = sigma_distance
-        if movement_surf <> None:
+        if movement_surf != None:
             toy_params['movement_surf'] = movement_surf
 
 
@@ -80,7 +80,7 @@ def watch_movement(pop, land, scape_num, num_timesteps, params = None, mu_direct
         toy_params['kappa_direction'] = kappa_direction
         toy_params['mu_distance'] = mu_distance 
         toy_params['sigma_distance'] = sigma_distance
-        if movement_surf <> None:
+        if movement_surf != None:
             toy_params['movement_surf'] = movement_surf
         elif land.movement_surf == None:
             toy_params['movement_surf'] = False

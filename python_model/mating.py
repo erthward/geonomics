@@ -133,7 +133,7 @@ def find_mates(pop, params, sex = False, repro_age = None, dist_weighted_birth =
 
         #NOTE: I have NOT restricted this so that each individual can only mate once per generation, but I should probably figure that out and add it here!
 
-    if repro_age <> None:
+    if repro_age != None:
         #np.array of the ages of all individuals
         ages = np.array([ind[3] for ind in individs])
 

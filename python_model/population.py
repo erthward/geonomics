@@ -528,7 +528,7 @@ class Population:
     
     
     
-    def show_density(self, land, window_width = None, normalize_by = 'census', max_1 = False, color = 'black', markersize = 40):
+    def show_density(self, land, window_width = None, normalize_by = 'census', max_1 = False, color = 'black', markersize = 40, alpha = 0.5):
 		dens = self.calc_density(land, window_width = window_width, normalize_by = normalize_by, max_1 = max_1)
 		dens.show(im_interp_method = 'nearest', pop = True)
 		

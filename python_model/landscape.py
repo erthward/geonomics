@@ -113,7 +113,7 @@ class Landscape_Stack:
     def show(self, scape_num = None, colorbar = True, im_interp_method = 'nearest', pop = False):
         if plt.get_fignums():
             colorbar = False
-        cmaps = ['terrain', 'bone']
+        cmaps = ['terrain'] + ['bone'] * 10
         alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
 
         if scape_num <> None:

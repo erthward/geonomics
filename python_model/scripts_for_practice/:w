@@ -1,0 +1,35 @@
+import time
+import numpy.random as r
+
+pop_500_t = []
+pop_1500_t = []
+pop_5000_t = []
+
+fig = plt.figure()
+
+for d in [50,100,500,1000]:
+    land = landscape.Landscape((d,d), zeros(d,d))
+    for p in [500,1500,5000]:
+            xs = r.uniform(0,d,p)
+            ys = r.uniform(0,d,p)
+            pop = population.Population(p, [individual.Individual([0], xs[i], ys[i]) for i in range(len(xs))], g, p, 100)
+            for hww in [2.5, 5, 10, 20]:
+                search_area_array = create_search_area_array(hww, (d,d))
+                alt_t = []
+                alt2_t = []
+                for i in range(5):
+                    start = time.time() 
+                    alt_calc_density(pop, land)
+                    stop = time.time()
+                    alt_t.append(stop-start)
+
+                    start = time.time()
+                    alt2_calc_density(pop, land, search_area_array, window_width = 2*hww)
+                    stop = time.time()
+                    alt2_t.append(stop-start)
+                alt_t = mean(alt_t)
+                alt2_t = mean(alt2_t)
+
+
+
+fig = plt.figure()

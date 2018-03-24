@@ -87,8 +87,7 @@ def find_mates(pop, params, sex = False, repro_age = None, dist_weighted_birth =
     points = np.array([ind[1] for ind in individs])
     tree = cKDTree(points, leafsize = 100)   #NOTE: Figure out how leafsize, and how to parameterize this in order to optimize speed for any given pop...
     query = tree.query(points, k = 2, distance_upper_bound = mating_radius)
-    ##query_2 = tree.query_ball_tree(other = tree, r = mating_radius) #alternative, using query_ball_tree() method
-    ##[query_2[i].remove(i) for i in range(len(query_2))]; #remove self-pairings
+    #[query_2[i].remove(i) for i in range(len(query_2))]; #remove self-pairings
 
     #nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(points) #added by irene
     #distances, indices = nbrs.kneighbors(X) #added by irene

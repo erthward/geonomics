@@ -2,4 +2,4 @@
 *.pstats
 *.png
 *.swp
-python_model/.idea/
+python_model/.idea/**

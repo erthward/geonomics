@@ -85,10 +85,10 @@ class Population:
 
 
         
-        if size.__class__.__name__ in ['float', 'int'] and T <> None:
+        if size.__class__.__name__ in ['float', 'int'] and T != None:
             self.size = [size] * T              
         elif size.__class__.__name__ in ['list']:
-            assert T<> None and len(size) == T, "if expressing population size as a list, total model runtime must be provided and must equal the list length"
+            assert T!= None and len(size) == T, "if expressing population size as a list, total model runtime must be provided and must equal the list length"
             self.size = size
         else:
             self.size = size
@@ -325,7 +325,7 @@ class Population:
 
 
 
-        if normalize_by <> 'none':
+        if normalize_by != 'none':
 
             #if max_1 == True, set max_val to dens.max(), such that the density raster output will be normalized to
             #its own max, and thus vary between 0 and 1; else set to 1, and the output raster will vary between 0 and the current max value
@@ -342,7 +342,7 @@ class Population:
         if min_0 == True:
             dens[dens<0] = 0
 
-        if max_val <> None:
+        if max_val != None:
             dens[dens>max_val] = max_val
 
         if set_N == True:
@@ -408,7 +408,7 @@ class Population:
 
 
     def get_age(self, individs = None):
-        if individs <> None:
+        if individs != None:
             return {k: ind.age for k, ind in self.individs.items() if k in individs}
         else:
             return {k: ind.age for k, ind in self.individs.items()}
@@ -438,7 +438,7 @@ class Population:
 
     #convenience method for calling selection.get_phenotype() on this pop
     def get_phenotype(self, trait, individs = None):
-        if individs <> None:
+        if individs != None:
             return({i:v for i,v in selection.get_phenotype(self, trait).items() if i in individs})
         else:
             return(selection.get_phenotype(self, trait))
@@ -464,21 +464,21 @@ class Population:
 
 
     def get_coords(self, individs = None):
-        if individs <> None:
+        if individs != None:
             return({k: (float(ind.x), float(ind.y)) for k, ind in self.individs.items() if k in individs})
         else:
             return({k: (float(ind.x), float(ind.y)) for k, ind in self.individs.items()})
 
 
     def get_x_coords(self, individs = None):
-        if individs <> None:
+        if individs != None:
             return({k: (float(ind.x)) for k, ind in self.individs.items() if k in individs})
         else:
             return({k: (float(ind.x)) for k, ind in self.individs.items()})
 
 
     def get_y_coords(self, individs = None):
-        if individs <> None:
+        if individs != None:
             return({k: (float(ind.y)) for k, ind in self.individs.items() if k in individs})
         else:
             return({k: (float(ind.y)) for k, ind in self.individs.items()})
@@ -488,8 +488,8 @@ class Population:
 
 
     def show(self, land, scape_num = None, color = 'black', colorbar = True, markersize = 25, im_interp_method = 'nearest', alpha = False):
-		#if land <> None:
-		if scape_num <> None:
+		#if land != None:
+		if scape_num != None:
 			land.scapes[scape_num].show(colorbar = colorbar, im_interp_method = im_interp_method, pop = True)
 		else:
 			land.show(colorbar = colorbar, im_interp_method = im_interp_method, pop = True)
@@ -511,7 +511,7 @@ class Population:
 
 
     def show_individs(self, individs, land, scape_num = None, color = 'black', im_interp_method = 'nearest', markersize = 40, alpha = 0.5):
-		#if land <> None and scape_num <> None:
+		#if land != None and scape_num != None:
 		land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True)
 
 		#coords = dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items() if k in individs])
@@ -548,7 +548,7 @@ class Population:
 
     #method for plotting individuals colored by their genotype at a given locus
     def show_genotype(self, locus, land, scape_num = None, im_interp_method = 'nearest', markersize = 65, alpha = 1, by_dominance = False):
-        if scape_num <> None:
+        if scape_num != None:
             land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
         
         else:
@@ -577,7 +577,7 @@ class Population:
 
         from collections import OrderedDict as OD
     
-        if scape_num <> None:
+        if scape_num != None:
             land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
         else:
             land.scapes[self.genomic_arch.traits[trait].scape_num].show(im_interp_method = im_interp_method, pop = True) 
@@ -609,7 +609,7 @@ class Population:
     
         from collections import OrderedDict as OD
 
-        if scape_num <> None:
+        if scape_num != None:
             land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
         else:
             land.scapes[land.n_movement_surf_scape].show(im_interp_method = im_interp_method, pop = True) 
@@ -651,7 +651,7 @@ class Population:
 
         from collections import OrderedDict as OD
     
-        if scape_num <> None:
+        if scape_num != None:
             land.scapes[scape_num].show(im_interp_method = im_interp_method, pop = True) 
         else:
             land.scapes[self.genomic_arch.traits[trait].scape_num].show(im_interp_method = im_interp_method, pop = True) 

@@ -92,7 +92,7 @@ class Genomic_Architecture:
             n = 1
 
         #if locations provided manually, use those
-        if locs <> None:
+        if locs != None:
             loci = np.array(locs)
             assert len(np.shape(loci)) == 1, 'Object containing loci provided manually is not of dimension 1'
         #otherwise choose loci randomly, either allowing pleiotropy or not
@@ -203,7 +203,7 @@ def construct_traits(traits_params):
 def draw_r(params, recomb_rate_fn = None):
     
     #use custom recomb_fn, if provided
-    if recomb_rate_fn <> None:
+    if recomb_rate_fn != None:
         recomb_array = np.array([max(0,min(0.5, recomb_rate_fn())) for locus in range(L)])
         return(recomb_array)
 
@@ -214,7 +214,7 @@ def draw_r(params, recomb_rate_fn = None):
         param_vals = {'alpha_r': 7e2, 'beta_r': 7e3}
 
         for param in ['alpha_r', 'beta_r']:
-            if (param in params.keys() and params[param] <> None):
+            if (param in params.keys() and params[param] != None):
                 param_vals[param] = params[param]
        
         recomb_array = np.array([max(0,min(0.5, recomb_rate)) for recomb_rate in r.beta(a = param_vals['alpha_r'], b = param_vals['beta_r'], size = L)])
@@ -244,7 +244,7 @@ def create_recomb_array(params):
 
     #get L (num of loci) and l_c (if provided; num of loci per chromsome) from params dict
     L = params['L']
-    if ('l_c' in params.keys() and params['l_c'] <> None and len(params['l_c']) > 1):
+    if ('l_c' in params.keys() and params['l_c'] != None and len(params['l_c']) > 1):
         l_c = params['l_c']
         #and if l_c provided, check chrom lenghts sum to total number of loci
         assert sum(l_c) == L, 'The chromosome lengths provided do not sum to the number of loci provided.'
@@ -254,7 +254,7 @@ def create_recomb_array(params):
 
     #if params['recomb_array'] (i.e a linkage map) manually provided (will break if not a list, tuple, or np.array), 
     #then set that as the recomb_array, and check that len(recomb_array) == L
-    if ('recomb_array' in params.keys() and params['recomb_array'] <> None):
+    if ('recomb_array' in params.keys() and params['recomb_array'] != None):
         recomb_array = np.array(params['recomb_array'])
         len(recomb_array) == L, "Length of recomb_array provided not equal to params['L']."
 
@@ -270,7 +270,7 @@ def create_recomb_array(params):
     else:
 
         #if a custom recomb_fn is provided, grab it
-        if ('recomb_rate_fn' in params['custom_fns'] and params['custom_fns']['recomb_rate_fn'] <> None):
+        if ('recomb_rate_fn' in params['custom_fns'] and params['custom_fns']['recomb_rate_fn'] != None):
             recomb_rate_fn = params['custom_fns']
             assert callable(recomb_rate_fn), "The recomb_rate_fn provided in params['custom_fns'] appear not to be defined properly as a callable function."
             #then call the draw_r() function for each locus, using custom recomb_fn

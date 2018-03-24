@@ -116,7 +116,7 @@ class Landscape_Stack:
         cmaps = ['terrain'] + ['bone'] * 10
         alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
 
-        if scape_num <> None:
+        if scape_num != None:
 
             cmap = plt.cm.terrain
             vmin = 0
@@ -158,7 +158,7 @@ class Landscape_Stack:
         cmaps = ['terrain', 'bone']
         alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
         cmap = 'terrain'
-        if scape_num <> None:
+        if scape_num != None:
             zoom_rast = np.array([row[min_j:max_j] for row in self.scapes[scape_num].raster[min_i:max_i]]) 
             if pop == True:
                 plt.imshow(zoom_rast, interpolation = im_interp_method, cmap = cmap)
@@ -190,7 +190,7 @@ class Landscape_Stack:
 
 
     def plot_movement_surf_vectors(self, params, circle = False):
-        if params['movement_surf'] == True and self.movement_surf <> None:
+        if params['movement_surf'] == True and self.movement_surf != None:
             import movement
             movement.plot_movement_surf_vectors(self, params, circle = circle)
         else:
@@ -289,7 +289,7 @@ def random_surface(dims, n_rand_pts, interp_method = "cubic", island_val = 0, nu
     if interp_method == 'cubic':  #transform to constrain all values to 0 <= val <= 1
         I = I + np.abs(I.min())+(0.01*r.rand()) #NOTE: adding a small jitter to keep values from reaching == 0 or == 1, as would likely be the case with linear interpolation
         I = I/(I.max()+(0.01*r.rand()))
-    if dims[0] <> dims[1]:
+    if dims[0] != dims[1]:
         pass #NOTE: figure out how to get it to use the dims tuple to subset an approriate size if dims not equal
 
     return Landscape(dims,I)
@@ -321,7 +321,7 @@ def defined_surface(dims, pts, vals, interp_method = "cubic", num_hab_types = 2)
     if interp_method == 'cubic':  #transform to constrain all values to 0 <= val <= 1
         I = I + np.abs(I.min())+(0.01*r.rand()) #NOTE: adding a small jitter to keep values from reaching == 0 or == 1, as would likely be the case with linear interpolation
         I = I/(I.max()+(0.01*r.rand()))
-    if dims[0] <> dims[1]:
+    if dims[0] != dims[1]:
         pass #NOTE: figure out how to get it to use the dims tuple to subset an approriate size if dims not equal
     return Landscape(dims,I)
 
@@ -412,7 +412,7 @@ def build_scape_stack(params, num_hab_types = 2):
                 movement_rast[movement_rast < iv] = 1e-8
                
 
-            elif ('island_mask' in params.keys() and params['island_mask'] <> None):
+            elif ('island_mask' in params.keys() and params['island_mask'] != None):
                 im_file = params['island_mask']
                 ma = np.loads(im_file)
                 assert type(ma) == np.ndarray, "The pickled file located at the path provided in params['island_mask'] does not appear to be a numpy ndarray."

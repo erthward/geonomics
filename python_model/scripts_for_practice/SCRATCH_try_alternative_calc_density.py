@@ -270,3 +270,30 @@ def alt2_calc_density(pop, land, search_area_array, window_width = None, grid_ma
 
 
 
+
+
+
+def calc_kde_pop_density(pop, land, bw = 0.1):
+    from scipy.stats import gaussian_kde as kde
+    dims = land.dims
+    xmin = 0.5
+    ymin = 0.5
+    xmax = dims[1]-0.5
+    ymax = dims[0]-0.5
+    xx, yy = np.mgrid[xmin:xmax:50j, ymin:ymax:50j]
+    c = np.array(pop.get_coords().values()).T
+    #NOTE: NEED TO BETTER UNDERSTAND, EXPLORE, AND CHOOSE THE BANDWIDTH OPTIONS
+    res = kde(c, bw)
+    dens = np.reshape(res(positions), xx.shape)
+
+    #NOTE: NEEDS TO BE SCALED TO GIVE A GOOD APPROXIMATION OF THE INDIVIDS-PER-CELL VALUES!
+        #DON'T KNOW IF THIS APPROACH IS ACTUALLY JUSTIFIED...
+    dens = dens*pop.Nt[::-1][0]
+
+    #NOTE: NEED TO FIGURE OUT HOW TO AVOID EDGE EFFECTS!
+
+    return(dens)
+
+
+
+

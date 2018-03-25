@@ -278,21 +278,23 @@ def calc_kde_pop_density(pop, land, bw = 0.1):
     dims = land.dims
     xmin = 0.5
     ymin = 0.5
-    xmax = dims[1]-0.5
-    ymax = dims[0]-0.5
-    xx, yy = np.mgrid[xmin:xmax:50j, ymin:ymax:50j]
-    c = np.array(pop.get_coords().values()).T
+    xmax = dims[1]-0.5 + 2
+    ymax = dims[0]-0.5 + 2
+    xx, yy = np.mgrid[xmin:xmax:52j, ymin:ymax:52j]
+    positions = np.vstack([xx.ravel(), yy.ravel()])
+    c = np.array(pop.get_coords().values()).T+1
     #NOTE: NEED TO BETTER UNDERSTAND, EXPLORE, AND CHOOSE THE BANDWIDTH OPTIONS
     res = kde(c, bw)
-    dens = np.reshape(res(positions), xx.shape)
+    dens = np.reshape(res(positions), xx.shape).T[1:51, 1:51]
 
     #NOTE: NEEDS TO BE SCALED TO GIVE A GOOD APPROXIMATION OF THE INDIVIDS-PER-CELL VALUES!
         #DON'T KNOW IF THIS APPROACH IS ACTUALLY JUSTIFIED...
     dens = dens*pop.Nt[::-1][0]
 
     #NOTE: NEED TO FIGURE OUT HOW TO AVOID EDGE EFFECTS!
-
-    return(dens)
+    
+    assert dens.shape == dims
+    return(landscape.Landscape(dims, dens))
 
 
 

@@ -473,7 +473,8 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     
     if params['island_val'] > 0:
         d_ind.update({i:1 for i,v in pop.get_habitat_by_land_ind(scape_num = land.n_island_mask_scape).items() if v})
-        print('\n\tINDIVIDS KILLED OUTSIDE ISLANDS: %i\n' % len({i:1 for i,v in pop.get_habitat_by_land_ind(scape_num = land.n_island_mask_scape).items() if v}))
+        num_killed_isle = len({i:1 for i,v in pop.get_habitat_by_land_ind(scape_num = land.n_island_mask_scape).items() if v})
+        print('\n\tINDIVIDS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))
         
     
 

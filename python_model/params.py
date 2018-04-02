@@ -33,7 +33,7 @@ params = {
 'use_dom' : False,              #whether or not to use dominance (default to False)
                                 #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP
 
-'pleiotropy' : False,           #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?)
+'pleiotropy' : True,           #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?) false
 
 'traits' : {'num': 2,           #number of traits to simulate
             'scape_num': [0,0], #list of the landscape numbers to be used for selection on each trait 
@@ -98,7 +98,7 @@ params = {
 
 'sigma_distance' : 0.5,            #sd of movement distance
 
-'sex' : False,                      #is this a sexual species?
+'sex' : False,                      #is this a sexual species? 
 
 'repro_age' : 0,          #age at sexual maturity (int or float for non-sexual species, tuple or list of two ints/floats for sexual species; set to 'None' to not make this an age-structured species
 

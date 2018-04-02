@@ -3,11 +3,13 @@ class MatingRaster:
         self.dims = params['dims']
         mating_radius = params['mating_radius']
 
+        #
         x = self.dims[0] / (2 * mating_radius)
         y = self.dims[0] / (2 * mating_radius)
 
-        self.offset1 = [[set() for i in range(x)] for j in range(y)]
-        self.offset2 = [[set() for i in range(x)] for j in range(y)]
+        self.offset1 = [[set() for i in range(int(x))] for j in range(int(y))]
+        self.offset2 = [[set() for i in range(int(x))] for j in range(int(y))]
+
 
     def add(self, ind):
         self.__add(ind.x, ind.y)
@@ -17,7 +19,7 @@ class MatingRaster:
         return None
 
     def move(self, old_pos, new_pos):
-        self.__remove(old_pos[0], old_pos[y])
+        self.__remove(old_pos[0], old_pos[1])
         self.__add(new_pos[0], new_pos[1])
         return None
 

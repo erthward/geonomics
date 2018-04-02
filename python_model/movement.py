@@ -46,7 +46,7 @@ s_vonmises.b = np.inf
 
 
 def move(individual, land, params):
-    oldPos = (individual.x, individual.y)
+    old_pos = (individual.x, individual.y)
 
     # choose direction using movement surface, if applicable
     if params['movement_surf'] == True:
@@ -78,11 +78,11 @@ def move(individual, land, params):
     distance = wald(mu_distance, sigma_distance)
     # distance = lognormal(mu_distance, sigma_distance)
     # distance = gamma(mu_distance, sigma_distance)
-    newPos = (min(max(individual.x + cos(direction) * distance, 0), land.dims[0] - 0.001),
+    new_pos = (min(max(individual.x + cos(direction) * distance, 0), land.dims[0] - 0.001),
               min(max(individual.y + sin(direction) * distance, 0), land.dims[1] - 0.001))
-    # determine new coordinates
-    individual.x = min(max(individual.x + cos(direction) * distance, 0), land.dims[0] - 0.001)
-    individual.y = min(max(individual.y + sin(direction) * distance, 0), land.dims[1] - 0.001)
+
+    individual.set_pos(new_pos[0], new_pos[1])
+    land.mating_raster.move(old_pos, new_pos)
 
 
 # Function to generate a simulative Von Mises mixture distribution sampler function

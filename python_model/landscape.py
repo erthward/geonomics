@@ -29,6 +29,7 @@ import numpy.random as r
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+import mating_raster
 
 
 #------------------------------------
@@ -98,7 +99,7 @@ class Landscape:
 
 
 class Landscape_Stack:
-    def __init__(self, raster_list):
+    def __init__(self, raster_list, params=None):
         self.scapes = dict(zip(range(len(raster_list)), raster_list))  
         assert False not in [raster.__class__.__name__ == 'Landscape' for raster in raster_list], 'All landscapes supplied in raster_list must be of type landscape.Landscape.'
         self.n_scapes = len(raster_list)
@@ -107,6 +108,7 @@ class Landscape_Stack:
         self.movement_surf = None
         self.n_movement_surf_surf = None
         self.n_island_mask_scape = None
+        self.mating_raster = mating_raster.MatingRaster(params=params)
 
 
 

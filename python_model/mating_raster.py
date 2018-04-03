@@ -15,7 +15,11 @@ class MatingRaster:
         self.__add(ind.x, ind.y, ind)
 
     def remove(self, ind):
-        self.__remove(ind.x, ind.y, ind)
+        try:
+            self.__remove(ind.x, ind.y, ind)
+        except KeyError:
+            print ("there are no individuals there.")
+
         return None
 
     def move(self, old_pos, new_pos, ind):
@@ -28,12 +32,12 @@ class MatingRaster:
 
     def __get_set(self, x_pos, y_pos):
         # TODO: notimplemented
-        x_index = round(ind.x, self.mating_radius - int(self.mating_radius))
-        y_index = round(ind.y, self.mating_radius - int(self.mating_radius))
+        x_index = int(x_pos, self.mating_radius - int(self.mating_radius))
+        y_index = int(y_pos, self.mating_radius - int(self.mating_radius))
         set1 = self.offset1[int(x_index)][int(y_index)]
 
-        x2_index = round(ind.x, self.mating_radius - int(0.5 * self.mating_radius))
-        y2_index = round(ind.y, self.mating_radius - int(0.5 * self.mating_radius))
+        x2_index = int(x_pos, self.mating_radius - int(0.5 * self.mating_radius))
+        y2_index = int(y_pos, self.mating_radius - int(0.5 * self.mating_radius))
         set2 = self.offset2[int(x2_index)][int(y2_index)]
 
         # set1 = self.offset1[int(x_pos)][int(y_pos)]

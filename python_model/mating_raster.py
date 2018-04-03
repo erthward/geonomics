@@ -1,28 +1,35 @@
 class MatingRaster:
     def __init__(self, params):
         self.dims = params['dims']
-        mating_radius = params['mating_radius']
+        self.mating_radius = params['mating_radius']
 
         #
-        x = self.dims[0] / (2 * mating_radius)
-        y = self.dims[0] / (2 * mating_radius)
+        x = self.dims[0] / (2 * self.mating_radius)
+        y = self.dims[0] / (2 * self.mating_radius)
 
         self.offset1 = [[set() for i in range(int(x))] for j in range(int(y))]
         self.offset2 = [[set() for i in range(int(x))] for j in range(int(y))]
 
     def add(self, ind):
 
-        x = round(ind.x, mating_radius - int(mating_radius))
-        y = round(ind.y, mating_radius - int(mating_radius))
-        offset1[int(x)][int(y)].add(ind)
+        x_index = round(ind.x, self.mating_radius - int(self.mating_radius))
+        y_index = round(ind.y, self.mating_radius - int(self.mating_radius))
+        self.offset1[int(x_index)][int(y_index)].add(ind)
 
-        x2 = round(ind.x, mating_radius - int(0.5 * mating_radius))
-        y2 = round(ind.y, mating_radius - int(0.5 * mating_radius))
-        offset2[int(x)][int(y)].add(ind)
+        x2_index = round(ind.x, self.mating_radius - int(0.5 * self.mating_radius))
+        y2_index = round(ind.y, self.mating_radius - int(0.5 * self.mating_radius))
+        self.offset2[int(x2_index)][int(y2_index)].add(ind)
 
     def remove(self, ind):
-    	offset1.remove(ind)
-    	offset2.remove(ind)
+        self.offset1.remove(ind)
+        self.offset2.remove(ind)
+
+    def move(self, ind, newpos):
+        self.remove(ind)
+        ind.x = newpos[0]
+        ind.y = newpos[1]
+        self.add(ind)
+
 
     def add(self, ind):
         self.__add(ind.x, ind.y)

@@ -55,7 +55,7 @@ class Landscape:
             colorbar = False
         cmap = plt.cm.terrain
         vmin = 0
-        if self.mask_island_vals == True:
+        if self.mask_island_vals:
             cmap.set_under(color='black')
             vmin = 1e-7
         # TODO: REALLY GET TO THE BOTTOM OF THE RASTER-PLOTTING ISSUE!! 04/16/17: While working on the
@@ -63,7 +63,7 @@ class Landscape:
         # be working, but that the results seemed reflected about the diagonal. I am doing this, for the
         # moment, as a TEMPORARY fix, but will have to make sure that I haven't already 'fixed' this (and
         # forgotten) elsewhere, such that this is actually introducing more problems in the long-run
-        if pop == True:
+        if pop:
             plt.imshow(self.raster, interpolation=im_interp_method, cmap=cmap, vmin=vmin)
         else:
             plt.imshow(np.flipud(self.raster), interpolation=im_interp_method, cmap=cmap, vmin=vmin)
@@ -78,7 +78,7 @@ class Landscape:
             colorbar = False
         cmap = 'terrain'
         zoom_rast = np.array([row[min_j:max_j] for row in self.raster[min_i:max_i]])
-        if pop == True:
+        if pop:
             plt.imshow(zoom_rast, interpolation=im_interp_method, cmap=cmap)
         else:
             plt.imshow(np.flipud(zoom_rast), interpolation=im_interp_method, cmap=cmap)
@@ -112,11 +112,11 @@ class Landscape_Stack:
 
             cmap = plt.cm.terrain
             vmin = 0
-            if self.scapes[scape_num].mask_island_vals == True:
+            if self.scapes[scape_num].mask_island_vals:
                 cmap.set_under(color='black')
                 vmin = 1e-7
 
-            if pop == True:
+            if pop:
                 plt.imshow(self.scapes[scape_num].raster, interpolation=im_interp_method, cmap=cmap, vmin=vmin)
             else:
                 plt.imshow(np.flipud(self.scapes[scape_num].raster), interpolation=im_interp_method, cmap=cmap,
@@ -131,7 +131,7 @@ class Landscape_Stack:
 
         else:
             for n, scape in self.scapes.items():
-                if pop == True:
+                if pop:
                     plt.imshow(scape.raster, interpolation=im_interp_method, alpha=alphas[n], cmap=cmaps[n])
                 else:
                     plt.imshow(np.flipud(self.scapes[scape_num].raster), interpolation=im_interp_method,
@@ -151,7 +151,7 @@ class Landscape_Stack:
         cmap = 'terrain'
         if scape_num != None:
             zoom_rast = np.array([row[min_j:max_j] for row in self.scapes[scape_num].raster[min_i:max_i]])
-            if pop == True:
+            if pop:
                 plt.imshow(zoom_rast, interpolation=im_interp_method, cmap=cmap)
             else:
                 plt.imshow(np.flipud(zoom_rast), interpolation=im_interp_method, cmap=cmap)
@@ -163,7 +163,7 @@ class Landscape_Stack:
         else:
             for n, scape in self.scapes.items():
                 zoom_rast = np.array([row[min_j:max_j] for row in self.scapes[n].raster[min_i:max_i]])
-                if pop == True:
+                if pop:
                     plt.imshow(zoom_rast, interpolation=im_interp_method, alpha=alphas[n], cmap=cmaps[n])
                 else:
                     # NOTE: FIGURE OUT WHY FLIPUD SEEMED GOOD WHEN PLOTTING POP, BUT BAD FOR CIRC_HIST FN BELOW
@@ -316,7 +316,7 @@ def build_scape_stack(params, num_hab_types=2):
     dims = params['dims']
 
     # create rasters for random landscape, if params['rand_land'] == True
-    if params['rand_land'] == True:
+    if params['rand_land']:
 
         n_rand_pts = params['n_rand_pts']
 
@@ -331,7 +331,7 @@ def build_scape_stack(params, num_hab_types=2):
              range(num_scapes)], params=params)
 
     # or create rasters for defined landscape, if params['rand_land'] == False
-    elif params['rand_land'] == False:
+    elif not params['rand_land']:
 
         # get pts
         pts = params['landscape_pt_coords']

@@ -82,7 +82,7 @@ def move(individual, land, params):
               min(max(individual.y + sin(direction) * distance, 0), land.dims[1] - 0.001))
 
     individual.set_pos(new_pos[0], new_pos[1])
-    land.mating_raster.move(old_pos, new_pos)
+    land.mating_raster.move(old_pos, new_pos, individual)
 
 
 # Function to generate a simulative Von Mises mixture distribution sampler function

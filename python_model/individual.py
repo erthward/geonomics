@@ -74,7 +74,7 @@ class Individual:
     #set movement.move as a method
     def move(self, land, params):
         movement.move(self, land, params)
-        
+
 
     #function to increment age by one
     def increment_age_stage(self):
@@ -93,13 +93,13 @@ class Individual:
 
 
 def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0, burn =False):
-    '''Create a new individual from:
+    """Create a new individual from:
             - either an instance of genome.Genomic_Architecture (i.e. for newly simulated individual) or both
               the genomic architecture and a numpy.ndarray genome (e.g. for new offspring) (one of the two must be provided),
             - x and y-coordinates
             - sex
             - age.
-            '''
+            """
 
     #LOOP FOR SIMULATION OF NEW INDIVIDUALS FOR STARTING POPULATION
 
@@ -121,7 +121,7 @@ def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None,
 
     elif new_genome == None:
         assert dims != None, "landscape dims required to simulate a new individual without reproduction"
-        
+
         #randomly assign individual a valid starting location
         x,y = r.rand(2)*dims
 
@@ -129,9 +129,9 @@ def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None,
 
             #use genome.sim_genome and genomic_arch variable to simulate individual's genome
             new_genome = genome.sim_genome(genomic_arch)
-         
+
             return Individual(new_genome, x, y, sex = sex, age = age)
-        
+
         elif burn == True:
 
             return(Individual(new_genome = np.array([0]), x=x, y=y, sex = sex, age = age))

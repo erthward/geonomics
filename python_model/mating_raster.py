@@ -28,12 +28,12 @@ class MatingRaster:
 
     def __get_set(self, x_pos, y_pos):
         # TODO: notimplemented
-        x_index = round(ind.x, self.mating_radius - int(self.mating_radius))
-        y_index = round(ind.y, self.mating_radius - int(self.mating_radius))
+        x_index = round(x_pos, self.mating_radius - int(self.mating_radius))
+        y_index = round(y_pos, self.mating_radius - int(self.mating_radius))
         set1 = self.offset1[int(x_index)][int(y_index)]
 
-        x2_index = round(ind.x, self.mating_radius - int(0.5 * self.mating_radius))
-        y2_index = round(ind.y, self.mating_radius - int(0.5 * self.mating_radius))
+        y2_index = round(y_pos, self.mating_radius - int(0.5 * self.mating_radius))
+        x2_index = round(x_pos, self.mating_radius - int(0.5 * self.mating_radius))
         set2 = self.offset2[int(x2_index)][int(y2_index)]
 
         # set1 = self.offset1[int(x_pos)][int(y_pos)]

@@ -273,27 +273,75 @@ def alt2_calc_density(pop, land, search_area_array, window_width = None, grid_ma
 
 
 
-def calc_kde_pop_density(pop, land, bw = 0.1):
+def calc_kde_pop_density(pop, land, bw = 0.1, buff = 5):
     from scipy.stats import gaussian_kde as kde
     dims = land.dims
     xmin = 0.5
     ymin = 0.5
-    xmax = dims[1]-0.5
-    ymax = dims[0]-0.5
-    xx, yy = np.mgrid[xmin:xmax:50j, ymin:ymax:50j]
-    c = np.array(pop.get_coords().values()).T
+    xmax = dims[1]-0.5 + (buff*2)
+    ymax = dims[0]-0.5 + (buff*2)
+    xx, yy = np.mgrid[xmin:xmax:complex('%ij' % (dims[0]+(2*buff))), ymin:ymax:complex('%ij' % (dims[0]+(2*buff)))]
+    positions = np.vstack([xx.ravel(), yy.ravel()])
+    c = np.array(pop.get_coords().values()).T+buff
     #NOTE: NEED TO BETTER UNDERSTAND, EXPLORE, AND CHOOSE THE BANDWIDTH OPTIONS
     res = kde(c, bw)
-    dens = np.reshape(res(positions), xx.shape)
+    dens = np.reshape(res(positions), xx.shape).T[buff:(dims[0]+buff), buff:(dims[1]+buff)]
 
     #NOTE: NEEDS TO BE SCALED TO GIVE A GOOD APPROXIMATION OF THE INDIVIDS-PER-CELL VALUES!
         #DON'T KNOW IF THIS APPROACH IS ACTUALLY JUSTIFIED...
     dens = dens*pop.Nt[::-1][0]
 
     #NOTE: NEED TO FIGURE OUT HOW TO AVOID EDGE EFFECTS!
+   
+    assert dens.shape == dims, 'dens.shape is %s' % str(dens.shape)
+    return(landscape.Landscape(dims, dens))
 
-    return(dens)
 
 
+
+
+
+class MidpointNormalize(mpl.colors.Normalize):
+    """
+    Normalise the colorbar so that diverging bars work there way either side from a prescribed
+    midpoint value)
+
+    e.g. im=ax1.imshow(array, norm=MidpointNormalize(midpoint=0.,vmin=-100, vmax=100))
+    """
+    def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
+        self.midpoint = midpoint
+        mpl.colors.Normalize.__init__(self, vmin, vmax, clip)
+
+    def __call__(self, value, clip=None):
+        # I'm ignoring masked values and all kinds of edge
+        # cases to make a
+        # simple example...
+        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+        return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
+
+
+def compare_orig_and_kde(pop, land, window_width = None, bw = 0.15):
+    c = np.array(pop.get_coords().values())
+    orig = pop.calc_density(land, window_width = window_width)
+    kde = calc_kde_pop_density(pop, land, bw = bw)
+    fig = figure()
+    fig.suptitle('window_width = %i, bw = %s' % (window_width, str(bw)))
+    ax = fig.add_subplot(131)
+    plt.imshow(orig.raster, interpolation='nearest', cmap = 'terrain')
+    plt.colorbar() 
+    plt.scatter(c[:,0]-0.5, c[:,1]-0.5)
+    ax.set_title('Original')
+    ax2 = fig.add_subplot(132)
+    plt.imshow(kde.raster, interpolation='nearest', cmap = 'terrain')
+    plt.colorbar()
+    plt.scatter(c[:,0]-0.5, c[:,1]-0.5)
+    ax2.set_title('KDE')
+    ax3 = fig.add_subplot(133)
+    max_val = (orig.raster - kde.raster).max()
+    plt.imshow(orig.raster - kde.raster, interpolation='nearest', cmap = 'PiYG', norm=MidpointNormalize(midpoint=0,vmin=-1*max_val, vmax=max_val))
+    plt.colorbar()
+    plt.scatter(c[:,0]-0.5, c[:,1]-0.5, color = 'gray', alpha = 0.25)
+    plt.show()
+    return
 
 

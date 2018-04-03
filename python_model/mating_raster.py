@@ -13,15 +13,16 @@ class MatingRaster:
 
         x = round(ind.x, mating_radius - int(mating_radius))
         y = round(ind.y, mating_radius - int(mating_radius))
-        offset1[int(x)][int(y)] = ind
+        offset1[int(x)][int(y)].add(ind)
 
         x2 = round(ind.x, mating_radius - int(0.5 * mating_radius))
         y2 = round(ind.y, mating_radius - int(0.5 * mating_radius))
-        offset2[int(x)][int(y)] = ind
+        offset2[int(x)][int(y)].add(ind)
 
     def remove(self, ind):
-
-        return None
+    	offset1.remove(ind)
+    	offset2.remove(ind)
+        
 
     def move(self, ind):
 

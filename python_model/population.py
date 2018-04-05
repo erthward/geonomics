@@ -205,7 +205,7 @@ class Population:
                         ind = individual.Individual(np.array([0]), offspring_x, offspring_y,
                                                                              age)
                 self.individs[offspring_key] = ind
-                land.mating_raster.add(ind)
+                land.mating_grid.add(ind)
 
         # sample all individuals' habitat values, to initiate for offspring
         self.set_habitat(land)
@@ -685,7 +685,7 @@ def create_population(genomic_arch, land, params, burn=False):
         # use individual.create_individual to simulate individuals and add them to the population
         ind = individual.create_individual(genomic_arch, dims)
         individs[i] = ind
-        land.mating_raster.add(ind)
+        land.mating_grid.add(ind)
 
     pop = Population(N=N, individs=individs, genomic_arch=genomic_arch, size=size, T=T)
 

@@ -29,7 +29,7 @@ import numpy.random as r
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-import mating_raster
+import mating_grid
 
 
 # ------------------------------------
@@ -100,7 +100,7 @@ class Landscape_Stack:
         self.movement_surf = None
         self.n_movement_surf_surf = None
         self.n_island_mask_scape = None
-        self.mating_raster = mating_raster.MatingRaster(params=params)
+        self.mating_grid = mating_grid.MatingGrid(params=params)
 
     def show(self, scape_num=None, colorbar=True, im_interp_method='nearest', pop=False):
         if plt.get_fignums():

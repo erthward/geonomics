@@ -345,3 +345,107 @@ def compare_orig_and_kde(pop, land, window_width = None, bw = 0.15):
     return
 
 
+
+
+def cell_string_method(pop, land, window_width = None):
+    from collections import Counter as C
+    from operator import itemgetter as ig
+    from scipy import interpolate
+
+    #use ww as shorthand
+    ww = window_width
+
+    #set ww to 1 if None
+    if ww == None:
+        ww = 1
+    #otherwise make sure that both landscape dimensions are evenly divisible by ww
+    else:
+        assert (land.dims[0]%ww == 0 and land.dims[1]%ww == 0), 'land.dims not evenly divisible by window_width'
+
+    #get the order of magnitude of the landscape dimension (to decide length argument for zfill, below)
+    ord_mag_dims = max([len(str(land.dims[0])), len(str(land.dims[1]))])
+
+    #tuple of dimensions for the counting grid
+        #adding 2 to each dimension creates a grid that represents the actual landscape grid, with a 1-cell
+        #buffer around it, from which the actual landscape grid can be extracted at the end, to avoid
+        #interpolation edge effects
+    ct_grid_dims = (int(land.dims[1]//ww)+2, int(land.dims[0]//ww)+2)
+    
+    #create meshgrid for the counting grid
+    xx,yy = np.meshgrid(range(ct_grid_dims[1]), range(ct_grid_dims[0]))
+    #create a list of the string versions of the zfill'd x and y coordinates for each cell
+    xx_str = [str(x).zfill(ord_mag_dims) for x in xx.flatten()]
+    yy_str = [str(y).zfill(ord_mag_dims) for y in yy.flatten()]
+    #then concatenate the strings of the x and y coordinates for each cell, to create unique cell IDs
+    cells = [''.join(c) for c in zip(yy_str,xx_str)]
+
+    #create a function to extract the dictionary value for each key in an input list (to be called on the
+    #Counter object below)
+    f = ig(*cells) 
+        # the post here: https://stackoverflow.com/questions/18453566/python-dictionary-get-list-of-values-for-list-of-keys
+        #suggests this is the fastest approach
+
+    #get population's coordinates
+    c = np.array(pop.get_coords().values())
+    #add one window's width to the coordinates, to shift them into their correct landscape locations within
+    #the nested grid at the center of the buffered count grid
+    true_x = c[:,0] + ww
+    true_y = c[:,1] + ww
+
+    #array to hold the results for all four coordinate offsets
+    res_array = np.zeros((4, land.dims[0], land.dims[1]))
+
+    #loop over offsets
+    for n, off in enumerate([(-0.5, -0.5), (-0.5, 0.5), (0.5, -0.5), (0.5, 0.5)]):
+        print(off)
+        print(n)
+
+        x = true_x + (off[0]*ww/2)
+        y = true_y + (off[1]*ww/2)
+
+        #and get zfill'd strings of these coordinates as well  
+        X = [str(int(int(j)//ww)).zfill(ord_mag_dims) for j in x]
+        Y = [str(int(int(i)//ww)).zfill(ord_mag_dims) for i in y]
+        locs = [''.join(i) for i in zip(Y,X)]
+
+
+        #count the number of individuals within each grid cell
+        cts = C(locs)
+
+        #then use the function defined above to extract the counts each cell's unique string ID
+        res = f(cts)
+
+        #convert the res vector to an array, of shape determined by ct_grid_dims
+        res = np.reshape(res, ct_grid_dims)
+        #divide each cell's count by the cell area
+        res = res/(ww**2)
+
+        #if the count grid has a resolution greater than 1 landscape cell, interpolate to the landscape resolution
+        if ww > 1:
+            #create a meshgrid of points at the centers of the landscape cells (plus 1 ww, to account for the
+            #1-cell-buffer around the count grid)
+            out_x, out_y = np.meshgrid(np.arange(land.dims[0])+0.5+ww, np.arange(land.dims[1])+0.5+ww)
+           
+            #get an array of the x,y coordinates associated with each count in the count grid
+            x_pts = [(j + 0.5) * ww for j in xx.flatten()]
+            y_pts = [(i + 0.5) * ww for i in yy.flatten()]
+            pts = np.array(zip(y_pts, x_pts))
+
+            #then interpolate to the landscape cells
+            dens = interpolate.griddata(pts, res.flatten(), (out_x, out_y), method = 'cubic')
+
+            #floor the array at 0
+            dens[dens<0] = 0
+
+            #add to res_array
+            res_array[n,:,:] = dens
+
+        #otherwise, if the count grid has a 1-landscape-cell resolution, just return the center-nested count grid
+        else:
+            res_array[n,:,:] = res[1:ct_grid_dims[0]-1, 1:ct_grid_dims[1]-1]
+
+   
+        print(res_array)
+    
+    dens = np.mean(res_array, axis = 0)
+    return(dens)

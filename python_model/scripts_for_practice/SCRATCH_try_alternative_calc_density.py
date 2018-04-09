@@ -39,6 +39,11 @@ Ideas include:
 
 '''
 
+from collections import Counter as C
+from operator import itemgetter as ig
+from scipy import interpolate
+from shapely import geometry as g
+
 
 
 
@@ -392,16 +397,20 @@ def cell_string_method(pop, land, window_width = None):
     true_x = c[:,0] + ww
     true_y = c[:,1] + ww
 
+    offsets = [(0, 0), (0.5, 0), (0, 0.5), (0.5, 0.5)]
+
     #array to hold the results for all four coordinate offsets
-    res_array = np.zeros((4, land.dims[0], land.dims[1]))
+    res_array = np.zeros((len(offsets), land.dims[0], land.dims[1]))
+
+    all_x_pts = []
+    all_y_pts = [] 
+    all_res = []
 
     #loop over offsets
-    for n, off in enumerate([(-0.5, -0.5), (-0.5, 0.5), (0.5, -0.5), (0.5, 0.5)]):
-        print(off)
-        print(n)
+    for n, off in enumerate(offsets):
 
-        x = true_x + (off[0]*ww/2)
-        y = true_y + (off[1]*ww/2)
+        x = true_x + (off[0]*ww)
+        y = true_y + (off[1]*ww)
 
         #and get zfill'd strings of these coordinates as well  
         X = [str(int(int(j)//ww)).zfill(ord_mag_dims) for j in x]
@@ -418,7 +427,7 @@ def cell_string_method(pop, land, window_width = None):
         #convert the res vector to an array, of shape determined by ct_grid_dims
         res = np.reshape(res, ct_grid_dims)
         #divide each cell's count by the cell area
-        res = res/(ww**2)
+        #res = res/(ww**2)
 
         #if the count grid has a resolution greater than 1 landscape cell, interpolate to the landscape resolution
         if ww > 1:
@@ -427,12 +436,17 @@ def cell_string_method(pop, land, window_width = None):
             out_x, out_y = np.meshgrid(np.arange(land.dims[0])+0.5+ww, np.arange(land.dims[1])+0.5+ww)
            
             #get an array of the x,y coordinates associated with each count in the count grid
-            x_pts = [(j + 0.5) * ww for j in xx.flatten()]
-            y_pts = [(i + 0.5) * ww for i in yy.flatten()]
+            x_pts = [(j + 0.5 + off[0]) * ww for j in xx.flatten()]
+            y_pts = [(i + 0.5 + off[1]) * ww for i in yy.flatten()]
             pts = np.array(zip(y_pts, x_pts))
 
+            all_x_pts.extend(list(x_pts)) 
+            all_y_pts.extend(list(y_pts)) 
+            all_res.extend(list(res.flatten()))
+
+
             #then interpolate to the landscape cells
-            dens = interpolate.griddata(pts, res.flatten(), (out_x, out_y), method = 'cubic')
+            dens = interpolate.griddata(pts, res.flatten(), (out_y, out_x), method = 'cubic')
 
             #floor the array at 0
             dens[dens<0] = 0
@@ -444,8 +458,167 @@ def cell_string_method(pop, land, window_width = None):
         else:
             res_array[n,:,:] = res[1:ct_grid_dims[0]-1, 1:ct_grid_dims[1]-1]
 
-   
-        print(res_array)
+    all_dens = interpolate.griddata(np.array(zip(all_y_pts, all_x_pts)), np.array(all_res), (out_y, out_x), method = 'cubic')
     
     dens = np.mean(res_array, axis = 0)
-    return(dens)
+    return(res_array, dens, all_dens)
+
+
+
+
+
+################################################################################################
+#DEH: 04/07/18: ATTEMPTING TO USE THE CELL-STRING COUNTING APPROACH TO CREATE A Grid_Stack class
+################################################################################################
+
+class Grid:
+    def __init__(self, dims, ww, i_off, j_off, corner_cells):
+        self.dims = dims
+        self.ww = ww
+
+        self.i_off = i_off
+        self.j_off = j_off
+        
+        self.dim_om = max([len(str(d)) for d in self.dims])
+
+        self.gi, self.gj = create_grid(self.i_off, self.j_off, self.ww, self.dims)
+
+        self.grid_coords, self.grid_areas = get_grid_coords_and_areas(self.gi, self.gj, self.dims)
+
+        self.grid_cells = get_cell_strings((self.gi + gg.j_off*ww)//ww, (self.gj + gg.i_off*ww)//ww, self.dim_om)
+
+        self.grid_counter = ig(*self.grid_cells) 
+
+
+    def get_grid_dens(self, x, y):
+        x = np.array(x)
+        y = np.array(y)
+        x_cells = (x + self.j_off*self.ww)//self.ww
+        y_cells = (y + self.i_off*self.ww)//self.ww
+        cells = get_cell_strings(y_cells, x_cells, self.dim_om)
+        counts = C(cells)
+        grid_counts = self.grid_counter(counts)
+        grid_counts = np.reshape(grid_counts, self.gi.shape)
+        grid_dens = grid_counts/self.grid_areas
+        return(grid_dens)
+
+
+def get_cell_counts(x, y, grid):
+    x_cells = (x - grid.corner_cells*grid.ww/2.)//grid.ww + grid.corner_cells
+    y_cells = (y - grid.corner_cells*grid.ww/2.)//grid.ww + grid.corner_cells
+    cells = get_cell_strings(y_cells, x_cells, grid.dim_om)
+    counts = C(cells)
+    grid_counts = grid.grid_counter(counts)
+    grid_counts = np.reshape(grid_counts, grid.gi.shape)
+    grid_dens = grid_counts/grid.grid_areas
+    return(grid_dens)
+
+
+
+class Grid_Stack:
+    def __init__(self, dims, ww, offsets):
+        self.dims = dims
+        self.ww = ww
+        self.offsets = offsets
+        self.land_gi, self.land_gj = np.meshgrid(np.arange(0, self.dims[0])+0.5, np.arange(0, self.dims[1])+0.5)
+
+        self.grids = dict([[n, Grid(self.dims, self.ww, off[0], off[1])] for n, off in enumerate(offsets)])
+
+
+    def calc_pop_density(self, x, y):
+
+        pts = np.vstack([grid.grid_coords for grid in self.grids.values()])
+
+        vals = np.hstack([grid.get_grid_dens(x, y).flatten() for grid in self.grids.values()])
+
+        dens = interpolate.griddata(pts, vals, (self.land_gi, self.land_gj), method = 'cubic')
+
+        return(pts, vals, dens)
+
+
+
+
+
+
+def create_grid(i_off, j_off, ww, dims):
+    i_inds = sorted(list(set(list(np.arange(0+ww*i_off,dims[0],ww)) + [0]))) 
+    j_inds = sorted(list(set(list(np.arange(0+ww*j_off,dims[1],ww)) + [0]))) 
+    gj, gi = np.meshgrid(j_inds, i_inds)
+    return(gi, gj)
+
+
+def get_grid_coords_and_areas(gi, gj, dims):
+    gi_dim = gi.shape
+    gi_extend = np.ones((gi_dim[0]+1, gi_dim[1])) * dims[0]
+    gi_extend[0:gi.shape[0], 0:gi.shape[1]] = gi
+    di = np.zeros(gi.shape)
+    for i in range(gi.shape[0]):
+        di[i, :] = gi_extend[i+1, :] - gi_extend[i, :]
+
+    i_coords = gi + 0.5*di
+
+    gj_dim = gj.shape
+    gj_extend = np.ones((gj_dim[0], gj_dim[1]+1)) * dims[1]
+    gj_extend[0:gj.shape[0], 0:gj.shape[1]] = gj
+    dj = np.zeros(gj.shape)
+    for j in range(gj.shape[1]):
+        dj[:, j] = gj_extend[:, j+1] - gj_extend[:, j]
+    
+    j_coords = gj + 0.5*dj
+
+    coords = np.vstack((i_coords.flatten(), j_coords.flatten())).T
+
+    areas = di*dj
+
+    return(coords, areas)
+
+
+
+def get_cell_strings(gi, gj, dim_om):
+    i_strs = [str(int(i)).zfill(dim_om) for i in gi.flatten()]
+    j_strs = [str(int(j)).zfill(dim_om) for j in gj.flatten()]
+    cells = [''.join(c) for c in zip(i_strs,j_strs)]
+    return(cells)
+
+
+
+def make_grids(land, dims, ww, dim_om):
+    hww = ww/2.
+
+    gx1, gy1 = np.meshgrid(np.arange(0,10+ww,ww), np.arange(0,10+ww,ww))
+    gx2, gy2 = np.meshgrid(np.arange(0+hww,10+hww,ww), np.arange(0+hww,10+hww,ww))
+   
+    land_poly = g.asPolygon((0,0), (dims[0], 0), (0, dims[1]), (dims[0], dims[1]))
+    
+    x1 = gx1.flatten()
+    y1 = gy1.flatten()
+    x2 = gx2.flatten()
+    y2 = gy2.flatten()
+
+    polys1 = [g.asPolygon(((x1[n]-hww, y1[n]-hww), (x1[n]-hww, y1[n]+hww), (x1[n]+hww, y1[n]+hww), (x1[n]+hww, y1[n]-hww))) for n in range(len(x1))]
+    polys2 = [g.asPolygon(((x2[n]-hww, y2[n]-hww), (x2[n]-hww, y2[n]+hww), (x2[n]+hww, y2[n]+hww), (x2[n]+hww, y2[n]-hww))) for n in range(len(x2))]
+
+    areas1 = [p.intersection(land_poly) for p in polys1]
+    areas2 = [p.intersection(land_poly) for p in polys1]
+
+    cells1 = get_cell_strings(gy1, gx1, dim_om)
+    cells2 = get_cell_strings(gy2, gx2, dim_om)
+
+    g1 = Grid(gy1, gx1, areas1, cells1)
+    g2 = Grid(gy2, gx2, areas2, cells2)
+
+    return(Grid_Stack(dims, dim_om, ww))
+
+
+
+def get_cell_counts(x, y, grid):
+    x_cells = (x - grid.corner_cells*grid.ww/2.)//grid.ww + grid.corner_cells
+    y_cells = (y - grid.corner_cells*grid.ww/2.)//grid.ww + grid.corner_cells
+    cells = get_cell_strings(y_cells, x_cells, grid.dim_om)
+    counts = C(cells)
+    grid_counts = grid.grid_counter(counts)
+    grid_counts = np.reshape(grid_counts, grid.gi.shape)
+    grid_dens = grid_counts/grid.grid_areas
+    return(grid_dens)
+
+

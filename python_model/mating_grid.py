@@ -32,7 +32,7 @@ class MatingGrid:
 
     def __get_set(self, x_pos, y_pos):
         # TODO: notimplemented
-        x_index = int(x_pos // (2 * self.mating_radius))
+        x_index = int(x_pos // (2 * self.mating_radius))  #NOTE DEH: shouldn't these lines just have // self.grid_size?
         y_index = int(y_pos // (2 * self.mating_radius))
         set1 = self.offset1[int(x_index)][int(y_index)]
 

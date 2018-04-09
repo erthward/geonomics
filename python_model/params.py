@@ -47,9 +47,9 @@ params = {
             'univ_advant' : [False, False] #is the phenotype unviersally advantageous? if so, phenotypes closer to 1 will have higher fitness at all locations
             },
 
-'N' : 500,                        #total pop size
+'N' : 100,                        #total pop size
 
-'dims' : (50,50),             #dimensions of landscape  
+'dims' : (10,10),             #dimensions of landscape  
 
 'num_scapes' : 2,               #number of landscapes desired
 

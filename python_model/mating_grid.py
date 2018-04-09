@@ -36,8 +36,8 @@ class MatingGrid:
         y_index = int(y_pos // (self.grid_size))
         set1 = self.offset1[int(x_index)][int(y_index)]
 
-        x2_index = int((x_pos + self.mating_radius) // (self.grid_size))
-        y2_index = int((y_pos + self.mating_radius) // (self.grid_size))
+        x2_index = int((x_pos + self.grid_size * 0.5) // (self.grid_size))
+        y2_index = int((y_pos + self.grid_size * 0.5) // (self.grid_size))
         set2 = self.offset2[int(x2_index)][int(y2_index)]
 
         return set1, set2

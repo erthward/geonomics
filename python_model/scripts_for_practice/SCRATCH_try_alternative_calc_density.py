@@ -472,105 +472,60 @@ def cell_string_method(pop, land, window_width = None):
 ################################################################################################
 
 class Grid:
-    def __init__(self, dims, ww, i_off, j_off, corner_cells):
+    def __init__(self, dims, ww, gi, gj, cells, areas, corner_cells):
+
         self.dims = dims
         self.ww = ww
-
-        self.i_off = i_off
-        self.j_off = j_off
         
         self.dim_om = max([len(str(d)) for d in self.dims])
 
-        self.gi, self.gj = create_grid(self.i_off, self.j_off, self.ww, self.dims)
+        self.corner_cells = corner_cells  #True if this is the outer grid (i.e. contains cells centered
+                                          #on the landscape corners); else False for the inner grid (i.e.
+                                          #cells centered on points half-window-width in from landscape corners 
 
-        self.grid_coords, self.grid_areas = get_grid_coords_and_areas(self.gi, self.gj, self.dims)
+        self.gi = gi
+        self.gj = gj
 
-        self.grid_cells = get_cell_strings((self.gi + gg.j_off*ww)//ww, (self.gj + gg.i_off*ww)//ww, self.dim_om)
+        self.grid_coords = np.array(zip(self.gi.flatten(), self.gj.flatten()))
+        #self.grid_coords, self.grid_areas = get_grid_coords_and_areas(self.gi, self.gj, self.dims)
 
-        self.grid_counter = ig(*self.grid_cells) 
+        self.cells = cells
+        self.areas = areas
+
+        self.grid_counter = ig(*self.cells) 
 
 
-    def get_grid_dens(self, x, y):
+    def get_dens(self, x, y):
         x = np.array(x)
         y = np.array(y)
-        x_cells = (x + self.j_off*self.ww)//self.ww
-        y_cells = (y + self.i_off*self.ww)//self.ww
+        x_cells = (x - self.corner_cells*self.ww/2.)//self.ww + self.corner_cells
+        y_cells = (y - self.corner_cells*self.ww/2.)//self.ww + self.corner_cells
         cells = get_cell_strings(y_cells, x_cells, self.dim_om)
         counts = C(cells)
         grid_counts = self.grid_counter(counts)
         grid_counts = np.reshape(grid_counts, self.gi.shape)
-        grid_dens = grid_counts/self.grid_areas
+        grid_dens = grid_counts/self.areas
         return(grid_dens)
-
-
-def get_cell_counts(x, y, grid):
-    x_cells = (x - grid.corner_cells*grid.ww/2.)//grid.ww + grid.corner_cells
-    y_cells = (y - grid.corner_cells*grid.ww/2.)//grid.ww + grid.corner_cells
-    cells = get_cell_strings(y_cells, x_cells, grid.dim_om)
-    counts = C(cells)
-    grid_counts = grid.grid_counter(counts)
-    grid_counts = np.reshape(grid_counts, grid.gi.shape)
-    grid_dens = grid_counts/grid.grid_areas
-    return(grid_dens)
 
 
 
 class Grid_Stack:
-    def __init__(self, dims, ww, offsets):
-        self.dims = dims
+    def __init__(self, land, ww):
+
+        self.dims = land.dims
         self.ww = ww
-        self.offsets = offsets
+        self.dim_om = max([len(str(d)) for d in self.dims])
+
         self.land_gi, self.land_gj = np.meshgrid(np.arange(0, self.dims[0])+0.5, np.arange(0, self.dims[1])+0.5)
 
-        self.grids = dict([[n, Grid(self.dims, self.ww, off[0], off[1])] for n, off in enumerate(offsets)])
+        self.grids = dict([(n,g) for n,g in enumerate(make_grids(land, self.ww))])
 
 
-    def calc_pop_density(self, x, y):
-
+    def calc_density(self, x, y):
         pts = np.vstack([grid.grid_coords for grid in self.grids.values()])
-
-        vals = np.hstack([grid.get_grid_dens(x, y).flatten() for grid in self.grids.values()])
-
+        vals = np.hstack([grid.get_dens(x, y).flatten() for grid in self.grids.values()])
         dens = interpolate.griddata(pts, vals, (self.land_gi, self.land_gj), method = 'cubic')
-
-        return(pts, vals, dens)
-
-
-
-
-
-
-def create_grid(i_off, j_off, ww, dims):
-    i_inds = sorted(list(set(list(np.arange(0+ww*i_off,dims[0],ww)) + [0]))) 
-    j_inds = sorted(list(set(list(np.arange(0+ww*j_off,dims[1],ww)) + [0]))) 
-    gj, gi = np.meshgrid(j_inds, i_inds)
-    return(gi, gj)
-
-
-def get_grid_coords_and_areas(gi, gj, dims):
-    gi_dim = gi.shape
-    gi_extend = np.ones((gi_dim[0]+1, gi_dim[1])) * dims[0]
-    gi_extend[0:gi.shape[0], 0:gi.shape[1]] = gi
-    di = np.zeros(gi.shape)
-    for i in range(gi.shape[0]):
-        di[i, :] = gi_extend[i+1, :] - gi_extend[i, :]
-
-    i_coords = gi + 0.5*di
-
-    gj_dim = gj.shape
-    gj_extend = np.ones((gj_dim[0], gj_dim[1]+1)) * dims[1]
-    gj_extend[0:gj.shape[0], 0:gj.shape[1]] = gj
-    dj = np.zeros(gj.shape)
-    for j in range(gj.shape[1]):
-        dj[:, j] = gj_extend[:, j+1] - gj_extend[:, j]
-    
-    j_coords = gj + 0.5*dj
-
-    coords = np.vstack((i_coords.flatten(), j_coords.flatten())).T
-
-    areas = di*dj
-
-    return(coords, areas)
+        return(dens)
 
 
 
@@ -582,43 +537,79 @@ def get_cell_strings(gi, gj, dim_om):
 
 
 
-def make_grids(land, dims, ww, dim_om):
+def make_grids(land, ww):
+
     hww = ww/2.
-
-    gx1, gy1 = np.meshgrid(np.arange(0,10+ww,ww), np.arange(0,10+ww,ww))
-    gx2, gy2 = np.meshgrid(np.arange(0+hww,10+hww,ww), np.arange(0+hww,10+hww,ww))
-   
-    land_poly = g.asPolygon((0,0), (dims[0], 0), (0, dims[1]), (dims[0], dims[1]))
+    dims = land.dims
     
-    x1 = gx1.flatten()
-    y1 = gy1.flatten()
-    x2 = gx2.flatten()
-    y2 = gy2.flatten()
+    dim_om = max([len(str(d)) for d in dims])
 
-    polys1 = [g.asPolygon(((x1[n]-hww, y1[n]-hww), (x1[n]-hww, y1[n]+hww), (x1[n]+hww, y1[n]+hww), (x1[n]+hww, y1[n]-hww))) for n in range(len(x1))]
-    polys2 = [g.asPolygon(((x2[n]-hww, y2[n]-hww), (x2[n]-hww, y2[n]+hww), (x2[n]+hww, y2[n]+hww), (x2[n]+hww, y2[n]-hww))) for n in range(len(x2))]
+    gj1, gi1 = np.meshgrid(np.arange(0,dims[0]+ww,ww), np.arange(0,dims[1]+ww,ww))
+    gj2, gi2 = np.meshgrid(np.arange(0+hww,dims[0]+hww,ww), np.arange(0+hww,dims[1]+hww,ww))
+   
+    land_poly_coords = ((0,0), (dims[0], 0), (dims[0], dims[1]), (0, dims[1]))
+    land_poly = g.Polygon(land_poly_coords)
+    
+    j1 = gj1.flatten()
+    i1 = gi1.flatten()
+    j2 = gj2.flatten()
+    i2 = gi2.flatten()
 
-    areas1 = [p.intersection(land_poly) for p in polys1]
-    areas2 = [p.intersection(land_poly) for p in polys1]
+    polys1 = [g.Polygon(((j1[n]-hww, i1[n]-hww), (j1[n]-hww, i1[n]+hww), (j1[n]+hww, i1[n]+hww), (j1[n]+hww, i1[n]-hww))) for n in range(len(j1))]
+    polys2 = [g.Polygon(((j2[n]-hww, i2[n]-hww), (j2[n]-hww, i2[n]+hww), (j2[n]+hww, i2[n]+hww), (j2[n]+hww, i2[n]-hww))) for n in range(len(j2))]
+    #polys1 = [g.asPolygon(((j1[n]-hww, i1[n]-hww), (j1[n]-hww, i1[n]+hww), (j1[n]+hww, i1[n]+hww), (j1[n]+hww, i1[n]-hww))) for n in range(len(j1))]
+    #polys2 = [g.asPolygon(((j2[n]-hww, i2[n]-hww), (j2[n]-hww, i2[n]+hww), (j2[n]+hww, i2[n]+hww), (j2[n]+hww, i2[n]-hww))) for n in range(len(j2))]
 
-    cells1 = get_cell_strings(gy1, gx1, dim_om)
-    cells2 = get_cell_strings(gy2, gx2, dim_om)
+    areas1 = np.reshape([p.intersection(land_poly).area for p in polys1], gj1.shape)
+    areas2 = np.reshape([p.intersection(land_poly).area for p in polys2], gj2.shape)
 
-    g1 = Grid(gy1, gx1, areas1, cells1)
-    g2 = Grid(gy2, gx2, areas2, cells2)
+    i_cells_1 = (i1 - ww/2.)//ww + 1
+    j_cells_1 = (j1 - ww/2.)//ww + 1
+    i_cells_2 = (i2)//ww 
+    j_cells_2 = (j2)//ww 
 
-    return(Grid_Stack(dims, dim_om, ww))
+    cells1 = get_cell_strings(i_cells_1, j_cells_1, dim_om)
+    cells2 = get_cell_strings(i_cells_2, j_cells_2, dim_om)
 
+    g1 = Grid(dims, ww, gi1, gj1, cells1, areas1, corner_cells = True)
+    g2 = Grid(dims, ww, gi2, gj2, cells2, areas2, corner_cells = False)
 
-
-def get_cell_counts(x, y, grid):
-    x_cells = (x - grid.corner_cells*grid.ww/2.)//grid.ww + grid.corner_cells
-    y_cells = (y - grid.corner_cells*grid.ww/2.)//grid.ww + grid.corner_cells
-    cells = get_cell_strings(y_cells, x_cells, grid.dim_om)
-    counts = C(cells)
-    grid_counts = grid.grid_counter(counts)
-    grid_counts = np.reshape(grid_counts, grid.gi.shape)
-    grid_dens = grid_counts/grid.grid_areas
-    return(grid_dens)
+    return(g1, g2)
 
 
+
+
+def compare_original_new(land, pop, grid_stack):
+    x = pop.get_x_coords().values()
+    y = pop.get_y_coords().values()
+    d1 = pop.calc_density(land, window_width = 5).raster
+    d2 = grid_stack.calc_density(x,y)
+
+    fig = plt.figure()
+    fig.suptitle('Comparison of pop-density calculation approaches')
+
+    ax = fig.add_subplot(131)
+    ax.set_title('ORIG:\n 50x50 x 5-cell wind x 1675inds: 256ms')
+    plt.imshow(d1, interpolation = 'nearest', cmap = 'PiYG')
+    plt.colorbar()
+    plt.xlim((0,50))
+    plt.ylim((0,50))
+    plt.scatter(np.array(x)-0.5, np.array(y)-0.5, color = 'black')
+
+    ax = fig.add_subplot(132)
+    ax.set_title('ORIG - NEW')
+    plt.imshow(d1 - d2.T, interpolation = 'nearest', cmap = 'PiYG')
+    plt.colorbar()
+    plt.xlim((0,50))
+    plt.ylim((0,50))
+    plt.scatter(np.array(x)-0.5, np.array(y)-0.5, color = 'black')
+
+    ax = fig.add_subplot(133)
+    ax.set_title('NEW:\n 50x50 x 5-cell wind x 1675inds: 12.4ms')
+    plt.imshow(d2.T, interpolation = 'nearest', cmap = 'PiYG')
+    plt.colorbar()
+    plt.xlim((0,50))
+    plt.ylim((0,50))
+    plt.scatter(np.array(x)-0.5, np.array(y)-0.5, color = 'black')
+
+    plt.show()

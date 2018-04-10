@@ -144,7 +144,7 @@ def calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic'):
 
 def kill(land, pop, params, death_probs):
     deaths = [i for i, p in death_probs.items() if bool(r.binomial(1, p, 1)) == True]
-
+    [land.mating_grid.remove(pop.individs[ind]) for ind in deaths]
     [pop.individs.pop(ind) for ind in deaths]
 
     return(len(deaths))

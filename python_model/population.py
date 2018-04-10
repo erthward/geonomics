@@ -191,21 +191,21 @@ class Population:
 
                 if burn == False:
                     if sex == True:
-                        ind = individual.Individual(new_genomes[n], offspring_x, offspring_y,
+                        self.individs[offspring_key] = individual.Individual(new_genomes[n], offspring_x, offspring_y,
                                                                              offspring_sex, age)
                     else:
-                        ind = individual.Individual(new_genomes[n], offspring_x, offspring_y,
+                        self.individs[offspring_key] = individual.Individual(new_genomes[n], offspring_x, offspring_y,
                                                                              age)
 
                 elif burn == True:
                     if sex == True:
-                        ind = individual.Individual(np.array([0]), offspring_x, offspring_y,
+                        self.individs[offspring_key] = individual.Individual(np.array([0]), offspring_x, offspring_y,
                                                                              offspring_sex, age)
                     else:
-                        ind = individual.Individual(np.array([0]), offspring_x, offspring_y,
+                        self.individs[offspring_key] = individual.Individual(np.array([0]), offspring_x, offspring_y,
                                                                              age)
-                self.individs[offspring_key] = ind
-                land.mating_grid.add(ind)
+                # self.individs[offspring_key] = ind
+                land.mating_grid.add(self.individs[offspring_key])
 
         # sample all individuals' habitat values, to initiate for offspring
         self.set_habitat(land)

@@ -3,3 +3,4 @@
 *.png
 *.swp
 /python_model/.idea/
+*ipynb

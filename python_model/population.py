@@ -271,10 +271,11 @@ class Population:
         assert len(window_size) == len(gj)
 
         # make a list of the counts of all individs within each window
-        window_ct = [len([ind for ind in range(len(c)) if
-                          (c[ind][0] > window_ll[n][0] and c[ind][0] <= window_ur[n][0]) and (
-                                      c[ind][1] > window_ll[n][1] and c[ind][1] <= window_ur[n][1])]) for n in
-                     range(len(gj))]
+        window_ct = [len([ind for ind in range(len(c)) 
+                          if  (c[ind][0] > window_ll[n][0] and c[ind][0] <= window_ur[n][0]) 
+                          and (c[ind][1] > window_ll[n][1] and c[ind][1] <= window_ur[n][1])]) 
+                          for n in range(len(gj))]
+
         assert len(window_ct) == len(gj)
 
         # divide window counts by window sizes

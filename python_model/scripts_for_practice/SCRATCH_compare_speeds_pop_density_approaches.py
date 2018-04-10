@@ -20,7 +20,7 @@ for n, d in enumerate([50,100,200]):
     for m, p in enumerate([500,1500,5000]):
             xs = r.uniform(0,d,p)
             ys = r.uniform(0,d,p)
-            pop = population.Population(p, dict([(i, individual.Individual(np.array([0]), xs[i], ys[i])) for i in range(len(xs))]), g, p, 100)
+            pop = population.Population(p, dict([(i, individual.Individual(np.array([0]), xs[i], ys[i])) for i in range(len(xs))]), ga, p, 100)
             pop.Nt = [p]
             alt_t = []
             kde_t = []

@@ -8,7 +8,7 @@ import numpy as np
 def get_phenotype(pop, trait):
 
     #get list of individs' ids (to make sure they are correctly associated with phenotypes
-    inds = pop.individs.keys()
+    inds = list(pop.individs.keys())
 
     #get the trait object
     trait_obj = pop.genomic_arch.traits[trait]
@@ -40,7 +40,7 @@ def get_phenotype(pop, trait):
 #it would be faster to add a conditional check of whether or not a given trait's phi is a single value, and to
 #only calculate as phi[i]*(np.abs(hab[i][scape_num]... if it isn't??
 def get_fitness(pop):
-    fit_dict = dict(zip(pop.individs.keys(),[1]*pop.census()))
+    fit_dict = dict(zip(list(pop.individs.keys()),[1]*pop.census()))
     hab = pop.get_habitat()
     for t,trt in pop.genomic_arch.traits.items():
         phi = trt.get_phi(pop)
@@ -87,8 +87,8 @@ def get_prob_death(pop, d):
    
     #NOTE: NEED TO FIURE OUT BEST WAY TO KEEP MORTALITIES BETWEEN 0 AND 1
     #Check that 0<= mort <= 1
-    assert np.alltrue(np.array(d_ind.values())>=0)
-    assert np.alltrue(np.array(d_ind.values())<=1)
+    assert np.alltrue(np.array(list(d_ind.values()))>=0)
+    assert np.alltrue(np.array(list(d_ind.values()))<=1)
 
     #return
     return(d_ind)

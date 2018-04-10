@@ -42,7 +42,7 @@ def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', m
     dims = land.dims
 
     #get a list of pop's coord-tuples
-    c = coords
+    c = list(coords)
 
     #make window_width a float, to avoid Py2 integer-division issues
     window_width = float(window_width)
@@ -84,7 +84,7 @@ def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', m
 
     #interpolate resulting density vals to a grid equal in size to the landscape
     new_gj, new_gi = np.mgrid[0:dims[0]-1:complex("%ij" % (dims[0])), 0:dims[1]-1:complex("%ij" % (dims[1]))]
-    dens = interpolate.griddata(np.array(zip(list(gi), list(gj))), window_dens, (new_gj, new_gi), method = 'cubic')
+    dens = interpolate.griddata(np.array(list(zip(list(gi), list(gj)))), window_dens, (new_gj, new_gi), method = 'cubic')
 
 
 
@@ -188,7 +188,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
     p_x = [float(np.mean((pop.individs[pairs[i,0]].x, pop.individs[pairs[i,1]].x))) for i in range(pairs.shape[0])]
     p_y = [float(np.mean((pop.individs[pairs[i,0]].y, pop.individs[pairs[i,1]].y))) for i in range(pairs.shape[0])]
-    n_pairs = calc_pop_density(land, zip(p_x, p_y), max(1, params['mu_dispersal']), min_0 = True).raster
+    n_pairs = calc_pop_density(land, list(zip(p_x, p_y)), max(1, params['mu_dispersal']), min_0 = True).raster
     n_pairs[np.isnan(n_pairs)] = 0
     assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())  #NOTE: Has occasionally produced an assertion error here, though I'm not sure why yet...
 
@@ -467,8 +467,8 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
     elif with_selection == False:
         d_ind = {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()}
-        assert np.alltrue(np.array(d_ind.values()) >= 0)
-        assert np.alltrue(np.array(d_ind.values()) <= 1)
+        assert np.alltrue(np.array(list(d_ind.values())) >= 0)
+        assert np.alltrue(np.array(list(d_ind.values())) <= 1)
 
     
     if params['island_val'] > 0:
@@ -489,7 +489,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     num_deaths = kill(land, pop, params, d_ind)
     pop.n_deaths.append(num_deaths)
 
-    print '\n\t%i individuals dead' % num_deaths
+    print('\n\t%i individuals dead' % num_deaths)
 
 
 

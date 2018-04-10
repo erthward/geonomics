@@ -167,7 +167,7 @@ def calc_LD(pop, plot = False):
 
 def calc_het(pop):
     N = float(pop.census())
-    het = [C(pop.get_genotype(0,l).values())[0.5]/N for l in range(pop.genomic_arch.L)]
+    het = [C(list(pop.get_genotype(0,l).values()))[0.5]/N for l in range(pop.genomic_arch.L)]
     return(het)
 
     
@@ -176,7 +176,7 @@ def calc_MAF(pop):
     two_N = 2*float(pop.census())
     MAF = []
     for l in range(pop.genomic_arch.L):
-        cts = C(pop.get_genotype(0,l).values())
+        cts = C(list(pop.get_genotype(0,l).values()))
         MAF_l = (cts[1.0]*2 + cts[0.5])/two_N
         if MAF_l >0.5:
             MAF_l = 1-MAF_l

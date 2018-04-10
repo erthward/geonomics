@@ -23,7 +23,7 @@ def adf_threshold_test(pop, num_timesteps_back, p_val):
 
 def tt_threshold_test(pop, num_timesteps_back, p_val):
     num_timesteps_back += num_timesteps_back % 2
-    return(tt(pop.Nt[-num_timesteps_back: -num_timesteps_back/2], pop.Nt[-num_timesteps_back/2:])[1] >0.05)
+    return(tt(pop.Nt[int(-num_timesteps_back): int(-num_timesteps_back/2)], pop.Nt[int(-num_timesteps_back/2):])[1] >0.05)
 
 
 

@@ -39,7 +39,7 @@ params = {
             'scape_num': [0,0], #list of the landscape numbers to be used for selection on each trait 
                                 #(i.e.  list length should equal value of 'num' on previous line, as should lengths of subsequent lists)
 
-            'phi' : [0.1, 0.1],   #phenotypic selection coefficient for trait; for each trait, can either be a numeric value, or can be an array of spatially-contingent s values of dimensions equal to land.dims
+            'phi' : [0.05, 0.05],   #phenotypic selection coefficient for trait; for each trait, can either be a numeric value, or can be an array of spatially-contingent s values of dimensions equal to land.dims
             'n': [1,100], #number of loci assigned to trait
             'alpha_dist_sigma': [0.5, 0.00025],  #NOTE: for sigma = 0.5, one average locus is enough to generate an both optimum genotypes; for 0.025, 10 loci should (on average, but depends of course on the random sample of alphas drawn!); and so on linearly
             'fitness_fn_gamma': [1, 1], #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)

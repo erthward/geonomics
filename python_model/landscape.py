@@ -95,8 +95,8 @@ class Landscape_Stack:
         assert False not in [raster.__class__.__name__ == 'Landscape' for raster in
                              raster_list], 'All landscapes supplied in raster_list must be of type landscape.Landscape.'
         self.n_scapes = len(raster_list)
-        assert len(set([land.dims for land in self.scapes.values()])) == 1, 'Dimensions of all landscapes must be even.'
-        self.dims = self.scapes.values()[0].dims
+        assert len(set([land.dims for land in list(self.scapes.values())])) == 1, 'Dimensions of all landscapes must be even.'
+        self.dims = list(self.scapes.values())[0].dims
         self.movement_surf = None
         self.n_movement_surf_surf = None
         self.n_island_mask_scape = None
@@ -207,7 +207,7 @@ class Landscape_Stack:
             return
         else:
             scape_num = params['n_movement_surf_scape']
-            v, a = np.histogram([self.movement_surf[i][j]()[0] for n in range(7500)], bins=15)
+            v, a = np.histogram([[self.movement_surf[i][j]()][0] for n in range(7500)], bins=15)
             v = v / float(v.sum())
             a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
             x = [np.cos(a[n]) * 0.5 for n in range(len(a))]

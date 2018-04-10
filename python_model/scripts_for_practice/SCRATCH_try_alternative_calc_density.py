@@ -118,12 +118,12 @@ def alt_calc_density(pop, land, grid_mag = 1, count_type = 0, window_width = Non
 
     #interpolate resulting density vals to a grid equal in size to the landscape
     new_gj, new_gi = np.mgrid[0:dims[0]-1:complex("%ij" % (dims[0])), 0:dims[1]-1:complex("%ij" % (dims[1]))]
-    dens = interpolate.griddata(np.array(zip(list(gi/grid_mag), list(gj/grid_mag))), window_dens, (new_gj, new_gi), method = 'cubic')
+    dens = interpolate.griddata(np.array(list(zip(list(gi/grid_mag), list(gj/grid_mag)))), window_dens, (new_gj, new_gi), method = 'cubic')
     dens = np.flipud(dens)
 
 
 
-    if normalize_by <> 'none':
+    if normalize_by != 'none':
 
         #if max_1 == True, set max_val to dens.max(), such that the density raster output will be normalized to
         #its own max, and thus vary between 0 and 1; else set to 1, and the output raster will vary between 0 and the current max value
@@ -140,7 +140,7 @@ def alt_calc_density(pop, land, grid_mag = 1, count_type = 0, window_width = Non
     if min_0 == True:
         dens[dens<0] = 0
 
-    if max_val <> None:
+    if max_val != None:
         dens[dens>max_val] = max_val
 
     if set_N == True:
@@ -232,7 +232,7 @@ def alt2_calc_density(pop, land, search_area_array, window_width = None, grid_ma
 
 
     new_gj, new_gi = np.mgrid[0:dims[0]-1:complex("%ij" % (dims[0])), 0:dims[1]-1:complex("%ij" % (dims[1]))]
-    dens = interpolate.griddata(np.array(zip(list(gj), list(gi))), dens.flatten(), (new_gj, new_gi), method = 'cubic')
+    dens = interpolate.griddata(np.array(list(zip(list(gj), list(gi)))), dens.flatten(), (new_gj, new_gi), method = 'cubic')
     dens = np.flipud(dens)
 
 
@@ -247,7 +247,7 @@ def alt2_calc_density(pop, land, search_area_array, window_width = None, grid_ma
     else:  #POTENTIALLY ADD OTHER OPTIONS HERE, i.e. to normalize by starting size?
         pass 
 
-    if normalize_by <> 'none':
+    if normalize_by != 'none':
 
         #if max_1 == True, set max_val to dens.max(), such that the density raster output will be normalized to
         #its own max, and thus vary between 0 and 1; else set to 1, and the output raster will vary between 0 and the current max value
@@ -264,7 +264,7 @@ def alt2_calc_density(pop, land, search_area_array, window_width = None, grid_ma
     if min_0 == True:
         dens[dens<0] = 0
 
-    if max_val <> None:
+    if max_val != None:
         dens[dens>max_val] = max_val
 
     if set_N == True:
@@ -382,7 +382,7 @@ def cell_string_method(pop, land, window_width = None):
     xx_str = [str(x).zfill(ord_mag_dims) for x in xx.flatten()]
     yy_str = [str(y).zfill(ord_mag_dims) for y in yy.flatten()]
     #then concatenate the strings of the x and y coordinates for each cell, to create unique cell IDs
-    cells = [''.join(c) for c in zip(yy_str,xx_str)]
+    cells = [''.join(c) for c in list(zip(yy_str,xx_str))]
 
     #create a function to extract the dictionary value for each key in an input list (to be called on the
     #Counter object below)
@@ -415,7 +415,7 @@ def cell_string_method(pop, land, window_width = None):
         #and get zfill'd strings of these coordinates as well  
         X = [str(int(int(j)//ww)).zfill(ord_mag_dims) for j in x]
         Y = [str(int(int(i)//ww)).zfill(ord_mag_dims) for i in y]
-        locs = [''.join(i) for i in zip(Y,X)]
+        locs = [''.join(i) for i in list(zip(Y,X))]
 
 
         #count the number of individuals within each grid cell
@@ -438,7 +438,7 @@ def cell_string_method(pop, land, window_width = None):
             #get an array of the x,y coordinates associated with each count in the count grid
             x_pts = [(j + 0.5 + off[0]) * ww for j in xx.flatten()]
             y_pts = [(i + 0.5 + off[1]) * ww for i in yy.flatten()]
-            pts = np.array(zip(y_pts, x_pts))
+            pts = np.array(list(zip(y_pts, x_pts)))
 
             all_x_pts.extend(list(x_pts)) 
             all_y_pts.extend(list(y_pts)) 
@@ -458,7 +458,7 @@ def cell_string_method(pop, land, window_width = None):
         else:
             res_array[n,:,:] = res[1:ct_grid_dims[0]-1, 1:ct_grid_dims[1]-1]
 
-    all_dens = interpolate.griddata(np.array(zip(all_y_pts, all_x_pts)), np.array(all_res), (out_y, out_x), method = 'cubic')
+    all_dens = interpolate.griddata(np.array(list(zip(all_y_pts, all_x_pts))), np.array(all_res), (out_y, out_x), method = 'cubic')
     
     dens = np.mean(res_array, axis = 0)
     return(res_array, dens, all_dens)
@@ -486,7 +486,7 @@ class Grid:
         self.gi = gi
         self.gj = gj
 
-        self.grid_coords = np.array(zip(self.gi.flatten(), self.gj.flatten()))
+        self.grid_coords = np.array(list(zip(self.gi.flatten(), self.gj.flatten())))
         #self.grid_coords, self.grid_areas = get_grid_coords_and_areas(self.gi, self.gj, self.dims)
 
         self.cells = cells
@@ -532,7 +532,7 @@ class Grid_Stack:
 def get_cell_strings(gi, gj, dim_om):
     i_strs = [str(int(i)).zfill(dim_om) for i in gi.flatten()]
     j_strs = [str(int(j)).zfill(dim_om) for j in gj.flatten()]
-    cells = [''.join(c) for c in zip(i_strs,j_strs)]
+    cells = [''.join(c) for c in list(zip(i_strs,j_strs))]
     return(cells)
 
 
@@ -580,8 +580,8 @@ def make_grids(land, ww):
 
 
 def compare_original_new(land, pop, grid_stack):
-    x = pop.get_x_coords().values()
-    y = pop.get_y_coords().values()
+    x = list(pop.get_x_coords().values())
+    y = list(pop.get_y_coords().values())
     d1 = pop.calc_density(land, window_width = 5).raster
     d2 = grid_stack.calc_density(x,y)
 
@@ -589,12 +589,12 @@ def compare_original_new(land, pop, grid_stack):
     fig.suptitle('Comparison of pop-density calculation approaches')
 
     ax = fig.add_subplot(131)
-    ax.set_title('ORIG:\n 50x50 x 5-cell wind x 1675inds: 256ms')
+    ax.set_title('ORIG:\n 50x50 x 5-cell wind\nx 1675inds: 256ms')
     plt.imshow(d1, interpolation = 'nearest', cmap = 'PiYG')
     plt.colorbar()
     plt.xlim((0,50))
     plt.ylim((0,50))
-    plt.scatter(np.array(x)-0.5, np.array(y)-0.5, color = 'black')
+    plt.scatter(np.array(x)-0.5, np.array(y)-0.5, color = 'black', s = 5)
 
     ax = fig.add_subplot(132)
     ax.set_title('ORIG - NEW')
@@ -602,14 +602,14 @@ def compare_original_new(land, pop, grid_stack):
     plt.colorbar()
     plt.xlim((0,50))
     plt.ylim((0,50))
-    plt.scatter(np.array(x)-0.5, np.array(y)-0.5, color = 'black')
+    plt.scatter(np.array(x)-0.5, np.array(y)-0.5, color = 'black', s = 5)
 
     ax = fig.add_subplot(133)
-    ax.set_title('NEW:\n 50x50 x 5-cell wind x 1675inds: 12.4ms')
+    ax.set_title('NEW:\n 50x50 x 5-cell wind\nx 1675inds: 12.4ms')
     plt.imshow(d2.T, interpolation = 'nearest', cmap = 'PiYG')
     plt.colorbar()
     plt.xlim((0,50))
     plt.ylim((0,50))
-    plt.scatter(np.array(x)-0.5, np.array(y)-0.5, color = 'black')
+    plt.scatter(np.array(x)-0.5, np.array(y)-0.5, color = 'black', s = 5)
 
     plt.show()

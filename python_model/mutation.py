@@ -63,7 +63,7 @@ def mutate(pop, log = False):
 
     if mutation == 1:
         #randomly choose an individual
-        ind = r.choice(newborns.keys(), 1)
+        ind = r.choice(list(newborns.keys()), 1)
         #randomly choose a locus from among the mutables
         shuffle(pop.genomic_arch.mutables)
         loc = pop.genomic_arch.mutables.pop()
@@ -79,7 +79,7 @@ def mutate(pop, log = False):
             with open('./mutation_log.txt', 'a') as f:
                 f.write('locus: %i,t: %i' % (locus, t))
             
-        print 'MUTATION:\n\t INDIVIDUAL %i,  LOCUS %i\n\t timestep %i\n\n' % (ind, locus, pop.t)
+        print('MUTATION:\n\t INDIVIDUAL %i,  LOCUS %i\n\t timestep %i\n\n' % (ind, locus, pop.t))
 
 
        

@@ -101,7 +101,7 @@ class Population:
 
         assert type(N) == int, "N must be an integer"
         assert type(self.individs) == dict, "self.individs must be a dictionary"
-        assert list(set([i.__class__.__name__ for i in self.individs.values()])) == [
+        assert list(set([i.__class__.__name__ for i in list(self.individs.values())])) == [
             'Individual'], "self.individs must be a dictionary containing only instances of the individual.Individual class"
         assert self.genomic_arch.__class__.__name__ == 'Genomic_Architecture', "self.genomic_arch must be an instance of the genome.Genomic_Architecture class"
 
@@ -128,7 +128,7 @@ class Population:
     def increment_age_stage(self, burn=False):
 
         # increment age of all individuals
-        [ind.increment_age_stage() for ind in self.individs.values()];
+        [ind.increment_age_stage() for ind in list(self.individs.values())];
 
         # add 1 to pop.t
         if burn == False:  # as long as this is not during burn-in, pop.t will increment
@@ -136,7 +136,7 @@ class Population:
 
     # method to move all individuals simultaneously
     def move(self, land, params):
-        [ind.move(land, params) for ind in self.individs.values()];
+        [ind.move(land, params) for ind in list(self.individs.values())];
 
         self.set_habitat(land)
 
@@ -210,7 +210,7 @@ class Population:
         # sample all individuals' habitat values, to initiate for offspring
         self.set_habitat(land)
 
-        print '\n\t%i individuals born' % (total_births)
+        print('\n\t%i individuals born' % (total_births))
 
     # method to carry out mutation
     def mutate(self, log=False):
@@ -218,7 +218,7 @@ class Population:
 
     def check_extinct(self):
         if len(self.individs.keys()) == 0:
-            print '\n\nYOUR POPULATION WENT EXTINCT!\n\n'
+            print('\n\nYOUR POPULATION WENT EXTINCT!\n\n')
             return (1)
             # sys.exit()
         else:
@@ -242,7 +242,7 @@ class Population:
         dims = land.dims
 
         # get a list of pop's coord-tuples
-        c = self.get_coords().values()
+        c = list(self.get_coords().values())
 
         # make window_width a float, to avoid Py2 integer-division issues
         window_width = float(window_width)
@@ -294,7 +294,7 @@ class Population:
 
             # interpolate resulting density vals to a grid equal in size to the landscape
         new_gj, new_gi = np.mgrid[0:dims[0] - 1:complex("%ij" % (dims[0])), 0:dims[1] - 1:complex("%ij" % (dims[1]))]
-        dens = interpolate.griddata(np.array(zip(list(gi), list(gj))), window_dens, (new_gj, new_gi), method='cubic')
+        dens = interpolate.griddata(np.array(list(zip(list(gi), list(gj)))), window_dens, (new_gj, new_gi), method='cubic')
 
         if normalize_by != 'none':
 
@@ -330,7 +330,7 @@ class Population:
 
     # method for setting all individs' habitat attributes to match current locations
     def set_habitat(self, land, scape_num=None, individs=None):
-        hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in land.scapes.values()] for i, ind in
+        hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for i, ind in
                self.individs.items()}
         for i, v in self.individs.items():
             v.habitat = hab[i]
@@ -339,13 +339,13 @@ class Population:
     def set_habitat_by_land_ind(self, land, scape_num=None, individs=None):
         if individs is None:
             if scape_num is None:
-                hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in land.scapes.values()] for i, ind in
+                hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for i, ind in
                        self.individs.items()}
             else:
                 hab = {i: land.scapes[scape_num].raster[int(ind.y), int(ind.x)] for i, ind in self.individs.items()}
         else:
             if scape_num is None:
-                hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in land.scapes.values()] for i, ind in
+                hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for i, ind in
                        self.individs.items() if i in individs}
             else:
                 hab = {i: land.scapes[scape_num].raster[int(ind.y), int(ind.x)] for i, ind in self.individs.items() if
@@ -391,8 +391,7 @@ class Population:
                 h = self.genomic_arch.h[locus]
             else:
                 h = 0.5
-            return dict(zip(individs, self.heterozygote_effects[h](
-                np.array([ind.genome[locus,] for i, ind in self.individs.items() if i in individs]))))
+            return dict(zip(individs, self.heterozygote_effects[h](np.array([ind.genome[locus,] for i, ind in self.individs.items() if i in individs]))))
 
     # convenience method for calling selection.get_phenotype() on this pop
     def get_phenotype(self, trait, individs=None):
@@ -405,7 +404,7 @@ class Population:
         return selection.get_fitness(self)
 
     def hist_fitness(self):
-        plt.hist(selection.get_fitness(self).values())
+        plt.hist(list(selection.get_fitness(self).values()))
 
     def get_single_trait_fitness(self, trait):
         return selection.get_single_trait_fitness(self, trait)
@@ -439,7 +438,7 @@ class Population:
         else:
             land.show(colorbar=colorbar, im_interp_method=im_interp_method, pop=True)
 
-        c = np.array(self.get_coords().values())
+        c = np.array(list(self.get_coords().values()))
         # NOTE: subtract 0.5 to line up the points with the plt.imshow() grid of the land; imshow plots each pixel centered on its index, but the points then plot against those indices, so wind up shifted +0.5 in each axis
         x = c[:, 0] - 0.5
         y = c[:, 1] - 0.5
@@ -460,7 +459,7 @@ class Population:
         land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
 
         # coords = dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items() if k in individs])
-        c = np.array(self.get_coords(individs).values())
+        c = np.array(list(self.get_coords(individs).values()))
         # NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
         x = c[:, 0] - 0.5
         y = c[:, 1] - 0.5
@@ -477,7 +476,7 @@ class Population:
         dens = self.calc_density(land, window_width=window_width, normalize_by=normalize_by, max_1=max_1)
         dens.show(im_interp_method='nearest', pop=True)
 
-        c = np.array(self.get_coords().values())
+        c = np.array(list(self.get_coords().values()))
         # NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
         x = c[:, 0] - 0.5
         y = c[:, 1] - 0.5
@@ -485,7 +484,7 @@ class Population:
         plt.xlim(-0.6, land.dims[1] - 0.4);
         plt.ylim(-0.6, land.dims[0] - 0.4)
 
-    # ax = mpl.pyplot.plot([i[0] - 0.5 for i in c.values()], [i[1] - 0.5 for i in c.values()], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
+    # ax = mpl.pyplot.plot([i[0] - 0.5 for i in list(c.values())], [i[1] - 0.5 for i in list(c.values())], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
 
     # NOTE: perhaps worth figuring out how to label with the individual number!!
 
@@ -510,7 +509,7 @@ class Population:
             inds = [i for i, g in genotypes.items() if np.atleast_1d(g)[0] == genotype]
             # plot if there are any individuals of this genotype
             if len(inds) >= 1:
-                c = np.array(self.get_coords(inds).values())
+                c = np.array(list(self.get_coords(inds).values()))
                 x = c[:, 0] - 0.5
                 y = c[:, 1] - 0.5
                 plt.scatter(x, y, s=markersize, c=colors[n], alpha=alpha);
@@ -537,9 +536,9 @@ class Population:
         c = self.get_coords()
         z = self.get_phenotype(trait)
 
-        data = OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, z[i]) for i in self.individs.keys()}).values()
+        data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, z[i]) for i in self.individs.keys()}).values())
 
-        plt.scatter([i[0] for i in data], [i[1] for i in data], s=markersize, c=[i[2] for i in data], cmap=cmap,
+        plt.scatter([i[0] for i in data], [i[1] for i in data], s=markersize, c=[i[2] for i in data], cmap=cmap, linewidth = 1.5, edgecolor = 'black',
                     alpha=alpha)
         plt.xlim(-0.6, land.dims[1] - 0.4)
         plt.ylim(-0.6, land.dims[0] - 0.4)
@@ -569,7 +568,7 @@ class Population:
         w = self.get_fitness()
 
         # calc minimum possible fitness
-        min_fit = np.product([1 - np.atleast_2d(t.phi).min() for t in self.genomic_arch.traits.values()])
+        min_fit = np.product([1 - np.atleast_2d(t.phi).min() for t in list(self.genomic_arch.traits.values())])
 
         # generate an evenly spaced range of the possible fitness values
         fit_vals = np.linspace(min_fit, 1, 50)
@@ -577,8 +576,7 @@ class Population:
         # use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
         markersize_differentials = {i: 3 * np.abs(fit_vals - w[i]).argmin() for i in self.individs.keys()}
 
-        data = OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], markersize_differentials[i]) for i in
-                   self.individs.keys()}).values()
+        data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], markersize_differentials[i]) for i in self.individs.keys()}).values())
 
         plt.scatter([i[0] for i in data], [i[1] for i in data], s=[min_markersize + i[3] for i in data],
                     c=[i[2] for i in data], cmap=cmap, alpha=alpha)
@@ -622,8 +620,7 @@ class Population:
 
         z = self.get_phenotype(trait)
 
-        data = OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], z[i], markersize_differentials[i]) for i in
-                   self.individs.keys()}).values()
+        data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], z[i], markersize_differentials[i]) for i in self.individs.keys()}).values())
 
         # separate colormap to color marker edges from black (fit = 1) to white (fit = 0) through red
         inside_marker_cmap = mpl.cm.get_cmap('RdYlGn')
@@ -641,9 +638,9 @@ class Population:
     # method for plotting a population pyramid
     # NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS
     def show_pyramid(self):
-        plt.hist([ind.age for ind in self.individs.values() if ind.sex == 0], orientation='horizontal', color='pink',
+        plt.hist([ind.age for ind in list(self.individs.values()) if ind.sex == 0], orientation='horizontal', color='pink',
                  alpha=0.6)
-        plt.hist([ind.age for ind in self.individs.values() if ind.sex == 1], orientation='horizontal', color='skyblue',
+        plt.hist([ind.age for ind in list(self.individs.values()) if ind.sex == 1], orientation='horizontal', color='skyblue',
                  alpha=0.6)
 
     def show_pop_growth(self, params):

@@ -93,7 +93,7 @@ def watch_movement(pop, land, scape_num, num_timesteps, params = None, mu_direct
 
 
     if subset_pop:
-        cull_individs = np.random.choice(toy_pop.individs.keys(), len(toy_pop.individs) - subset_pop, replace = False)
+        cull_individs = np.random.choice(list(toy_pop.individs.keys()), len(toy_pop.individs) - subset_pop, replace = False)
         [toy_pop.individs.pop(ind) for ind in cull_individs]
 
 
@@ -107,8 +107,8 @@ def watch_movement(pop, land, scape_num, num_timesteps, params = None, mu_direct
 
 
     #NOTE: offset all values by -0.5 for visual reconciliation, to account for apparent offset of axes on top of raster?
-    new_x = [ind.x-0.5 for ind in toy_pop.individs.values()]
-    new_y = [ind.y-0.5 for ind in toy_pop.individs.values()]
+    new_x = [ind.x-0.5 for ind in list(toy_pop.individs.values())]
+    new_y = [ind.y-0.5 for ind in list(toy_pop.individs.values())]
 
 
     for t in range(num_timesteps):
@@ -117,8 +117,8 @@ def watch_movement(pop, land, scape_num, num_timesteps, params = None, mu_direct
 
         #NOTE: offset all values by -0.5 for visual reconciliation, to account for apparent offset of axes on top of raster?
         [ind.move(land, toy_params) for ind in toy_pop.individs.values()];
-        new_x = [ind.x-0.5 for ind in toy_pop.individs.values()]
-        new_y = [ind.y-0.5 for ind in toy_pop.individs.values()]
+        new_x = [ind.x-0.5 for ind in list(toy_pop.individs.values())]
+        new_y = [ind.y-0.5 for ind in list(toy_pop.individs.values())]
 
         if color_by_individ == True:
             [mpl.pyplot.plot((old_x[i], new_x[i]), (old_y[i], new_y[i]), '-', scalex = False, scaley = False, 

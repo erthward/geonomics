@@ -234,7 +234,7 @@ def sample_data(pop, land, params, sampling_scheme, n = None, points = None, rad
 def get_transect_points(eps, n_pts):
     x_pts = np.linspace(eps[0][0] , eps[1][0], n_pts)
     y_pts = np.linspace(eps[0][1] , eps[1][1], n_pts)
-    return(zip(x_pts, y_pts))
+    return(list(zip(x_pts, y_pts)))
      
 
 

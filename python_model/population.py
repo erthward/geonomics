@@ -538,7 +538,7 @@ class Population:
 
         data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, z[i]) for i in self.individs.keys()}).values())
 
-        plt.scatter([i[0] for i in data], [i[1] for i in data], s=markersize, c=[i[2] for i in data], cmap=cmap, linewidth = 1.5, edgecolor = 'black',
+        plt.scatter([i[0] for i in data], [i[1] for i in data], s=markersize, c=[i[2] for i in data], cmap=cmap, linewidth = 1, edgecolor = 'black',
                     alpha=alpha)
         plt.xlim(-0.6, land.dims[1] - 0.4)
         plt.ylim(-0.6, land.dims[0] - 0.4)

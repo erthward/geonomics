@@ -212,9 +212,11 @@ class Population:
 
         print('\n\t%i individuals born' % (total_births))
 
+
     # method to carry out mutation
     def mutate(self, log=False):
         mutation.mutate(self)
+
 
     def check_extinct(self):
         if len(self.individs.keys()) == 0:
@@ -224,77 +226,22 @@ class Population:
         else:
             return (0)
 
-    def calc_density(self, land, window_width=None, normalize_by='none', min_0=True, max_1=False, max_val=None,
-                     set_N=False):
+
+    def calc_density(self, land, normalize_by='none', min_0=True, max_1=False, max_val=None, set_N=False):
 
         '''
-        Calculate an interpolated raster of local population density, using a window size of window_width.
+        Calculate an interpolated raster of local population density, using the
+        Landscape_Stack.density_grid_stack object.
+
         Valid values for normalize_by currently include 'census' and 'none'. If normalize_by = 'census', max_1 =
         True will cause the output density raster to vary between 0 and 1, rather than between 0 and the current
-        max normalized density value. Window width will default to 1/10 of the larger raster dimension.
+        max normalized density value. 
         '''
+        
+        x = list(self.get_x_coords().values())
+        y = list(self.get_y_coords().values())
 
-        # window width defaults to 1/10 the maximum landscape dimension
-        if window_width == None:
-            window_width = max(land.dims) * 0.1
-
-        # shorthand
-        dims = land.dims
-
-        # get a list of pop's coord-tuples
-        c = list(self.get_coords().values())
-
-        # make window_width a float, to avoid Py2 integer-division issues
-        window_width = float(window_width)
-
-        # create meshgrid using window_width/2 as step size
-        grid_j, grid_i = np.mgrid[0:dims[0]:complex("%ij" % (dims[0] / (window_width / 2))),
-                         0:dims[1]:complex("%ij" % (dims[1] / (window_width / 2)))]
-
-        # grid_j, grid_i = np.mgrid[0+(window_width/2):dims[0]-(window_width/2):complex("%ij" % (dims[0]/(window_width/2))), 0+(window_width/2):dims[1]-(window_width/2):complex("%ij" % (dims[1]/(window_width/2)))]
-
-        # flatten the arrays, so that I can run over them in a single for loop
-        gj = grid_j.ravel()
-        gi = grid_i.ravel()
-
-        # make lists of tuples, of same length as gj, containing the window ll and ur coords
-        window_ll = [(max(gj[n] - (window_width / 2), 0), max(gi[n] - (window_width / 2), 0)) for n in
-                     range(len(gj))]  # constrain min window vals to 0
-        window_ur = [(min(gj[n] + (window_width / 2), land.dims[0]), min(gi[n] + (window_width / 2), land.dims[1])) for
-                     n in range(len(gj))]  # constrain max window vals to each respective land dimension
-        assert len(window_ll) == len(gj)
-        assert len(window_ur) == len(gj)
-
-        # make a list of the sizes of each window
-        window_size = [(window_ur[n][0] - window_ll[n][0]) * (window_ur[n][1] - window_ll[n][1]) for n in
-                       range(len(gj))]  # calculate size of this window (not always the same because of edge effects
-        assert len(window_size) == len(gj)
-
-        # make a list of the counts of all individs within each window
-        window_ct = [len([ind for ind in range(len(c)) 
-                          if  (c[ind][0] > window_ll[n][0] and c[ind][0] <= window_ur[n][0]) 
-                          and (c[ind][1] > window_ll[n][1] and c[ind][1] <= window_ur[n][1])]) 
-                          for n in range(len(gj))]
-
-        assert len(window_ct) == len(gj)
-
-        # divide window counts by window sizes
-        window_dens = [window_ct[n] / window_size[n] for n in range(len(window_ct))]  # divide by window size
-        assert len(window_dens) == len(gj)
-
-        # if normalize_by == census, then divide each density by total pop census size
-        if normalize_by == 'census':
-            N = self.census()
-            window_dens = [dens / N for dens in window_dens]
-        elif normalize_by == 'none':
-            pass
-
-        else:  # POTENTIALLY ADD OTHER OPTIONS HERE, i.e. to normalize by starting size?
-            pass
-
-            # interpolate resulting density vals to a grid equal in size to the landscape
-        new_gj, new_gi = np.mgrid[0:dims[0] - 1:complex("%ij" % (dims[0])), 0:dims[1] - 1:complex("%ij" % (dims[1]))]
-        dens = interpolate.griddata(np.array(list(zip(list(gi), list(gj)))), window_dens, (new_gj, new_gi), method='cubic')
+        dens = land.density_grid_stack.calc_density(x,y)
 
         if normalize_by != 'none':
 
@@ -317,10 +264,11 @@ class Population:
             dens[dens > max_val] = max_val
 
         if set_N == True:
-            self.set_N(landscape.Landscape(dims, dens))
+            self.set_N(landscape.Landscape(land.dims, dens))
 
         else:
-            return (landscape.Landscape(dims, dens))
+            return (landscape.Landscape(land.dims, dens))
+
 
     # NOTE: DEH 01-11-18: Reformatting the habitat-getting approach
     # 1.) determined a 10x-faster way of setting hab vals of individs
@@ -471,9 +419,8 @@ class Population:
     # for k, coord_pair in coords.items():
     # ax = mpl.pyplot.plot(coord_pair[0], coord_pair[1], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
 
-    def show_density(self, land, window_width=None, normalize_by='census', max_1=False, color='black', markersize=40,
-                     alpha=0.5):
-        dens = self.calc_density(land, window_width=window_width, normalize_by=normalize_by, max_1=max_1)
+    def show_density(self, land, normalize_by='census', max_1=False, color='black', markersize=40, alpha=0.5):
+        dens = self.calc_density(land, normalize_by=normalize_by, max_1=max_1)
         dens.show(im_interp_method='nearest', pop=True)
 
         c = np.array(list(self.get_coords().values()))

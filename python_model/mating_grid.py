@@ -18,7 +18,8 @@ class MatingGrid:
         try:
             self.__remove(ind.x, ind.y, ind)
         except KeyError:
-            print ("there are no individuals there.")
+            #print ("there are no individuals there.")
+            pass 
 
         return None
 

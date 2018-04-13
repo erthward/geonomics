@@ -51,6 +51,10 @@ params = {
 
 'dims' : (50,50),             #dimensions of landscape  
 
+'density_grid_window_width': None,   #with window-width used for the Density_Grid_Stack used to calculate
+                                     #population density (if set to None, defaults to the closest factor 
+                                     #of the larger landscape dimension to 1/10th of that dimension)
+
 'num_scapes' : 2,               #number of landscapes desired
 
 'rand_land' : True,        #whether or not to generate random landscapes

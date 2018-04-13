@@ -28,6 +28,10 @@ import numpy as np
 import numpy.random as r
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from collections import Counter as C
+from operator import itemgetter as ig
+from scipy import interpolate
+from shapely import geometry as g
 
 import mating_grid
 
@@ -99,6 +103,7 @@ class Landscape_Stack:
         self.dims = list(self.scapes.values())[0].dims
         self.movement_surf = None
         self.n_movement_surf_surf = None
+        self.density_grid_stack = None
         self.n_island_mask_scape = None
         self.mating_grid = mating_grid.MatingGrid(params=params)
 
@@ -225,6 +230,76 @@ class Landscape_Stack:
             cPickle.dump(self, f)
 
 
+class Density_Grid:
+    def __init__(self, dims, window_width, gi, gj, cells, areas, corner_cells):
+
+        self.dims = dims
+        self.window_width = window_width
+        
+        self.dim_om = max([len(str(d)) for d in self.dims])
+
+        self.corner_cells = corner_cells  #True if this is the outer grid (i.e. contains cells centered
+                                          #on the landscape corners); else False for the inner grid (i.e.
+                                          #cells centered on points half-window-width in from landscape corners 
+
+        self.gi = gi
+        self.gj = gj
+
+        self.grid_coords = np.array(list(zip(self.gi.flatten(), self.gj.flatten())))
+        #self.grid_coords, self.grid_areas = get_grid_coords_and_areas(self.gi, self.gj, self.dims)
+
+        self.cells = cells
+        self.areas = areas
+
+        self.grid_counter = ig(*self.cells) 
+
+
+    def calc_density(self, x, y):
+        x = np.array(x)
+        y = np.array(y)
+        x_cells = (x - self.corner_cells*self.window_width/2.)//self.window_width + self.corner_cells
+        y_cells = (y - self.corner_cells*self.window_width/2.)//self.window_width + self.corner_cells
+        cells = get_cell_strings(y_cells, x_cells, self.dim_om)
+        counts = C(cells)
+        grid_counts = self.grid_counter(counts)
+        grid_counts = np.reshape(grid_counts, self.gi.shape)
+        grid_dens = grid_counts/self.areas
+        return(grid_dens)
+
+
+
+class Density_Grid_Stack:
+    def __init__(self, land, window_width = None):
+
+        self.dims = land.dims
+
+        #NOTE: This is a quick hack to find the closest whole-number factor of the larger of the landscape
+        #dimensions and set to 1/10th of that dimension, and set that as the window_width.
+        #This is so the windows fit evenly across the landscape. Otherwise, strange numerical errors are
+        #occurring. But when I get the time, I need to puzzle through the density_grid_stack code again and
+        #figure out why it throws errors in those cases, and how to rectify it
+        if window_width == None:
+            facts = [(i,abs(i-0.1*max(self.dims))) for i in range(1,max(self.dims)+1) if max(self.dims)%i == 0]
+            closest_fact = min([f[1] for f in facts])
+            window_width = [f[0] for f in facts if f[1] == closest_fact][0]
+        self.window_width = window_width
+
+        self.dim_om = max([len(str(d)) for d in self.dims])
+
+        self.land_gi, self.land_gj = np.meshgrid(np.arange(0, self.dims[0])+0.5, np.arange(0, self.dims[1])+0.5)
+
+        self.grids = dict([(n,g) for n,g in enumerate(make_density_grids(land, self.window_width))])
+
+
+    def calc_density(self, x, y):
+        pts = np.vstack([grid.grid_coords for grid in self.grids.values()])
+        vals = np.hstack([grid.calc_density(x, y).flatten() for grid in self.grids.values()])
+        dens = interpolate.griddata(pts, vals, (self.land_gj, self.land_gi), method = 'cubic')
+        return(dens)
+
+
+
+
 # --------------------------------------
 # FUNCTIONS ---------------------------
 # --------------------------------------
@@ -349,6 +424,12 @@ def build_scape_stack(params, num_hab_types=2):
     # if params['island_val'] > 0, then use the movement_surf raster to create T/F mask-raster, added as an
     # additional landscape, to be used to kill all individuals straying off 'islands'
 
+    #create the land.density_grid_stack object
+    if params['density_grid_window_width'] != None:
+        land.density_grid_stack = Density_Grid_Stack(land, window_width = params['density_grid_window_width'])
+    else:
+        land.density_grid_stack = Density_Grid_Stack(land)
+
     # create a movement surface, if params call for it
     # NOTE: THIS WILL TAKE A WHILE TO COMPUTER UP-FRONT!
     if params['movement_surf']:
@@ -412,3 +493,54 @@ def load_pickled_scape_stack(filename):
         land = cPickle.load(f)
 
     return land
+
+
+#functions for creating density-calculation grids
+
+def get_cell_strings(gi, gj, dim_om):
+    i_strs = [str(int(i)).zfill(dim_om) for i in gi.flatten()]
+    j_strs = [str(int(j)).zfill(dim_om) for j in gj.flatten()]
+    cells = [''.join(c) for c in list(zip(i_strs,j_strs))]
+    return(cells)
+
+
+def make_density_grids(land, ww):
+
+    hww = ww/2.
+    dims = land.dims
+    
+    dim_om = max([len(str(d)) for d in dims])
+
+    gj1, gi1 = np.meshgrid(np.arange(0,dims[0]+ww,ww), np.arange(0,dims[1]+ww,ww))
+    gj2, gi2 = np.meshgrid(np.arange(0+hww,dims[0]+hww,ww), np.arange(0+hww,dims[1]+hww,ww))
+   
+    land_poly_coords = ((0,0), (dims[0], 0), (dims[0], dims[1]), (0, dims[1]))
+    land_poly = g.Polygon(land_poly_coords)
+    
+    j1 = gj1.flatten()
+    i1 = gi1.flatten()
+    j2 = gj2.flatten()
+    i2 = gi2.flatten()
+
+    polys1 = [g.Polygon(((j1[n]-hww, i1[n]-hww), (j1[n]-hww, i1[n]+hww), (j1[n]+hww, i1[n]+hww), (j1[n]+hww, i1[n]-hww))) for n in range(len(j1))]
+    polys2 = [g.Polygon(((j2[n]-hww, i2[n]-hww), (j2[n]-hww, i2[n]+hww), (j2[n]+hww, i2[n]+hww), (j2[n]+hww, i2[n]-hww))) for n in range(len(j2))]
+
+    areas1 = np.reshape([p.intersection(land_poly).area for p in polys1], gj1.shape)
+    areas2 = np.reshape([p.intersection(land_poly).area for p in polys2], gj2.shape)
+
+    i_cells_1 = (i1 - ww/2.)//ww + 1
+    j_cells_1 = (j1 - ww/2.)//ww + 1
+    i_cells_2 = (i2)//ww 
+    j_cells_2 = (j2)//ww 
+
+    cells1 = get_cell_strings(i_cells_1, j_cells_1, dim_om)
+    cells2 = get_cell_strings(i_cells_2, j_cells_2, dim_om)
+
+    g1 = Density_Grid(dims, ww, gi1, gj1, cells1, areas1, corner_cells = True)
+    g2 = Density_Grid(dims, ww, gi2, gj2, cells2, areas2, corner_cells = False)
+
+    return(g1, g2)
+
+
+
+

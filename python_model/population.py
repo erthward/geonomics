@@ -143,7 +143,7 @@ class Population:
     # function for finding all the mating pairs in a population
     def find_mating_pairs(self, land, params):
 
-        mating_pairs = mating.find_mates(self, params)
+        mating_pairs = mating.find_mates(self, params, land)
         return (mating_pairs)
 
     # function for executing mating for a population
@@ -159,7 +159,7 @@ class Population:
         total_births = sum(num_births)
         self.n_births.append(total_births)
 
-        if burn == False:
+        if not burn:
             recombinants = gametogenesis.recombine(self.genomic_arch.r_lookup, 2 * total_births)
 
         for pair in mating_pairs:
@@ -212,11 +212,9 @@ class Population:
 
         print('\n\t%i individuals born' % (total_births))
 
-
     # method to carry out mutation
     def mutate(self, log=False):
         mutation.mutate(self)
-
 
     def check_extinct(self):
         if len(self.individs.keys()) == 0:
@@ -225,7 +223,6 @@ class Population:
             # sys.exit()
         else:
             return (0)
-
 
     def calc_density(self, land, normalize_by='none', min_0=True, max_1=False, max_val=None, set_N=False):
 
@@ -237,11 +234,11 @@ class Population:
         True will cause the output density raster to vary between 0 and 1, rather than between 0 and the current
         max normalized density value. 
         '''
-        
+
         x = list(self.get_x_coords().values())
         y = list(self.get_y_coords().values())
 
-        dens = land.density_grid_stack.calc_density(x,y)
+        dens = land.density_grid_stack.calc_density(x, y)
 
         if normalize_by != 'none':
 
@@ -268,7 +265,6 @@ class Population:
 
         else:
             return (landscape.Landscape(land.dims, dens))
-
 
     # NOTE: DEH 01-11-18: Reformatting the habitat-getting approach
     # 1.) determined a 10x-faster way of setting hab vals of individs
@@ -339,7 +335,8 @@ class Population:
                 h = self.genomic_arch.h[locus]
             else:
                 h = 0.5
-            return dict(zip(individs, self.heterozygote_effects[h](np.array([ind.genome[locus,] for i, ind in self.individs.items() if i in individs]))))
+            return dict(zip(individs, self.heterozygote_effects[h](
+                np.array([ind.genome[locus,] for i, ind in self.individs.items() if i in individs]))))
 
     # convenience method for calling selection.get_phenotype() on this pop
     def get_phenotype(self, trait, individs=None):
@@ -485,7 +482,8 @@ class Population:
 
         data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, z[i]) for i in self.individs.keys()}).values())
 
-        plt.scatter([i[0] for i in data], [i[1] for i in data], s=markersize, c=[i[2] for i in data], cmap=cmap, linewidth = 1, edgecolor = 'black',
+        plt.scatter([i[0] for i in data], [i[1] for i in data], s=markersize, c=[i[2] for i in data], cmap=cmap,
+                    linewidth=1, edgecolor='black',
                     alpha=alpha)
         plt.xlim(-0.6, land.dims[1] - 0.4)
         plt.ylim(-0.6, land.dims[0] - 0.4)
@@ -523,7 +521,8 @@ class Population:
         # use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
         markersize_differentials = {i: 3 * np.abs(fit_vals - w[i]).argmin() for i in self.individs.keys()}
 
-        data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], markersize_differentials[i]) for i in self.individs.keys()}).values())
+        data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], markersize_differentials[i]) for i in
+                        self.individs.keys()}).values())
 
         plt.scatter([i[0] for i in data], [i[1] for i in data], s=[min_markersize + i[3] for i in data],
                     c=[i[2] for i in data], cmap=cmap, alpha=alpha)
@@ -567,7 +566,8 @@ class Population:
 
         z = self.get_phenotype(trait)
 
-        data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], z[i], markersize_differentials[i]) for i in self.individs.keys()}).values())
+        data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], z[i], markersize_differentials[i]) for i in
+                        self.individs.keys()}).values())
 
         # separate colormap to color marker edges from black (fit = 1) to white (fit = 0) through red
         inside_marker_cmap = mpl.cm.get_cmap('RdYlGn')
@@ -585,9 +585,11 @@ class Population:
     # method for plotting a population pyramid
     # NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS
     def show_pyramid(self):
-        plt.hist([ind.age for ind in list(self.individs.values()) if ind.sex == 0], orientation='horizontal', color='pink',
+        plt.hist([ind.age for ind in list(self.individs.values()) if ind.sex == 0], orientation='horizontal',
+                 color='pink',
                  alpha=0.6)
-        plt.hist([ind.age for ind in list(self.individs.values()) if ind.sex == 1], orientation='horizontal', color='skyblue',
+        plt.hist([ind.age for ind in list(self.individs.values()) if ind.sex == 1], orientation='horizontal',
+                 color='skyblue',
                  alpha=0.6)
 
     def show_pop_growth(self, params):

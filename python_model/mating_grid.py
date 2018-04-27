@@ -1,4 +1,6 @@
 class MatingGrid:
+
+    # creates a mating grid with two offsets to find closest pairs
     def __init__(self, params):
         self.dims = params['dims']
         self.mating_radius = params['mating_radius']
@@ -14,9 +16,11 @@ class MatingGrid:
         self.offset3 = [[set() for _ in range(int(self.x) + 1)] for j in range(int(self.y) + 1)]
         self.offset4 = [[set() for _ in range(int(self.x) + 1)] for j in range(int(self.y) + 1)]
 
+    # adds an individual to the grid
     def add(self, ind):
         self.__add(ind.x, ind.y, ind)
 
+    #removes an individual from the grid
     def remove(self, ind):
         try:
             self.__remove(ind.x, ind.y, ind)
@@ -25,10 +29,12 @@ class MatingGrid:
 
         return None
 
+    #moves an individual to a new position
     def move(self, old_pos, new_pos, ind):
         self.__remove(old_pos[0], old_pos[1], ind)
         self.__add(new_pos[0], new_pos[1], ind)
 
+    #retrieves the individual from the grid
     def get(self, ind):
         """
         :param ind:

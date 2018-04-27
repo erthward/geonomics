@@ -418,7 +418,7 @@ def reassign_genomes(pop, params):
     #use mean n_births at tail end of burn-in to estimate number of mutations, and randomly choose set of neutral loci 
     #of that length to go into pop.genomic_arch.mutable slot
     n_muts = mutation.estimate_total_num_mutations(params, pop)
-    muts = r.choice(np.where(pop.genomic_arch.non_neutral == 1)[0], n_muts, replace = False)
+    muts = r.choice(np.where(pop.genomic_arch.non_neutral == 0)[0], n_muts, replace = False)
     pop.genomic_arch.mutables = list(muts)
 
     #set those loci's p values to 0 (i.e. non-segregating)

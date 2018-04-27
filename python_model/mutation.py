@@ -65,7 +65,7 @@ def mutate(pop, log = False):
         #randomly choose an individual
         ind = r.choice(list(newborns.keys()), 1)
         #randomly choose a locus from among the mutables
-        shuffle(pop.genomic_arch.mutables)
+        r.shuffle(pop.genomic_arch.mutables)
         loc = pop.genomic_arch.mutables.pop()
         #randomly choose a chromosome
         chrom = r.binomial(1,0.5)

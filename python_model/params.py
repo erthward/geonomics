@@ -35,16 +35,16 @@ params = {
 
 'pleiotropy' : True,           #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?) false
 
-'traits' : {'num': 2,           #number of traits to simulate
-            'scape_num': [0,0], #list of the landscape numbers to be used for selection on each trait 
+'traits' : {'num': 1,           #number of traits to simulate
+            'scape_num': [0], #list of the landscape numbers to be used for selection on each trait 
                                 #(i.e.  list length should equal value of 'num' on previous line, as should lengths of subsequent lists)
 
-            'phi' : [0.05, 0.05],   #phenotypic selection coefficient for trait; for each trait, can either be a numeric value, or can be an array of spatially-contingent s values of dimensions equal to land.dims
-            'n': [1,100], #number of loci assigned to trait
-            'alpha_dist_sigma': [0.5, 0.00025],  #NOTE: for sigma = 0.5, one average locus is enough to generate an both optimum genotypes; for 0.025, 10 loci should (on average, but depends of course on the random sample of alphas drawn!); and so on linearly
-            'fitness_fn_gamma': [1, 1], #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
+            'phi' : [0.05],   #phenotypic selection coefficient for trait; for each trait, can either be a numeric value, or can be an array of spatially-contingent s values of dimensions equal to land.dims
+            'n': [1], #number of loci assigned to trait
+            'alpha_dist_sigma': [0.5],  #NOTE: for sigma = 0.5, one average locus is enough to generate an both optimum genotypes; for 0.025, 10 loci should (on average, but depends of course on the random sample of alphas drawn!); and so on linearly
+            'fitness_fn_gamma': [1], #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
 
-            'univ_advant' : [False, False] #is the phenotype unviersally advantageous? if so, phenotypes closer to 1 will have higher fitness at all locations
+            'univ_advant' : [False] #is the phenotype unviersally advantageous? if so, phenotypes closer to 1 will have higher fitness at all locations
             },
 
 'N' : 1000,                        #total pop size

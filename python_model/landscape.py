@@ -231,46 +231,66 @@ class Landscape_Stack:
 
 
 class Density_Grid:
-    def __init__(self, dims, window_width, gi, gj, cells, areas, corner_cells):
+    def __init__(self, dims, window_width, gi, gj, cells, areas, x_edge, y_edge):
 
+        #same as land.dims
         self.dims = dims
+        #window width to be used for grid-cell windows within which population will be counted
         self.window_width = window_width
-        
+       
+        #order of magnitude of the largest dimension in self.dims (used for zero-padding the cell strings)
         self.dim_om = max([len(str(d)) for d in self.dims])
 
-        self.corner_cells = corner_cells  #True if this is the outer grid (i.e. contains cells centered
-                                          #on the landscape corners); else False for the inner grid (i.e.
-                                          #cells centered on points half-window-width in from landscape corners 
+        self.x_edge = x_edge
+        self.y_edge = y_edge
+            #True if this grid has cells centered on the edge (i.e. 0 and the dims val) for this dimension, else False
+       
 
+        #meshgrid arrays of the i and j points associated with each window
         self.gi = gi
         self.gj = gj
 
+        #create array of the i,j grid-cell centerpoints
         self.grid_coords = np.array(list(zip(self.gi.flatten(), self.gj.flatten())))
-        #self.grid_coords, self.grid_areas = get_grid_coords_and_areas(self.gi, self.gj, self.dims)
 
+        #create attriibutes of the grid cells and their areas
         self.cells = cells
         self.areas = areas
 
+        #save itemgetter as an attribute (returns the counted number of instances of each cell from the collections.Counter() dict)
         self.grid_counter = ig(*self.cells) 
 
 
     def calc_density(self, x, y):
+        #coerce x and y points of all individuals to arrays
         x = np.array(x)
         y = np.array(y)
-        x_cells = (x - self.corner_cells*self.window_width/2.)//self.window_width + self.corner_cells
-        y_cells = (y - self.corner_cells*self.window_width/2.)//self.window_width + self.corner_cells
+
+        #determine the x and y cells within which each individual's x and y coordinates fall
+        #(the self.x_edge and self.y_edge corrections determine the correct cells whether the grid includes cells
+        #centered on the landscape edges , i.e. self.x_edge or y_edge = True, or not)
+        x_cells = (x - self.x_edge*self.window_width/2.)//self.window_width + self.x_edge
+        y_cells = (y - self.y_edge*self.window_width/2.)//self.window_width + self.y_edge
+        
+        #get cell strings from indivudals' cells
         cells = get_cell_strings(y_cells, x_cells, self.dim_om)
+        #and get Counter dict of the cell strings
         counts = C(cells)
+
+        #use the itemgetter attribute to get the count for each cell
         grid_counts = self.grid_counter(counts)
+        #reshape them into an ndarray 
         grid_counts = np.reshape(grid_counts, self.gi.shape)
+        #and divide the array values by the appropriate grid-cell areas to get the densities
         grid_dens = grid_counts/self.areas
+
         return(grid_dens)
 
 
 
 class Density_Grid_Stack:
     def __init__(self, land, window_width = None):
-
+    
         self.dims = land.dims
 
         #NOTE: This is a quick hack to find the closest whole-number factor of the larger of the landscape
@@ -282,19 +302,29 @@ class Density_Grid_Stack:
             facts = [(i,abs(i-0.1*max(self.dims))) for i in range(1,max(self.dims)+1) if max(self.dims)%i == 0]
             closest_fact = min([f[1] for f in facts])
             window_width = [f[0] for f in facts if f[1] == closest_fact][0]
+
+        #set window width of the grid-cell windows within which to count the population
         self.window_width = window_width
 
+        #get the order of magnitude of the larger of the two land dimensions (used to zero-pad the cell-coordinate strings)
         self.dim_om = max([len(str(d)) for d in self.dims])
 
+        #get meshgrids of the i and j cell-center coordinates of the landscape-raster cells (to be interpolated to for density calculation)
         self.land_gi, self.land_gj = np.meshgrid(np.arange(0, self.dims[0])+0.5, np.arange(0, self.dims[1])+0.5)
 
+        #create inner and outer density grids from the land and window-width
         self.grids = dict([(n,g) for n,g in enumerate(make_density_grids(land, self.window_width))])
 
 
     def calc_density(self, x, y):
-        pts = np.vstack([grid.grid_coords for grid in self.grids.values()])
-        vals = np.hstack([grid.calc_density(x, y).flatten() for grid in self.grids.values()])
+        #get a concatenated list of the grid-cell center coordinates from both density grids
+        pts = np.vstack([self.grids[n].grid_coords for n in range(len(self.grids))])
+        #and a concatenated list of the densities calculated for both density grids
+        vals = np.hstack([self.grids[n].calc_density(x, y).flatten() for n in range(len(self.grids))])
+
+        #then interpolate from those points and values to the centerpoints of all of the land centerpoints
         dens = interpolate.griddata(pts, vals, (self.land_gj, self.land_gi), method = 'cubic')
+
         return(dens)
 
 
@@ -495,52 +525,103 @@ def load_pickled_scape_stack(filename):
     return land
 
 
-#functions for creating density-calculation grids
+####functions for creating density-calculation grids
 
+#create strings from input cell coordinates
 def get_cell_strings(gi, gj, dim_om):
+    #get strings for both i and j cooridnates, zfilling to the correct order-of-magnitude (of the larger landscape dimension)
     i_strs = [str(int(i)).zfill(dim_om) for i in gi.flatten()]
     j_strs = [str(int(j)).zfill(dim_om) for j in gj.flatten()]
+
+    #join those strings to one single string, unique for each cell
     cells = [''.join(c) for c in list(zip(i_strs,j_strs))]
+
     return(cells)
 
 
-def make_density_grids(land, ww):
 
-    hww = ww/2.
-    dims = land.dims
+
+#make a density grid, based on the Landscape_Stack, the chosen window-width, 
+#and the Boolean arguments dictating whether or not the grid's 
+#x- and y-dimension cells should be centered on the landscape 
+#edges (i.e. 0 and dims[_])
+def make_density_grid(land, ww, x_edge, y_edge):
     
+    #half-window width
+    hww = ww/2.
+
+    #get land dimensions
+    dims = land.dims
+   
+    #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
     dim_om = max([len(str(d)) for d in dims])
 
-    gj1, gi1 = np.meshgrid(np.arange(0,dims[0]+ww,ww), np.arange(0,dims[1]+ww,ww))
-    gj2, gi2 = np.meshgrid(np.arange(0+hww,dims[0]+hww,ww), np.arange(0+hww,dims[1]+hww,ww))
-   
+    #create a dictionary of cell ranges, one for when cells center on edge values 
+    #(i.e. 0 and dims[n] for either dimension), 
+    #the other for when they don't 
+    #(i.e. run from hww to dims[n] - hww)
+    edge_range_dict = {True:  np.arange(0, dims[0]+ww, ww), 
+                       False: np.arange(0+hww, dims[0]+hww, ww)}
+    
+    #create the meshgrid of the centerpoints of neighborhoods (or cells) within which population will be counted
+    #(x_edge and y_edge arguments determine whether this grid's 
+    #x and y cells are centered on the lanscape edges or not)
+    #NOTE: these are expressed as points in continuous space from 0 to each landscape dimension, NOT as cell
+    #numbers (which will be calculated below)
+    gj, gi = np.meshgrid(edge_range_dict[x_edge], edge_range_dict[y_edge])
+    
+    #and get flattened lists of the grid's i and j coordinates 
+    j = gj.flatten()
+    i = gi.flatten()
+
+
+    #create a single, large Polygon object of the landscape quadrilateral
     land_poly_coords = ((0,0), (dims[0], 0), (dims[0], dims[1]), (0, dims[1]))
     land_poly = g.Polygon(land_poly_coords)
+   
     
-    j1 = gj1.flatten()
-    i1 = gi1.flatten()
-    j2 = gj2.flatten()
-    i2 = gi2.flatten()
+    #create a list of quadrilaterals centered on each of the points in the grid
+    polys = [g.Polygon(((j[n]-hww, i[n]-hww), (j[n]-hww, i[n]+hww), (j[n]+hww, i[n]+hww), (j[n]+hww, i[n]-hww))) for n in range(len(j))]
 
-    polys1 = [g.Polygon(((j1[n]-hww, i1[n]-hww), (j1[n]-hww, i1[n]+hww), (j1[n]+hww, i1[n]+hww), (j1[n]+hww, i1[n]-hww))) for n in range(len(j1))]
-    polys2 = [g.Polygon(((j2[n]-hww, i2[n]-hww), (j2[n]-hww, i2[n]+hww), (j2[n]+hww, i2[n]+hww), (j2[n]+hww, i2[n]-hww))) for n in range(len(j2))]
+    #use the Polygons' intersection method to calculate the total area within the landscape that is covered
+    #by each grid cell (which will be used as the denominator for calculating neighborhood population densities
+    #from neighborhood population counts)
+    areas = np.reshape([p.intersection(land_poly).area for p in polys], gj.shape)
 
-    areas1 = np.reshape([p.intersection(land_poly).area for p in polys1], gj1.shape)
-    areas2 = np.reshape([p.intersection(land_poly).area for p in polys2], gj2.shape)
-
-    i_cells_1 = (i1 - ww/2.)//ww + 1
-    j_cells_1 = (j1 - ww/2.)//ww + 1
-    i_cells_2 = (i2)//ww 
-    j_cells_2 = (j2)//ww 
-
-    cells1 = get_cell_strings(i_cells_1, j_cells_1, dim_om)
-    cells2 = get_cell_strings(i_cells_2, j_cells_2, dim_om)
-
-    g1 = Density_Grid(dims, ww, gi1, gj1, cells1, areas1, corner_cells = True)
-    g2 = Density_Grid(dims, ww, gi2, gj2, cells2, areas2, corner_cells = False)
-
-    return(g1, g2)
+    #get lists of the integer-identifiers (i,j in the proper matrix sense) of the cells in each of the grids
+    #(so that these can be matched up with individuals' cell numbers when calculating population density while
+    #the model is running)
+    #(e.g. a cell centered at point y = 0, x = 5 would be cell i = 0,j = 6 if the window-width is 1, 
+    #or cell i =0,j = 1 if the window width is 5)
+    i_cells = (i - (hww * (y_edge))) // ww + (y_edge)
+    j_cells = (j - (hww * (x_edge))) // ww + (x_edge)
 
 
+    #turn the cell-number integers into cell strings
+    #(NOTE: the previous algorithm used to calculate population density was more or less the same, but found
+    #individuals' cells by checking numerically whether they were within each window, but was much slower and
+    #scaled poorly with decreasing window width, increasing landscape size, and increasing population size.
+    #This approach instead uses the floor-divide // on individuals' x and y coordinates to generate
+    #cell-number integers for them, converts those to strings, then counts the number of instances of each
+    #string for the population and uses those values as the counts of individuals within each density-grid
+    #cell, obviating the need to loop across grid dimensions. This performs better and scales much better.
+    cells = get_cell_strings(i_cells, j_cells, dim_om)
+
+    #use the above-created data structures to create two Density_Grid objects (which will inhere to the
+    #Landscape_Stack as attributes)
+    grid = Density_Grid(dims, ww, gi, gj, cells, areas, x_edge= x_edge, y_edge = y_edge)
+
+    return(grid)
+
+#create 4 density grids, one for each offset (i.e. each combination of offset by 0 and by 0.5*window_width)
+def make_density_grids(land, ww):
+
+    #make a grid for each combo of Booleans for x_edge and y_edge
+    g1 = make_density_grid(land, ww, x_edge = True, y_edge = True)
+    g2 = make_density_grid(land, ww, x_edge = False, y_edge = False)
+    g3 = make_density_grid(land, ww, x_edge = True, y_edge = False)
+    g4 = make_density_grid(land, ww, x_edge = False, y_edge = True)
+
+    return(g1, g2, g3, g4)
 
 

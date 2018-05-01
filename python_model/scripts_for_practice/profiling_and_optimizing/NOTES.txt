@@ -1,0 +1,34 @@
+#DEH: 05-01-18
+
+Previously, I have been keeping notes in a combination of git commit messages, in-line or at top of
+SCRATCH scripts, and also in my notebooks. But now I am really starting to make quicker progress profiling and
+optimizing code (using mainly a combination of %timeit and %lprun, rather than that weird profiler
+network-graph maker package that I used a while ago, which was not very useful in the end; see other files in
+this directory from when I used that package). So it makese sense
+to start keeping my notes in one file here.
+
+As for the latest work:
+
+Replacing demography.calc_pop_density used in getting N_b raster with land.density_grid_stack.calc_density has
+cut the runtime of demography.pop_dynamics basically in half (e.g. a pop of N~1000 ran 2.3 s old way vs 1.2 s
+new way), reducing split of run-time percentages of movement and pop_dynamics in a main() function from
+25%/75% to ~50%/50%, and reducing % of runtime of demography.pop_dynamics() used by n_pairs = ... from ~62.2%
+to ~ 1.9%. Now, however, the N_b, N_d, and thus d rasters all have a much wider spread of high values around
+population clusters where mating pairs occur (because this is dictated by the window_width of
+land.density_grid_stack, whereas before the window_width was being set to match dispersal kernel radius, which
+made for extreme lags); you can see this by running the old and new versions of demography.pop_dynamics in
+debug mode and comparing the output arrays of rasters. I should now figure out how to attend to this, either
+a.) by creating a second density_grid at the beginning of the model, which would also inhere to the
+Landscape_Stack and with window_widths based on mu_dispersal, or b.) by coming up with some simpler way of
+interpolating the surface??
+
+Also, now 13.0% of runtime of demography.pop_dynamics is spent on pairs = pop.find_mating_pairs(...), which
+hopefully will be reduced if Jiazheng and Irene's mating_grid approach works out, but which should also
+separately be checked for potential speed gains; 10.5% is spent on the dNdt[K<1] = ... line (which can likely
+be sped up easily with a bit of introspection), since a lot of this code was hacked together last spring just
+to make the model work for my popgen class project; 50.5% of runtime is spent on pop.mate(), which I suspect
+is largely consumed by recombination but which needs to be properly introspected and
+optimized; 12.1% is spent on the d_ind = selection.get_prob_death(...) line, which I suspect could also be
+optimized fairly easily; and 3.6% is spent on num_deaths = ..., which is a small fraction of time but which
+could also likely be sped up a bit at minimal labor cost. 4.9% also spent on pop.calc_density, but I've
+already put a ton of time into optimizing this, so probably no easily won gains there for the moment...

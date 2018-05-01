@@ -22,101 +22,6 @@ import selection
     # - also probably get rid of any optional arguments fed into if statements that I wound up not using?
 
 
-
-
-
-def calc_pop_density(land, coords, window_width = None, normalize_by = 'none', min_0 = True, max_1 = False, max_val = None):
-
-    '''
-    Calculate an interpolated raster of local population density, using a window size of window_width.
-    Valid values for normalize_by currently include 'census' and 'none'. If normalize_by = 'census', max_1 =
-    True will cause the output density raster to vary between 0 and 1, rather than between 0 and the current
-    max normalized density value. Window width will default to 1/10 of the larger raster dimension.
-    '''
-
-    #window width default to 1/10 the maximum landscape dimension
-    if window_width == None:
-        window_width = max(land.dims)*0.1
-
-    #shorthand
-    dims = land.dims
-
-    #get a list of pop's coord-tuples
-    c = list(coords)
-
-    #make window_width a float, to avoid Py2 integer-division issues
-    window_width = float(window_width)
-    
-    #create meshgrid using window_width/2 as step size
-    grid_j, grid_i = np.mgrid[0:dims[0]:complex("%ij" % (dims[0]/(window_width/2))), 0:dims[1]:complex("%ij" % (dims[1]/(window_width/2)))]
-
-    #flatten the arrays, so that I can run over them in a single for loop
-    gj = grid_j.ravel()
-    gi = grid_i.ravel()
-
-    #make lists of tuples, of same length as gj, containing the window ll and ur coords
-    window_ll = [(max(gj[n]-window_width/2, 0), max(gi[n]-window_width/2, 0)) for n in range(len(gj))]   #constrain min window vals to 0
-    window_ur = [(min(gj[n]+window_width/2, land.dims[0]), min(gi[n]+window_width/2, land.dims[1])) for n in range(len(gj))] #constrain max window vals to each respective land dimension
-    assert len(window_ll) == len(gj)
-    assert len(window_ur) == len(gj)
-
-    #make a list of the sizes of each window
-    window_size = [(window_ur[n][0] - window_ll[n][0]) * (window_ur[n][1] - window_ll[n][1]) for n in range(len(gj))]#calculate size of this window (not always the same because of edge effects
-    assert len(window_size) == len(gj)
-    
-    #make a list of the counts of all individs within each window
-    window_ct = [len([ind for ind in range(len(c)) if (c[ind][0]>window_ll[n][0] and c[ind][0]<=window_ur[n][0]) and (c[ind][1]>window_ll[n][1] and c[ind][1]<=window_ur[n][1])]) for n in range(len(gj))] 
-    assert len(window_ct) == len(gj)
-
-    #divide window counts by window sizes
-    window_dens = [window_ct[n]/window_size[n] for n in range(len(window_ct))] #divide by window size
-    assert len(window_dens) == len(gj)
-
-    #if normalize_by == census, then divide each density by total pop census size
-    if normalize_by == 'census':
-        N = pop.census()
-        window_dens = [dens/N for dens in window_dens]
-    elif normalize_by == 'none':
-        pass
-
-    else:  #POTENTIALLY ADD OTHER OPTIONS HERE, i.e. to normalize by starting size?
-        pass 
-
-    #interpolate resulting density vals to a grid equal in size to the landscape
-    new_gj, new_gi = np.mgrid[0:dims[0]-1:complex("%ij" % (dims[0])), 0:dims[1]-1:complex("%ij" % (dims[1]))]
-    dens = interpolate.griddata(np.array(list(zip(list(gi), list(gj)))), window_dens, (new_gj, new_gi), method = 'cubic')
-
-
-
-    if normalize_by != 'none':
-
-        #if max_1 == True, set max_val to dens.max(), such that the density raster output will be normalized to
-        #its own max, and thus vary between 0 and 1; else set to 1, and the output raster will vary between 0 and the current max value
-        if max_1 == True:
-            max_val = dens.max()
-        elif max_1 == False:
-            max_val = 1
-
-        #Use max_val to normalize the density raster to either 0 to its current max val or
-        #0 to 1, to make sure the interpolation didn't generate any values slightly outside this range
-        norm_factor = max_val - dens.min()
-        dens = (dens - dens.min())/norm_factor
-
-    else:
-        pass
-
-    if min_0 == True:
-        dens[dens<0] = 0
-
-    if max_val != None:
-        dens[dens>max_val] = max_val
-    
-    return(landscape.Landscape(dims, dens))
-
-
-
-
-
 def logistic_eqxn(R, N, K):
     dNdt = R*(1-(N/K))*N 
     return(dNdt)
@@ -188,9 +93,17 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
     p_x = [float(np.mean((pop.individs[pairs[i,0]].x, pop.individs[pairs[i,1]].x))) for i in range(pairs.shape[0])]
     p_y = [float(np.mean((pop.individs[pairs[i,0]].y, pop.individs[pairs[i,1]].y))) for i in range(pairs.shape[0])]
-    n_pairs = calc_pop_density(land, list(zip(p_x, p_y)), max(1, params['mu_dispersal']), min_0 = True).raster
+
+    #use the Landscape_Stack.density_grid_stack to calculate a raster of the expected number of pairs
+    #NOTE: because the window_width of that object is much wider than mu_dispersal in the parameterizations
+    #I've typically been running, this produces much wider areas of high values in the 
+    #N_b, N_d, and hence d rasters than the old method did (which had its window_width set to mu_dispersal,
+    #leading of course to huge lags in the old calc_density algorithm)
+    #need to think about whether I need to attend to this, and if so, how
+    n_pairs = np.clip(land.density_grid_stack.calc_density(p_x, p_y), a_min = 0, a_max = None)
+
     n_pairs[np.isnan(n_pairs)] = 0
-    assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())  #NOTE: Has occasionally produced an assertion error here, though I'm not sure why yet...
+    assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())  
 
     #NOTE: I anticipate that using mu_dispersal as the density-calculating window should produce a slightly more realistic expectation
     #of the number of births per cell in a few steps; using max(1, mu_dispersal) to avoid

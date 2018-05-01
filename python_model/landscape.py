@@ -32,7 +32,6 @@ from collections import Counter as C
 from operator import itemgetter as ig
 from scipy import interpolate
 from shapely import geometry as g
-from math import abs
 
 import mating_grid
 

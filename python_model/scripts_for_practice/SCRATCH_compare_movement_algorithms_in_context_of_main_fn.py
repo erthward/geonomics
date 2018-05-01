@@ -1,4 +1,4 @@
-def old_main(T, reassign_genomes=False):
+def old_main(T, reassign_genomes=False, debug = None):
     if reassign_genomes == True:
         print('\n\nReassigning genomes...\n\n')
         genome.reassign_genomes(pop, params)
@@ -7,7 +7,7 @@ def old_main(T, reassign_genomes=False):
         pop.increment_age_stage(burn=False)
         pop.set_Nt()
         pop.move(land, params)
-        extinct = demography.pop_dynamics(land, pop, params, with_selection=True)
+        extinct = demography.pop_dynamics(land, pop, params, with_selection=True, debug = debug)
         if extinct == 1:
             break
         pop.mutate(log=False)

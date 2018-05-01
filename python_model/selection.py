@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import numpy as np
-from math import abs
 
 
 

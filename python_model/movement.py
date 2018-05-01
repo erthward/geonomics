@@ -44,7 +44,6 @@ s_vonmises.b = np.inf
 # FUNCTIONS ---------------------------
 # --------------------------------------
 
-
 def move(individual, land, params):
     old_pos = (individual.x, individual.y)
 
@@ -57,7 +56,7 @@ def move(individual, land, params):
         # OLD NOTE: this should be a function that allows individuals' movements to be determined by some calculation on a resistance surface raster yet to figure this out; was thinking perhaps of surrounding the surface with a ring of cells with value 0, then calculating a Von Mises mixture distribution (a mixture of all 8 queen's neighbourhood cells) for each cell, then using that in each cell to choose the direction of an individual's movement...
 
         # NOTE: DEH 01-05-18: For some reason, this line produced a numeric on the office computer, but a numpy array on my laptop. So wrapping it in np.atleast_1d() before indexing [0] should make it work on both machines. To really 'fix' it, might need to upgrade the package on one of the two machines though...
-        direction = np.atleast_1d(land.movement_surf[int(individual.y)][int(individual.x)]())[0]
+        direction = land.movement_surf[int(individual.y)][int(individual.x)]()
         # NOTE: Pretty sure that I don't need to constrain values output for the Gaussian KDE that is approximating the von Mises mixture distribution to 0<=val<=2*pi, because e.g. cos(2*pi + 1) = cos(1), etc...
         # NOTE: indexed out of movement_surf as y then x because becuase the list of lists (like a numpy array structure) is indexed i then j, i.e. vertical, then horizontal
 
@@ -148,7 +147,8 @@ def create_movement_surface(land, params, kappa=12):
 
 # function for plotting average unit vectors across the movement surface, for visualization (and for debugging the movement surface functions)
 def plot_movement_surf_vectors(land, params, circle=False):
-    from numpy import pi, mean, sqrt, cos, sin, arctan
+    from numpy import pi, mean, cos, sin, arctan
+    from math import sqrt
 
     # plot movement surface raster
     land.show(scape_num=params['n_movement_surf_scape'])

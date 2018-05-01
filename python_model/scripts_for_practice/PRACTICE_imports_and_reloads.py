@@ -25,17 +25,17 @@ import matplotlib as mpl
 import os
 
 
-reload(landscape)
-reload(movement)
-reload(genome)
-reload(individual)
-reload(population)
-reload(demography)
-reload(mating)
-reload(gametogenesis)
-reload(selection)
-reload(mutation)
-reload(burn_in)
-reload(pe)
-reload(stats)
-
+#reload(landscape)
+#reload(movement)
+#reload(genome)
+#reload(individual)
+#reload(population)
+#reload(demography)
+#reload(mating)
+#reload(gametogenesis)
+#reload(selection)
+#reload(mutation)
+#reload(burn_in)
+#reload(pe)
+#reload(stats)
+#

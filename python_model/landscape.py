@@ -32,6 +32,7 @@ from collections import Counter as C
 from operator import itemgetter as ig
 from scipy import interpolate
 from shapely import geometry as g
+from math import abs
 
 import mating_grid
 
@@ -101,6 +102,7 @@ class Landscape_Stack:
         self.n_scapes = len(raster_list)
         assert len(set([land.dims for land in list(self.scapes.values())])) == 1, 'Dimensions of all landscapes must be even.'
         self.dims = list(self.scapes.values())[0].dims
+        self.dim_om = max([len(str(d)) for d in self.dims]) #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
         self.movement_surf = None
         self.n_movement_surf_surf = None
         self.density_grid_stack = None
@@ -231,19 +233,20 @@ class Landscape_Stack:
 
 
 class Density_Grid:
-    def __init__(self, dims, window_width, gi, gj, cells, areas, x_edge, y_edge):
+    def __init__(self, dims, dim_om, window_width, gi, gj, cells, areas, x_edge, y_edge):
 
         #same as land.dims
         self.dims = dims
-        #window width to be used for grid-cell windows within which population will be counted
+
+        #order of magnitude of the largest dimension in self.dims (used for zero-padding the cell strings)
+        self.dim_om = dim_om
+
+       #window width to be used for grid-cell windows within which population will be counted
         self.window_width = window_width
        
-        #order of magnitude of the largest dimension in self.dims (used for zero-padding the cell strings)
-        self.dim_om = max([len(str(d)) for d in self.dims])
-
+        #self.x_edge/y_edge are True if this grid has cells centered on the edge (i.e. 0 and the dims val) for this dimension, else False
         self.x_edge = x_edge
         self.y_edge = y_edge
-            #True if this grid has cells centered on the edge (i.e. 0 and the dims val) for this dimension, else False
        
 
         #meshgrid arrays of the i and j points associated with each window
@@ -307,7 +310,7 @@ class Density_Grid_Stack:
         self.window_width = window_width
 
         #get the order of magnitude of the larger of the two land dimensions (used to zero-pad the cell-coordinate strings)
-        self.dim_om = max([len(str(d)) for d in self.dims])
+        self.dim_om = land.dim_om
 
         #get meshgrids of the i and j cell-center coordinates of the landscape-raster cells (to be interpolated to for density calculation)
         self.land_gi, self.land_gj = np.meshgrid(np.arange(0, self.dims[0])+0.5, np.arange(0, self.dims[1])+0.5)
@@ -364,7 +367,7 @@ def random_surface(dims, n_rand_pts, interp_method="cubic", island_val=0, num_ha
     if interp_method == 'nearest':  # i.e., if being used to generate random habitat patches...
         I = I.round().astype(float)
     if interp_method == 'cubic':  # transform to constrain all values to 0 <= val <= 1
-        I = I + np.abs(I.min()) + (
+        I = I + abs(I.min()) + (
                 0.01 * r.rand())  # NOTE: adding a small jitter to keep values from reaching == 0 or == 1, as would likely be the case with linear interpolation
         I = I / (I.max() + (0.01 * r.rand()))
     if dims[0] != dims[1]:
@@ -393,7 +396,7 @@ def defined_surface(dims, pts, vals, interp_method="cubic",
     if interp_method == 'nearest':  # i.e., if being used to generate random habitat patches...
         I = I.round().astype(float)
     if interp_method == 'cubic':  # transform to constrain all values to 0 <= val <= 1
-        I = I + np.abs(I.min()) + (
+        I = I + abs(I.min()) + (
                 0.01 * r.rand())  # NOTE: adding a small jitter to keep values from reaching == 0 or == 1,
         # as would likely be the case with linear interpolation
         I = I / (I.max() + (0.01 * r.rand()))
@@ -552,10 +555,8 @@ def make_density_grid(land, ww, x_edge, y_edge):
 
     #get land dimensions
     dims = land.dims
+    dim_om = land.dim_om
    
-    #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
-    dim_om = max([len(str(d)) for d in dims])
-
     #create a dictionary of cell ranges, one for when cells center on edge values 
     #(i.e. 0 and dims[n] for either dimension), 
     #the other for when they don't 
@@ -609,7 +610,7 @@ def make_density_grid(land, ww, x_edge, y_edge):
 
     #use the above-created data structures to create two Density_Grid objects (which will inhere to the
     #Landscape_Stack as attributes)
-    grid = Density_Grid(dims, ww, gi, gj, cells, areas, x_edge= x_edge, y_edge = y_edge)
+    grid = Density_Grid(dims, dim_om, ww, gi, gj, cells, areas, x_edge= x_edge, y_edge = y_edge)
 
     return(grid)
 

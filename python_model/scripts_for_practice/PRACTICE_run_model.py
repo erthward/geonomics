@@ -1,6 +1,7 @@
-execfile('./params.py')
-execfile('./scripts_for_practice/PRACTICE_imports_and_reloads.py')
-execfile('./scripts_for_practice/PRACTICE_create_land_genomic_arch_pop.py')
+
+exec(open('./params.py', 'r').read())
+exec(open('./scripts_for_practice/PRACTICE_imports_and_reloads.py', 'r').read())
+exec(open('./scripts_for_practice/PRACTICE_create_land_genomic_arch_pop.py', 'r').read())
 
 pop.set_K(land.scapes[params['n_movement_surf_scape']])
 
@@ -46,3 +47,5 @@ def main(T, reassign_genomes=False):
         if extinct == 1:
             break
         pop.mutate(log=False)
+
+

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import numpy as np
+from math import abs
 
 
 
@@ -38,7 +39,7 @@ def get_phenotype(pop, trait):
 
 #TODO: DEH 01-11-18: Added ability to use spatially varying phenotypic selection coefficient, but curious if 
 #it would be faster to add a conditional check of whether or not a given trait's phi is a single value, and to
-#only calculate as phi[i]*(np.abs(hab[i][scape_num]... if it isn't??
+#only calculate as phi[i]*(abs(hab[i][scape_num]... if it isn't??
 def get_fitness(pop):
     fit_dict = dict(zip(list(pop.individs.keys()),[1]*pop.census()))
     hab = pop.get_habitat()
@@ -48,7 +49,7 @@ def get_fitness(pop):
         scape_num = trt.scape_num
         z = get_phenotype(pop, t)
         univ_advant = trt.univ_advant
-        w = {i:1 - phi[i]*(np.abs((hab[i][scape_num]**(not univ_advant)) - z_val)**gamma) for i,z_val in z.items()}
+        w = {i:1 - phi[i]*(abs((hab[i][scape_num]**(not univ_advant)) - z_val)**gamma) for i,z_val in z.items()}
         fit_dict = {i : w_val *fit_dict[i] for i, w_val in w.items()}
     return(fit_dict)
 
@@ -64,7 +65,7 @@ def get_single_trait_fitness(pop, trait):
     scape_num = trt.scape_num
     z = get_phenotype(pop, trait)
     univ_advant = trt.univ_advant
-    w = {i:1 - phi[i]*(np.abs((hab[i]**(not univ_advant)) - z_val)**gamma) for i,z_val in z.items()}
+    w = {i:1 - phi[i]*(abs((hab[i]**(not univ_advant)) - z_val)**gamma) for i,z_val in z.items()}
     return(w)
 
 

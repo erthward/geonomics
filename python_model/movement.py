@@ -23,16 +23,21 @@ Documentation:              URL
 '''
 
 import numpy as np
-from numpy import sin, cos
-from numpy import pi
 import numpy.random as r
+from numpy import sin, cos, pi
 from numpy.random import vonmises as r_vonmises
 from numpy.random import lognormal, choice, gamma, wald
 import matplotlib.pyplot as plt
 from scipy.stats import vonmises as s_vonmises
+import copy
+from operator import itemgetter
+from numba import jit
 
 s_vonmises.a = -np.inf
 s_vonmises.b = np.inf
+
+
+
 
 
 # ----------------------------------
@@ -44,8 +49,18 @@ s_vonmises.b = np.inf
 # FUNCTIONS ---------------------------
 # --------------------------------------
 
-def move(individual, land, params):
-    old_pos = (individual.x, individual.y)
+def move(pop, land, params):
+    
+    #get individuals' ids
+    ids = pop.individs.keys()
+    #plug them into an itemgetter
+    ind_ig = itemgetter(*ids)
+    #then use the itemgetter to get individuals' coordinates
+    old_x = np.array(ind_ig(pop.get_x_coords()))
+    old_y = np.array(ind_ig(pop.get_y_coords()))
+    #and their cells (by rounding down to the int)
+    old_x_cells = np.int16(old_x)
+    old_y_cells = np.int16(old_y)
 
     # choose direction using movement surface, if applicable
     if params['movement_surf'] == True:
@@ -53,10 +68,12 @@ def move(individual, land, params):
         mu_distance = params['mu_distance']
         sigma_distance = params['sigma_distance']
 
-        # OLD NOTE: this should be a function that allows individuals' movements to be determined by some calculation on a resistance surface raster yet to figure this out; was thinking perhaps of surrounding the surface with a ring of cells with value 0, then calculating a Von Mises mixture distribution (a mixture of all 8 queen's neighbourhood cells) for each cell, then using that in each cell to choose the direction of an individual's movement...
+        #create a vector of random choices from the approximation vectors for the VonMises mixture dist. for each individual's movement_surface cell
+        choices = r.randint(low = 0, high = land.movement_surf_approx_len, size = len(old_x_cells))
+        #and use those choices to draw movement directions
+        direction = land.movement_surf[old_y_cells, old_x_cells, choices]
 
-        # NOTE: DEH 01-05-18: For some reason, this line produced a numeric on the office computer, but a numpy array on my laptop. So wrapping it in np.atleast_1d() before indexing [0] should make it work on both machines. To really 'fix' it, might need to upgrade the package on one of the two machines though...
-        direction = land.movement_surf[int(individual.y)][int(individual.x)]()
+
         # NOTE: Pretty sure that I don't need to constrain values output for the Gaussian KDE that is approximating the von Mises mixture distribution to 0<=val<=2*pi, because e.g. cos(2*pi + 1) = cos(1), etc...
         # NOTE: indexed out of movement_surf as y then x because becuase the list of lists (like a numpy array structure) is indexed i then j, i.e. vertical, then horizontal
 
@@ -70,18 +87,31 @@ def move(individual, land, params):
         mu_distance = params['mu_distance']
         sigma_distance = params['sigma_distance']
 
-        direction = r_vonmises(mu_direction, kappa_direction)
+        direction = r_vonmises(mu_direction, kappa_direction, size = len(old_x))
 
     # choose distance
     # NOTE: Instead of lognormal, could use something with long right tail for Levy-flight type movement, same as below
-    distance = wald(mu_distance, sigma_distance)
+    distance = wald(mu_distance, sigma_distance, size = len(old_x))
     # distance = lognormal(mu_distance, sigma_distance)
     # distance = gamma(mu_distance, sigma_distance)
-    new_pos = (min(max(individual.x + cos(direction) * distance, 0), land.dims[0] - 0.001),
-              min(max(individual.y + sin(direction) * distance, 0), land.dims[1] - 0.001))
+    #new_pos = (min(max(individual.x + cos(direction) * distance, 0), land.dims[0] - 0.001),
+              #min(max(individual.y + sin(direction) * distance, 0), land.dims[1] - 0.001))
 
-    individual.set_pos(new_pos[0], new_pos[1])
+    #create the new locations by adding x- and y-dim line segments to their current positions, using trig
+    new_x = old_x + cos(direction)*distance
+    #and clip the values to be within the landscape dimensions
+        #NOTE: subtract a very small value to avoid having the dimension itself set as a coordinate, which rounds down to a cell id one beyond the largest cell id the landscape
+    new_x = np.clip(new_x, a_min = 0, a_max = land.dims[1]-0.00001) 
+    new_y = old_y + sin(direction)*distance
+    new_y = np.clip(new_y, a_min = 0, a_max = land.dims[0]-0.00001)
+
+    #then feed the new locations into each individual's set_pos method
+    [ind.set_pos(new_x[n], new_y[n]) for n, ind in enumerate(ind_ig(pop.individs))]
     #land.mating_grid.move(old_pos, new_pos, individual)
+
+
+
+
 
 
 # Function to generate a simulative Von Mises mixture distribution sampler function
@@ -90,7 +120,7 @@ def move(individual, land, params):
 # 1.) Chooses a direction by neighborhood-weighted probability
 # 2.) Makes a random draw from a Von Mises dist centered on the direction, with a kappa value set such that the net effect, when doing this a ton of times for a given neighborhood and then plotting the resulting histogram, gives the visually/heuristically satisfying approximation of a Von Mises mixture distribution
 
-def gen_von_mises_mix_sampler(neigh, dirs, kappa=12):
+def create_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
     # NOTE: Just visually, heuristically, kappa = 10 seemed like a perfect middle value (kappa ~3 gives too
     # wide of a Von Mises variance and just chooses values around the entire circle regardless of neighborhood
     # probability, whereas kappa ~20 produces noticeable reductions in probability of moving to directions
@@ -108,20 +138,16 @@ def gen_von_mises_mix_sampler(neigh, dirs, kappa=12):
     s_vonmises.a = -np.inf
     s_vonmises.b = np.inf
     f = lambda: s_vonmises.rvs(kappa, loc=r.choice(d, 1, p=n), scale=1)
-    return (f)
-
-    # weighted_pdfs = np.array([s_vonmises.pdf(support[i,:], kappa, scale = 1, loc = d[i])*(n[i]/float(sum(n))).ravel() for i in range(len(d))])
-    # weighted_pdfs = np.array([s_vonmises.pdf(support, kappa, scale = 1, loc = d[i])*(n[i]/float(sum(n))).ravel() for i in range(len(d))])
-
-    # mix_pdf = weighted_pdfs.sum(axis = 0)
-
-    # return(mix_pdf)
+    approx = np.array([f() for _ in range(approx_len)]).ravel()
+    #return (f)
+    return(approx)
 
 
-# Runs the Von Mises mixture sampler function (gen_von_mises_mix_sampler) across the entire landscape and returns an array-like (list of
+
+# Runs the Von Mises mixture sampler function (create_von_mises_mix_sampler) across the entire landscape and returns an array-like (list of
 # lists) of the resulting lambda-function samplers
 
-def create_movement_surface(land, params, kappa=12):
+def create_movement_surface(land, params, kappa=12, approx_len = 5000):
     # queen_dirs = np.array([[5*pi/4, 3*pi/2, 7*pi/4],[pi, np.NaN, 0],[3*pi/4,pi/2,pi/4]])
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0], [3 * pi / 4, pi / 2, pi / 4]])
 
@@ -135,12 +161,15 @@ def create_movement_surface(land, params, kappa=12):
     embedded_rast[1:embedded_rast.shape[0] - 1, 1:embedded_rast.shape[1] - 1] = rast
 
     # create list of lists (aping an array) for storage of resulting functions
-    movement_surf = [[None for j in range(land.dims[1])] for i in range(land.dims[0])]
+    #movement_surf = [[None for j in range(land.dims[1])] for i in range(land.dims[0])]
+    #NOTE: nevermind that, create an actual array and store vectors approximating the functions!
+    movement_surf = np.float16(np.zeros((rast.shape[0], rast.shape[1], approx_len)))
 
     for i in range(rast.shape[0]):
         for j in range(rast.shape[1]):
             neigh = embedded_rast[i:i + 3, j:j + 3].copy()
-            movement_surf[i][j] = gen_von_mises_mix_sampler(neigh, queen_dirs, kappa=kappa)
+            #movement_surf[i][j] = create_von_mises_mix_sampler(neigh, queen_dirs, kappa=kappa)
+            movement_surf[i, j, :] = create_von_mises_mix_sampler(neigh, queen_dirs, kappa = kappa, approx_len= approx_len)
 
     return (movement_surf)
 
@@ -191,3 +220,27 @@ def plot_movement_surf_vectors(land, params, circle=False):
 
     # call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
     [[plot_one_cell(i, j) for i in range(len(land.movement_surf))] for j in range(len(land.movement_surf[0]))]
+
+
+
+
+
+
+def plot_scaling_random_choice_with_array_size():
+    sizes = [1e2, 1e3, 1e4, 1e5, 1e6]
+    mean_times = []
+    for size in sizes:
+        arr = r.random(size = int(size))
+        times = []
+        for i in range(10):
+            start = time.time()
+            r.choice(arr)
+            stop = time.time()
+            diff = stop-start
+            times.append(diff)
+        mean_times.append(mean(times))
+    plt.plot(sizes, mean_times)
+
+
+
+

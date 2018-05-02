@@ -25,6 +25,7 @@ Documentation:             URL
 
 import genome
 import individual
+import movement
 import mating
 import gametogenesis
 import dispersal
@@ -40,6 +41,7 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 from scipy.spatial import cKDTree
 from collections import Counter as C
+from operator import itemgetter
 
 import sys
 
@@ -134,11 +136,11 @@ class Population:
         if burn == False:  # as long as this is not during burn-in, pop.t will increment
             self.t += 1
 
-    # method to move all individuals simultaneously
+    # method to move all individuals simultaneously, and sample their new habitats
     def move(self, land, params):
-        [ind.move(land, params) for ind in list(self.individs.values())];
-
+        movement.move(self, land, params)
         self.set_habitat(land)
+
 
     # function for finding all the mating pairs in a population
     def find_mating_pairs(self, land, params):
@@ -191,22 +193,26 @@ class Population:
 
                 if burn == False:
                     if sex == True:
-                        self.individs[offspring_key] = individual.Individual(new_genomes[n], offspring_x, offspring_y,
+                        self.individs[offspring_key] = individual.Individual(offspring_key, new_genomes[n], offspring_x, offspring_y,
                                                                              offspring_sex, age)
                     else:
-                        self.individs[offspring_key] = individual.Individual(new_genomes[n], offspring_x, offspring_y,
-                                                                             age)
+                        self.individs[offspring_key] = individual.Individual(offspring_key, new_genomes[n], offspring_x, offspring_y, age)
+               
+                    #set new individual's phenotype (won't be set during burn-in, becuase no genomes assigned)
+                    self.individs[offspring_key].set_phenotype(self.genomic_arch)
+
 
                 elif burn == True:
                     if sex == True:
-                        self.individs[offspring_key] = individual.Individual(np.array([0]), offspring_x, offspring_y,
+                        self.individs[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y,
                                                                              offspring_sex, age)
                     else:
-                        self.individs[offspring_key] = individual.Individual(np.array([0]), offspring_x, offspring_y,
+                        self.individs[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y,
                                                                              age)
                 # self.individs[offspring_key] = ind
                 land.mating_grid.add(self.individs[offspring_key])
 
+                
         # sample all individuals' habitat values, to initiate for offspring
         self.set_habitat(land)
 
@@ -272,31 +278,33 @@ class Population:
     # 2.) creating separate set functions for whole pop (usually called this way, so avoids conditional
     # tests) and for scape_num and/or individ-specific calls (and ditto for the get functions)
 
-    # method for setting all individs' habitat attributes to match current locations
-    def set_habitat(self, land, scape_num=None, individs=None):
-        hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for i, ind in
-               self.individs.items()}
-        for i, v in self.individs.items():
-            v.habitat = hab[i]
 
-    # if scape_num and individs args set to None, does same as set_habitat()
-    def set_habitat_by_land_ind(self, land, scape_num=None, individs=None):
+    def set_habitat(self, land, individs = None):
         if individs is None:
-            if scape_num is None:
-                hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for i, ind in
-                       self.individs.items()}
-            else:
-                hab = {i: land.scapes[scape_num].raster[int(ind.y), int(ind.x)] for i, ind in self.individs.items()}
-        else:
-            if scape_num is None:
-                hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for i, ind in
-                       self.individs.items() if i in individs}
-            else:
-                hab = {i: land.scapes[scape_num].raster[int(ind.y), int(ind.x)] for i, ind in self.individs.items() if
-                       i in individs}
+            individs = self.individs.keys()
+        ig = itemgetter(*individs)
+        hab = [[sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for ind in ig(self.individs)]
+        [ind.set_habitat(hab[n]) for n, ind in enumerate(ig(self.individs))]
+        
 
-        for i, v in self.individs.items():
-            v.habitat = hab[i]
+    ## if scape_num and individs args set to None, does same as set_habitat()
+    #def set_habitat_by_land_ind(self, land, scape_num=None, individs=None):
+    #    if individs is None:
+    #        if scape_num is None:
+    #            hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for i, ind in
+    #                   self.individs.items()}
+    #        else:
+    #            hab = {i: land.scapes[scape_num].raster[int(ind.y), int(ind.x)] for i, ind in self.individs.items()}
+    #    else:
+    #        if scape_num is None:
+    #            hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for i, ind in
+    #                   self.individs.items() if i in individs}
+    #        else:
+    #            hab = {i: land.scapes[scape_num].raster[int(ind.y), int(ind.x)] for i, ind in self.individs.items() if
+    #                   i in individs}
+
+    #    for i, v in self.individs.items():
+    #        v.habitat = hab[i]
 
     # method to get all individs' habitat values
     def get_habitat(self):
@@ -338,12 +346,12 @@ class Population:
             return dict(zip(individs, self.heterozygote_effects[h](
                 np.array([ind.genome[locus,] for i, ind in self.individs.items() if i in individs]))))
 
-    # convenience method for calling selection.get_phenotype() on this pop
-    def get_phenotype(self, trait, individs=None):
+    # convenience method for getting whole population's phenotype
+    def get_phenotype(self, individs=None):
         if individs != None:
-            return ({i: v for i, v in selection.get_phenotype(self, trait).items() if i in individs})
+            return ({i: self.individs[i].phenotype for i in individs})
         else:
-            return (selection.get_phenotype(self, trait))
+            return({i: v.phenotype for i,v in self.individs.items()})
 
     def get_fitness(self):
         return selection.get_fitness(self)
@@ -478,7 +486,7 @@ class Population:
         cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
 
         c = self.get_coords()
-        z = self.get_phenotype(trait)
+        z = {i:v[trait] for i,v in self.get_phenotype().items()}
 
         data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, z[i]) for i in self.individs.keys()}).values())
 
@@ -487,7 +495,7 @@ class Population:
                     alpha=alpha)
         plt.xlim(-0.6, land.dims[1] - 0.4)
         plt.ylim(-0.6, land.dims[0] - 0.4)
-        # plt.scatter(x,y, s = markersize, c = [z[i] for i in inds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
+        # plt.scatter(x,y, s = markersize, c = [z[i] for i in i.items()}nds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
 
     # method for plotting individuals colored and sized by their overall fitnesses
     def show_fitness(self, land, scape_num=None, im_interp_method='nearest', min_markersize=60, alpha=1):
@@ -564,7 +572,7 @@ class Population:
         # use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
         markersize_differentials = {i: 3 * np.abs(fit_vals - w[i]).argmin() for i in self.individs.keys()}
 
-        z = self.get_phenotype(trait)
+        z = {i:v[trait] for i,v in self.get_phenotype().items()}
 
         data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], z[i], markersize_differentials[i]) for i in
                         self.individs.keys()}).values())
@@ -628,16 +636,19 @@ def create_population(genomic_arch, land, params, burn=False):
 
     assert dims.__class__.__name__ in ['tuple', 'list'], "dims should be expressed as a tuple or a list"
     individs = dict()
-    for i in range(N):
+    for idx in range(N):
         # use individual.create_individual to simulate individuals and add them to the population
-        ind = individual.create_individual(genomic_arch, dims)
-        individs[i] = ind
+        ind = individual.create_individual(idx = idx, genomic_arch = genomic_arch, dims = dims)
+        individs[idx] = ind
         land.mating_grid.add(ind)
 
     pop = Population(N=N, individs=individs, genomic_arch=genomic_arch, size=size, T=T)
 
-    # get initial habitat values
+    #get initial habitat values
     pop.set_habitat(land)
+
+    #set phenotypes
+    [i.set_phenotype(pop.genomic_arch) for i in pop.individs.values()]
 
     return pop
 

@@ -103,6 +103,7 @@ class Landscape_Stack:
         self.dims = list(self.scapes.values())[0].dims
         self.dim_om = max([len(str(d)) for d in self.dims]) #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
         self.movement_surf = None
+        self.movement_surf_approx_len = None
         self.n_movement_surf_surf = None
         self.density_grid_stack = None
         self.n_island_mask_scape = None
@@ -467,6 +468,7 @@ def build_scape_stack(params, num_hab_types=2):
     if params['movement_surf']:
 
         land.n_movement_surf_scape = params['n_movement_surf_scape']
+        land.movement_surf_approx_len = params['movement_surf_approx_len']
 
         if params['islands']:
 
@@ -508,7 +510,7 @@ def build_scape_stack(params, num_hab_types=2):
 
         # create the movement surface, and set it as the land.movement_surf attribute
         import movement
-        land.movement_surf = movement.create_movement_surface(land, params)
+        land.movement_surf = movement.create_movement_surface(land, params, approx_len = land.movement_surf_approx_len)
 
     return land
 

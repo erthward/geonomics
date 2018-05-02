@@ -116,7 +116,7 @@ def watch_movement(pop, land, scape_num, num_timesteps, params = None, mu_direct
         old_y = [y for y in new_y]
 
         #NOTE: offset all values by -0.5 for visual reconciliation, to account for apparent offset of axes on top of raster?
-        [ind.move(land, toy_params) for ind in toy_pop.individs.values()];
+        toy_pop.move(land, toy_params)
         new_x = [ind.x-0.5 for ind in list(toy_pop.individs.values())]
         new_y = [ind.y-0.5 for ind in list(toy_pop.individs.values())]
 

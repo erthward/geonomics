@@ -288,7 +288,7 @@ def alt_alt_create_movement_surface(land, params, kappa=12, approx_len=500):
     cells = landscape.get_cell_strings(gi, gj, max([len(str(land.dims[0])), len(str(land.dims[1]))]))
     cells = cells[::-1]
 
-    movement_surf = np.zeros((land.dims[0], land.dims[1], approx_len))
+    movement_surf = np.float16(np.zeros((land.dims[0], land.dims[1], approx_len)))
 
     for i in range(land.dims[0]):
         for j in range(land.dims[1]):

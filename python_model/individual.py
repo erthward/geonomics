@@ -26,6 +26,7 @@ Documentation:            URL
 
 import genome
 import movement
+import selection
 
 
 import numpy as np
@@ -38,7 +39,9 @@ import numpy.random as r
 
 
 class Individual:
-    def __init__(self, new_genome, x, y, sex = None, age=0):
+    def __init__(self, idx, new_genome, x, y, sex = None, age=0):
+
+        self.idx = idx
 
         self.genome = new_genome             #individual's x-ploid genome
 
@@ -53,6 +56,8 @@ class Individual:
         self.age = age              #age
 
         self.habitat = None
+
+        self.phenotype = None
 
 
 
@@ -71,18 +76,23 @@ class Individual:
     #####################
 
 
-    #set movement.move as a method
-    def move(self, land, params):
-        movement.move(self, land, params)
-
-
     #function to increment age by one
     def increment_age_stage(self):
         self.age += 1
+
     #sets the individual's position
-    def set_pos(self, pos_x, pos_y):
-        self.x = pos_x
-        self.y = pos_y
+    def set_pos(self, x_pos, y_pos):
+        self.x = x_pos
+        self.y = y_pos
+
+    #set the individual's habitat
+    def set_habitat(self, hab):
+        self.habitat = hab
+
+    #set the individual's phenotype for all traits
+    def set_phenotype(self, genomic_arch):
+        self.phenotype = [selection.calc_phenotype(self, genomic_arch, i) for i in list(genomic_arch.traits.keys())]
+        
 
 
 
@@ -92,7 +102,7 @@ class Individual:
 #--------------------------------------
 
 
-def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0, burn =False):
+def create_individual(idx, genomic_arch, dims=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0, burn =False):
     """Create a new individual from:
             - either an instance of genome.Genomic_Architecture (i.e. for newly simulated individual) or both
               the genomic architecture and a numpy.ndarray genome (e.g. for new offspring) (one of the two must be provided),
@@ -116,7 +126,7 @@ def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None,
         sex = r.binomial(1,0.5)  #NOTE: For now, sex randomly chosen at 50/50. Change if later decide to implement sex chroms!!!
 
 
-        return Individual(new_genome, x, y, sex = sex, age = 0)
+        return Individual(idx, new_genome, x, y, sex = sex, age = 0)
 
 
     elif new_genome == None:
@@ -130,10 +140,10 @@ def create_individual(genomic_arch, dims=None, new_genome = None, ploidy = None,
             #use genome.sim_genome and genomic_arch variable to simulate individual's genome
             new_genome = genome.sim_genome(genomic_arch)
 
-            return Individual(new_genome, x, y, sex = sex, age = age)
+            return Individual(idx, new_genome, x, y, sex = sex, age = age)
 
         elif burn == True:
 
-            return(Individual(new_genome = np.array([0]), x=x, y=y, sex = sex, age = age))
+            return(Individual(idx, new_genome = np.array([0]), x=x, y=y, sex = sex, age = age))
 
 

@@ -38,6 +38,7 @@ def main(T, reassign_genomes=False):
     if reassign_genomes == True:
         print('\n\nReassigning genomes...\n\n')
         genome.reassign_genomes(pop, params)
+        [i.set_phenotype(genomic_arch) for i in pop.individs.values()];
     for t in range(T):
         print('###############\n\n TIMESTEP %i\n' % t)
         pop.increment_age_stage(burn=False)

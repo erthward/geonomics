@@ -32,3 +32,44 @@ optimized; 12.1% is spent on the d_ind = selection.get_prob_death(...) line, whi
 optimized fairly easily; and 3.6% is spent on num_deaths = ..., which is a small fraction of time but which
 could also likely be sped up a bit at minimal labor cost. 4.9% also spent on pop.calc_density, but I've
 already put a ton of time into optimizing this, so probably no easily won gains there for the moment...
+
+[pushed a commit]
+
+Realized that phenotypes are being calculted each step, and this is hugely unnecessary, so I will
+create an Individual.phenotype attribute and a set_phenotype() method that is called each time an individual
+is created. So I needed to do:
+  - create the attribute
+  - create the method that calls selection.get_phenotype()
+  - create a pop.get_phenotype() attribute like pop.get_x_coords(), etc.
+  - in selection.get_fitness, change it from calling get_phenotype to just using the individuals' phenotype
+    attributes
+  - when genomes are reassigned in main() fn phenotypes need to also be reassigned
+
+
+Also added an individual.idx attribute
+
+Then implemented the new movement algorithm. (Note that building the movement_surf object now takes a buttload
+of time for a reasonalbe length (I'm guessing roughly 5000?) of the VonMises approximation vectors, but
+params.py provides a 'movement_surf_approx_len' entry which can be set to something low to allow for quick pop
+creation when iteratively launching and running interactive processes while writing/debugging/optimizing
+code.)
+
+After all those changes, runtime per timestep for the main() function, with a pop ~1300, is down to 530 ms! :)
+
+And now demography.pop_dynamics uses 96.4% of runtime of a single step of the main() fn, because movement is
+much faster. And of that algorithm ~10.8% runtime is on the dNdt[K<1] line, ~58.3% on pop.mate, ~9.7% on d_ind
+= selection.get_prob_death, And in pop.mate(), ~22.3% spent on recombinants = gametogenesis(...), ~34.1% 
+on new_genomes = mating.mate(...),
+~14.1% on self.individs[offspring_key].set_phenotype(...).  So those 
+look like the most promising next 3 places to work on speeding things up.
+
+Also, I should still run some more checks to ensure that the new movement functionality is working correctly (it was
+in the SCRATCH script, but I of course had to tweak a bunch of things when I incorporated it). But I did run a
+main() function for 50+ timesteps, then check pop.show_single_trait_fitness() for the monogenic trait, and
+everything looked very good (basically, exactly as it did after roughly that many timesteps before I implemented the new movement algorithm.
+
+
+And I should also think more about how to attend to the now-changed N_b, N_d, and d rasters (see notes above,
+~line 16).
+
+[pushed a commit]

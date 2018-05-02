@@ -71,7 +71,7 @@ def mutate(pop, log = False):
         chrom = r.binomial(1,0.5)
 
         #then mutate this individual at this locus
-        pop.individuals[ind].genome[loc,chrom] = 1
+        pop.individs[ind].genome[loc,chrom] = 1
 
 
         #NOTE: Change this to something more generalizable in the main script

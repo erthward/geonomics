@@ -203,12 +203,11 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     with np.errstate(divide='ignore', invalid='ignore'):
         dNdt = calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic').raster
 
-    #NOTE: cells where K<1 dramatically inflate negative dNdt values, so to control for this in a realistic way I
-    #force all cells where K<1 to take on either the calculated dNdt value or the negative value of N at that
-    #cell, whichever is higher
-    dNdt[K<1] = [max(dNdt[K<1][i], -N[K<1][i]) for i in range(len(dNdt[K<1]))]
-    #dNdt[np.isnan(dNdt)] = 0
-    assert False not in list(dNdt[K<1].ravel() >= -N[K<1].ravel()), 'dNdt[K<1] not >= -N[K<1]: \n\t%s' % str(dNdt[K<1].ravel() >= -N[K<1].ravel())
+    #NOTE: The next line used to replace each cell in dNdt where K<1 with that cell's -N value. But it was
+    #really slow to run, and at those cells where K ~= 0 it really won't make a difference how negative the
+    #dNdt values there are, so the following line just makes this much simpler.
+    dNdt = np.clip(dNdt, a_min = -1*N.max(), a_max = None)
+
     assert True not in np.isnan(dNdt)
     assert True not in np.isinf(dNdt), 'The following cells are infinite: \n\t%s' % str([i for i, n in enumerate(dNdt.ravel()) if np.isinf(n)])
 

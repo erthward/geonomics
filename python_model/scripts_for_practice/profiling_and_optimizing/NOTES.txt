@@ -9,6 +9,60 @@ to start keeping my notes in one file here.
 
 As for the latest work:
 
+The following indented block between hashed lines are the notes I originall had in
+SCRATCH_optimize_movement_and_recomb_algs.py:
+
+-------------------------------------------------------
+
+  #########
+  MOVEMENT:
+  #########
+  
+  - check how r.choice(n) scales with length of n
+  - check %lprof for both
+  
+  
+  N         pop.move()   new_surf_move()  
+  1000      139ms        4.35ms
+  10000     1.41s        1.14s
+  
+  
+  
+  ANOTHER COMPARSION USING %timeit (USING MOVEMENT SURFACE APPROACHES BELOW AND COMPARING TO ORIGINAL):
+  
+  N               orig                    alt_movement_surf()         alt_alt_movement_surf()
+  1000            214+-3.87 ms            9.28 ms +- 80.8 us          1.63 ms +- 36.5 us
+  10000           1.08 s +- 11.2 ms       46.3 ms +- 727 us           7.97 ms +- 51.7 us
+  
+  AND COMPARING THE main() FN ON A DEMOGRAPHICALLY STABLE POP, USING THE SAME 3 DIFFERENT MOVE ALGS (A
+  N~1000          1.45 s +- 58.9 ms       1.21 s +- 58.9 ms           1.27 s +- 71.1 ms
+  
+  
+  Why should it seem to perform so much better on its own, but make less difference in the larger algorithm? I
+  guess it IS just because movement is only a portion of the total runtime.A
+  
+  When I run the main() function with the three above algorithms and a pop ~1000 I get:
+  
+  
+  orig                       alt_movement_surf()         alt_alt_movement_surf()
+  7.683 s total time         6.006 s total time          5.801 s total time 
+  movement is 28.3% of time  movement is 1.3% of time    movement is 0.4% of time
+  
+  ##############
+  RECOMBINATION:
+  ##############
+  
+  Maybe iteratively convert and store chunks of the total recombination approx array as bits!?! then just return
+  a random bit from each inter-locus position
+  
+  
+  - read about and play with int types for vector of binomial-draw approx in numpy, for recombination
+  
+  
+  
+
+-------------------------------------------------------
+
 Replacing demography.calc_pop_density used in getting N_b raster with land.density_grid_stack.calc_density has
 cut the runtime of demography.pop_dynamics basically in half (e.g. a pop of N~1000 ran 2.3 s old way vs 1.2 s
 new way), reducing split of run-time percentages of movement and pop_dynamics in a main() function from
@@ -73,3 +127,8 @@ And I should also think more about how to attend to the now-changed N_b, N_d, an
 ~line 16).
 
 [pushed a commit]
+
+
+
+
+

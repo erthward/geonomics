@@ -206,7 +206,7 @@ def mate(pop, pair, params, n_offspring, gamete_recomb_paths):
         # generate a gamete for each member of mating pair
         # paths, gamete_recomb_paths = [gamete_recomb_paths[:,0], gamete_recomb_paths[:,1]], gamete_recomb_paths[:,2:]
         paths = [gamete_recomb_paths.pop() for i in range(2)]
-        gametes = [gametogenesis.gametogenerate(pop.individs[i], paths.pop()) for i in pair]
+        gametes = [gametogenesis.gametogenerate(pop.individs[i], paths.pop(), pop.genomic_arch.L) for i in pair]
         # stack the gametes and transpose, to create the new individual's new_genome array
         new_genome = np.vstack((gametes[0], gametes[1])).T
         # append the new_genome to the list of offspring

@@ -52,10 +52,10 @@ import numpy.random as r
 
 
 #function to generate a gamete from given individual.Individual and genome.Genomic_Architecture instances
-def gametogenerate(individ, recomb_path):
+def gametogenerate(individ, recomb_path, L):
     #produce the gamete resulting from the recombination path
     genome = individ.genome
-    gamete = genome[range(np.shape(genome)[0]),recomb_path]
+    gamete = genome[range(L),recomb_path]
     #gamete = np.array([individ.genome[n][recombination_path[n]] for n in range(len(recombination_path))])  
     return gamete
 

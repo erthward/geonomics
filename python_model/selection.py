@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import numpy as np
+from collections import OrderedDict as OD
 
 
 #Get the phenotypic values of all individuals for a given trait
@@ -72,7 +73,7 @@ def calc_phenotype(ind, genomic_arch, trait):
 #TODO: DEH 01-11-18: Added ability to use spatially varying phenotypic selection coefficient, but curious if 
 #it would be faster to add a conditional check of whether or not a given trait's phi is a single value, and to
 #only calculate as phi[i]*(abs(hab[i][scape_num]... if it isn't??
-def get_fitness(pop):
+def get_fitness(pop, set_fit = False):
     fit_dict = dict(zip(list(pop.individs.keys()),[1]*pop.census()))
     hab = pop.get_habitat()
     z = pop.get_phenotype()
@@ -83,6 +84,8 @@ def get_fitness(pop):
         univ_advant = trt.univ_advant
         w = {i:1 - phi[i]*(abs((hab[i][scape_num]**(not univ_advant)) - z_val[t])**gamma) for i,z_val in z.items()}
         fit_dict = {i : w_val *fit_dict[i] for i, w_val in w.items()}
+    if set_fit == True:
+        [pop.individs[i].set_fitness(fit) for i, fit in fit_dict.items()];
     return(fit_dict)
 
 
@@ -113,20 +116,17 @@ def get_prob_death(pop, d):
 
     #NOTE: FOR NOW, ASSUMING d IS IN THE FORM OF A DICT OF K-V PAIRS: {indvidual_id: d_xy}, LIKE W 
 
-    d_ind = {i: 1-(1-d[i])*w for i, w in W.items()}
+    death_probs = OD()
 
-
-    #Now, tweak it if need be to ensure that it stays between 0 and 1
-    #NOTE: NEED TO CONSIDER IF THERE IS A BETTER, LESS BIASING WAY OF DOING THIS
-    d_ind = {i: max(min(0.999999, d_val), 0.000001) for i, d_val in d_ind.items()}
+    [death_probs.update({i: 1-(1-d[i])*w}) for i, w in W.items()];
    
-    #NOTE: NEED TO FIURE OUT BEST WAY TO KEEP MORTALITIES BETWEEN 0 AND 1
-    #Check that 0<= mort <= 1
-    assert np.alltrue(np.array(list(d_ind.values()))>=0)
-    assert np.alltrue(np.array(list(d_ind.values()))<=1)
+    assert np.alltrue(np.array(list(death_probs.values()))>=0)
+    assert np.alltrue(np.array(list(death_probs.values()))<=1)
+
+    assert False not in [w >= 0 and w <= 1 for w in death_probs.values()], 'ERROR: Some fitness values outside the 0-to-1 range.'
 
     #return
-    return(d_ind)
+    return(death_probs)
 
     
 

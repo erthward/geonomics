@@ -4,3 +4,4 @@
 *.swp
 /python_model/.idea/
 *ipynb
+./python_model/__pycache__/

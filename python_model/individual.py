@@ -59,6 +59,8 @@ class Individual:
 
         self.phenotype = None
 
+        self.fitness = None
+
 
 
         assert type(self.genome) == np.ndarray, "An individual's genome must be an instance of numpy.ndarray."
@@ -92,7 +94,10 @@ class Individual:
     #set the individual's phenotype for all traits
     def set_phenotype(self, genomic_arch):
         self.phenotype = [selection.calc_phenotype(self, genomic_arch, i) for i in list(genomic_arch.traits.keys())]
-        
+
+    #set the individual's fitness
+    def set_fitness(self, fit):
+        self.fitness = fit
 
 
 

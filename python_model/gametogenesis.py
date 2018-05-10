@@ -62,8 +62,8 @@ def gametogenerate(individ, recomb_path, L):
 
 
 #carry out recombination, using the lookup array in a Genomic_Architecture object
-def recombine(la, n_recombinants):
-    recombinants = np.array([r.choice(la[i,], size = n_recombinants, replace = True) for i in range(len(la))])
+def recombine(r_lookup, n_recombinants):
+    recombinants = np.array([r.choice(r_lookup[i,], size = n_recombinants, replace = True) for i in range(len(r_lookup))])
     recombinants = np.cumsum(recombinants, axis = 0)%2
     return(recombinants)
 

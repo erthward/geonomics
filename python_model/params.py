@@ -62,9 +62,9 @@ params = {
 
 'n_rand_pts' : 2600,           #number of random coordinates to be used in generating random landscapes (only needed if rand_land = True)
 
-'islands' : True,           #create habitat islands (outside which individuals cannot move without dying)?
+'islands' : False,           #create habitat islands (outside which individuals cannot move without dying)?
 
-'island_val' : 0.1,              #if greater than 0 (and of course less than 1), the value will be used to
+'island_val' : 0,              #if greater than 0 (and of course less than 1), the value will be used to
                                #create habitat islands in a random landscape (i.e. all cells less than this 
                                #value will be made completely uninhabitable)
 

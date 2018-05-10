@@ -18,7 +18,8 @@ def burn():
     burn_in_test_t = params['burn_T_min']
     t = 0
     while break_burn_in == False:
-        print('###############\n\n TIMESTEP %i\n' % t)
+        print('###############\n\n TIMESTEP %i' % t)
+        print('     POP %i\n' % pop.census())
         pop.increment_age_stage(burn=True)
         # pop.mutate(params,t)
         pop.set_Nt()
@@ -40,7 +41,8 @@ def main(T, reassign_genomes=False):
         genome.reassign_genomes(pop, params)
         [i.set_phenotype(genomic_arch) for i in pop.individs.values()];
     for t in range(T):
-        print('###############\n\n TIMESTEP %i\n' % t)
+        print('###############\n\n TIMESTEP %i' % t)
+        print('     POP %i\n' % pop.census())
         pop.increment_age_stage(burn=False)
         pop.set_Nt()
         pop.move(land, params)

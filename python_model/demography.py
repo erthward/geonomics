@@ -8,6 +8,7 @@ from numpy import random as r
 from scipy import interpolate
 from scipy.spatial import cKDTree
 from sklearn.preprocessing import normalize
+from collections import OrderedDict as OD
 
 import landscape
 import mating
@@ -48,7 +49,7 @@ def calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic'):
 
 
 def kill(land, pop, params, death_probs):
-    deaths = [i for i, p in death_probs.items() if bool(r.binomial(1, p, 1)) == True]
+    deaths = np.array(list(death_probs.keys()))[np.bool8(r.binomial(n = 1, p = list(death_probs.values())))]
     [land.mating_grid.remove(pop.individs[ind]) for ind in deaths]
     [pop.individs.pop(ind) for ind in deaths]
 
@@ -371,20 +372,20 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     #OF THOSE LOCI ONTO TRAITS
     if with_selection == True:
     
-        d_ind = selection.get_prob_death(pop, {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()})
+        death_probs = selection.get_prob_death(pop, {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()})
 
-        #print(d_ind.items()[0:20])
+        #print(death_probs.items()[0:20])
         #print('VS')
         #print(dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()]).items()[0:20])
 
     elif with_selection == False:
-        d_ind = {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()}
-        assert np.alltrue(np.array(list(d_ind.values())) >= 0)
-        assert np.alltrue(np.array(list(d_ind.values())) <= 1)
+        death_probs = OD({i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()})
+        assert np.alltrue(np.array(list(death_probs.values())) >= 0)
+        assert np.alltrue(np.array(list(death_probs.values())) <= 1)
 
     
     if params['island_val'] > 0:
-        d_ind.update({i:1 for i,v in pop.get_habitat_by_land_ind(scape_num = land.n_island_mask_scape).items() if v})
+        death_probs.update({i:1 for i,v in pop.get_habitat_by_land_ind(scape_num = land.n_island_mask_scape).items() if v})
         num_killed_isle = len({i:1 for i,v in pop.get_habitat_by_land_ind(scape_num = land.n_island_mask_scape).items() if v})
         print('\n\tINDIVIDS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))
         
@@ -398,7 +399,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
     #Feed the per-individual death probabilities into the kill function, which will probabilistically generate deaths
     #and cull those individuals, and will return the number of deaths
-    num_deaths = kill(land, pop, params, d_ind)
+    num_deaths = kill(land, pop, params, death_probs)
     pop.n_deaths.append(num_deaths)
 
     print('\n\t%i individuals dead' % num_deaths)

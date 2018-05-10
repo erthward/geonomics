@@ -140,24 +140,16 @@ class Genomic_Architecture:
 #----------------------------------
 
 
-#function for choosing a random number from a Bernoulli distribution of an arbitrary p value
-#(to be mapped to allele frequencies in order to generate genotypes)
-def draw_rand_bern(prob):
-    return r.binomial(1,prob)
-
-
 
 #generate allele_freqs
 def draw_allele_freqs(l):
-    return r.beta(1,1,l)
+    return(r.beta(1,1,l))
 
 
 
 #simulate genotypes
 def draw_genotype(p): 
-    return [draw_rand_bern(freq) for freq in p]
-
-
+    return(r.binomial(1, p))
 
 
 #randomly assign heterozygous effects, choosing from either 0, 0.5, or 1,
@@ -166,25 +158,7 @@ def draw_genotype(p):
 #NOTE: Should be able to also implement negative h values here, for overdominance
 def draw_h(l, params, low = 0, high = 2):
     h  = r.randint(low = 0, high = 3, size = l)/2.   #NOTE: Pythonic style, so high is exclusive, hence high = 3
-    return h
-
-
-
-#NOTE: DEH 01-04-18: Now that I implemented trait architecture, this is not being used, so basically defunct,
-#but leaving in case I decide there's interest in simulating monogenic selection at numerous distinct loci
-#simulate selection coefficients
-def draw_s(l, alpha_s = 0.007, beta_s = 2): #NOTE: alpha= 0.15 gives ~600-660 loci in 10,000 with s > .75; 0.025 gives ~85-115; 0.0025 gives ~5-15
-    #NOTE: See Thurman and Barrett (2016) for metaanalysis of s values in real populations!
-
-    s = r.beta(alpha_s, beta_s, l)
-    s = np.array([0.0 if l < 0.001 else l for l in s])
-    return s
-    #NOTE: For now, beta seems an intuitive and fine way to model this
-    #For effectively no selection: Beta(1,1e5)
-    #For spread of different selection values, but highly zero-inflated: ~ Beta(0.15, 2)
-    #For a wide range of selection coefficients, something like: Beta(1,5)
-    #For a uniform range of selection coefficients between 0 and 1: beta (1,1)
-
+    return(h)
 
 
 
@@ -306,27 +280,6 @@ def create_recomb_array(params):
     #that can be modeled this way
 def create_recomb_lookup_array(genomic_arch, size = 10000):
     
-    #TODO: May need to work on this section below, to provide ability to create a list of lookup arrays, in case where number of loci being
-    #modeled exceeds possible memory allotment for a single np.ndarray
-    #then would loop over them by using int(locus/L) to increment along the list
-
-
-    #determine how many arrays would be needed on this system for the given amount of loci
-    #max_loci_per_array = 0
-    #max_val = 100000
-    #for i in [100, 1000, 10000, 100000]:
-    #    try: 
-    #        x = np.zeros([i,10000], dtype = np.int8)
-    #    except MemoryError:
-    #        max_val = i
-    #        break
-    #num_arrays = int(np.ceil(L/float(max_val))) 
-    #arrays = [max_val] * num_arrays
-    #arrays[-1] = pop.genomic_arch.L - max_val*(num_arrays)-1
-
-    #las = []
-    #for n in range(num_arrays):
-        #r_slice = genomic_arch.r[n*max_val:(n*max_val + max_val)]
     la = np.zeros((len(genomic_arch.r),size), dtype = np.int8)
 
     for i, rate in enumerate(genomic_arch.r):

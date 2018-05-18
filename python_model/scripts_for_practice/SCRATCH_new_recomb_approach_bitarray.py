@@ -70,6 +70,9 @@ class Recomb_Queue:
         self.queue = self.queue[:, n:]
         if self.queue.shape[1] < self.queue_len_min:
             self.refresh_queue()
+        while paths.shape[1] < n: #In case n is greater than the remaining number of paths in the queue, 
+                               #recursively get more paths until paths.shape[1] == n
+            paths = np.hstack((paths, self.get_paths(n-paths.shape[1])))
         return(paths)
 
 
@@ -84,7 +87,7 @@ def gen_recomb_paths(r_lookup, n_recombinants):
 
 #save the bitarray of recombination paths to a tmp file in the cwd
 def create_recomb_path_bitfile(paths_bitarray, recomb_file):
-    paths.tofile(recomb_file)
+    paths_bitarray.tofile(open(recomb_file, 'wb'))
 
 
 #generate a bitarray of recombination paths, using the gen_recomb_paths function

@@ -131,4 +131,23 @@ And I should also think more about how to attend to the now-changed N_b, N_d, an
 
 
 
+#DEH 05-23-18:
+Timing-trial results for new recombination approach:
 
+  NEW APPROACH (on branch new_recomb_trial):
+    N_start = 1250 individuals
+    N_end = 1533
+    n_timesteps = 200
+    recomb_queue = len 5000, len_min 1000
+    bitarray = len 100000, len_min 1000000 (??? LOOK INTO THIS)
+    total elapsed time = 133.33883 seconds
+    avg time/step = 0.667 seconds
+
+  OLD APPROACH (on branch master):
+    N_start = 1250 individuals
+    N_end = 1498 
+    n_timesteps = 200
+    recomb_queue = n/a
+    bitarray = n/a
+    total elapsed time = 106.3258 s
+    avg time/step = 0.532 s

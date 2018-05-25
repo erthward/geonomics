@@ -6,7 +6,7 @@ params = {
 
 'set_seed' : True,                  #set the seed (for reproducibility)?
 
-'seed_num' : 2,                    #number to seed random number generators
+'seed_num' : 23432,                    #number to seed random number generators
 
 'T' : 2500,                      #total model runtime
 

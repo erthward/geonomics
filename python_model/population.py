@@ -36,6 +36,7 @@ import demography
 
 import numpy as np
 from numpy import random as r
+import random
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy import interpolate
@@ -162,21 +163,22 @@ class Population:
         self.n_births.append(total_births)
 
         if not burn:
-            recombinants = gametogenesis.recombine(self.genomic_arch.r_lookup, 2 * total_births)
+            #recombinants = gametogenesis.recombine(self.genomic_arch.r_lookup, 2 * total_births)
+            recombinants = random.sample(self.genomic_arch.recomb_paths, 2 * total_births)
 
         for pair in mating_pairs:
 
-            parent_centroid_x = np.mean((self.individs[pair[0]].x, self.individs[pair[1]].x))
-            parent_centroid_y = np.mean((self.individs[pair[0]].y, self.individs[pair[1]].y))
+            parent_centroid_x = (self.individs[pair[0]].x + self.individs[pair[1]].x)/2
+            parent_centroid_y = (self.individs[pair[0]].y + self.individs[pair[1]].y)/2
 
             n_offspring = num_births.pop()
             n_gametes = 2 * n_offspring
 
             # gamete_recomb_paths, recombinants = recombinants[:,0:n_gametes], recombinants[:,n_gametes:]
             if burn == False:
-                gamete_recomb_paths, recombinants = [i.flatten() for i in
-                                                     np.hsplit(recombinants[:, 0:n_gametes], n_gametes)], recombinants[
-                                                                                                          :, n_gametes:]
+                gamete_recomb_paths, recombinants = (recombinants[0:n_gametes], recombinants[n_gametes:])
+                #gamete_recomb_paths, recombinants = [i.flatten() for i in np.hsplit(recombinants[:, 0:n_gametes], n_gametes)], recombinants[ :, n_gametes:]
+                
                 new_genomes = mating.mate(self, pair, params, n_offspring, gamete_recomb_paths)
 
             for n in range(n_offspring):

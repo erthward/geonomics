@@ -25,6 +25,9 @@ Documentation:            URL
 import numpy as np    
 from numpy import random as r
 
+import bitarray
+import gametogenesis
+
 
 
 
@@ -66,6 +69,7 @@ class Genomic_Architecture:
         self.r = r              #Dict of recombination rates between each locus and the next, for all chroms (NOTE: first will be forced to 1/float(x), to effect independent segregation of chroms, after which recomb occurs as a crossing-over path down the chroms
         self.r_lookup = None    #The recombination lookup object will be assigned here; used to speed up large
                                 #quantities of binomial draws needed for recombination
+        self.recomb_paths = None
         self.mu = mu            #genome-wide mutation rate  #NOTE: should I allow this to be declared as a dictionary of mutation rates along all the chromosomes, to allow for heterogeneous mutation rates across the genome???
         self.mutables = None    #after burn-in, will be set to an array containing eligible loci for mutation
         self.sex = sex
@@ -118,7 +122,7 @@ class Genomic_Architecture:
 
     #method for creating and assigning the r_lookup attribute
     def create_r_lookup(self):
-        self.r_lookup = create_recomb_lookup_array(self)
+        self.recomb_paths = create_recomb_lookup_array(self)
 
 
 
@@ -230,7 +234,7 @@ def create_recomb_array(params):
     #then set that as the recomb_array, and check that len(recomb_array) == L
     if ('recomb_array' in params.keys() and params['recomb_array'] != None):
         recomb_array = np.array(params['recomb_array'])
-        len(recomb_array) == L, "Length of recomb_array provided not equal to params['L']."
+        assert len(recomb_array) == L, "Length of recomb_array provided not equal to params['L']."
 
         #NOTE: #Always necessary to set the first locus r = 1/ploidy, to ensure independent assortment of homologous chromosomes
         recomb_array[0] = 0.5
@@ -284,15 +288,23 @@ def create_recomb_lookup_array(genomic_arch, size = 10000):
 
     for i, rate in enumerate(genomic_arch.r):
         la[i,0:int(round(size*rate))] = 1
-        #las.append(la)
 
-    #if len(las) >1:
-        #return(las)
-   #else:
-        #return(las[0])
-    return(la)
+    recomb_paths = gametogenesis.recombine(la, size).T
+    bitarrays = tuple([make_bitarray_recomb_subsetter(p) for p in recomb_paths])
+    
+    return(bitarrays)
 
 
+
+
+def make_bitarray_recomb_subsetter(recomb_path):
+    ba = bitarray.bitarray(list(recomb_path.reshape((recomb_path.size,))))
+    ba_inv = bitarray.bitarray(list(np.array(ba) == False))
+    tot = []
+    for i in range(len(ba)):
+        tot.append(ba[i])
+        tot.append(ba_inv[i])
+    return(bitarray.bitarray(tot))
 
 
 

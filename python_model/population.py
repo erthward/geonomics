@@ -42,7 +42,9 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 from scipy.spatial import cKDTree
 from collections import Counter as C
+from collections import OrderedDict as OD
 from operator import itemgetter
+from operator import attrgetter
 
 import sys
 
@@ -103,10 +105,14 @@ class Population:
         }
 
         assert type(N) == int, "N must be an integer"
-        assert type(self.individs) == dict, "self.individs must be a dictionary"
+        assert type(self.individs) == OD, "self.individs must be of type collections.OrderedDict"
         assert list(set([i.__class__.__name__ for i in list(self.individs.values())])) == [
             'Individual'], "self.individs must be a dictionary containing only instances of the individual.Individual class"
         assert self.genomic_arch.__class__.__name__ == 'Genomic_Architecture', "self.genomic_arch must be an instance of the genome.Genomic_Architecture class"
+
+
+        self.__coord_attrgetter__ = attrgetter('x', 'y')
+        self.__individ_coord_attrgetter__ = attrgetter('idx', 'x', 'y')
 
     #####################
     ### OTHER METHODS ###
@@ -368,10 +374,11 @@ class Population:
         return {locus: self.genomic_arch.h[locus]}
 
     def get_coords(self, individs=None):
-        if individs != None:
-            return ({k: (float(ind.x), float(ind.y)) for k, ind in self.individs.items() if k in individs})
-        else:
-            return ({k: (float(ind.x), float(ind.y)) for k, ind in self.individs.items()})
+        if individs == None:
+            return(np.array(list(map(self.__coord_attrgetter__, self.individs.values()))))
+        else: 
+            ig = itemgetter(*individs)
+            return(np.array(ig(dict(map(self.__individ_coord_attrgetter__, self.individs.values())))))
 
     def get_x_coords(self, individs=None):
         if individs != None:
@@ -473,8 +480,6 @@ class Population:
     # method for plotting individuals colored by their phenotypes for a given trait
     def show_phenotype(self, trait, land, scape_num=None, im_interp_method='nearest', markersize=65, alpha=1):
 
-        from collections import OrderedDict as OD
-
         if scape_num != None:
             land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
         else:
@@ -501,8 +506,6 @@ class Population:
 
     # method for plotting individuals colored and sized by their overall fitnesses
     def show_fitness(self, land, scape_num=None, im_interp_method='nearest', min_markersize=60, alpha=1):
-
-        from collections import OrderedDict as OD
 
         if scape_num != None:
             land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
@@ -544,8 +547,6 @@ class Population:
     # method for plotting individuals colored by their phenotypes for a given trait, sized by their fitness
     def show_single_trait_fitness(self, trait, land, scape_num=None, im_interp_method='nearest', min_markersize=60,
                                   alpha=1):
-
-        from collections import OrderedDict as OD
 
         if scape_num != None:
             land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
@@ -637,7 +638,7 @@ def create_population(genomic_arch, land, params, burn=False):
     T = params['T']
 
     assert dims.__class__.__name__ in ['tuple', 'list'], "dims should be expressed as a tuple or a list"
-    individs = dict()
+    individs = OD()
     for idx in range(N):
         # use individual.create_individual to simulate individuals and add them to the population
         ind = individual.create_individual(idx = idx, genomic_arch = genomic_arch, dims = dims)

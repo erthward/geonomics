@@ -67,8 +67,7 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
     ######################################################
     # First, build cKDTree and create nearest-neighbor query:
 
-    individs = [(i, [ind.x, ind.y], ind.sex, ind.age) for i, ind in pop.individs.items()]
-    points = np.array([ind[1] for ind in individs])
+    points = pop.get_coords()
     tree = cKDTree(points,
                    leafsize=100)  # NOTE: Figure out how leafsize, and how to parameterize this in order to optimize speed for any given pop...
     query = tree.query(points, k=2, distance_upper_bound=mating_radius)
@@ -82,7 +81,7 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
 
     if sex:
         # np.array of the sexes of all individuals
-        sexes = np.array([ind[2] for ind in individs])
+        sexes = np.array([ind.sex for ind in pop.individs.values()])
 
         # array of couplings for all females with nearest individual < mating_radius
         available_females = np.array(query[0][:, 1] != np.inf) & np.array(sexes[query[1][:,
@@ -119,7 +118,7 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
 
     if repro_age != None:
         # np.array of the ages of all individuals
-        ages = np.array([ind[3] for ind in individs])
+        ages = np.array([ind.age for ind in pop.individs.values()])
 
         if sex:  # if sexual species, repro_age expected to be a tuple or list of numerics of length 2
 
@@ -157,7 +156,7 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
             mates = available_pairs[mating_decisions]
 
             # finally, link back to initially created structure, to get individuals' proper keys
-            keys = [i[0] for i in individs]
+            keys = [ind.idx for ind in pop.individs.values()]
 
             mates = np.array([[keys[mate] for mate in pair] for pair in mates])
 
@@ -172,7 +171,7 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
             mates = available_pairs[mating_decisions]
 
             # finally, link back to initially created structure, to get individuals' proper keys
-            keys = [i[0] for i in individs]
+            keys = [ind.idx for ind in pop.individs.values()]
 
             mates = np.array([[keys[mate] for mate in pair] for pair in mates])
 

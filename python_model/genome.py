@@ -288,7 +288,7 @@ def create_recomb_paths_bitarrays(genomic_arch, lookup_array_size = 10000, num_r
     for i, rate in enumerate(genomic_arch.r):
         lookup_array[i,0:int(round(lookup_array_size*rate))] = 1
 
-    recomb_paths = gametogenesis.recombine(la, num_recomb_paths).T
+    recomb_paths = gametogenesis.recombine(lookup_array, num_recomb_paths).T
     bitarrays = tuple([make_bitarray_recomb_subsetter(p) for p in recomb_paths])
     
     return(bitarrays)
@@ -352,7 +352,7 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
         genomic_arch.assign_loci_to_trait(trait_num, mutational = False, locs = None)
 
     #create the r_lookup attribute
-    genomic_arch.create_r_lookup()
+    genomic_arch.create_recomb_paths()
 
 
     return(genomic_arch)

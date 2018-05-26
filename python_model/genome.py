@@ -67,9 +67,8 @@ class Genomic_Architecture:
         self.non_neutral = np.zeros([L]) #array to keep track of all loci that influence the phenotype of at least one trait
         self.h = h          #Dict of heterozygous effects for all loci, for all chroms
         self.r = r              #Dict of recombination rates between each locus and the next, for all chroms (NOTE: first will be forced to 1/float(x), to effect independent segregation of chroms, after which recomb occurs as a crossing-over path down the chroms
-        self.r_lookup = None    #The recombination lookup object will be assigned here; used to speed up large
+        self.recomb_paths = None  #The recombination-paths object will be assigned here; used to speed up large
                                 #quantities of binomial draws needed for recombination
-        self.recomb_paths = None
         self.mu = mu            #genome-wide mutation rate  #NOTE: should I allow this to be declared as a dictionary of mutation rates along all the chromosomes, to allow for heterogeneous mutation rates across the genome???
         self.mutables = None    #after burn-in, will be set to an array containing eligible loci for mutation
         self.sex = sex
@@ -121,8 +120,8 @@ class Genomic_Architecture:
 
 
     #method for creating and assigning the r_lookup attribute
-    def create_r_lookup(self):
-        self.recomb_paths = create_recomb_lookup_array(self)
+    def create_recomb_paths(self):
+        self.recomb_paths = create_recomb_paths_bitarrays(self)
 
 
 
@@ -282,14 +281,14 @@ def create_recomb_array(params):
 #function to create a lookup array, for raster recombination of larger numbers of loci on the fly
     #NOTE: size argument ultimately determines the minimum distance between probabilities (i.e. recombination rates)
     #that can be modeled this way
-def create_recomb_lookup_array(genomic_arch, size = 10000):
+def create_recomb_paths_bitarrays(genomic_arch, lookup_array_size = 10000, num_recomb_paths = 10000):
     
-    la = np.zeros((len(genomic_arch.r),size), dtype = np.int8)
+    lookup_array = np.zeros((len(genomic_arch.r),lookup_array_size), dtype = np.int8)
 
     for i, rate in enumerate(genomic_arch.r):
-        la[i,0:int(round(size*rate))] = 1
+        lookup_array[i,0:int(round(lookup_array_size*rate))] = 1
 
-    recomb_paths = gametogenesis.recombine(la, size).T
+    recomb_paths = gametogenesis.recombine(la, num_recomb_paths).T
     bitarrays = tuple([make_bitarray_recomb_subsetter(p) for p in recomb_paths])
     
     return(bitarrays)

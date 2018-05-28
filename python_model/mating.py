@@ -91,9 +91,6 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
         available_individs = dists[:, 1] != np.inf
 
         # delete inverse-equal pairs from list (i.e. if 3-paired-to-5 and 5-paired-to-3 are both listed, drop one)
-        #DEH 05-27-18: As I was debugging it turns out the following line wasn't actually working! I've
-        #replaced it with the subsequent line, which is also ~ 20% faster
-        #available_pairs = np.array(list(set([tuple(set(item)) for item in pairs[available_individs]])))
         available_pairs = np.array(list(map(tuple, set(map(frozenset, pairs[available_individs])))))
 
     ##############################################

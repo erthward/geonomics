@@ -29,11 +29,9 @@ Documentation:              URL
 
 
 from scipy.spatial import cKDTree
-
-# import sklearn.neighbors  #added by Irene
-
 import numpy as np
 import numpy.random as r
+from operator import itemgetter as ig
 
 import gametogenesis
 import genome
@@ -70,11 +68,7 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
     points = pop.get_coords()
     tree = cKDTree(points,
                    leafsize=100)  # NOTE: Figure out how leafsize, and how to parameterize this in order to optimize speed for any given pop...
-    query = tree.query(points, k=2, distance_upper_bound=mating_radius)
-    # [query_2[i].remove(i) for i in range(len(query_2))]; #remove self-pairings
-
-    # nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(points) #added by irene
-    # distances, indices = nbrs.kneighbors(X) #added by irene
+    dists, pairs = tree.query(points, k=2, distance_upper_bound=mating_radius)
 
     ####################################################
     # Then, operationalize sexes, if being used, and find all available pairs within max distance
@@ -84,23 +78,23 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
         sexes = np.array([ind.sex for ind in pop.individs.values()])
 
         # array of couplings for all females with nearest individual < mating_radius
-        available_females = np.array(query[0][:, 1] != np.inf) & np.array(sexes[query[1][:,
+        available_females = np.array(dists[:, 1] != np.inf) & np.array(sexes[pairs[:,
                                                                                 0]] == 0)  # i.e.  [AT LEAST 1 INDIVID < mating_radius (OTHERWISE scipy.spatial.cKDTree associates them with a nonexistent neighbour and infinite distance)] & [female]
 
         # check that nearest individuals to paired females are males, otherwise remove
-        available_pairs = query[1][available_females][sexes[query[1][:, 1][available_females]] == 1]
-        # available_pairs_inds = [query[1][i] in available_pairs for i in range(len(query[1]))]
+        available_pairs = pairs[available_females][sexes[pairs[:, 1][available_females]] == 1]
 
 
     else:
 
         # take all pairs within mating_radius
-        available_individs = np.array(query[0][:, 1] != np.inf)
+        available_individs = dists[:, 1] != np.inf
 
         # delete inverse-equal pairs from list (i.e. if 3-paired-to-5 and 5-paired-to-3 are both listed, drop one)
-        available_pairs = np.array(
-            [np.array(tup) for tup in list(set([tuple(set(item)) for item in query[1][available_individs]]))])
-        # available_pairs_inds = [query[1][i] in available_pairs for i in range(len(query[1]))]
+        #DEH 05-27-18: As I was debugging it turns out the following line wasn't actually working! I've
+        #replaced it with the subsequent line, which is also ~ 20% faster
+        #available_pairs = np.array(list(set([tuple(set(item)) for item in pairs[available_individs]])))
+        available_pairs = np.array(list(map(tuple, set(map(frozenset, pairs[available_individs])))))
 
     ##############################################
     # Check if any available pairs have been found thus far, proceed if so, otherwise return empty array of pairs
@@ -116,7 +110,7 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
     # NOTE: I have NOT restricted this so that each individual can only mate once per generation, but I should
     # probably figure that out and add it here!
 
-    if repro_age != None:
+    if repro_age != None and repro_age > 0:
         # np.array of the ages of all individuals
         ages = np.array([ind.age for ind in pop.individs.values()])
 
@@ -128,7 +122,6 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
             yes_f = np.array(ages[available_pairs[:, 0]] >= repro_age[0])
             yes_m = np.array(ages[available_pairs[:, 1]] >= repro_age[1])
             available_pairs = available_pairs[yes_f & yes_m]
-            available_pairs_inds = [query[1][i] in available_pairs for i in range(len(query[1]))]
 
         else:  # if not sexual species, repro_age expected to be a numeric
 
@@ -137,8 +130,8 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
 
             yes_0 = np.array(ages[available_pairs[:, 0]] >= repro_age)
             yes_1 = np.array(ages[available_pairs[:, 1]] >= repro_age)
-            available_pairs = available_pairs[yes_0 & yes_1]
-            available_pairs_inds = [query[1][i] in available_pairs for i in range(len(query[1]))]
+            yes = np.sum(ages[available_pairs] >= repro_age, axis = 1) == 2
+            available_pairs = available_pairs[yes]
 
     #########################################
     # Then, if at least one valid pair was found, decide whether or not it will reproduce, as a binomial random var weighted by pair distance(s)
@@ -151,35 +144,28 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
 
             # binomial decision whether or not to mate with nearest male, as function of ratio: nn
             # distance/mating_radius
-            mating_decisions = r.binomial(n=1, p=b, size=available_pairs.shape[0]) == 1
+            mating_decisions = np.bool8(r.binomial(n=1, p=b, size=available_pairs.shape[0]))
 
-            mates = available_pairs[mating_decisions]
-
-            # finally, link back to initially created structure, to get individuals' proper keys
-            keys = [ind.idx for ind in pop.individs.values()]
-
-            mates = np.array([[keys[mate] for mate in pair] for pair in mates])
 
         # if birth probability is to be weighted by the distance btwn individs in a pair
         elif dist_weighted_birth:
 
             # binomial decision whether or not to mate with nearest male, as function of ratio: nn
             # distance/mating_radius
-            mating_decisions = np.array(
-                [r.binomial(n=1, p=b) for p in 1 - (query[0][available_pairs[:, 0]][:, 1] / mating_radius)]) == 1
+            mating_decisions = np.array([r.binomial(n=1, p=b) for p in 1 - (dists[available_pairs[:, 0]][:, 1] / mating_radius)]) == 1
 
-            mates = available_pairs[mating_decisions]
+        mating_pairs = available_pairs[mating_decisions]
 
-            # finally, link back to initially created structure, to get individuals' proper keys
-            keys = [ind.idx for ind in pop.individs.values()]
-
-            mates = np.array([[keys[mate] for mate in pair] for pair in mates])
+        # finally, link back to initially created structure, to get individuals' proper keys
+        keys = list(pop.individs.keys())
+        f = ig(*mating_pairs.flatten())
+        mates = np.array(f(keys)).reshape(mating_pairs.shape)
 
     else:
 
         mates = np.array([])
 
-    return mates    # Return an array or arrays, each inner array containing a mating-pair
+    return(mates)   # Return an array or arrays, each inner array containing a mating-pair
 
 
 def determine_num_births(num_pairs, params):

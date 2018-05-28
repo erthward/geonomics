@@ -91,9 +91,9 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     ######calc num_pairs raster (use the calc_pop_density function on the centroids of the mating pairs)
     pairs = pop.find_mating_pairs(land, params)
 
-
-    p_x = [float(np.mean((pop.individs[pairs[i,0]].x, pop.individs[pairs[i,1]].x))) for i in range(pairs.shape[0])]
-    p_y = [float(np.mean((pop.individs[pairs[i,0]].y, pop.individs[pairs[i,1]].y))) for i in range(pairs.shape[0])]
+    pairs_coords = pop.get_coords(pairs.flatten())
+    p_x = pairs_coords[:,0].reshape(pairs.shape).mean(axis = 1) 
+    p_y = pairs_coords[:,1].reshape(pairs.shape).mean(axis = 1) 
 
     #use the Landscape_Stack.density_grid_stack to calculate a raster of the expected number of pairs
     #NOTE: because the window_width of that object is much wider than mu_dispersal in the parameterizations
@@ -372,11 +372,8 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     #OF THOSE LOCI ONTO TRAITS
     if with_selection == True:
     
-        death_probs = selection.get_prob_death(pop, {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()})
-
-        #print(death_probs.items()[0:20])
-        #print('VS')
-        #print(dict([(i, d[int(ind.y), int(ind.x)]) for i,ind in pop.individs.items()]).items()[0:20])
+        #death_probs = selection.get_prob_death(pop, {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()})
+        death_probs = selection.get_prob_death(pop, dict(zip(pop.individs.keys(), d[pop.cells[:,1], pop.cells[:,0]])))
 
     elif with_selection == False:
         death_probs = OD({i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()})

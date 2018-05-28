@@ -83,6 +83,10 @@ class Population:
 
         self.initial_size = len(self.individs)
 
+        #attributes for storing numpy arrays of all individuals' coordinates and cells, to avoid repeat compute time each turn
+        self.coords = None
+        self.cells = None
+
         if size.__class__.__name__ in ['float', 'int'] and T != None:
             self.size = [size] * T
         elif size.__class__.__name__ in ['list']:
@@ -147,6 +151,7 @@ class Population:
     def move(self, land, params):
         movement.move(self, land, params)
         self.set_habitat(land)
+        self.set_coords_and_cells()
 
 
     # function for finding all the mating pairs in a population
@@ -223,6 +228,7 @@ class Population:
                 
         # sample all individuals' habitat values, to initiate for offspring
         self.set_habitat(land)
+        self.set_coords_and_cells()
 
         print('\n\t%i individuals born' % (total_births))
 
@@ -295,24 +301,11 @@ class Population:
         [ind.set_habitat(hab[n]) for n, ind in enumerate(ig(self.individs))]
         
 
-    ## if scape_num and individs args set to None, does same as set_habitat()
-    #def set_habitat_by_land_ind(self, land, scape_num=None, individs=None):
-    #    if individs is None:
-    #        if scape_num is None:
-    #            hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for i, ind in
-    #                   self.individs.items()}
-    #        else:
-    #            hab = {i: land.scapes[scape_num].raster[int(ind.y), int(ind.x)] for i, ind in self.individs.items()}
-    #    else:
-    #        if scape_num is None:
-    #            hab = {i: [sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for i, ind in
-    #                   self.individs.items() if i in individs}
-    #        else:
-    #            hab = {i: land.scapes[scape_num].raster[int(ind.y), int(ind.x)] for i, ind in self.individs.items() if
-    #                   i in individs}
+    #method to set population's coords and cells arrays
+    def set_coords_and_cells(self):
+        self.coords = self.get_coords()
+        self.cells = np.int8(self.coords)
 
-    #    for i, v in self.individs.items():
-    #        v.habitat = hab[i]
 
     # method to get all individs' habitat values
     def get_habitat(self):
@@ -339,7 +332,7 @@ class Population:
 
     def get_genotype(self, locus, return_format='mean', individs=None, by_dominance=False):
 
-        if individs == None:
+        if individs is None:
             individs = self.individs.keys()
             # individs = range(len(self.genomic_arch.s[chromosome]))
 
@@ -373,12 +366,24 @@ class Population:
     def get_dom(self, locus):
         return {locus: self.genomic_arch.h[locus]}
 
-    def get_coords(self, individs=None):
-        if individs == None:
-            return(np.array(list(map(self.__coord_attrgetter__, self.individs.values()))))
-        else: 
+    def get_coords(self, individs = None, float = True):
+        coords = list(map(self.__coord_attrgetter__, self.individs.values()))
+        if individs is not None: 
             ig = itemgetter(*individs)
-            return(np.array(ig(dict(map(self.__individ_coord_attrgetter__, self.individs.values())))))
+            coords = ig(dict(zip(self.individs.keys(), coords)))
+
+        if float == True:
+            return(np.float32(coords))
+        elif float == False:
+            return(np.int8(coords))
+        else:
+            raise TypeError("'float' arugment must be of type Boolean")
+            
+            
+    def get_cells(self, individs = None):
+        cells = self.get_coords(individs = individs, float = False)
+        return(cells)
+  
 
     def get_x_coords(self, individs=None):
         if individs != None:
@@ -400,7 +405,7 @@ class Population:
         else:
             land.show(colorbar=colorbar, im_interp_method=im_interp_method, pop=True)
 
-        c = np.array(list(self.get_coords().values()))
+        c = np.array(list(self.get_coords()))
         # NOTE: subtract 0.5 to line up the points with the plt.imshow() grid of the land; imshow plots each pixel centered on its index, but the points then plot against those indices, so wind up shifted +0.5 in each axis
         x = c[:, 0] - 0.5
         y = c[:, 1] - 0.5
@@ -421,7 +426,7 @@ class Population:
         land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
 
         # coords = dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items() if k in individs])
-        c = np.array(list(self.get_coords(individs).values()))
+        c = np.array(list(self.get_coords(individs)))
         # NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
         x = c[:, 0] - 0.5
         y = c[:, 1] - 0.5
@@ -437,7 +442,7 @@ class Population:
         dens = self.calc_density(land, normalize_by=normalize_by, max_1=max_1)
         dens.show(im_interp_method='nearest', pop=True)
 
-        c = np.array(list(self.get_coords().values()))
+        c = np.array(list(self.get_coords()))
         # NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
         x = c[:, 0] - 0.5
         y = c[:, 1] - 0.5
@@ -470,7 +475,7 @@ class Population:
             inds = [i for i, g in genotypes.items() if np.atleast_1d(g)[0] == genotype]
             # plot if there are any individuals of this genotype
             if len(inds) >= 1:
-                c = np.array(list(self.get_coords(inds).values()))
+                c = self.get_coords(inds)
                 x = c[:, 0] - 0.5
                 y = c[:, 1] - 0.5
                 plt.scatter(x, y, s=markersize, c=colors[n], alpha=alpha);
@@ -613,7 +618,7 @@ class Population:
 
     # method to plot (or add to an open plot) individuals' IDs
     def plot_ind_ids(self):
-        [plt.text(v[0] - 0.5, v[1] - 0.5, i) for i, v in self.get_coords().items()]
+        [plt.text(v[0] - 0.5, v[1] - 0.5, i) for i, v in dict(zip(self.individs.keys(), self.get_coords()))]
 
     def pickle(self, filename):
         import cPickle
@@ -647,8 +652,11 @@ def create_population(genomic_arch, land, params, burn=False):
 
     pop = Population(N=N, individs=individs, genomic_arch=genomic_arch, size=size, T=T)
 
-    #get initial habitat values
+    #set initial habitat values
     pop.set_habitat(land)
+
+    #set initial coords and cells
+    pop.set_coords_and_cells()
 
     #set phenotypes
     [i.set_phenotype(pop.genomic_arch) for i in pop.individs.values()]

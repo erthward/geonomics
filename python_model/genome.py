@@ -37,12 +37,13 @@ import gametogenesis
 
 
 class Trait:
-    def __init__(self, phi, n, scape_num, alpha_dist_sigma, fitness_fn_gamma, univ_advant):
+    def __init__(self, num, phi, n_loci, scape_num, alpha_dist_sigma, gamma, univ_advant):
+        self.num = num
         self.phi = phi
-        self.n = n
+        self.n_loci = n_loci
         self.scape_num = scape_num
         self.alpha_dist_sigma = alpha_dist_sigma
-        self.fitness_fn_gamma = fitness_fn_gamma
+        self.gamma = gamma
         self.univ_advant = univ_advant
 
         self.loci = np.array([])
@@ -51,10 +52,10 @@ class Trait:
 
     def get_phi(self, pop):
         if type(self.phi) in (float, int):
-            phi = self.phi
-            return({i:phi for i in pop.individs.keys()})
+            phi = np.array([self.phi]*pop.census())
         else:
-            return(get_phi(pop, self.phi))
+            phi = get_phi(pop, self.phi)
+        return(phi)
 
 
 class Genomic_Architecture:
@@ -90,7 +91,7 @@ class Genomic_Architecture:
 
         if mutational == False:  #i.e. if this is not the result of a point mutation, but instead either an initial setup or somehow manually introduced
             #number of loci to be assigned
-            n = self.traits[trait_num].n
+            n = self.traits[trait_num].n_loci
         else:
             n = 1
 
@@ -171,7 +172,7 @@ def construct_traits(traits_params):
     #pop out the number of traits to create
     num_traits = params_copy.pop('num') 
     #then for each of i traits, unpack the ith components of the remaining params to create the trait dict
-    traits = {i : Trait(**{k:v[i] for k,v in params_copy.items()}) for i in range(num_traits)}
+    traits = {i : Trait(i, **{k:v[i] for k,v in params_copy.items()}) for i in range(num_traits)}
     return(traits)
 
 
@@ -398,7 +399,8 @@ def reassign_genomes(pop, params):
 
 #function for getting phi when it is spatially variable
 def get_phi(pop, phi_rast):
-    return({i:phi_rast[int(ind.y), int(ind.x)] for i,ind in pop.individs.items()})
+    phi = phi_rast[pop.cells[:,1], pop.cells[:,0]]
+    return(phi)
 
 
 

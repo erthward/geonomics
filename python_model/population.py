@@ -141,7 +141,7 @@ class Population:
     def increment_age_stage(self, burn=False):
 
         # increment age of all individuals
-        [ind.increment_age_stage() for ind in list(self.individs.values())];
+        [ind.increment_age_stage() for ind in self.individs.values()];
 
         # add 1 to pop.t
         if burn == False:  # as long as this is not during burn-in, pop.t will increment
@@ -191,7 +191,8 @@ class Population:
                 #gamete_recomb_paths, recombinants = [i.flatten() for i in np.hsplit(recombinants[:, 0:n_gametes], n_gametes)], recombinants[ :, n_gametes:]
                 
                 new_genomes = mating.mate(self, pair, params, n_offspring, gamete_recomb_paths)
-
+            
+            offspring_key = next(reversed(self.individs)) + 1
             for n in range(n_offspring):
 
                 offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal,
@@ -201,8 +202,6 @@ class Population:
                     offspring_sex = r.binomial(1, 0.5)
 
                 age = 0
-
-                offspring_key = max(self.individs.keys()) + 1
 
                 if burn == False:
                     if sex == True:
@@ -224,6 +223,8 @@ class Population:
                                                                              age)
                 # self.individs[offspring_key] = ind
                 land.mating_grid.add(self.individs[offspring_key])
+
+                offspring_key += 1
 
                 
         # sample all individuals' habitat values, to initiate for offspring
@@ -307,28 +308,31 @@ class Population:
         self.cells = np.int8(self.coords)
 
 
-    # method to get all individs' habitat values
-    def get_habitat(self):
-        return ({i: ind.habitat for i, ind in self.individs.items()})
-
-    # is both args set to None, does same as get_habitat
-    def get_habitat_by_land_ind(self, scape_num=None, individs=None):
+    # method to get individs' habitat values
+    def get_habitat(self, scape_num=None, individs=None):
         if individs is None:
             if scape_num is None:
-                return ({i: ind.habitat for i, ind in self.individs.items()})
+                habs = np.array([ind.habitat for i, ind in self.individs.items()])
             else:
-                return ({i: ind.habitat[scape_num] for i, ind in self.individs.items()})
+                habs = np.array([ind.habitat[scape_num] for i, ind in self.individs.items()])
         else:
+            ig = itemgetter(*individs)
             if scape_num is None:
-                return ({i: ind.habitat for i, ind in self.individs.items() if i in individs})
+                habs = {i:ind.habitat for i, ind in self.individs.items()}
+                habs = np.array(ig(habs))
             else:
-                return ({i: ind.habitat[scape_num] for i, ind in self.individs.items() if i in individs})
+                habs = {i:ind.habitat[scape_num] for i, ind in self.individs.items()}
+                habs = np.array(ig(habs))
+        return(habs)
 
     def get_age(self, individs=None):
-        if individs != None:
-            return {k: ind.age for k, ind in self.individs.items() if k in individs}
+        if individs is None:
+            ages = np.array([ind.age for ind in self.individs.values()])
         else:
-            return {k: ind.age for k, ind in self.individs.items()}
+            ig = itemgetter(*individs)
+            ages = {i: ind.age for i, ind in self.individs.items()}
+            ages = np.array(ig(ages))
+        return(ages)
 
     def get_genotype(self, locus, return_format='mean', individs=None, by_dominance=False):
 
@@ -349,10 +353,13 @@ class Population:
 
     # convenience method for getting whole population's phenotype
     def get_phenotype(self, individs=None):
-        if individs != None:
-            return ({i: self.individs[i].phenotype for i in individs})
-        else:
-            return({i: v.phenotype for i,v in self.individs.items()})
+        if individs is None:
+            zs = np.array([ind.phenotype for ind in self.individs.values()])
+        else: 
+            ig = itemgetter(*individs)
+            zs = {i:ind.phenotype for i, ind in self.individs.items()}
+            zs = np.array(ig(zs))
+        return(zs)
 
     def get_fitness(self):
         return selection.get_fitness(self)
@@ -373,11 +380,13 @@ class Population:
             coords = ig(dict(zip(self.individs.keys(), coords)))
 
         if float == True:
-            return(np.float32(coords))
+            coords = np.float32(coords)
         elif float == False:
-            return(np.int8(coords))
+            coords = np.int8(coords)
         else:
             raise TypeError("'float' arugment must be of type Boolean")
+
+        return(coords)
             
             
     def get_cells(self, individs = None):
@@ -386,16 +395,13 @@ class Population:
   
 
     def get_x_coords(self, individs=None):
-        if individs != None:
-            return ({k: (float(ind.x)) for k, ind in self.individs.items() if k in individs})
-        else:
-            return ({k: (float(ind.x)) for k, ind in self.individs.items()})
+        coords = self.get_coords(individs = individs)
+        return(coords[:,0])
 
     def get_y_coords(self, individs=None):
-        if individs != None:
-            return ({k: (float(ind.y)) for k, ind in self.individs.items() if k in individs})
-        else:
-            return ({k: (float(ind.y)) for k, ind in self.individs.items()})
+        coords = self.get_coords(individs = individs)
+        return(coords[:,1])
+
 
     def show(self, land, scape_num=None, color='black', colorbar=True, markersize=25, im_interp_method='nearest',
              alpha=False):

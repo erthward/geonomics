@@ -366,10 +366,8 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
     ######Now implement deaths
 
-    #If with_selection = True, then use the d raster and individuals' relative fitnesses to calculate
+    #If with_selection = True, then use the d raster and individuals' fitnesses to calculate
     #per-individual probabilities of death
-    #NOTE: FOR NOW JUST USING A SINGLE LOCUS, BUT LATER NEED TO IMPLEMENT FOR AN ARBITRARY NUMBER OF LOCI, AND A MAP
-    #OF THOSE LOCI ONTO TRAITS
     if with_selection == True:
     
         #death_probs = selection.get_prob_death(pop, {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()})

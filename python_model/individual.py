@@ -93,7 +93,7 @@ class Individual:
 
     #set the individual's phenotype for all traits
     def set_phenotype(self, genomic_arch):
-        self.phenotype = [selection.calc_phenotype(self, genomic_arch, i) for i in list(genomic_arch.traits.keys())]
+        self.phenotype = [selection.calc_phenotype(self, genomic_arch, trait) for trait in genomic_arch.traits.values()]
 
     #set the individual's fitness
     def set_fitness(self, fit):

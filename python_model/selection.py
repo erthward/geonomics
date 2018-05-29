@@ -2,109 +2,55 @@
 
 import numpy as np
 from collections import OrderedDict as OD
+from itertools import repeat
 
 
 #Get the phenotypic values of all individuals for a given trait
 def calc_phenotype(ind, genomic_arch, trait):
 
-    #get the trait object
-    trait_obj = genomic_arch.traits[trait]
+    #get number of loci and their allelic effect sizes
+    n_loci = trait.n_loci
+    alpha = trait.alpha
 
-    n_loci = trait_obj.n
-    alpha = trait_obj.alpha
-
-    #for all individuals, multiply genotype by 2*alpha (because genotype is sum of 2 alleles, each with effect size alpha) 
-    #at all loci, sum across loci, then add to 0.5 (the null phenotypic value), yielding an array of all individuals' phenotypes
-        #NOTE: NO! That was a mistake to multiply alpha by 2 manually. 
-        #Because when I sum across axis 1, then individuals who homozygous 1 sum
-        #to 2, which is then multiplied by alpha accordingly. I think I was mistakenly 
-        #thinking that I was summing mean environmental values, i.e. 0.5's
-    #phenotypes = [(trait_obj.n > 1)*0.5 + sum(pop.individs[i].genome[trait_obj.loci,:].sum(axis = 1)*(trait_obj.alpha)) for i in inds]
-    phenotype = (n_loci > 1)*0.5 + sum(ind.genome[trait_obj.loci,:].sum(axis = 1) * ((alpha * (n_loci > 1)) + (0.5*(n_loci == 1))))
-        #NOTE: DEH 01-06-17: Replaced 0.5 with (trait_obj.n >1)*0.5 in the line above, so that for multigenic
-        #traits, 0.5 is treated as the mean phenotypic value to which positive or negative alpha deviations,
-        #whereas for monogenic traits a positive alpha effect is added to the default phenotypic value of 0
-
-    #TODO: THIS SEEMS TO BE PRODUCE STRANGELY RIGHT OR LEFT SHIFTED HISTOGRAMS OF PHENOTYPES WHEN I EXPECTED THEM
-    #TO BE CENTERED ON 0.5... GO THROUGH THE MATH SLOWLY AGAIN TO SEE IF THERE'S A BUG...
-        #NOTE: 01-06-17: NOPE, JUST BECAUSE OF SAMPLING OF ALPHAS, WHERE A FEW OUTLIERS HAVE AN OUTSIZE EFFECT ON THE PHENOTYPIC DIST
+    #if monogenic, then divide genotype by 2, 
+    #but if polygenic then multiply genotype by alpha (i.e. effect size) 
+    #at all loci, sum across loci, then add to 0.5 (the null phenotypic value)
+    phenotype = np.float32(ind.genome[trait.loci,:].sum(axis = 1))
+    if n_loci > 1:
+        phenotype = 0.5 + sum(phenotype*alpha)
+    else:
+        phenotype = phenotype[0]/2
 
     return(phenotype)
 
 
 
-
-##Get the phenotypic values of all individuals for a given trait
-#def get_phenotype(pop, trait):
-#
-#    #get list of individs' ids (to make sure they are correctly associated with phenotypes
-#    inds = list(pop.individs.keys())
-#
-#    #get the trait object
-#    trait_obj = pop.genomic_arch.traits[trait]
-#
-#    n_loci = trait_obj.n
-#    alpha = trait_obj.alpha
-#
-#    #for all individuals, multiply genotype by 2*alpha (because genotype is sum of 2 alleles, each with effect size alpha) 
-#    #at all loci, sum across loci, then add to 0.5 (the null phenotypic value), yielding an array of all individuals' phenotypes
-#        #NOTE: NO! That was a mistake to multiply alpha by 2 manually. 
-#        #Because when I sum across axis 1, then individuals who homozygous 1 sum
-#        #to 2, which is then multiplied by alpha accordingly. I think I was mistakenly 
-#        #thinking that I was summing mean environmental values, i.e. 0.5's
-#    #phenotypes = [(trait_obj.n > 1)*0.5 + sum(pop.individs[i].genome[trait_obj.loci,:].sum(axis = 1)*(trait_obj.alpha)) for i in inds]
-#    phenotypes = [(n_loci > 1)*0.5 + sum(pop.individs[i].genome[trait_obj.loci,:].sum(axis = 1) * ((alpha * (n_loci > 1)) + (0.5*(n_loci == 1)))) for i in inds]
-#        #NOTE: DEH 01-06-17: Replaced 0.5 with (trait_obj.n >1)*0.5 in the line above, so that for multigenic
-#        #traits, 0.5 is treated as the mean phenotypic value to which positive or negative alpha deviations,
-#        #whereas for monogenic traits a positive alpha effect is added to the default phenotypic value of 0
-#
-#    #TODO: THIS SEEMS TO BE PRODUCE STRANGELY RIGHT OR LEFT SHIFTED HISTOGRAMS OF PHENOTYPES WHEN I EXPECTED THEM
-#    #TO BE CENTERED ON 0.5... GO THROUGH THE MATH SLOWLY AGAIN TO SEE IF THERE'S A BUG...
-#        #NOTE: 01-06-17: NOPE, JUST BECAUSE OF SAMPLING OF ALPHAS, WHERE A FEW OUTLIERS HAVE AN OUTSIZE EFFECT ON THE PHENOTYPIC DIST
-#
-#    z = dict(zip(inds,phenotypes))
-#    return(z)
-#
-
-
-#NOTE: I HAVE A FEELING IF I THINK ABOUT THIS FUNCTION AND THE SERIES OF FUNCTIONS IN THIS MODULE THAT IT FITS
-      #INTO, THERE WOULD BE A GOOD WAY TO SPEED IT UP
-
-#TODO: DEH 01-11-18: Added ability to use spatially varying phenotypic selection coefficient, but curious if 
-#it would be faster to add a conditional check of whether or not a given trait's phi is a single value, and to
-#only calculate as phi[i]*(abs(hab[i][scape_num]... if it isn't??
-def get_fitness(pop, set_fit = False):
-    fit_dict = dict(zip(list(pop.individs.keys()),[1]*pop.census()))
-    hab = pop.get_habitat()
-    z = pop.get_phenotype()
-    for t,trt in pop.genomic_arch.traits.items():
-        phi = trt.get_phi(pop)
-        gamma = trt.fitness_fn_gamma
-        scape_num = trt.scape_num
-        univ_advant = trt.univ_advant
-        w = {i:1 - phi[i]*(abs((hab[i][scape_num]**(not univ_advant)) - z_val[t])**gamma) for i,z_val in z.items()}
-        fit_dict = {i : w_val *fit_dict[i] for i, w_val in w.items()}
-    if set_fit == True:
-        [pop.individs[i].set_fitness(fit) for i, fit in fit_dict.items()];
-    return(fit_dict)
-
-
-
-#NOTE: I HAVE A FEELING IF I THINK ABOUT THIS FUNCTION AND THE SERIES OF FUNCTIONS IN THIS MODULE THAT IT FITS
-      #INTO, THERE WOULD BE A GOOD WAY TO SPEED IT UP
 def get_single_trait_fitness(pop, trait):
     trt = pop.genomic_arch.traits[trait]
-    scape_num = trt.scape_num
+    scape_num = trait.scape_num
     hab = pop.get_habitat_by_land_ind(scape_num = scape_num)
-    trt = pop.genomic_arch.traits[trait]
-    phi = trt.get_phi(pop)
-    gamma = trt.fitness_fn_gamma
-    scape_num = trt.scape_num
+    phi = trait.get_phi(pop)
+    gamma = trait.gamma
+    scape_num = trait.scape_num
     z = pop.get_phenotype()
     univ_advant = trt.univ_advant
     w = {i:1 - phi[i]*(abs((hab[i]**(not univ_advant)) - z_val[trait])**gamma) for i,z_val in z.items()}
     return(w)
 
+def calc_sngl_trt_fitness(t, e, z, pop):
+    fit = 1 - t.get_phi(pop)*(abs((e[:,t.scape_num]**(not t.univ_advant)) - z[:,t.num])**t.gamma)
+    return(fit)
+
+def calc_fitness(pop, traits):
+    #get all individuals' environmental values
+    e = pop.get_habitat()
+    #get all individuals' phenotypes
+    z = pop.get_phenotype()
+    #create lambda function with current e, z, and pop objects
+    calc_fitness_lambda = lambda t: calc_sngl_trt_fitness(t, e, z, pop)
+    #map the calc_sngl_trait_fitness function to all traits
+    fit = np.stack(list(map(calc_fitness_lambda, traits))).prod(axis = 0)
+    return(fit)
 
 
 #Get the vector of mortalities (probabilies of death) for a given density-dependent Pr(death) at a cell, the

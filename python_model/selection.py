@@ -40,6 +40,8 @@ def get_fitness(pop, trait_num = None, set_fit = False):
     calc_fitness_lambda = lambda t: calc_fitness(t, e, z, pop)
     #map the calc_sngl_trait_fitness function to all traits
     fit = np.stack(list(map(calc_fitness_lambda, traits))).prod(axis = 0)
+    #for polygenic traits, loci with very large effect sizes can generate fitnesses less than 0; correct for this
+    fit = np.clip(fit, a_min = 0.001, a_max = None)
     #set individuals' fitness attributes, if indicated
     if set_fit:
         [ind.set_fitness(f) for f in fit];

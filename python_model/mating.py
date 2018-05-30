@@ -150,13 +150,15 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
             # binomial decision whether or not to mate with nearest male, as function of ratio: nn
             # distance/mating_radius
             mating_decisions = np.array([r.binomial(n=1, p=b) for p in 1 - (dists[available_pairs[:, 0]][:, 1] / mating_radius)]) == 1
-
         mating_pairs = available_pairs[mating_decisions]
 
-        # finally, link back to initially created structure, to get individuals' proper keys
-        keys = list(pop.individs.keys())
-        f = ig(*mating_pairs.flatten())
-        mates = np.array(f(keys)).reshape(mating_pairs.shape)
+        if mating_pairs.any():
+            # finally, link back to initially created structure, to get individuals' proper keys
+            keys = list(pop.individs.keys())
+            f = ig(*mating_pairs.flatten())
+            mates = np.array(f(keys)).reshape(mating_pairs.shape)
+        else:
+            mates = np.array([])
 
     else:
 

@@ -296,10 +296,15 @@ class Population:
 
     def set_habitat(self, land, individs = None):
         if individs is None:
-            individs = self.individs.keys()
-        ig = itemgetter(*individs)
-        hab = [[sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())] for ind in ig(self.individs)]
-        [ind.set_habitat(hab[n]) for n, ind in enumerate(ig(self.individs))]
+            inds_to_set = self.individs.values()
+        
+        else:
+            ig = itemgetter(*individs)
+            inds_to_set = ig(self.individs)
+            if type(inds_to_set) is individual.Individual:
+                inds_to_set = (inds_to_set,)
+       
+        hab = [ind.set_habitat([sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())]) for ind in inds_to_set]
         
 
     #method to set population's coords and cells arrays
@@ -368,7 +373,7 @@ class Population:
         plt.hist(list(selection.get_fitness(self).values()))
 
     def get_single_trait_fitness(self, trait):
-        return selection.get_single_trait_fitness(self, trait)
+        return selection.get_fitness(self, trait_num = trait)
 
     def get_dom(self, locus):
         return {locus: self.genomic_arch.h[locus]}
@@ -541,7 +546,7 @@ class Population:
         fit_vals = np.linspace(min_fit, 1, 50)
 
         # use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
-        markersize_differentials = {i: 3 * np.abs(fit_vals - w[i]).argmin() for i in self.individs.keys()}
+        markersize_differentials = {i: 3 * np.abs(fit_vals - w[n]).argmin() for n,i in enumerate(self.individs.keys())}
 
         data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], markersize_differentials[i]) for i in
                         self.individs.keys()}).values())

@@ -91,27 +91,32 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     ######calc num_pairs raster (use the calc_pop_density function on the centroids of the mating pairs)
     pairs = pop.find_mating_pairs(land, params)
 
-    pairs_coords = pop.get_coords(pairs.flatten())
-    p_x = pairs_coords[:,0].reshape(pairs.shape).mean(axis = 1) 
-    p_y = pairs_coords[:,1].reshape(pairs.shape).mean(axis = 1) 
+    if pairs.size > 0:
 
-    #use the Landscape_Stack.density_grid_stack to calculate a raster of the expected number of pairs
-    #NOTE: because the window_width of that object is much wider than mu_dispersal in the parameterizations
-    #I've typically been running, this produces much wider areas of high values in the 
-    #N_b, N_d, and hence d rasters than the old method did (which had its window_width set to mu_dispersal,
-    #leading of course to huge lags in the old calc_density algorithm)
-    #need to think about whether I need to attend to this, and if so, how
-    n_pairs = np.clip(land.density_grid_stack.calc_density(p_x, p_y), a_min = 0, a_max = None)
+        pairs_coords = pop.get_coords(pairs.flatten())
+        p_x = pairs_coords[:,0].reshape(pairs.shape).mean(axis = 1) 
+        p_y = pairs_coords[:,1].reshape(pairs.shape).mean(axis = 1) 
 
-    n_pairs[np.isnan(n_pairs)] = 0
-    assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())  
+        #use the Landscape_Stack.density_grid_stack to calculate a raster of the expected number of pairs
+        #NOTE: because the window_width of that object is much wider than mu_dispersal in the parameterizations
+        #I've typically been running, this produces much wider areas of high values in the 
+        #N_b, N_d, and hence d rasters than the old method did (which had its window_width set to mu_dispersal,
+        #leading of course to huge lags in the old calc_density algorithm)
+        #need to think about whether I need to attend to this, and if so, how
+        n_pairs = np.clip(land.density_grid_stack.calc_density(p_x, p_y), a_min = 0, a_max = None)
 
-    #NOTE: I anticipate that using mu_dispersal as the density-calculating window should produce a slightly more realistic expectation
-    #of the number of births per cell in a few steps; using max(1, mu_dispersal) to avoid
-    #window_lengths <1 (needlessly computationally expensive)
+        n_pairs[np.isnan(n_pairs)] = 0
+        assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())  
 
-    assert True not in np.isnan(n_pairs)
-    assert True not in np.isinf(n_pairs)
+        #NOTE: I anticipate that using mu_dispersal as the density-calculating window should produce a slightly more realistic expectation
+        #of the number of births per cell in a few steps; using max(1, mu_dispersal) to avoid
+        #window_lengths <1 (needlessly computationally expensive)
+
+        assert True not in np.isnan(n_pairs)
+        assert True not in np.isinf(n_pairs)
+    
+    else:
+        n_pairs = np.zeros(land.dims)
 
     if debug != None:
         fig = plt.figure()

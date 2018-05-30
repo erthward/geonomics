@@ -256,8 +256,8 @@ class Population:
         max normalized density value. 
         '''
 
-        x = list(self.get_x_coords().values())
-        y = list(self.get_y_coords().values())
+        x = self.get_x_coords()
+        y = self.get_y_coords()
 
         dens = land.density_grid_stack.calc_density(x, y)
 
@@ -361,8 +361,8 @@ class Population:
             zs = np.array(ig(zs))
         return(zs)
 
-    def get_fitness(self):
-        return selection.get_fitness(self)
+    def get_fitness(self, trait_num = None, set_fit = False):
+        return selection.get_fitness(self, trait_num = trait_num, set_fit = set_fit)
 
     def hist_fitness(self):
         plt.hist(list(selection.get_fitness(self).values()))
@@ -381,10 +381,8 @@ class Population:
 
         if float == True:
             coords = np.float32(coords)
-        elif float == False:
-            coords = np.int8(coords)
         else:
-            raise TypeError("'float' arugment must be of type Boolean")
+            coords = np.int8(coords)
 
         return(coords)
             

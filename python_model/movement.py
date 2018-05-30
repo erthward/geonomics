@@ -49,15 +49,13 @@ s_vonmises.b = np.inf
 def move(pop, land, params):
     
     #get individuals' ids
-    ids = pop.individs.keys()
+    #ids = pop.individs.keys()
     #plug them into an itemgetter
-    ind_ig = itemgetter(*ids)
+    #ind_ig = itemgetter(*ids)
     #then use the itemgetter to get individuals' coordinates
-    old_x = np.array(ind_ig(pop.get_x_coords()))
-    old_y = np.array(ind_ig(pop.get_y_coords()))
+    old_x, old_y = [a.flatten() for a in np.split(pop.get_coords(), 2, axis = 1)]
     #and their cells (by rounding down to the int)
-    old_x_cells = np.int16(old_x)
-    old_y_cells = np.int16(old_y)
+    old_x_cells, old_y_cells = [a.flatten() for a in np.split(pop.get_cells(), 2, axis = 1)]
 
     # choose direction using movement surface, if applicable
     if params['movement_surf'] == True:
@@ -103,7 +101,7 @@ def move(pop, land, params):
     new_y = np.clip(new_y, a_min = 0, a_max = land.dims[0]-0.00001)
 
     #then feed the new locations into each individual's set_pos method
-    [ind.set_pos(new_x[n], new_y[n]) for n, ind in enumerate(ind_ig(pop.individs))]
+    [ind.set_pos(new_x[n], new_y[n]) for n, ind in enumerate(pop.individs.values())]
     #land.mating_grid.move(old_pos, new_pos, individual)
 
 

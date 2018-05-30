@@ -49,7 +49,7 @@ def calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic'):
 
 
 def kill(land, pop, params, death_probs):
-    deaths = np.array(list(death_probs.keys()))[np.bool8(r.binomial(n = 1, p = list(death_probs.values())))]
+    deaths = np.array(list(pop.individs.keys()))[np.bool8(r.binomial(n = 1, p = death_probs))]
     [land.mating_grid.remove(pop.individs[ind]) for ind in deaths]
     [pop.individs.pop(ind) for ind in deaths]
 
@@ -368,20 +368,18 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
     #If with_selection = True, then use the d raster and individuals' fitnesses to calculate
     #per-individual probabilities of death
-    if with_selection == True:
-    
-        #death_probs = selection.get_prob_death(pop, {i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()})
-        death_probs = selection.get_prob_death(pop, dict(zip(pop.individs.keys(), d[pop.cells[:,1], pop.cells[:,0]])))
+    death_probs = d[pop.cells[:,1], pop.cells[:,0]]
 
-    elif with_selection == False:
-        death_probs = OD({i:d[int(ind.y), int(ind.x)] for i, ind in pop.individs.items()})
-        assert np.alltrue(np.array(list(death_probs.values())) >= 0)
-        assert np.alltrue(np.array(list(death_probs.values())) <= 1)
+    if with_selection == True:
+        death_probs = selection.get_prob_death(pop, death_probs)
+
+    assert np.alltrue(death_probs >= 0)
+    assert np.alltrue(death_probs <= 1)
 
     
     if params['island_val'] > 0:
-        death_probs.update({i:1 for i,v in pop.get_habitat_by_land_ind(scape_num = land.n_island_mask_scape).items() if v})
-        num_killed_isle = len({i:1 for i,v in pop.get_habitat_by_land_ind(scape_num = land.n_island_mask_scape).items() if v})
+        death_probs[pop.get_habitat(scape_num = land.n_island_mask_scape)] = 1
+        num_killed_isle = np.sum(death_probs == 1)
         print('\n\tINDIVIDS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))
         
     

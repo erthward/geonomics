@@ -265,9 +265,6 @@ class Density_Grid:
 
 
     def calc_density(self, x, y):
-        #coerce x and y points of all individuals to arrays
-        x = np.array(x)
-        y = np.array(y)
 
         #determine the x and y cells within which each individual's x and y coordinates fall
         #(the self.x_edge and self.y_edge corrections determine the correct cells whether the grid includes cells

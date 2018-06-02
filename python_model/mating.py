@@ -174,8 +174,22 @@ def determine_num_births(num_pairs, params):
 
 
 # function for mating a chosen mating-pair
-def mate(pop, pair, params, n_offspring, gamete_recomb_paths):
-    offspring = []
+def mate_sngl_offspr(pop, pair, gamete_recomb_paths):
+    # generate a gamete for each member of mating pair
+    new_genome = np.vstack([pop.individs[ind].genome.flatten()[gamete_recomb_paths.pop()] for ind in pair]).T
+    #paths = [gamete_recomb_paths.pop() for i in range(2)]
+    #gametes = [gametogenesis.gametogenerate(pop.individs[i], paths.pop()) for i in pair]
+    # stack the gametes and transpose, to create the new individual's new_genome array
+    #new_genome = np.vstack(gametes).T
+    return(new_genome)
+
+
+
+# function for mating a chosen mating-pair
+def mate(pop, pair, n_offspring, gamete_recomb_paths):
+    offspring = [mate_sngl_offspr(pop, pair, [gamete_recomb_paths.pop() for _ in range(2)]) for off in range(n_offspring)]
+    return(offspring)
+    #offspring = []
     # NOTE: Subtracting 1 from the input lambda then
     # adding 1 to the resulting vector ensures that all pairs who were already determined to be giving birth
     # will have at least one offspring (i.e. prevents draws of 0); adding .000001 to the input lambda prevents
@@ -186,14 +200,15 @@ def mate(pop, pair, params, n_offspring, gamete_recomb_paths):
     # to parameterize it to be equivalent to a Poisson), but even still I would need to use the
     # (lambda-1) + 1 trick either way to avoid 0s, so that issue would remain; for now, minor, but should
     # come back and think the theoretical implications/justification for this
-    for n in range(n_offspring):
+    #for n in range(n_offspring):
         # generate a gamete for each member of mating pair
         # paths, gamete_recomb_paths = [gamete_recomb_paths[:,0], gamete_recomb_paths[:,1]], gamete_recomb_paths[:,2:]
-        paths = [gamete_recomb_paths.pop() for i in range(2)]
-        gametes = [gametogenesis.gametogenerate(pop.individs[i], paths.pop(), pop.genomic_arch.L) for i in pair]
+        #paths = [gamete_recomb_paths.pop() for i in range(2)]
+        #gametes = [gametogenesis.gametogenerate(pop.individs[i], paths.pop(), pop.genomic_arch.L) for i in pair]
         # stack the gametes and transpose, to create the new individual's new_genome array
-        new_genome = np.vstack((gametes[0], gametes[1])).T
+        #new_genome = np.vstack((gametes[0], gametes[1])).T
         # append the new_genome to the list of offspring
-        offspring.append(new_genome)
+        #offspring.append(new_genome)
 
-    return offspring
+
+ 

@@ -190,7 +190,7 @@ class Population:
                 gamete_recomb_paths, recombinants = (recombinants[0:n_gametes], recombinants[n_gametes:])
                 #gamete_recomb_paths, recombinants = [i.flatten() for i in np.hsplit(recombinants[:, 0:n_gametes], n_gametes)], recombinants[ :, n_gametes:]
                 
-                new_genomes = mating.mate(self, pair, params, n_offspring, gamete_recomb_paths)
+                new_genomes = mating.mate(self, pair, n_offspring, gamete_recomb_paths)
             
             offspring_key = next(reversed(self.individs)) + 1
             for n in range(n_offspring):
@@ -245,7 +245,7 @@ class Population:
         else:
             return (0)
 
-    def calc_density(self, land, normalize_by='none', min_0=True, max_1=False, max_val=None, set_N=False):
+    def calc_density(self, land, normalize_by= None, min_0=True, max_1=False, max_val=None, set_N=False):
 
         '''
         Calculate an interpolated raster of local population density, using the
@@ -261,7 +261,7 @@ class Population:
 
         dens = land.density_grid_stack.calc_density(x, y)
 
-        if normalize_by != 'none':
+        if normalize_by is not None:
 
             # if max_1 == True, set max_val to dens.max(), such that the density raster output will be normalized to
             # its own max, and thus vary between 0 and 1; else set to 1, and the output raster will vary between 0 and the current max value
@@ -275,13 +275,13 @@ class Population:
             norm_factor = max_val - dens.min()
             dens = (dens - dens.min()) / norm_factor
 
-        if min_0 == True:
+        if min_0:
             dens[dens < 0] = 0
 
-        if max_val != None:
+        if max_val is not None:
             dens[dens > max_val] = max_val
 
-        if set_N == True:
+        if set_N:
             self.set_N(landscape.Landscape(land.dims, dens))
 
         else:

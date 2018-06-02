@@ -9,6 +9,7 @@ from scipy import interpolate
 from scipy.spatial import cKDTree
 from sklearn.preprocessing import normalize
 from collections import OrderedDict as OD
+from operator import itemgetter
 
 import landscape
 import mating
@@ -50,7 +51,8 @@ def calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic'):
 
 def kill(land, pop, params, death_probs):
     deaths = np.array(list(pop.individs.keys()))[np.bool8(r.binomial(n = 1, p = death_probs))]
-    [land.mating_grid.remove(pop.individs[ind]) for ind in deaths]
+    ig = itemgetter(*deaths)
+    map(land.mating_grid.remove, ig(pop.individs))
     [pop.individs.pop(ind) for ind in deaths]
 
     return(len(deaths))
@@ -381,10 +383,15 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     assert np.alltrue(death_probs >= 0)
     assert np.alltrue(death_probs <= 1)
 
+    num_killed_age = 0
+    if params['max_age'] is not None:
+        death_probs[pop.get_age() > params['max_age']] = 1
+        num_killed_age = np.sum(death_probs == 1)
+        print('\n\tINDIVIDS DEAD OF OLD AGE: %i  (%0.3f%% of pop)\n' % (num_killed_age, num_killed_age/pop.Nt[::-1][0]))
     
     if params['island_val'] > 0:
         death_probs[pop.get_habitat(scape_num = land.n_island_mask_scape)] = 1
-        num_killed_isle = np.sum(death_probs == 1)
+        num_killed_isle = np.sum(death_probs == 1) - num_killed_age
         print('\n\tINDIVIDS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))
         
     
@@ -398,6 +405,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     #Feed the per-individual death probabilities into the kill function, which will probabilistically generate deaths
     #and cull those individuals, and will return the number of deaths
     num_deaths = kill(land, pop, params, death_probs)
+    pop.set_coords_and_cells()
     pop.n_deaths.append(num_deaths)
 
     print('\n\t%i individuals dead' % num_deaths)

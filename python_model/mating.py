@@ -32,6 +32,7 @@ from scipy.spatial import cKDTree
 import numpy as np
 import numpy.random as r
 from operator import itemgetter as ig
+from itertools import repeat, starmap
 
 import gametogenesis
 import genome
@@ -167,48 +168,30 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
     return(mates)   # Return an array or arrays, each inner array containing a mating-pair
 
 
-def determine_num_births(num_pairs, params):
+def determine_n_births(num_pairs, params):
     lambda_offspring = params['lambda_offspring']
     num_births = [r.poisson(lambda_offspring - 1 + .0001) + 1 for i in range(num_pairs)]
     return (num_births)
 
 
+
+
+
 # function for mating a chosen mating-pair
 def mate_sngl_offspr(pop, pair, gamete_recomb_paths):
-    # generate a gamete for each member of mating pair
+    # generate a gamete for each member of mating pair, stack, and transpose
     new_genome = np.vstack([pop.individs[ind].genome.flatten()[gamete_recomb_paths.pop()] for ind in pair]).T
-    #paths = [gamete_recomb_paths.pop() for i in range(2)]
-    #gametes = [gametogenesis.gametogenerate(pop.individs[i], paths.pop()) for i in pair]
-    # stack the gametes and transpose, to create the new individual's new_genome array
-    #new_genome = np.vstack(gametes).T
     return(new_genome)
 
-
+def mate_sngl_pair(pop, pair, n_offspring, recomb_paths):
+    offspring = [mate_sngl_offspr(pop, pair, [recomb_paths.pop() for _ in range(2)]) for off in range(n_offspring)]
+    return(offspring)
 
 # function for mating a chosen mating-pair
-def mate(pop, pair, n_offspring, gamete_recomb_paths):
-    offspring = [mate_sngl_offspr(pop, pair, [gamete_recomb_paths.pop() for _ in range(2)]) for off in range(n_offspring)]
-    return(offspring)
-    #offspring = []
-    # NOTE: Subtracting 1 from the input lambda then
-    # adding 1 to the resulting vector ensures that all pairs who were already determined to be giving birth
-    # will have at least one offspring (i.e. prevents draws of 0); adding .000001 to the input lambda prevents
-    # absolute fixation at 1 that results when input lambda is 0
-    # NOTE: This means that the deaths are actually not truly Poisson dispersed (actually underdispersed, I
-    # believe); I don't really see that this matters much, given that I don't even want to keep this simply
-    # a Poisson dist in the long-run (would rather change to neg binom, to allow overdispersion, with option
-    # to parameterize it to be equivalent to a Poisson), but even still I would need to use the
-    # (lambda-1) + 1 trick either way to avoid 0s, so that issue would remain; for now, minor, but should
-    # come back and think the theoretical implications/justification for this
-    #for n in range(n_offspring):
-        # generate a gamete for each member of mating pair
-        # paths, gamete_recomb_paths = [gamete_recomb_paths[:,0], gamete_recomb_paths[:,1]], gamete_recomb_paths[:,2:]
-        #paths = [gamete_recomb_paths.pop() for i in range(2)]
-        #gametes = [gametogenesis.gametogenerate(pop.individs[i], paths.pop(), pop.genomic_arch.L) for i in pair]
-        # stack the gametes and transpose, to create the new individual's new_genome array
-        #new_genome = np.vstack((gametes[0], gametes[1])).T
-        # append the new_genome to the list of offspring
-        #offspring.append(new_genome)
+def mate(pop, mating_pairs, n_offspring, recomb_paths):
+    pairs_paths = [[next(iter(recomb_paths)) for _ in range(2*n)] for n in n_offspring]
+    new_genomes = list(starmap(mate_sngl_pair, zip(repeat(pop), mating_pairs, n_offspring, pairs_paths)))
+    return(new_genomes)
 
-
+            
  

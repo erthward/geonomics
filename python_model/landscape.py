@@ -33,7 +33,7 @@ from operator import itemgetter as ig
 from scipy import interpolate
 from shapely import geometry as g
 
-import mating_grid
+#import mating_grid
 
 
 # ------------------------------------
@@ -107,7 +107,7 @@ class Landscape_Stack:
         self.n_movement_surf_surf = None
         self.density_grid_stack = None
         self.n_island_mask_scape = None
-        self.mating_grid = mating_grid.MatingGrid(params=params)
+        #self.mating_grid = mating_grid.MatingGrid(params=params)
 
     def show(self, scape_num=None, colorbar=True, im_interp_method='nearest', pop=False):
         if plt.get_fignums():

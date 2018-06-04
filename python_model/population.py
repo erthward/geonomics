@@ -169,29 +169,22 @@ class Population:
         sex = params['sex']
         repro_age = params['repro_age']
 
-        num_births = mating.determine_num_births(len(mating_pairs), params)
-        total_births = sum(num_births)
+        n_births = mating.determine_n_births(len(mating_pairs), params)
+        total_births = sum(n_births)
         self.n_births.append(total_births)
 
-        if not burn:
-            #recombinants = gametogenesis.recombine(self.genomic_arch.r_lookup, 2 * total_births)
-            recombinants = random.sample(self.genomic_arch.recomb_paths, 2 * total_births)
-
-        for pair in mating_pairs:
+        if burn == False:
+            recomb_paths = self.genomic_arch.recomb_paths.get(total_births*2)
+            new_genomes = mating.mate(self, mating_pairs, n_births, recomb_paths)
+        
+        for n_pair, pair in enumerate(mating_pairs):
 
             parent_centroid_x = (self.individs[pair[0]].x + self.individs[pair[1]].x)/2
             parent_centroid_y = (self.individs[pair[0]].y + self.individs[pair[1]].y)/2
 
-            n_offspring = num_births.pop()
+            n_offspring = n_births[n_pair]
             n_gametes = 2 * n_offspring
 
-            # gamete_recomb_paths, recombinants = recombinants[:,0:n_gametes], recombinants[:,n_gametes:]
-            if burn == False:
-                gamete_recomb_paths, recombinants = (recombinants[0:n_gametes], recombinants[n_gametes:])
-                #gamete_recomb_paths, recombinants = [i.flatten() for i in np.hsplit(recombinants[:, 0:n_gametes], n_gametes)], recombinants[ :, n_gametes:]
-                
-                new_genomes = mating.mate(self, pair, n_offspring, gamete_recomb_paths)
-            
             offspring_key = next(reversed(self.individs)) + 1
             for n in range(n_offspring):
 
@@ -205,10 +198,9 @@ class Population:
 
                 if burn == False:
                     if sex == True:
-                        self.individs[offspring_key] = individual.Individual(offspring_key, new_genomes[n], offspring_x, offspring_y,
-                                                                             offspring_sex, age)
+                        self.individs[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, offspring_sex, age)
                     else:
-                        self.individs[offspring_key] = individual.Individual(offspring_key, new_genomes[n], offspring_x, offspring_y, age)
+                        self.individs[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, age)
                
                     #set new individual's phenotype (won't be set during burn-in, becuase no genomes assigned)
                     self.individs[offspring_key].set_phenotype(self.genomic_arch)
@@ -221,8 +213,7 @@ class Population:
                     else:
                         self.individs[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y,
                                                                              age)
-                # self.individs[offspring_key] = ind
-                land.mating_grid.add(self.individs[offspring_key])
+                #land.mating_grid.add(self.individs[offspring_key])
 
                 offspring_key += 1
 
@@ -245,7 +236,7 @@ class Population:
         else:
             return (0)
 
-    def calc_density(self, land, normalize_by= None, min_0=True, max_1=False, max_val=None, set_N=False):
+    def calc_density(self, land, normalize_by= None, min_0=True, max_1=False, max_val=None, as_landscape = False, set_N=False):
 
         '''
         Calculate an interpolated raster of local population density, using the
@@ -281,11 +272,14 @@ class Population:
         if max_val is not None:
             dens[dens > max_val] = max_val
 
+        if as_landscape == True:
+            dens = landscape.Landscape(land.dims, dens)
+
         if set_N:
-            self.set_N(landscape.Landscape(land.dims, dens))
+            self.set_N(dens)
 
         else:
-            return (landscape.Landscape(land.dims, dens))
+            return (dens)
 
     # NOTE: DEH 01-11-18: Reformatting the habitat-getting approach
     # 1.) determined a 10x-faster way of setting hab vals of individs
@@ -619,8 +613,8 @@ class Population:
 
     def show_pop_growth(self, params):
         T = range(len(self.Nt))
-        x0 = params['N'] / self.K.raster.sum()
-        plt.plot(T, [demography.logistic_soln(x0, params['R'], t) * self.K.raster.sum() for t in T], color='red')
+        x0 = params['N'] / self.K.sum()
+        plt.plot(T, [demography.logistic_soln(x0, params['R'], t) * self.K.sum() for t in T], color='red')
         plt.plot(T, self.Nt, color='blue')
         plt.xlabel('t')
         plt.ylabel('N(t)')
@@ -657,7 +651,7 @@ def create_population(genomic_arch, land, params, burn=False):
         # use individual.create_individual to simulate individuals and add them to the population
         ind = individual.create_individual(idx = idx, genomic_arch = genomic_arch, dims = dims)
         individs[idx] = ind
-        land.mating_grid.add(ind)
+        #land.mating_grid.add(ind)
 
     pop = Population(N=N, individs=individs, genomic_arch=genomic_arch, size=size, T=T)
 

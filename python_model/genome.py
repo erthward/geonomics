@@ -24,6 +24,7 @@ Documentation:            URL
 
 import numpy as np    
 from numpy import random as r
+import random
 
 import bitarray
 import gametogenesis
@@ -56,6 +57,14 @@ class Trait:
         else:
             phi = get_phi(pop, self.phi)
         return(phi)
+
+
+class Recomb_Paths:
+    def __init__(self, recomb_paths):
+        self.recomb_paths = recomb_paths
+
+    def get(self, n):
+        return(random.sample(self.recomb_paths, n))
 
 
 class Genomic_Architecture:
@@ -122,7 +131,7 @@ class Genomic_Architecture:
 
     #method for creating and assigning the r_lookup attribute
     def create_recomb_paths(self):
-        self.recomb_paths = create_recomb_paths_bitarrays(self)
+        self.recomb_paths = Recomb_Paths(create_recomb_paths_bitarrays(self))
 
 
 

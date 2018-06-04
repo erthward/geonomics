@@ -52,7 +52,8 @@ def calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic'):
 def kill(land, pop, params, death_probs):
     deaths = np.array(list(pop.individs.keys()))[np.bool8(r.binomial(n = 1, p = death_probs))]
     ig = itemgetter(*deaths)
-    map(land.mating_grid.remove, ig(pop.individs))
+    #[land.mating_grid.remove(ind) for ind in ig(pop.individs)]
+    #list(map(land.mating_grid.remove, ig(pop.individs)));
     [pop.individs.pop(ind) for ind in deaths]
 
     return(len(deaths))
@@ -147,7 +148,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     ######calc N raster, set it as pop.N, then get it  
     #NOTE: 04/28/17 this way the N used to calculate density-dependent deaths this turn incorporates the babies born this turn, if births_before_deaths == True
     pop.calc_density(land, set_N = True)
-    N = pop.N.raster
+    N = pop.N
     assert N.min() >= 0
     assert True not in np.isnan(N)
     assert True not in np.isinf(N)
@@ -167,7 +168,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
 
     ######get K raster
-    K = pop.K.raster
+    K = pop.K
     #K[K==0]=1  #values of 0 produce np.inf by division, so must avoid this
     #NOTE: Plotted dNdt against N for different values of K, to see how strong density-dependent
     #selection would be for individs landing in lowest-K cells. 1 seemed still very strong, but a bit more
@@ -387,12 +388,12 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     if params['max_age'] is not None:
         death_probs[pop.get_age() > params['max_age']] = 1
         num_killed_age = np.sum(death_probs == 1)
-        print('\n\tINDIVIDS DEAD OF OLD AGE: %i  (%0.3f%% of pop)\n' % (num_killed_age, num_killed_age/pop.Nt[::-1][0]))
+        print('\n\tINDIVIDUALS DEAD OF OLD AGE: %i  (%0.3f%% of pop)\n' % (num_killed_age, num_killed_age/pop.Nt[::-1][0]))
     
     if params['island_val'] > 0:
         death_probs[pop.get_habitat(scape_num = land.n_island_mask_scape)] = 1
         num_killed_isle = np.sum(death_probs == 1) - num_killed_age
-        print('\n\tINDIVIDS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))
+        print('\n\tINDIVIDUALS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))
         
     
 

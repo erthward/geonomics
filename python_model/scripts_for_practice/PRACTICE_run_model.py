@@ -2,7 +2,7 @@ exec(open('./params.py', 'r').read())
 exec(open('./scripts_for_practice/PRACTICE_imports_and_reloads.py', 'r').read())
 exec(open('./scripts_for_practice/PRACTICE_create_land_genomic_arch_pop.py', 'r').read())
 
-pop.set_K(land.scapes[params['n_movement_surf_scape']])
+pop.set_K(land.scapes[params['n_movement_surf_scape']].raster)
 
 pop.genomic_arch.traits[0].s = 0.1
 

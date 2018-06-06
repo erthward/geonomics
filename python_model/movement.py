@@ -32,6 +32,7 @@ from scipy.stats import vonmises as s_vonmises
 import copy
 from operator import itemgetter
 from numba import jit
+from collections import Counter as C
 
 s_vonmises.a = -np.inf
 s_vonmises.b = np.inf
@@ -120,10 +121,7 @@ def move(pop, land, params):
 # lists) of the resulting lambda-function samplers
 
 def create_movement_surface(land, params, kappa=12, approx_len = 5000):
-    # queen_dirs = np.array([[5*pi/4, 3*pi/2, 7*pi/4],[pi, np.NaN, 0],[3*pi/4,pi/2,pi/4]])
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0], [3 * pi / 4, pi / 2, pi / 4]])
-
-    # support = np.linspace(s_vonmises.ppf(10e-13, 3, loc = 0), s_vonmises.ppf(1-10e-13, 3, loc = 0), 100000)
 
     # grab the correct landscape raster
     rast = land.scapes[params['n_movement_surf_scape']].raster.copy()
@@ -155,17 +153,16 @@ def create_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
     # when tested on neighborhoods that should generate bimodal distributions
     d = list(dirs.ravel())
     n = list(neigh.ravel())
-    # print(d)
-    # print(n)
     del d[4]
     del n[4]
     sum_n = float(sum(n))
     n = [i / sum_n for i in n]
     s_vonmises.a = -np.inf
     s_vonmises.b = np.inf
-    f = lambda: s_vonmises.rvs(kappa, loc=r.choice(d, 1, p=n), scale=1)
-    approx = np.array([f() for _ in range(approx_len)]).ravel()
-    #return (f)
+    loc_choices = r.choice(d, approx_len, replace = True, p = n)
+    loc_choices = list(C(loc_choices).items())
+    approx = np.hstack([s_vonmises.rvs(kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])
+    #approx = np.array([f() for _ in range(approx_len)]).ravel()
     return(approx)
 
 

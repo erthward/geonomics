@@ -24,6 +24,7 @@ Documentation:              URL
 
 import numpy as np
 import numpy.random as r
+import random
 from numpy import sin, cos, pi
 from numpy.random import vonmises as r_vonmises
 from numpy.random import lognormal, choice, gamma, wald
@@ -162,7 +163,6 @@ def create_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
     loc_choices = r.choice(d, approx_len, replace = True, p = n)
     loc_choices = list(C(loc_choices).items())
     approx = np.hstack([s_vonmises.rvs(kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])
-    #approx = np.array([f() for _ in range(approx_len)]).ravel()
     return(approx)
 
 
@@ -177,8 +177,7 @@ def plot_movement_surf_vectors(land, params, circle=False):
     # define inner function for plotting a single cell's average unit vector
     def plot_one_cell(i, j):
         # draw sample of angles from the Gaussian KDE representing the von mises mixture distribution (KDE)
-        # jason: changed from 1000 to 100
-        samp = np.array([land.movement_surf[i][j]() for n in range(100)])
+        samp = random.sample(list(land.movement_surf[i][j]), k = 100)
 
         # create lists of the x and y (i.e. cos and sin) components of each angle in the sample
         x_vects = cos(samp)

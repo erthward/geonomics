@@ -26,6 +26,7 @@ Documentation:        URL
 from scipy import interpolate
 import numpy as np
 import numpy.random as r
+import random
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from collections import Counter as C
@@ -183,7 +184,7 @@ class Landscape_Stack:
                         plt.colorbar(boundaries=np.linspace(0, 1, 51))
 
     def plot_movement_surf_vectors(self, params, circle=False):
-        if params['movement_surf'] == True and self.movement_surf != None:
+        if params['movement_surf'] == True and self.movement_surf is not None:
             import movement
             movement.plot_movement_surf_vectors(self, params, circle=circle)
         else:
@@ -214,7 +215,7 @@ class Landscape_Stack:
             return
         else:
             scape_num = params['n_movement_surf_scape']
-            v, a = np.histogram([[self.movement_surf[i][j]()][0] for n in range(7500)], bins=15)
+            v, a = np.histogram(r.choice(list(self.movement_surf[i][j]), replace = True, size = 7500), bins=15)
             v = v / float(v.sum())
             a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
             x = [np.cos(a[n]) * 0.5 for n in range(len(a))]

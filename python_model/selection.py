@@ -31,7 +31,7 @@ def get_fitness(pop, trait_num = None, set_fit = False):
     traits = pop.genomic_arch.traits.values()
     #subset for single trait, if indicated
     if trait_num is not None:
-        traits = [traits[trait_num]]
+        traits = [list(traits)[trait_num]]
     #get all individuals' environmental values
     e = pop.get_habitat()
     #get all individuals' phenotypes

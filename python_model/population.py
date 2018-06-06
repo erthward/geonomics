@@ -581,9 +581,9 @@ class Population:
         w = self.get_single_trait_fitness(trait)
 
         # use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
-        markersize_differentials = {i: 3 * np.abs(fit_vals - w[i]).argmin() for i in self.individs.keys()}
+        markersize_differentials = [3 * np.abs(fit_vals - w[i]).argmin() for i in range(self.census())]
 
-        z = {i:v[trait] for i,v in self.get_phenotype().items()}
+        z = [v[trait] for v in self.get_phenotype()]
 
         data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], z[i], markersize_differentials[i]) for i in
                         self.individs.keys()}).values())

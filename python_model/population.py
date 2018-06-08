@@ -585,8 +585,8 @@ class Population:
 
         z = [v[trait] for v in self.get_phenotype()]
 
-        data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], z[i], markersize_differentials[i]) for i in
-                        self.individs.keys()}).values())
+        data = list(OD({i: (c[n][0] - 0.5, c[n][1] - 0.5, w[n], z[n], markersize_differentials[n]) for n,i in
+                        enumerate(self.individs.keys())}).values())
 
         # separate colormap to color marker edges from black (fit = 1) to white (fit = 0) through red
         inside_marker_cmap = mpl.cm.get_cmap('RdYlGn')

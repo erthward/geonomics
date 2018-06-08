@@ -216,6 +216,11 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     #really slow to run, and at those cells where K ~= 0 it really won't make a difference how negative the
     #dNdt values there are, so the following line just makes this much simpler.
     dNdt = np.clip(dNdt, a_min = -1*N.max(), a_max = None)
+        #DEH 06-07-18: I haven't thought it through well enough to guarantee that this is the best way to handle
+        #NaNs and infs, but they at least result from division by 0 zero cells in the pop.K raster, so for now
+        #correcting them to the minimum val
+    dNdt[np.isnan(dNdt)] = -1*N.max()
+    dNdt[np.isinf(dNdt)] = -1*N.max()
 
     assert True not in np.isnan(dNdt)
     assert True not in np.isinf(dNdt), 'The following cells are infinite: \n\t%s' % str([i for i, n in enumerate(dNdt.ravel()) if np.isinf(n)])

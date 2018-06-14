@@ -157,10 +157,13 @@ def create_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
     del d[4]
     del n[4]
     sum_n = float(sum(n))
-    n = [i / sum_n for i in n]
+    if sum_n > 0:
+        n_probs = [i / sum_n for i in n]
+    else:
+        n_probs = [.125]*8
     s_vonmises.a = -np.inf
     s_vonmises.b = np.inf
-    loc_choices = r.choice(d, approx_len, replace = True, p = n)
+    loc_choices = r.choice(d, approx_len, replace = True, p = n_probs)
     loc_choices = list(C(loc_choices).items())
     approx = np.hstack([s_vonmises.rvs(kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])
     return(approx)

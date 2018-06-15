@@ -23,7 +23,6 @@ Documentation:        URL
 ##########################################
 '''
 
-from scipy import interpolate
 import numpy as np
 import numpy.random as r
 import random

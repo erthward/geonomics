@@ -92,7 +92,7 @@ params = {
 
 'n_movement_surf_scape' : 1,               #scape number to use as the movement surface
 
-'movement_surf_approx_len' : 1000,     #length of the lookup vectors (numpy arrays) used to approximate the VonMises mixture distributions at each cell
+'movement_surf_approx_len' : 7500,     #length of the lookup vectors (numpy arrays) used to approximate the VonMises mixture distributions at each cell
 
 'movement_surf_vonmises_kappa' : 2, #kappa value to use in the von Mises mixture distributions (KDEs) underlying resistance surface movement
 

@@ -97,7 +97,7 @@ def move(pop, land, params):
     #create the new locations by adding x- and y-dim line segments to their current positions, using trig
     new_x = old_x + cos(direction)*distance
     #and clip the values to be within the landscape dimensions
-        #NOTE: subtract a very small value to avoid having the dimension itself set as a coordinate, which rounds down to a cell id one beyond the largest cell id the landscape
+       #NOTE: subtract a very small value to avoid having the dimension itself set as a coordinate, which rounds down to a cell id one beyond the largest cell id the landscape
     new_x = np.clip(new_x, a_min = 0, a_max = land.dims[1]-0.00001) 
     new_y = old_y + sin(direction)*distance
     new_y = np.clip(new_y, a_min = 0, a_max = land.dims[0]-0.00001)
@@ -161,8 +161,8 @@ def create_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
         n_probs = [i / sum_n for i in n]
     else:
         n_probs = [.125]*8
-    s_vonmises.a = -np.inf
-    s_vonmises.b = np.inf
+    #s_vonmises.a = -np.inf
+    #s_vonmises.b = np.inf
     loc_choices = r.choice(d, approx_len, replace = True, p = n_probs)
     loc_choices = list(C(loc_choices).items())
     approx = np.hstack([s_vonmises.rvs(kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])

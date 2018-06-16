@@ -85,15 +85,3 @@ def mutate(pop, log = False):
         print('MUTATION:\n\t INDIVIDUAL %i,  LOCUS %i\n\t timestep %i\n\n' % (ind, loc, pop.t))
         print('#\n#\n#\n#\n#\n#\n#\n')
 
-
-       
-        
-
-
-
-#NOTE: write a function that allows user to INTENTIONALLY introduce a mutation
-def introduce_mutation(pop):
-    pass
-
-
-

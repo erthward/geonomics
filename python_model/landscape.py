@@ -123,11 +123,10 @@ class Landscape_Stack:
                 cmap.set_under(color='black')
                 vmin = 1e-7
 
-            if pop:
-                plt.imshow(self.scapes[scape_num].raster, interpolation=im_interp_method, cmap=cmap, vmin=vmin)
-            else:
-                plt.imshow(np.flipud(self.scapes[scape_num].raster), interpolation=im_interp_method, cmap=cmap,
-                           vmin=vmin)
+            #if pop:
+            plt.imshow(self.scapes[scape_num].raster, interpolation=im_interp_method, cmap=cmap, vmin=vmin)
+            #else:
+                #plt.imshow(np.flipud(self.scapes[scape_num].raster), interpolation=im_interp_method, cmap=cmap, vmin=vmin)
 
             if colorbar:
                 if self.scapes[scape_num].raster.max() > 1:

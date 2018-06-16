@@ -424,19 +424,4 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
 
     return(extinct)
-    #If burn_in == True:
-    #if burn_in == True:
-    #    pass
-        #Update pop.K
-        #Run the burn_in functions to update the running metrics, and assess stationarity, and return decision
-        #of whether or not stationarity has been achieved
-
-        #return decision
-        
-    #Else exit
-    #else:
-        #pass
-
-
-
 

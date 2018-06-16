@@ -180,7 +180,7 @@ def plot_movement_surf_vectors(land, params, circle=False):
     # define inner function for plotting a single cell's average unit vector
     def plot_one_cell(i, j):
         # draw sample of angles from the Gaussian KDE representing the von mises mixture distribution (KDE)
-        samp = random.sample(list(land.movement_surf[i][j]), k = 100)
+        samp = list(land.movement_surf[i,j,:])
 
         # create lists of the x and y (i.e. cos and sin) components of each angle in the sample
         x_vects = cos(samp)
@@ -214,10 +214,6 @@ def plot_movement_surf_vectors(land, params, circle=False):
 
     # call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
     [[plot_one_cell(i, j) for i in range(len(land.movement_surf))] for j in range(len(land.movement_surf[0]))]
-
-
-
-
 
 
 def plot_scaling_random_choice_with_array_size():

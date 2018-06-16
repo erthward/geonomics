@@ -55,7 +55,7 @@ class Trait:
         if type(self.phi) in (float, int):
             phi = np.array([self.phi]*pop.census())
         else:
-            phi = get_phi(pop, self.phi)
+            phi = self.phi[pop.cells[:,1], pop.cells[:,0]]
         return(phi)
 
 
@@ -403,20 +403,6 @@ def reassign_genomes(pop, params):
         pop.individs[ind].genome = sim_genome(pop.genomic_arch)
 
        
-
-
-
-#function for getting phi when it is spatially variable
-def get_phi(pop, phi_rast):
-    phi = phi_rast[pop.cells[:,1], pop.cells[:,0]]
-    return(phi)
-
-
-
-
-
-
-
 #method for loading a pickled genomic architecture
 def load_pickled_genomic_arch(filename):
     import cPickle
@@ -424,6 +410,4 @@ def load_pickled_genomic_arch(filename):
         genomic_arch = cPickle.load(f)
 
     return genomic_arch
-
-
 

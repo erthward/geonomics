@@ -45,7 +45,6 @@ from collections import Counter as C
 from collections import OrderedDict as OD
 from operator import itemgetter
 from operator import attrgetter
-
 import sys
 
 
@@ -620,7 +619,7 @@ class Population:
         plt.ylabel('N(t)')
 
     # method to plot (or add to an open plot) individuals' IDs
-    def plot_ind_ids(self):
+    def show_ind_ids(self):
         [plt.text(v[0] - 0.5, v[1] - 0.5, i) for i, v in dict(zip(self.individs.keys(), self.get_coords()))]
 
     def pickle(self, filename):

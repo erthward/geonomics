@@ -56,36 +56,41 @@ def watch_movement(pop, land, scape_num, num_timesteps, params = None, mu_direct
         return None
 
     #if a params dictionary was fed in, copy it as toy_params
-    if params != None:
+    if params is not None:
         toy_params = copy.deepcopy(params)
 
 
+        toy_m_params = toy_params['pop']['movement']
         #then override existing values in params dictionary, if a new value has been entered for trial
         if mu_direction != None:
-            toy_params['mu_direction'] = mu_direction
+            toy_m_params['mu_direction'] = mu_direction
         if kappa_direction != None:
-            toy_params['kappa_direction'] = kappa_direction
+            toy_m_params['kappa_direction'] = kappa_direction
         if mu_distance  != None:
-            toy_params['mu_distance'] = mu_distance 
+            toy_m_params['mu_distance'] = mu_distance 
         if sigma_distance != None:
-            toy_params['sigma_distance'] = sigma_distance
+            toy_m_params['sigma_distance'] = sigma_distance
         if movement_surf != None:
-            toy_params['movement_surf'] = movement_surf
+            toy_m_params['movement_surf'] = movement_surf
+
+        toy_params['pop']['movement'] = toy_m_params
 
 
     #if no params dictionary provided, create toy_params from the individual parameter values that were fed in
-    elif params == None:
-        toy_params = {}
-        toy_params['mu_direction'] = mu_direction
-        toy_params['kappa_direction'] = kappa_direction
-        toy_params['mu_distance'] = mu_distance 
-        toy_params['sigma_distance'] = sigma_distance
+    elif params is None:
+        toy_m_params = {}
+        toy_m_params['mu_direction'] = mu_direction
+        toy_m_params['kappa_direction'] = kappa_direction
+        toy_m_params['mu_distance'] = mu_distance 
+        toy_m_params['sigma_distance'] = sigma_distance
         if movement_surf != None:
-            toy_params['movement_surf'] = movement_surf
+            toy_m_params['movement_surf'] = movement_surf
         elif land.movement_surf == None:
-            toy_params['movement_surf'] = False
+            toy_m_params['movement_surf'] = False
         else:
-            toy_params['movement_surf'] = True
+            toy_m_params['movement_surf'] = True
+
+        toy_params = {'pop':{'movement':toy_m_params}}
 
 
 
@@ -127,12 +132,4 @@ def watch_movement(pop, land, scape_num, num_timesteps, params = None, mu_direct
         else:
             mpl.pyplot.plot((old_x, new_x), (old_y, new_y), '-', scalex = False, scaley = False, 
             linewidth = linewidths[t], color = color, alpha = 0.5)
-
-
-
-
-
-
-
-   
 

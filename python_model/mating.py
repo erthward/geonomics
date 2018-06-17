@@ -47,13 +47,13 @@ import genome
 # FUNCTIONS -----------------------
 # ----------------------------------
 
-def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_birth=False):
-    b = params['b']
-    mating_radius = params['mating_radius']
-    if 'sex' in params.keys():
-        sex = params['sex']
-    if 'repro_age' in params.keys():
-        repro_age = params['repro_age']
+def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=False):
+    b = pop.b
+    mating_radius = pop.mating_radius
+    if 'sex' in pop.__dict__.keys():
+        sex = pop.sex
+    if 'repro_age' in pop.__dict__.keys():
+        repro_age = pop.repro_age
 
     # NOTE: In an IDEAL world, this would work as follows:
     # for all individuals, find set of nearest neighbors (excluding selves)
@@ -168,9 +168,8 @@ def find_mates(pop, params, land=None, sex=False, repro_age=None, dist_weighted_
     return(mates)   # Return an array or arrays, each inner array containing a mating-pair
 
 
-def determine_n_births(num_pairs, params):
-    lambda_offspring = params['lambda_offspring']
-    num_births = [r.poisson(lambda_offspring - 1 + .0001) + 1 for i in range(num_pairs)]
+def determine_n_births(num_pairs, n_births_lambda):
+    num_births = [r.poisson(n_births_lambda - 1 + .0001) + 1 for i in range(num_pairs)]
     return (num_births)
 
 

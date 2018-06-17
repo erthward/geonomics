@@ -104,7 +104,7 @@ class Landscape_Stack:
         self.dim_om = max([len(str(d)) for d in self.dims]) #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
         self.movement_surf = None
         self.movement_surf_approx_len = None
-        self.n_movement_surf_surf = None
+        self.movement_surf_scape_num = None
         self.density_grid_stack = None
         self.n_island_mask_scape = None
         #self.mating_grid = mating_grid.MatingGrid(params=params)
@@ -182,9 +182,9 @@ class Landscape_Stack:
                         plt.colorbar(boundaries=np.linspace(0, 1, 51))
 
     def plot_movement_surf_vectors(self, params, circle=False):
-        if params['movement_surf'] == True and self.movement_surf is not None:
+        if params['land']['movement_surf'] == True and self.movement_surf is not None:
             import movement
-            movement.plot_movement_surf_vectors(self, params, circle=circle)
+            movement.plot_movement_surf_vectors(self, self.movement_surf_scape_num, circle=circle)
         else:
             print('\n\nThis Landscape_Stack appears to have no movement surface.\n\n')
             pass
@@ -194,7 +194,7 @@ class Landscape_Stack:
             print('This landscape stack appears to have no movement surface layer. Function not valid.')
             return
         else:
-            scape_num = params['n_movement_surf_scape']
+            scape_num = self.movement_surf_scape_num
             pts = [(np.cos(a), np.sin(a)) for a in [self.movement_surf[i][j]()[0] for n in range(1000)]]
             plt.scatter([pt[0] * 0.5 + i for pt in pts], [pt[1] * 0.5 + j for pt in pts], color='red', alpha=0.2)
             self.scapes[scape_num].zoom(max(i - 10, 0), min(i + 10, self.dims[0]), max(j - 10, 0),
@@ -212,7 +212,7 @@ class Landscape_Stack:
             print('This landscape stack appears to have no movement surface layer. Function not valid.')
             return
         else:
-            scape_num = params['n_movement_surf_scape']
+            scape_num = land.movement_surf_scape_num
             v, a = np.histogram(r.choice(list(self.movement_surf[i][j]), replace = True, size = 7500), bins=15)
             v = v / float(v.sum())
             a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
@@ -327,6 +327,13 @@ class Density_Grid_Stack:
         return(dens)
 
 
+class Movement_Surface:
+    def __init__(self, movement_surf, scape_num):
+        self.movement_surf = movement_surf
+        self.scape_num = scape_num
+
+    def get(x, y, z):
+        return(self.movement_surf[y, x, z])
 
 
 # --------------------------------------
@@ -407,22 +414,22 @@ def build_scape_stack(params, num_hab_types=2):
 
     # grab necessary parameters from the params dict
 
-    if params['num_scapes'] == None:
+    if params['land']['num_scapes'] == None:
         num_scapes = 1
     else:
-        num_scapes = params['num_scapes']
+        num_scapes = params['land']['num_scapes']
 
-    if params['interp_method'] == None:
+    if params['land']['interp_method'] == None:
         interp_method = ['cubic'] * num_scapes
     else:
-        interp_method = params['interp_method']
+        interp_method = params['land']['interp_method']
 
-    dims = params['dims']
+    dims = params['land']['dims']
 
-    # create rasters for random landscape, if params['rand_land'] == True
-    if params['rand_land']:
+    # create rasters for random landscape, if params['land']['rand_land'] == True
+    if params['land']['rand_land']:
 
-        n_rand_pts = params['n_rand_pts']
+        n_rand_pts = params['land']['n_rand_pts']
 
         # if only a single integer provided for n_rand_pts, then use that for all landscape layers (i.e. scale of
         # spatial heterogeneity will be roughly equal for all layers); otherwise, a list or tuple of n_rand_pts could
@@ -430,75 +437,72 @@ def build_scape_stack(params, num_hab_types=2):
         if type(n_rand_pts) == int:
             n_rand_pts = [n_rand_pts] * num_scapes
 
-        land = Landscape_Stack(
-            [random_surface(dims, n_rand_pts[n], interp_method=interp_method[n], num_hab_types=num_hab_types) for n in
-             range(num_scapes)], params=params)
+        land = Landscape_Stack( [random_surface(dims, n_rand_pts[n], interp_method=interp_method[n], num_hab_types=num_hab_types) for n in range(num_scapes)], params=params)
 
-    # or create rasters for defined landscape, if params['rand_land'] == False
-    elif not params['rand_land']:
+    # or create rasters for defined landscape, if params['land']['rand_land'] == False
+    elif not params['land']['rand_land']:
 
         # get pts
-        pts = params['landscape_pt_coords']
+        pts = params['land']['landscape_pt_coords']
         # if only a single array of pts provided, multiply them into a list to use for each separate landscape layer
         if type(pts) == np.ndarray:
             pts = [pts] * num_scapes
 
         # get vals
-        vals = params['landscape_pt_vals']
+        vals = params['land']['landscape_pt_vals']
 
         land = Landscape_Stack(
             [defined_surface(dims, pts[n], vals[n], interp_method=interp_method[n], num_hab_types=num_hab_types) for n
              in range(num_scapes)])
 
-    # if params['island_val'] > 0, then use the movement_surf raster to create T/F mask-raster, added as an
+    # if params['islands']['island_val'] > 0, then use the movement_surf raster to create T/F mask-raster, added as an
     # additional landscape, to be used to kill all individuals straying off 'islands'
 
     #create the land.density_grid_stack object
-    if params['density_grid_window_width'] != None:
-        land.density_grid_stack = Density_Grid_Stack(land, window_width = params['density_grid_window_width'])
+    if params['land']['density_grid_window_width'] != None:
+        land.density_grid_stack = Density_Grid_Stack(land, window_width = params['land']['density_grid_window_width'])
     else:
         land.density_grid_stack = Density_Grid_Stack(land)
 
     # create a movement surface, if params call for it
     # NOTE: THIS WILL TAKE A WHILE TO COMPUTER UP-FRONT!
-    if params['movement_surf']:
+    if params['land']['movement_surf']['movement_surf']:
 
-        land.n_movement_surf_scape = params['n_movement_surf_scape']
-        land.movement_surf_approx_len = params['movement_surf_approx_len']
+        land.movement_surf_scape_num = params['land']['movement_surf']['movement_surf_scape_num']
+        land.movement_surf_approx_len = params['land']['movement_surf']['movement_surf_approx_len']
 
-        if params['islands']:
+        if params['land']['islands']['islands']:
 
-            if params['island_val'] > 0:
-                iv = params['island_val']
+            if params['land']['islands']['island_val'] > 0:
+                iv = params['land']['islands']['island_val']
 
                 # zero out the appropriate parts of the movement raster
-                movement_rast = land.scapes[land.n_movement_surf_scape].raster
+                movement_rast = land.scapes[land.movement_surf_scape_num].raster
                 # zero out the appropriate parts of the movement raster (but not exactly 0, because
                 # creates division-by-zero problems in the pop_dynamics calculations)
                 movement_rast[movement_rast < iv] = 1e-8
 
 
-            elif 'island_mask' in params.keys() and params['island_mask'] != None:
-                im_file = params['island_mask']
+            elif 'island_mask' in params['land']['islands'].keys() and params['land']['islands']['island_mask'] is not None:
+                im_file = params['land']['islands']['island_mask']
                 ma = np.loads(im_file)
                 assert type(
-                    ma) == np.ndarray, "The pickled file located at the path provided in params['island_mask'] does " \
-                                       "not appear to be a numpy ndarray. "
+                    ma) == np.ndarray, "The pickled file located at the path provided in params['land']['islands']['island_mask'] does not appear to be a numpy ndarray. "
 
                 # get the movement raster scape number
-                movement_rast = land.scapes[land.n_movement_surf_scape].raster
+                movement_rast = land.scapes[land.movement_surf_scape_num].raster
                 # zero out the appropriate parts of the movement raster (but not exactly 0, because
                 # creates division-by-zero problems in the pop_dynamics calculations)
                 movement_rast[ma == 0] = 1e-8
 
             # replace the movement_surf_scape raster with the updated raster with all outside-habitat values set to 1e-8
-            land.scapes[land.n_movement_surf_scape].raster = movement_rast
+            land.scapes[land.movement_surf_scape_num].raster = movement_rast
             # set the Landscape.mask_island_vals flag on the movement surf to True, for plotting purposes
-            land.scapes[land.n_movement_surf_scape].mask_island_vals = True
+            land.scapes[land.movement_surf_scape_num].mask_island_vals = True
 
             # then create an island mask and add as the last landscape (to use to quickly cull individuals outside
             # the 'islands')
-            island_mask = create_island_mask(dims, land.scapes[land.n_movement_surf_scape].raster)
+            island_mask = create_island_mask(dims, land.scapes[land.movement_surf_scape_num].raster)
             island_mask.island_mask = True  # set Lanscape.island_mask attribute to True
             land.scapes[land.n_scapes] = island_mask  # set as the last scape
             land.n_island_mask_scape = land.n_scapes  # the Landscape_Stack n_island_mask_scape attribute to last scape num
@@ -506,7 +510,7 @@ def build_scape_stack(params, num_hab_types=2):
 
         # create the movement surface, and set it as the land.movement_surf attribute
         import movement
-        land.movement_surf = movement.create_movement_surface(land, params, approx_len = land.movement_surf_approx_len)
+        land.movement_surf = movement.create_movement_surface(land, approx_len = land.movement_surf_approx_len)
 
     return land
 

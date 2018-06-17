@@ -56,9 +56,7 @@ import sys
 class Population:
     '''Population(self, N, individs, genomic_arch, size, birth_rate = None, death_rate = None, T = None)'''
 
-    def __init__(self, N, individs, genomic_arch, size, T):
-
-        self.T = T
+    def __init__(self, p_params, individs, genomic_arch):
 
         self.it = None  # attribute to keep track of iteration number this pop is being used for
         # (optional; will be set by the iteration.py module if called)
@@ -66,6 +64,12 @@ class Population:
         self.t = 0  # attribute to keep of track of number of timesteps the population has evolved
         # NOTE: This way, if model is stopped, changes are made, then it is run further,
         # this makes it easy to continue tracking from the beginning
+
+        for att in p_params['main'].keys():
+            setattr(self, att, p_params['main'][att])
+
+        for att in p_params['movement'].keys():
+            setattr(self, att, p_params['movement'][att])
 
         self.N = None  # attribute to hold a landscape.Landscape object of the current population density
 
@@ -85,15 +89,6 @@ class Population:
         #attributes for storing numpy arrays of all individuals' coordinates and cells, to avoid repeat compute time each turn
         self.coords = None
         self.cells = None
-
-        if size.__class__.__name__ in ['float', 'int'] and T != None:
-            self.size = [size] * T
-        elif size.__class__.__name__ in ['list']:
-            assert T != None and len(
-                size) == T, "if expressing population size as a list, total model runtime must be provided and must equal the list length"
-            self.size = size
-        else:
-            self.size = size
 
         self.genomic_arch = genomic_arch
         # Add other demographic parameters?? Other stuff in general??
@@ -147,28 +142,22 @@ class Population:
             self.t += 1
 
     # method to move all individuals simultaneously, and sample their new habitats
-    def move(self, land, params):
-        movement.move(self, land, params)
+    def move(self, land):
+        movement.move(self, land)
         self.set_habitat(land)
         self.set_coords_and_cells()
 
 
     # function for finding all the mating pairs in a population
-    def find_mating_pairs(self, land, params):
+    def find_mating_pairs(self, land):
 
-        mating_pairs = mating.find_mates(self, params, land)
+        mating_pairs = mating.find_mates(self, land)
         return (mating_pairs)
 
     # function for executing mating for a population
-    def mate(self, land, params, mating_pairs, burn=False):
+    def mate(self, land, mating_pairs, burn=False):
 
-        # pull necessary parameters from params dict
-        mu_dispersal = params['mu_dispersal']
-        sigma_dispersal = params['sigma_dispersal']
-        sex = params['sex']
-        repro_age = params['repro_age']
-
-        n_births = mating.determine_n_births(len(mating_pairs), params)
+        n_births = mating.determine_n_births(len(mating_pairs), self.n_births_lambda)
         total_births = sum(n_births)
         self.n_births.append(total_births)
 
@@ -187,16 +176,15 @@ class Population:
             offspring_key = next(reversed(self.individs)) + 1
             for n in range(n_offspring):
 
-                offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal,
-                                                              sigma_dispersal)
+                offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y, self.mu_dispersal, self.sigma_dispersal)
 
-                if sex == True:
+                if self.sex:
                     offspring_sex = r.binomial(1, 0.5)
 
                 age = 0
 
                 if burn == False:
-                    if sex == True:
+                    if self.sex == True:
                         self.individs[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, offspring_sex, age)
                     else:
                         self.individs[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, age)
@@ -205,10 +193,9 @@ class Population:
                     self.individs[offspring_key].set_phenotype(self.genomic_arch)
 
 
-                elif burn == True:
-                    if sex == True:
-                        self.individs[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y,
-                                                                             offspring_sex, age)
+                elif burn:
+                    if self.sex == True:
+                        self.individs[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y, offspring_sex, age)
                     else:
                         self.individs[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y,
                                                                              age)
@@ -612,8 +599,8 @@ class Population:
 
     def show_pop_growth(self, params):
         T = range(len(self.Nt))
-        x0 = params['N'] / self.K.sum()
-        plt.plot(T, [demography.logistic_soln(x0, params['R'], t) * self.K.sum() for t in T], color='red')
+        x0 = self.N_start / self.K.sum()
+        plt.plot(T, [demography.logistic_soln(x0, self.R, t) * self.K.sum() for t in T], color='red')
         plt.plot(T, self.Nt, color='blue')
         plt.xlabel('t')
         plt.ylabel('N(t)')
@@ -636,13 +623,7 @@ class Population:
 def create_population(genomic_arch, land, params, burn=False):
     # grab necessary params from params dict
 
-    N = params['N']
-
-    dims = params['dims']
-
-    size = params['size']
-
-    T = params['T']
+    dims = land.dims
 
     assert dims.__class__.__name__ in ['tuple', 'list'], "dims should be expressed as a tuple or a list"
     individs = OD()
@@ -652,7 +633,7 @@ def create_population(genomic_arch, land, params, burn=False):
         individs[idx] = ind
         #land.mating_grid.add(ind)
 
-    pop = Population(N=N, individs=individs, genomic_arch=genomic_arch, size=size, T=T)
+    pop = Population(p_params = params['pop'],  individs=individs, genomic_arch=genomic_arch)
 
     #set initial habitat values
     pop.set_habitat(land)

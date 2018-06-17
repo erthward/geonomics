@@ -42,7 +42,7 @@ def calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic'):
     #NOTE: For now this is the only option and the default, but could easily offer other equations later if desired
     if pop_growth_eq == 'logistic':
         #use logistic eqxn, with pop intrinsic growth rate from params['r'], to generate current growth-rate raster
-        dNdt = logistic_eqxn(params['R'], N, K)
+        dNdt = logistic_eqxn(params['pop']['R'], N, K)
     
     return(landscape.Landscape(dims, dNdt))
 
@@ -253,7 +253,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
         #NOTE: Currently, birth rate is intrinsic to the species and cannot be made a function of density or
         #spatial fitness. Might be worth adding this at some point in the future though.
-    N_b = params['b'] * params['lambda_offspring'] * n_pairs
+    N_b = params['pop']['b'] * params['pop']['lambda_offspring'] * n_pairs
     assert N_b.min() >= 0
     assert True not in np.isnan(N_b)
     assert True not in np.isinf(N_b)
@@ -309,8 +309,8 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     d[np.isnan(d)] = 0
     d[d<0] = 0
     #constrain to the min and max d values
-    d_min = params['d_min']
-    d_max = params['d_max']
+    d_min = params['pop']['d_min']
+    d_max = params['pop']['d_max']
     d[d<d_min] = d_min
     d[d>d_max] = d_max
 
@@ -390,12 +390,12 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     assert np.alltrue(death_probs <= 1)
 
     num_killed_age = 0
-    if params['max_age'] is not None:
-        death_probs[pop.get_age() > params['max_age']] = 1
+    if params['pop']['max_age'] is not None:
+        death_probs[pop.get_age() > params['pop']['max_age']] = 1
         num_killed_age = np.sum(death_probs == 1)
         print('\n\tINDIVIDUALS DEAD OF OLD AGE: %i  (%0.3f%% of pop)\n' % (num_killed_age, num_killed_age/pop.Nt[::-1][0]))
     
-    if params['island_val'] > 0:
+    if params['land']['islands']['islands'] and params['land']['islands']['island_val'] > 0:
         death_probs[pop.get_habitat(scape_num = land.n_island_mask_scape)] = 1
         num_killed_isle = np.sum(death_probs == 1) - num_killed_age
         print('\n\tINDIVIDUALS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))

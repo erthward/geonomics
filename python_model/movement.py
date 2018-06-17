@@ -48,22 +48,15 @@ s_vonmises.b = np.inf
 # FUNCTIONS ---------------------------
 # --------------------------------------
 
-def move(pop, land, params):
+def move(pop, land):
     
-    #get individuals' ids
-    #ids = pop.individs.keys()
-    #plug them into an itemgetter
-    #ind_ig = itemgetter(*ids)
-    #then use the itemgetter to get individuals' coordinates
+    #get individuals' coordinates (soon to be their old coords, so 'old_x' and 'old_y')
     old_x, old_y = [a.flatten() for a in np.split(pop.get_coords(), 2, axis = 1)]
-    #and their cells (by rounding down to the int)
+    #and get their cells (by rounding down to the int)
     old_x_cells, old_y_cells = [a.flatten() for a in np.split(pop.get_cells(), 2, axis = 1)]
 
     # choose direction using movement surface, if applicable
-    if params['movement_surf'] == True:
-
-        mu_distance = params['mu_distance']
-        sigma_distance = params['sigma_distance']
+    if pop.movement_surf:
 
         #create a vector of random choices from the approximation vectors for the VonMises mixture dist. for each individual's movement_surface cell
         choices = r.randint(low = 0, high = land.movement_surf_approx_len, size = len(old_x_cells))
@@ -77,22 +70,14 @@ def move(pop, land, params):
 
 
     # else, choose direction using a random walk with a uniform vonmises
-    elif params['movement_surf'] == False:
+    elif not pop.movement_surf:
 
-        mu_direction = params['mu_direction']
-        kappa_direction = params['kappa_direction']
-        mu_distance = params['mu_distance']
-        sigma_distance = params['sigma_distance']
-
-        direction = r_vonmises(mu_direction, kappa_direction, size = len(old_x))
+        direction = r_vonmises(pop.direction_mu, pop.direction_kappa, size = len(old_x))
+       
 
     # choose distance
     # NOTE: Instead of lognormal, could use something with long right tail for Levy-flight type movement, same as below
-    distance = wald(mu_distance, sigma_distance, size = len(old_x))
-    # distance = lognormal(mu_distance, sigma_distance)
-    # distance = gamma(mu_distance, sigma_distance)
-    #new_pos = (min(max(individual.x + cos(direction) * distance, 0), land.dims[0] - 0.001),
-              #min(max(individual.y + sin(direction) * distance, 0), land.dims[1] - 0.001))
+    distance = wald(pop.distance_mu, pop.distance_sigma, size = len(old_x))
 
     #create the new locations by adding x- and y-dim line segments to their current positions, using trig
     new_x = old_x + cos(direction)*distance
@@ -121,11 +106,11 @@ def move(pop, land, params):
 # Runs the Von Mises mixture sampler function (create_von_mises_mix_sampler) across the entire landscape and returns an array-like (list of
 # lists) of the resulting lambda-function samplers
 
-def create_movement_surface(land, params, kappa=12, approx_len = 5000):
+def create_movement_surface(land, kappa=12, approx_len = 5000):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0], [3 * pi / 4, pi / 2, pi / 4]])
 
     # grab the correct landscape raster
-    rast = land.scapes[params['n_movement_surf_scape']].raster.copy()
+    rast = land.scapes[land.movement_surf_scape_num].raster.copy()
 
     # create embedded raster (so that the edge probabilities are appropriately calculated)
     embedded_rast = np.zeros(shape=[n + 2 for n in rast.shape])
@@ -170,12 +155,9 @@ def create_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
 
 
 # function for plotting average unit vectors across the movement surface, for visualization (and for debugging the movement surface functions)
-def plot_movement_surf_vectors(land, params, circle=False):
+def plot_movement_surf_vectors(land, movement_surf_scape_num, circle=False):
     from numpy import pi, mean, cos, sin, arctan
     from math import sqrt
-
-    # plot movement surface raster
-    land.show(scape_num=params['n_movement_surf_scape'])
 
     # define inner function for plotting a single cell's average unit vector
     def plot_one_cell(i, j):

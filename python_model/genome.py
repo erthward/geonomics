@@ -169,7 +169,7 @@ def draw_genotype(p):
 #where 0 = allele 1 (A1) dominant, 0.5 = codominant, 1 = A1 recessive, i.e.
 #relative fitnesses: A1A1 = 1, A1A2 = 1-hs, A2A2 = 1-s
 #NOTE: Should be able to also implement negative h values here, for overdominance
-def draw_h(l, params, low = 0, high = 2):
+def draw_h(l, low = 0, high = 2):
     h  = r.randint(low = 0, high = 3, size = l)/2.   #NOTE: Pythonic style, so high is exclusive, hence high = 3
     return(h)
 
@@ -187,7 +187,7 @@ def construct_traits(traits_params):
 
 
 #simulate linkage values
-def draw_r(params, recomb_rate_fn = None):
+def draw_r(g_params, recomb_rate_fn = None):
     
     #use custom recomb_fn, if provided
     if recomb_rate_fn != None:
@@ -196,13 +196,13 @@ def draw_r(params, recomb_rate_fn = None):
 
     #otherwise, use default function with either default or custom param vals
     else: 
-        L = params['L']
+        L = g_params['L']
 
         param_vals = {'alpha_r': 7e2, 'beta_r': 7e3}
 
         for param in ['alpha_r', 'beta_r']:
-            if (param in params.keys() and params[param] != None):
-                param_vals[param] = params[param]
+            if (param in g_params.keys() and g_params[param] != None):
+                param_vals[param] = g_params[param]
        
         recomb_array = np.array([max(0,min(0.5, recomb_rate)) for recomb_rate in r.beta(a = param_vals['alpha_r'], b = param_vals['beta_r'], size = L)])
     #NOTE: for now, using the Beta, which can be very flexibly parameterized
@@ -226,29 +226,29 @@ def get_chrom_breakpoints(l_c, L):
 
 
 
-def create_recomb_array(params):
+def create_recomb_array(g_params):
 
 
-    #get L (num of loci) and l_c (if provided; num of loci per chromsome) from params dict
-    L = params['L']
-    if ('l_c' in params.keys() and params['l_c'] != None and len(params['l_c']) > 1):
-        l_c = params['l_c']
+    #get L (num of loci) and l_c (if provided; num of loci per chromsome) from params['genome'] dict
+    L = g_params['L']
+    if ('l_c' in g_params.keys() and g_params['l_c'] != None and len(g_params['l_c']) > 1):
+        l_c = g_params['l_c']
         #and if l_c provided, check chrom lenghts sum to total number of loci
         assert sum(l_c) == L, 'The chromosome lengths provided do not sum to the number of loci provided.'
     else:
         l_c = [L]
 
 
-    #if params['recomb_array'] (i.e a linkage map) manually provided (will break if not a list, tuple, or np.array), 
+    #if g_params['recomb_array'] (i.e a linkage map) manually provided (will break if not a list, tuple, or np.array), 
     #then set that as the recomb_array, and check that len(recomb_array) == L
-    if ('recomb_array' in params.keys() and params['recomb_array'] != None):
-        recomb_array = np.array(params['recomb_array'])
-        assert len(recomb_array) == L, "Length of recomb_array provided not equal to params['L']."
+    if ('recomb_array' in g_params.keys() and g_params['recomb_array'] != None):
+        recomb_array = np.array(g_params['recomb_array'])
+        assert len(recomb_array) == L, "Length of recomb_array provided not equal to params['genome']['L']."
 
         #NOTE: #Always necessary to set the first locus r = 1/ploidy, to ensure independent assortment of homologous chromosomes
         recomb_array[0] = 0.5
         #NOTE: for now, obligate diploidy
-        #recomb_array[0] = 1/params['x'] 
+        #recomb_array[0] = 1/g_params['x'] 
 
         return(recomb_array)
 
@@ -257,20 +257,20 @@ def create_recomb_array(params):
     else:
 
         #if a custom recomb_fn is provided, grab it
-        if ('recomb_rate_fn' in params['custom_fns'] and params['custom_fns']['recomb_rate_fn'] != None):
-            recomb_rate_fn = params['custom_fns']
-            assert callable(recomb_rate_fn), "The recomb_rate_fn provided in params['custom_fns'] appear not to be defined properly as a callable function."
+        if ('recomb_rate_custom_fn' in g_params.values() and g_params['recomb_rate_custom_fn'] is not None):
+            recomb_rate_fn = g_params['custom_fns']
+            assert callable(recomb_rate_fn), "The recomb_rate_fn provided in params['genome']['recomb_rate_custom_fn'] appear not to be defined properly as a callable function."
             #then call the draw_r() function for each locus, using custom recomb_fn
-            recomb_array = draw_r(params, recomb_fn = recomb_rate_fn)
+            recomb_array = draw_r(g_params, recomb_fn = recomb_rate_fn)
 
 
 
         #otherwise, use the default draw_r function to draw recomb rates
         else:
-            recomb_array = draw_r(params) 
+            recomb_array = draw_r(g_params) 
 
 
-        #if more than one chromosome (i.e. if l_c provided in params dict and of length >1), 
+        #if more than one chromosome (i.e. if l_c provided in g_params dict and of length >1), 
         #set recomb rate at the appropriate chrom breakpoints to 0.5
         if len(l_c) >1:
             bps = get_chrom_breakpoints(l_c, L)
@@ -280,7 +280,7 @@ def create_recomb_array(params):
         #NOTE: #Always necessary to set the first locus r = 0.5, to ensure independent assortment of homologous chromosomes
         recomb_array[0] = 0.5
         #NOTE: for now, obligate diploidy
-        #recomb_array[0] = 1/params['x']
+        #recomb_array[0] = 1/g_params['x']
 
 
         return(recomb_array, sorted(l_c))
@@ -319,26 +319,30 @@ def make_bitarray_recomb_subsetter(recomb_path):
 
 #build the genomic architecture
 #NOTE: This will create the "template" for the genomic architecture that will then be used to simulate individuals and populations
-def build_genomic_arch(params, land, allow_multiple_env_vars = True):
+def build_genomic_arch(g_params, land, allow_multiple_env_vars = True):
+
+    g_params = params['genome']
+
+    p_params = params['pop']
 
 
     #NOTE: 11/19/17: DO I STILL WANT TO OPERATIONALIZE GLOBALLY SELECTIVE LOCI??
 
 
-    #grab necessary parameters from the params dict
-    L = params['L']
-    mu = params['mu']
-    x = params['x']
-    pleiotropy = params['pleiotropy']
+    #grab necessary parameters from the g_params dict
+    L = g_params['L']
+    mu = g_params['mu']
+    x = g_params['x']
+    pleiotropy = g_params['pleiotropy']
 
 
-    trait_dict = construct_traits(params['traits'])
+    trait_dict = construct_traits(g_params['traits'])
 
 
 
 
     #NOTE: THIS SEEMS LIKE A VESTIGE FROM SOME PREVIOUS IDEA THAT IS NOW NOT CLEAR TO ME... INVESTIGATE, THEN LIKELY TEAR OUT
-    sex = params['sex']  #NOTE: HOW TO CHANGE THIS TO MAKE USE OF THE 'sex' PARAM IN params???
+    sex = p_params['sex']  #NOTE: HOW TO CHANGE THIS TO MAKE USE OF THE 'sex' PARAM IN p_params???
     if True:
         sex = False
 
@@ -350,9 +354,9 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
     p = draw_allele_freqs(L)  
         #TODO: DECIDE HOW TO OPERATIONALIZE MUTATIONS; PERHAPS WANT TO CREATE A BUNCH OF p=0 LOCI HERE, AS MUTATIONAL TARGETS FOR LATER?
 
-    h = draw_h(L, params)
+    h = draw_h(L)
 
-    r, l_c = create_recomb_array(params)
+    r, l_c = create_recomb_array(g_params)
 
     genomic_arch = Genomic_Architecture(x, L, l_c, r, mu, p, trait_dict, h, pleiotropy, sex = True)
    

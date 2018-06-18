@@ -65,11 +65,10 @@ class Population:
         # NOTE: This way, if model is stopped, changes are made, then it is run further,
         # this makes it easy to continue tracking from the beginning
 
-        for att in p_params['main'].keys():
-            setattr(self, att, p_params['main'][att])
-
-        for att in p_params['movement'].keys():
-            setattr(self, att, p_params['movement'][att])
+        #grab all of the params['pop'] parameters as Population attributes
+        for section in ['main', 'mating', 'mortality', 'movement']:
+            for att in p_params[section].keys():
+                setattr(self, att, p_params[section][att])
 
         self.N = None  # attribute to hold a landscape.Landscape object of the current population density
 
@@ -102,7 +101,7 @@ class Population:
             # relative fitness of homozygous 0 = relative fitness of heterozygote, i.e. 1-hs = 1-s
         }
 
-        assert type(N) == int, "N must be an integer"
+        assert type(self.N_start) == int, "N must be an integer"
         assert type(self.individs) == OD, "self.individs must be of type collections.OrderedDict"
         assert list(set([i.__class__.__name__ for i in list(self.individs.values())])) == [
             'Individual'], "self.individs must be a dictionary containing only instances of the individual.Individual class"
@@ -176,7 +175,8 @@ class Population:
             offspring_key = next(reversed(self.individs)) + 1
             for n in range(n_offspring):
 
-                offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y, self.mu_dispersal, self.sigma_dispersal)
+                offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y,
+                        self.dispersal_mu, self.dispersal_sigma)
 
                 if self.sex:
                     offspring_sex = r.binomial(1, 0.5)
@@ -627,6 +627,9 @@ def create_population(genomic_arch, land, params, burn=False):
 
     assert dims.__class__.__name__ in ['tuple', 'list'], "dims should be expressed as a tuple or a list"
     individs = OD()
+    
+    N = params['pop']['main']['N_start']
+
     for idx in range(N):
         # use individual.create_individual to simulate individuals and add them to the population
         ind = individual.create_individual(idx = idx, genomic_arch = genomic_arch, dims = dims)

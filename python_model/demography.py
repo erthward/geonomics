@@ -34,22 +34,22 @@ def logistic_soln(x0, R, t):
 
 
 
-def calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic'):
+def calc_dNdt(land, N, K, R, pop_growth_eq = 'logistic'):
 
     dims = land.dims
     
     #if using the logistic equation for pop growth
     #NOTE: For now this is the only option and the default, but could easily offer other equations later if desired
     if pop_growth_eq == 'logistic':
-        #use logistic eqxn, with pop intrinsic growth rate from params['r'], to generate current growth-rate raster
-        dNdt = logistic_eqxn(params['pop']['R'], N, K)
+        #use logistic eqxn, with pop intrinsic growth rate (pop.R) to generate current growth-rate raster
+        dNdt = logistic_eqxn(R, N, K)
     
     return(landscape.Landscape(dims, dNdt))
 
 
 
 
-def kill(land, pop, params, death_probs):
+def kill(land, pop, death_probs):
     deaths = np.array(list(pop.individs.keys()))[np.bool8(r.binomial(n = 1, p = death_probs))]
     ig = itemgetter(*deaths)
     #[land.mating_grid.remove(ind) for ind in ig(pop.individs)]
@@ -61,9 +61,9 @@ def kill(land, pop, params, death_probs):
 
 
 
-def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_stage_d = None, births_before_deaths = False, debug = None):
+def pop_dynamics(land, pop, with_selection = True, burn = False, age_stage_d = None, births_before_deaths = False, debug = None):
     '''Generalized function for implementation population dynamics. Will carry out one round of mating and
-    death, according to parameterization laid out in params dict.
+    death, according to parameterization laid out in params dict (which were grabbed as Population attributes).
 
 
        If with_selection == False, only density-dependent death will occur.
@@ -92,7 +92,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
 
     ######calc num_pairs raster (use the calc_pop_density function on the centroids of the mating pairs)
-    pairs = pop.find_mating_pairs(land, params)
+    pairs = pop.find_mating_pairs(land)
 
     if pairs.size > 0:
 
@@ -101,9 +101,9 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
         p_y = pairs_coords[:,1].reshape(pairs.shape).mean(axis = 1) 
 
         #use the Landscape_Stack.density_grid_stack to calculate a raster of the expected number of pairs
-        #NOTE: because the window_width of that object is much wider than mu_dispersal in the parameterizations
+        #NOTE: because the window_width of that object is much wider than dispersal_mu in the parameterizations
         #I've typically been running, this produces much wider areas of high values in the 
-        #N_b, N_d, and hence d rasters than the old method did (which had its window_width set to mu_dispersal,
+        #N_b, N_d, and hence d rasters than the old method did (which had its window_width set to dispersal_mu,
         #leading of course to huge lags in the old calc_density algorithm)
         #need to think about whether I need to attend to this, and if so, how
         n_pairs = np.clip(land.density_grid_stack.calc_density(p_x, p_y), a_min = 0, a_max = None)
@@ -111,8 +111,8 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
         n_pairs[np.isnan(n_pairs)] = 0
         assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())  
 
-        #NOTE: I anticipate that using mu_dispersal as the density-calculating window should produce a slightly more realistic expectation
-        #of the number of births per cell in a few steps; using max(1, mu_dispersal) to avoid
+        #NOTE: I anticipate that using dispersal_mu as the density-calculating window should produce a slightly more realistic expectation
+        #of the number of births per cell in a few steps; using max(1, dispersal_mu) to avoid
         #window_lengths <1 (needlessly computationally expensive)
 
         assert True not in np.isnan(n_pairs)
@@ -139,8 +139,8 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
     ######if births should happen before (and thus be included in the calculation of) deaths, then mate and disperse babies now
     if births_before_deaths == True:
-        #Feed the mating pairs and params['b'] to the mating functions, to produce and disperse zygotes
-        pop.mate(land, params, pairs, burn)
+        #Feed the land and mating pairs to pop.mate, to produce and disperse zygotes
+        pop.mate(land, pairs, burn)
 
 
 
@@ -175,10 +175,6 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     #permissive than the absurdly negative values that were produced by adding, say, 10e-1 or less; for now
     #leaving 1 as an arbitrary lower bound on K
 
-    #if params dict has a K_cap parameter, use this to set the max cell value for the K raster
-    #if 'K_cap' in params.keys():
-        #K[K>float(params['K_cap'])] = float(params['K_cap'])
-        #print(K.max())
     assert K.min() >= 0
     assert True not in np.isnan(K)
     assert True not in np.isinf(K)
@@ -207,10 +203,10 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
 
 
-    ######use N, K, and params['r'] to calc dN/dt raster, according to the chosen pop growth eqxn
+    ######use N, K., and pop.R to calc dN/dt raster, according to the chosen pop growth eqxn
         #NOTE: Currently, only option and default is basic logistic eqxn: dN/dt = r*(1-N/K)*N
     with np.errstate(divide='ignore', invalid='ignore'):
-        dNdt = calc_dNdt(land, N, K, params, pop_growth_eq = 'logistic').raster
+        dNdt = calc_dNdt(land, N, K, pop.R, pop_growth_eq = 'logistic').raster
 
     #NOTE: The next line used to replace each cell in dNdt where K<1 with that cell's -N value. But it was
     #really slow to run, and at those cells where K ~= 0 it really won't make a difference how negative the
@@ -240,9 +236,9 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
 
 
-    ######use n_pairs, params['b'] (i.e. probability that a pair gives birth), and params['lambda_offspring'] (i.e.
+    ######use n_pairs, pop.b (i.e. probability that a pair gives birth), and pop.n_births_lambda (i.e.
     #expected number of births per pair) to calculate the N_b raster (expected number of births in each cell)
-    #according to N_b = b*E[N_b/pair]*n_pairs where E[N_b/pair] = lambda (b/c births Poission distributed)
+    #according to N_b = b*E[N_b/pair]*n_pairs where E[N_b/pair] = n_births_lambda (b/c births Poission distributed)
         #NOTE: Would be good to in the future to use neg_binom dist to allow births to be modeled as Poisson
         #(using correct parameterization of neg_binom to approximate that) or overdispersed (to be parmeterized with field data)
 
@@ -253,7 +249,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
         #NOTE: Currently, birth rate is intrinsic to the species and cannot be made a function of density or
         #spatial fitness. Might be worth adding this at some point in the future though.
-    N_b = params['pop']['b'] * params['pop']['lambda_offspring'] * n_pairs
+    N_b = pop.b * pop.n_births_lambda * n_pairs
     assert N_b.min() >= 0
     assert True not in np.isnan(N_b)
     assert True not in np.isinf(N_b)
@@ -309,10 +305,8 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
     d[np.isnan(d)] = 0
     d[d<0] = 0
     #constrain to the min and max d values
-    d_min = params['pop']['d_min']
-    d_max = params['pop']['d_max']
-    d[d<d_min] = d_min
-    d[d>d_max] = d_max
+    d[d<pop.d_min] = pop.d_min
+    d[d>pop.d_max] = pop.d_max
 
 
     #d = normalize(N_d, norm = 'l2') 
@@ -372,30 +366,30 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
             #and undesirable results/effects?... NEED TO PUT MORE THOUGHT INTO THIS LATER.
 
     if births_before_deaths == False:
-        #Feed the mating pairs and params['b'] to the mating functions, to produce and disperse zygotes
-        pop.mate(land, params, pairs, burn)
+        #Feed the land and mating pairs to the mating functions, to produce and disperse zygotes
+        pop.mate(land, pairs, burn)
 
 
 
     ######Now implement deaths
 
-    #If with_selection = True, then use the d raster and individuals' fitnesses to calculate
+    #If with_selection, then use the d raster and individuals' fitnesses to calculate
     #per-individual probabilities of death
     death_probs = d[pop.cells[:,1], pop.cells[:,0]]
 
-    if with_selection == True:
+    if with_selection:
         death_probs = selection.get_prob_death(pop, death_probs)
 
     assert np.alltrue(death_probs >= 0)
     assert np.alltrue(death_probs <= 1)
 
     num_killed_age = 0
-    if params['pop']['max_age'] is not None:
-        death_probs[pop.get_age() > params['pop']['max_age']] = 1
+    if pop.max_age is not None:
+        death_probs[pop.get_age() > pop.max_age] = 1
         num_killed_age = np.sum(death_probs == 1)
         print('\n\tINDIVIDUALS DEAD OF OLD AGE: %i  (%0.3f%% of pop)\n' % (num_killed_age, num_killed_age/pop.Nt[::-1][0]))
     
-    if params['land']['islands']['islands'] and params['land']['islands']['island_val'] > 0:
+    if pop.islands:
         death_probs[pop.get_habitat(scape_num = land.n_island_mask_scape)] = 1
         num_killed_isle = np.sum(death_probs == 1) - num_killed_age
         print('\n\tINDIVIDUALS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))
@@ -410,7 +404,7 @@ def pop_dynamics(land, pop, params, with_selection = True, burn = False, age_sta
 
     #Feed the per-individual death probabilities into the kill function, which will probabilistically generate deaths
     #and cull those individuals, and will return the number of deaths
-    num_deaths = kill(land, pop, params, death_probs)
+    num_deaths = kill(land, pop, death_probs)
     pop.set_coords_and_cells()
     pop.n_deaths.append(num_deaths)
 

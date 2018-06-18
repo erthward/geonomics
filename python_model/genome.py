@@ -319,7 +319,7 @@ def make_bitarray_recomb_subsetter(recomb_path):
 
 #build the genomic architecture
 #NOTE: This will create the "template" for the genomic architecture that will then be used to simulate individuals and populations
-def build_genomic_arch(g_params, land, allow_multiple_env_vars = True):
+def build_genomic_arch(params, land, allow_multiple_env_vars = True):
 
     g_params = params['genome']
 
@@ -342,7 +342,7 @@ def build_genomic_arch(g_params, land, allow_multiple_env_vars = True):
 
 
     #NOTE: THIS SEEMS LIKE A VESTIGE FROM SOME PREVIOUS IDEA THAT IS NOW NOT CLEAR TO ME... INVESTIGATE, THEN LIKELY TEAR OUT
-    sex = p_params['sex']  #NOTE: HOW TO CHANGE THIS TO MAKE USE OF THE 'sex' PARAM IN p_params???
+    sex = p_params['mating']['sex']  #NOTE: HOW TO CHANGE THIS TO MAKE USE OF THE 'sex' PARAM IN p_params???
     if True:
         sex = False
 

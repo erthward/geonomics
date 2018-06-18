@@ -14,13 +14,18 @@ params = {
         'seed_num'      : 23432                     #value used to seed random number generators
         }, # <END> 'seed'
 
+
 ###############
 #### MODEL ####
 ###############
 
     'model' : {
-        'T'             : 2500,                     #total model runtime
-        'burn_T_min'    : 50                        #minimum burn-in runtime
+        'burn' : {
+            'burn_T_min'    : 50                        #minimum burn-in runtime
+            },
+        'main' : {
+            'T'             : 2500                      #total model runtime
+            }
         }, # <END> 'model'
 
 
@@ -120,46 +125,50 @@ params = {
 #############
 
     'pop' : {
-        'main'       : {
-            'N_start'          : 1000,                    #total pop size
-            'repro_age'  : 0,                       #age at sexual maturity (int or float for non-sexual species, tuple or list 
+        'main'      : {
+            'N_start'          : 1000               #starting population size
+            }, # <END> 'main'
+
+        'mating'    : {
+            'repro_age'     : 0,                    #age at sexual maturity (int or float for non-sexual species, tuple or list 
                                                         #of two ints/floats for sexual species; set to 'None' to not make this 
                                                         #an age-structured species
-            'max_age'    : 15,                      #age beyond which all individuals will automatically die; default to None
-            'sex'        : False,                   #is this a sexual species? 
+            'max_age'       : 15,                      #age beyond which all individuals will automatically die; default to None
+            'sex'           : False,                #is this a sexual species? 
             'dist_weighted_birth' : False,          #should the probability of birth be weighted by the distance between 
                                                         #individuals in a pair?
-            'R'         :0.5,                      #pop intrinsic growth rate
-            'b'          : 0.2,                     #population intrinsic birth rate (implemented as the probability 
+            'R'             : 0.5,                  #pop intrinsic growth rate
+            'b'             : 0.2,                  #population intrinsic birth rate (implemented as the probability 
                                                         #that an identified potential mating pair successfully mates); 
                                                         #NOTE: this may later need to be re-implemented to allow for spatial 
                                                         #variation in intrinsic rate (e.g. expression as a raster) and/or for 
                                                         #density-dependent births as well as deaths
-            'n_births_lambda': 4,                  #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
-            'mating_radius' : 0.5,                  #radius of mate-searching area
-            'n_deaths_sigma' : 0.2,                   # std for the normal distribution used to choose the r.v. of deaths 
+            'n_births_lambda': 4,                   #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
+            'mating_radius' : 0.5                   #radius of mate-searching area
+            }, # <END> 'mating'
+
+        'mortality'     : {
+            'n_deaths_sigma'            : 0.2,      # std for the normal distribution used to choose the r.v. of deaths 
                                                         #per timestep (mean of this distribution is the overshoot, 
                                                         #as calculated from pop.size and pop.census())
-            'density_dependent_fitness' : True     #should fitness be density dependent? (note: helps to avoid 
-        },
+            'density_dependent_fitness' : True,     #should fitness be density dependent? (note: helps to avoid 
+            'd_min'                     : 0.01,     #minimum neutral (i.e. non-selection driven) probability of death
+            'd_max'                     : 0.90,     #maximum neutral probability of death
+            'islands'                   : False
+
+        }, # <END> 'mortality'
                                                         #subpopulation 'clumping')
         'movement'   : {
-            'move'              : True,                 #is this a mobile species?
+            'movement'          : True,                 #is this a mobile species?
             'direction_mu'      : 0,                    #mu for von mises distribution defining movement directions
             'direction_kappa'   : 0,                    #kappa for von mises distribution
             'distance_mu'       : 0.5,                  #mean movement-distance (lognormal distribution)
-            'distance_sigm'    : 0.5,                  #sd of movement distance
+            'distance_sigma'    : 0.5,                  #sd of movement distance
             'dispersal_mu'      : 0.5,                  #mean dispersal distance (lognormal distribution)
             'dispersal_sigma'   : 0.5,                  #sd of dispersal distance
             'movement_surf'     : True                  #use the movement surface for this population?
-        }, # <END> 'movement'
+        } # <END> 'movement'
     
-        'etc'        : {
-            'd_min'      : 0.01,                    #minimum neutral (i.e. non-selection driven) probability of death
-            'd_max'      : 0.90,                    #maximum neutral probability of death
-
-            'K_cap'      : 0.4                     #per-cell highest carrying capacity value to be reached during burn-in
-            }
     }, # <END> 'pop'
 
 

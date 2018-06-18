@@ -10,9 +10,9 @@ import landscape, genome, population
 
 
 #set seed, if requested
-if params['set_seed']: 
-    random.seed(params['seed_num'])
-    r.seed(params['seed_num'])
+if params['seed']['set_seed']: 
+    random.seed(params['seed']['seed_num'])
+    r.seed(params['seed']['seed_num'])
 
             
 

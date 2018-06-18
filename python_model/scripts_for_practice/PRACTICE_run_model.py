@@ -2,7 +2,7 @@ exec(open('./params.py', 'r').read())
 exec(open('./scripts_for_practice/PRACTICE_imports_and_reloads.py', 'r').read())
 exec(open('./scripts_for_practice/PRACTICE_create_land_genomic_arch_pop.py', 'r').read())
 
-pop.set_K(land.scapes[params['n_movement_surf_scape']].raster)
+pop.set_K(land.scapes[params['land']['movement_surf']['movement_surf_scape_num']].raster)
 
 pop.genomic_arch.traits[0].s = 0.1
 
@@ -14,16 +14,15 @@ for i in pop.individs.keys():
 
 def burn(stop_after = None):
     break_burn_in = False
-    burn_in_test_t = params['burn_T_min']
+    burn_in_test_t = params['model']['burn']['burn_T_min']
     t = 0
     while break_burn_in == False:
         print('###############\n\n TIMESTEP %i' % t)
         print('     POP %i\n' % pop.census())
         pop.increment_age_stage(burn=True)
-        # pop.mutate(params,t)
         pop.set_Nt()
-        pop.move(land, params)
-        extinct = demography.pop_dynamics(land, pop, params, with_selection=False, burn=True)
+        pop.move(land)
+        extinct = demography.pop_dynamics(land, pop, with_selection=False, burn=True)
         t += 1
         if extinct == 1:
             break
@@ -45,8 +44,8 @@ def main(T, reassign_genomes=False):
         print('     POP %i\n' % pop.census())
         pop.increment_age_stage(burn=False)
         pop.set_Nt()
-        pop.move(land, params)
-        extinct = demography.pop_dynamics(land, pop, params, with_selection=True)
+        pop.move(land)
+        extinct = demography.pop_dynamics(land, pop, with_selection=True)
         if extinct == 1:
             break
         pop.mutate(log=False)

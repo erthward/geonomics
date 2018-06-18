@@ -6,3 +6,5 @@
 *ipynb
 ./python_model/__pycache__/
 *.txt
+*./python_model/*.txt
+*./python_model/*.tmp

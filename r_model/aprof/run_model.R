@@ -1,1 +1,0 @@
-core.model(p.cross = 0.8, start.pops = START.POPS, n.time = N.TIME, size.pop = SIZE.POP, mean.d.move = MEAN.D.MOVE, for.avg = FOR.AVG, repro.cycle = REPRO.CYCLE, d.pair = D.PAIR, n.loci = N.LOCI, fit.advntg = FIT.ADVNTG, mean.off = MEAN.OFF, sd.off = SD.OFF, mean.disp.dist = MEAN.DISP.DIST, sd.disp.dist = SD.DISP.DIST)   

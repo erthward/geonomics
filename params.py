@@ -34,7 +34,7 @@ params = {
 ##############
 
     'land' : {
-        'dims'          : (50,50),                  #dimensions of landscape  
+        'dims'          : (50,50),                  #x,y dimensions of landscape  
         'num_scapes'    : 2,                        #number of landscapes desired
         'rand_land'     : True,                     #whether or not to generate random landscapes
         'interp_method' : ['linear', 'linear'],     # list of interpolation methods for generation of random landscapes, 
@@ -195,7 +195,7 @@ params = {
 
     'data' : {      #dictionary defining the data to be collected, the sampling strategy to use, the timesteps for collection, and other parameters
 
-        'sampling_scheme'   : 'random',             # can be 'all', 'random', 'point', or 'transect'
+        'sampling_scheme'   : 'random',             #can be 'all', 'random', 'point', or 'transect'
         'sampling_args'     : {                     #args to be unpacked into sampling function (see docstring of sample_data function in data module for details)
                         'n'     : 50        
                             },

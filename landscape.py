@@ -90,48 +90,64 @@ class Landscape_Stack:
         viz.show_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, mask_val = mask_val, zoom = zoom)
 
 
-    def plot_movement_surf_vectors(self, params, circle=False):
-        if params['land']['movement_surf'] == True and self.movement_surf is not None:
-            import movement
-            movement.plot_movement_surf_vectors(self, self.movement_surf_scape_num, circle=circle)
-        else:
-            print('\n\nThis Landscape_Stack appears to have no movement surface.\n\n')
-            pass
-
-    def plot_vonmises_mix_circ_draws(self, i, j, params):
+    #method for plotting the movement surface (in various formats)
+    def show_movement_surf(self, style, i, j, zoom_width=5, scale_fact=4.5, color='black'):
+        '''
+        'style' can take values: 'hist', 'circ_hist', 'vect', or 'circ_draws'
+        '''
         if self.movement_surf is None:
             print('This landscape stack appears to have no movement surface layer. Function not valid.')
             return
+        elif style not in ['hist', 'circ_hist', 'vect', 'circ_draws']:
+            print("The 'style' argument must take one of the following values: 'hist', 'circ_hist', 'vect', 'circ_draws'")
         else:
-            scape_num = self.movement_surf_scape_num
-            pts = [(np.cos(a), np.sin(a)) for a in [self.movement_surf[i][j]()[0] for n in range(1000)]]
-            plt.scatter([pt[0] * 0.5 + i for pt in pts], [pt[1] * 0.5 + j for pt in pts], color='red', alpha=0.2)
-            self.scapes[scape_num].zoom(max(i - 10, 0), min(i + 10, self.dims[0]), max(j - 10, 0),
-                                        min(j + 10, self.dims[1]))
+            if style == 'hist':
+                plt.hist(r.choice(self.movement_surf[i,j,:], size = 10000, replace = True), bins=100, density=True, alpha=0.5)
+            elif style == 'circ_hist':
+                scape_num = self.movement_surf_scape_num
+                v, a = np.histogram(r.choice(self.movement_surf[i,j,:], replace = True, size = 7500), bins=15)
+                v = v / float(v.sum())
+                a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
+                x = [np.cos(a[n]) * 0.5 for n in range(len(a))]
+                y = [np.sin(a[n]) * 0.5 for n in range(len(a))]
+                x = np.array(x) * v * scale_fact
+                y = np.array(y) * v * scale_fact
+                [plt.plot((j, (j + x[n])), (i, (i + y[n])), linewidth=2, color=color) for n in range(len(x))]
+                self.scapes[scape_num].show(zoom = ((max(i - zoom_width, 0), min(i + zoom_width,
+                    self.dims[0])), (max(j - zoom_width, 0), min(j + zoom_width, self.dims[1]))))
+                #TODO: FIX HERE; Doesn't plot in correct spot if zoom_width is too small (e.g. plotting i = 5, j = 10, zoom_width = 5)
+           
+            elif style == 'circ_draws':
+                scape_num = self.movement_surf_scape_num
+                pts = [(np.cos(a), np.sin(a)) for a in r.choice(self.movement_surf[i,j,:], size = 1000, replace = True)]
+                plt.scatter([pt[0] * 0.5 + i for pt in pts], [pt[1] * 0.5 + j for pt in pts], color='red',
+                        alpha=0.1, marker = '.')
+                self.scapes[scape_num].show(zoom = ((max(i - zoom_width, 0), min(i + zoom_width,
+                    self.dims[0])), (max(j - zoom_width, 0), min(j + zoom_width, self.dims[1]))))
 
-    def plot_vonmises_mix_hist(self, i, j):
-        if self.movement_surf is None:
-            print('This landscape stack appears to have no movement surface layer. Function not valid.')
-            return
-        else:
-            plt.hist([self.movement_surf[i][j]()[0] for n in range(10000)], bins=100, normed=True, alpha=0.5)
-
-    def plot_vonmises_mix_circ_hist(self, i, j, zoom, params, scale_fac=4.5, color='black'):
-        if self.movement_surf is None:
-            print('This landscape stack appears to have no movement surface layer. Function not valid.')
-            return
-        else:
-            scape_num = land.movement_surf_scape_num
-            v, a = np.histogram(r.choice(list(self.movement_surf[i][j]), replace = True, size = 7500), bins=15)
-            v = v / float(v.sum())
-            a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
-            x = [np.cos(a[n]) * 0.5 for n in range(len(a))]
-            y = [np.sin(a[n]) * 0.5 for n in range(len(a))]
-            x = np.array(x) * v * scale_fac
-            y = np.array(y) * v * scale_fac
-            [plt.plot((j, (j + x[n])), (i, (i + y[n])), linewidth=2, color=color) for n in range(len(x))]
-            self.scapes[scape_num].zoom(max(i - zoom, 0), min(i + zoom, self.dims[0]), max(j - zoom, 0),
-                                        min(j + zoom, self.dims[1]), pop=True)
+            elif style == 'vect':
+                scape_num = self.movement_surf_scape_num
+                def plot_one_cell(i, j):
+                    # draw sample of angles from the Gaussian KDE representing the von mises mixture distribution (KDE)
+                    samp = self.movement_surf[i,j,:]
+                    # create lists of the x and y (i.e. cos and sin) components of each angle in the sample
+                    x_vects = np.cos(samp)
+                    y_vects = np.sin(samp)
+                    # define x and y plotting coordinates for base of arrow
+                    # (just equal to the cell's j,i indicies, because I would add 0.5 to plot base of the arrow in the cell center
+                    # but then would subtract 0.5 to visually reconcile the offset between the plotting axes and the raster)
+                    x, y = j, i
+                    # define the dx and dy distances used to the position the arrowhead
+                    # (divide by sqrt(2)/2, to scale to the size of half of the diagonal of a cell)
+                    dx = np.mean(x_vects) / np.sqrt(2)
+                    dy = np.mean(y_vects) / np.sqrt(2)
+                    # now plot the arrow
+                    plt.arrow(x, y, dx, dy, alpha=0.75, color='black', head_width=0.24, head_length=0.32)
+                # call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
+                self.scapes[scape_num].show(zoom = ((max(i - zoom_width, 0), min(i + zoom_width,
+                    self.dims[0])), (max(j - zoom_width, 0), min(j + zoom_width, self.dims[1]))))
+                [[plot_one_cell(i, j) for i in range(self.movement_surf.shape[0])] for j in range(self.movement_surf.shape[1])]
+           
 
     # method for pickling a landscape stack
     def pickle(self, filename):
@@ -534,5 +550,4 @@ def make_density_grids(land, ww):
     g4 = make_density_grid(land, ww, x_edge = False, y_edge = True)
 
     return(g1, g2, g3, g4)
-
 

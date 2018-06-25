@@ -35,7 +35,6 @@ import copy
 import sys
 
 
-
 def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'nearest', cmap = 'terrain', zoom = None, mask_val = None):
     #if a figure is already open, force colorbar to False
     if plt.get_fignums():
@@ -118,52 +117,6 @@ def show_points(points, scape_num=None, color='black', terrain_colormap = False,
         plt.ylim(ylim)
     #plt.ylim(-0.6, land.dims[0] - 0.4)
 
-
-
-
-#### FROM LANDSCAPE.PY
-def plot_movement_surf_vectors(self, params, circle=False):
-    if params['land']['movement_surf'] == True and self.movement_surf is not None:
-        import movement
-        movement.plot_movement_surf_vectors(self, self.movement_surf_scape_num, circle=circle)
-    else:
-        print('\n\nThis Landscape_Stack appears to have no movement surface.\n\n')
-        pass
-
-def plot_vonmises_mix_circ_draws(self, i, j, params):
-    if self.movement_surf is None:
-        print('This landscape stack appears to have no movement surface layer. Function not valid.')
-        return
-    else:
-        scape_num = self.movement_surf_scape_num
-        pts = [(np.cos(a), np.sin(a)) for a in [self.movement_surf[i][j]()[0] for n in range(1000)]]
-        plt.scatter([pt[0] * 0.5 + i for pt in pts], [pt[1] * 0.5 + j for pt in pts], color='red', alpha=0.2)
-        self.scapes[scape_num].zoom(max(i - 10, 0), min(i + 10, self.dims[0]), max(j - 10, 0),
-                                    min(j + 10, self.dims[1]))
-
-def plot_vonmises_mix_hist(self, i, j):
-    if self.movement_surf is None:
-        print('This landscape stack appears to have no movement surface layer. Function not valid.')
-        return
-    else:
-        plt.hist([self.movement_surf[i][j]()[0] for n in range(10000)], bins=100, normed=True, alpha=0.5)
-
-def plot_vonmises_mix_circ_hist(self, i, j, zoom, params, scale_fac=4.5, color='black'):
-    if self.movement_surf is None:
-        print('This landscape stack appears to have no movement surface layer. Function not valid.')
-        return
-    else:
-        scape_num = land.movement_surf_scape_num
-        v, a = np.histogram(r.choice(list(self.movement_surf[i][j]), replace = True, size = 7500), bins=15)
-        v = v / float(v.sum())
-        a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
-        x = [np.cos(a[n]) * 0.5 for n in range(len(a))]
-        y = [np.sin(a[n]) * 0.5 for n in range(len(a))]
-        x = np.array(x) * v * scale_fac
-        y = np.array(y) * v * scale_fac
-        [plt.plot((j, (j + x[n])), (i, (i + y[n])), linewidth=2, color=color) for n in range(len(x))]
-        self.scapes[scape_num].zoom(max(i - zoom, 0), min(i + zoom, self.dims[0]), max(j - zoom, 0),
-                                        min(j + zoom, self.dims[1]), pop=True)
 
 
 

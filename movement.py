@@ -34,6 +34,7 @@ import copy
 from operator import itemgetter
 from numba import jit
 from collections import Counter as C
+import time
 
 s_vonmises.a = -np.inf
 s_vonmises.b = np.inf
@@ -152,67 +153,4 @@ def create_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
     loc_choices = list(C(loc_choices).items())
     approx = np.hstack([s_vonmises.rvs(kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])
     return(approx)
-
-
-# function for plotting average unit vectors across the movement surface, for visualization (and for debugging the movement surface functions)
-def plot_movement_surf_vectors(land, movement_surf_scape_num, circle=False):
-    from numpy import pi, mean, cos, sin, arctan
-    from math import sqrt
-
-    # define inner function for plotting a single cell's average unit vector
-    def plot_one_cell(i, j):
-        # draw sample of angles from the Gaussian KDE representing the von mises mixture distribution (KDE)
-        samp = list(land.movement_surf[i,j,:])
-
-        # create lists of the x and y (i.e. cos and sin) components of each angle in the sample
-        x_vects = cos(samp)
-        y_vects = sin(samp)
-
-        # define x and y plotting coordinates for base of arrow
-        # NOTE: they are just equal to the cell's j,i indicies, because I would add 0.5 to plot base of the arrow in the cell center
-        # but then would subtract 0.5 to visually reconcile the offset between the plotting axes and the raster
-        x, y = j, i
-
-        if circle:  # NOTE: This was just an offhand thought while I was waiting for something else to
-            # compute. Doesn't work at all yet, but would be nice to get working. (Would plot circular
-            # distributions centered in each cell and scaled to unity, instead of the average vectors I
-            # currently have it plotting.)
-            x += j
-            y += i
-
-            plt.plot(x, y, '.', color='black')
-
-
-        else:
-            # define the dx and dy distances used to the position the arrowhead
-            # NOTE: multiply by sqrt(2)/2, to scale to the size of half of the diagonal of a cell
-            dx = mean(x_vects) / sqrt(2)
-            dy = mean(y_vects) / sqrt(2)
-            # NOTE: need to invert the dy value, so that it will plot correctly on the inverted axes (remember that the axes are inverted because the raster is plotted using imshow, which displays raster rows starting with row 0 at the top and working downward)
-            # dy *= -1
-
-            # now plot the arrow
-            plt.arrow(x, y, dx, dy, alpha=0.75, color='black', head_width=0.24, head_length=0.32)
-
-    # call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
-    [[plot_one_cell(i, j) for i in range(len(land.movement_surf))] for j in range(len(land.movement_surf[0]))]
-
-
-def plot_scaling_random_choice_with_array_size():
-    sizes = [1e2, 1e3, 1e4, 1e5, 1e6]
-    mean_times = []
-    for size in sizes:
-        arr = r.random(size = int(size))
-        times = []
-        for i in range(10):
-            start = time.time()
-            r.choice(arr)
-            stop = time.time()
-            diff = stop-start
-            times.append(diff)
-        mean_times.append(mean(times))
-    plt.plot(sizes, mean_times)
-
-
-
 

@@ -33,6 +33,7 @@ import selection
 import mutation
 import landscape
 import demography
+import viz
 
 import numpy as np
 from numpy import random as r

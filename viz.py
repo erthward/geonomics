@@ -36,23 +36,33 @@ import sys
 
 
 
-def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'nearest', cmap = 'terrain', zoom = None):
-    #if just a raster is desired, grab it and put it in a list
-    if scape_num is not None:
-        rasters = [land.scapes[scape_num].raster]
-    #else just create a list of all rasters
-    else:
-        rasters = [land.scapes[i].raster for i in range(len(land.scapes))]
+def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'nearest', cmap = 'terrain', zoom = None, mask_val = None):
     #if a figure is already open, force colorbar to False
     if plt.get_fignums():
         colorbar = False
+
+    #if just a Landscape (not a Landscape_Stack) is provided, or if just a single raster is desired, grab the raster into a list
+    if str(type(land)) == "<class 'landscape.Landscape'>": 
+        rasters = [land.raster]
+    elif str(type(land)) == "<class 'landscape.Landscape_Stack'>":
+        if scape_num is not None:
+            rasters = [land.scapes[scape_num].raster]
+        #else just create a list of all rasters
+        else:
+            rasters = [land.scapes[i].raster for i in range(len(land.scapes))]
+
     #get the requested cmap 
     cmap = getattr(plt.cm, cmap)
-    #create cmaps alphas lists, in case multiple rasters are to be plotted
-    cmaps = [cmap] + ['bone'] * (len(rasters)-1)
-    alphas = [1] + [0.5] * (len(rasters)-1)
     #set the minimum plotting value
     vmin = 0
+    #mask values below mask_val, if not None
+    if mask_val is not None:
+        cmap.set_under(color = 'black')
+        vmin = mask_val
+
+    #create cmaps and alphas lists, in case multiple rasters are to be plotted
+    cmaps = [cmap] + ['bone'] * (len(rasters)-1)
+    alphas = [1] + [0.5] * (len(rasters)-1)
     #plot all the rasters...
     for n in range(len(rasters)):
         #pull out the zoomed raster, if requested
@@ -68,12 +78,11 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
             clb.ax.set_title('Scape: %i' % n)
             ax = clb.ax
             text = ax.title
-            font = matplotlib.font_manager.FontProperties(family='arial', style='normal', size=10)
+            font = mpl.font_manager.FontProperties(family='arial', style='normal', size=10)
             text.set_font_properties(font)
 
 
-def show_points(points, scape_num=None, color='black', colorbar=True, markersize=25, im_interp_method='nearest',
-         alpha=False):
+def show_points(points, scape_num=None, color='black', terrain_colormap = False, markersize=25, alpha = False, text=None, xlim = None, ylim = None):
     #get the x and y coordinates from the points (and subtract 0.5 to line the points up with the plt.imshow()
     #grid of a landscape raster; imshow plots each pixel centered on its index, but the points then plot on 
     #those indices, so wind up shifted +0.5 on each axis
@@ -86,14 +95,28 @@ def show_points(points, scape_num=None, color='black', colorbar=True, markersize
         alpha = alpha
     else:
         alpha = 1.0
-    #plot the points
-    plt.scatter(x, y, s=markersize, c=color, alpha=alpha);
-    #plt.xlim(-0.6, land.dims[1] - 0.4);
+
+    #plot the points, as stipulated by arguments
+    if text is None:
+
+        if terrain_colormap: 
+            from matplotlib.colors import LinearSegmentedColormap
+            colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
+            # colors to match matplotlib colormap 'terrain' palette extremes, but with hybrid a mix of the extremes
+            # rather than the yellow at the middle of the palette, for nicer viewing
+            cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
+    
+            plt.scatter(x, y, s=markersize, c=color, cmap=cmap, linewidth=1, edgecolor='black', alpha=alpha)
+        else:
+            plt.scatter(x, y, s=markersize, c=color, alpha=alpha);
+    else:
+        [plt.text(x[i], y[i], text[i]) for i in text]
+
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
     #plt.ylim(-0.6, land.dims[0] - 0.4)
-
-
-
-
 
 
 
@@ -141,21 +164,6 @@ def plot_vonmises_mix_circ_hist(self, i, j, zoom, params, scale_fac=4.5, color='
         [plt.plot((j, (j + x[n])), (i, (i + y[n])), linewidth=2, color=color) for n in range(len(x))]
         self.scapes[scape_num].zoom(max(i - zoom, 0), min(i + zoom, self.dims[0]), max(j - zoom, 0),
                                         min(j + zoom, self.dims[1]), pop=True)
-
-       
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -368,8 +376,4 @@ def show_pop_growth(self, params):
     plt.plot(T, self.Nt, color='blue')
     plt.xlabel('t')
     plt.ylabel('N(t)')
-
-# method to plot (or add to an open plot) individuals' IDs
-def show_ind_ids(self):
-        [plt.text(v[0] - 0.5, v[1] - 0.5, i) for i, v in dict(zip(self.individs.keys(), self.get_coords()))]
 

@@ -22,6 +22,7 @@ Documentation:        URL
 
 ##########################################
 '''
+import viz
 
 import numpy as np
 import numpy.random as r
@@ -32,8 +33,6 @@ from collections import Counter as C
 from operator import itemgetter as ig
 from scipy import interpolate
 from shapely import geometry as g
-
-#import mating_grid
 
 
 # ------------------------------------
@@ -54,43 +53,12 @@ class Landscape:
     ### OTHER METHODS ###
     #####################
 
-    def show(self, colorbar=True, im_interp_method='nearest', pop=False):
-        if plt.get_fignums():
-            colorbar = False
-        cmap = plt.cm.terrain
-        vmin = 0
+    def show(self, colorbar=True, im_interp_method='nearest', cmap = 'terrain', zoom = None):
         if self.mask_island_vals:
-            cmap.set_under(color='black')
-            vmin = 1e-7
-        # TODO: REALLY GET TO THE BOTTOM OF THE RASTER-PLOTTING ISSUE!! 04/16/17: While working on the
-        # pop-density raster function, I was plotting the results and realized that the function seemed to
-        # be working, but that the results seemed reflected about the diagonal. I am doing this, for the
-        # moment, as a TEMPORARY fix, but will have to make sure that I haven't already 'fixed' this (and
-        # forgotten) elsewhere, such that this is actually introducing more problems in the long-run
-        if pop:
-            plt.imshow(self.raster, interpolation=im_interp_method, cmap=cmap, vmin=vmin)
+            mask_val = 1e-7
         else:
-            plt.imshow(np.flipud(self.raster), interpolation=im_interp_method, cmap=cmap, vmin=vmin)
-        if colorbar:
-            if self.raster.max() > 1:
-                plt.colorbar(boundaries=np.linspace(0, self.raster.max(), 51))
-            else:
-                plt.colorbar(boundaries=np.linspace(0, 1, 51))
-
-    def zoom(self, min_i, max_i, min_j, max_j, colorbar=True, im_interp_method='nearest', pop=False):
-        if plt.get_fignums():
-            colorbar = False
-        cmap = 'terrain'
-        zoom_rast = np.array([row[min_j:max_j] for row in self.raster[min_i:max_i]])
-        if pop:
-            plt.imshow(zoom_rast, interpolation=im_interp_method, cmap=cmap)
-        else:
-            plt.imshow(np.flipud(zoom_rast), interpolation=im_interp_method, cmap=cmap)
-        if colorbar:
-            if zoom_rast.max() > 1:
-                plt.colorbar(boundaries=np.linspace(0, zoom_rast.max(), 51))
-            else:
-                plt.colorbar(boundaries=np.linspace(0, 1, 51))
+            mask_val = None
+        viz.show_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, zoom = zoom, mask_val = mask_val)
 
 
 class Landscape_Stack:
@@ -109,77 +77,18 @@ class Landscape_Stack:
         self.n_island_mask_scape = None
         #self.mating_grid = mating_grid.MatingGrid(params=params)
 
-    def show(self, scape_num=None, colorbar=True, im_interp_method='nearest', pop=False):
-        if plt.get_fignums():
-            colorbar = False
-        cmaps = ['terrain'] + ['bone'] * 10
-        alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
 
-        if scape_num != None:
+    #####################
+    ### OTHER METHODS ###
+    #####################
 
-            cmap = plt.cm.terrain
-            vmin = 0
-            if self.scapes[scape_num].mask_island_vals:
-                cmap.set_under(color='black')
-                vmin = 1e-7
-
-            #if pop:
-            plt.imshow(self.scapes[scape_num].raster, interpolation=im_interp_method, cmap=cmap, vmin=vmin)
-            #else:
-                #plt.imshow(np.flipud(self.scapes[scape_num].raster), interpolation=im_interp_method, cmap=cmap, vmin=vmin)
-
-            if colorbar:
-                if self.scapes[scape_num].raster.max() > 1:
-                    plt.colorbar(boundaries=np.linspace(0, self.scapes[scape_num].raster.max(), 51))
-                else:
-                    plt.colorbar(boundaries=np.linspace(0, 1, 51))
-
-
+    def show(self, scape_num=None, colorbar=True, cmap = 'terrain', im_interp_method='nearest', zoom = None):
+        if True in [scape.mask_island_vals for scape in self.scapes.values()]:
+            mask_val = 1e-7
         else:
-            for n, scape in self.scapes.items():
-                if pop:
-                    plt.imshow(scape.raster, interpolation=im_interp_method, alpha=alphas[n], cmap=cmaps[n])
-                else:
-                    plt.imshow(np.flipud(self.scapes[scape_num].raster), interpolation=im_interp_method,
-                               alpha=alphas[n], cmap=cmaps[n])
+            mask_val = None
+        viz.show_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, mask_val = mask_val, zoom = zoom)
 
-                if colorbar:
-                    if self.scapes[n].raster.max() > 1:
-                        plt.colorbar(boundaries=np.linspace(0, self.scapes[n].raster.max(), 51))
-                    else:
-                        plt.colorbar(boundaries=np.linspace(0, 1, 51))
-
-    def zoom(self, min_i, max_i, min_j, max_j, scape_num=None, colorbar=True, im_interp_method='nearest', pop=False):
-        if plt.get_fignums():
-            colorbar = False
-        cmaps = ['terrain', 'bone']
-        alphas = [1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-        cmap = 'terrain'
-        if scape_num != None:
-            zoom_rast = np.array([row[min_j:max_j] for row in self.scapes[scape_num].raster[min_i:max_i]])
-            if pop:
-                plt.imshow(zoom_rast, interpolation=im_interp_method, cmap=cmap)
-            else:
-                plt.imshow(np.flipud(zoom_rast), interpolation=im_interp_method, cmap=cmap)
-            if colorbar:
-                if zoom_rast.max() > 1:
-                    plt.colorbar(boundaries=np.linspace(0, zoom_rast.max(), 51))
-                else:
-                    plt.colorbar(boundaries=np.linspace(0, 1, 51))
-        else:
-            for n, scape in self.scapes.items():
-                zoom_rast = np.array([row[min_j:max_j] for row in self.scapes[n].raster[min_i:max_i]])
-                if pop:
-                    plt.imshow(zoom_rast, interpolation=im_interp_method, alpha=alphas[n], cmap=cmaps[n])
-                else:
-                    # NOTE: FIGURE OUT WHY FLIPUD SEEMED GOOD WHEN PLOTTING POP, BUT BAD FOR CIRC_HIST FN BELOW
-                    plt.imshow(np.flipud(zoom_rast), interpolation=im_interp_method, alpha=alphas[n], cmap=cmaps[n])
-
-                if colorbar:
-                    if zoom_rast.max() > 1:
-                        plt.colorbar(boundaries=np.linspace(0, zoom_rast.max(), 51))
-                    else:
-                        plt.colorbar(boundaries=np.linspace(0, 1, 51))
 
     def plot_movement_surf_vectors(self, params, circle=False):
         if params['land']['movement_surf'] == True and self.movement_surf is not None:

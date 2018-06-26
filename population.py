@@ -382,67 +382,42 @@ class Population:
         coords = self.get_coords(individs = individs)
         return(coords[:,0])
 
+
     def get_y_coords(self, individs=None):
         coords = self.get_coords(individs = individs)
         return(coords[:,1])
 
 
-    def show(self, land, scape_num=None, color='black', colorbar=True, markersize=25, im_interp_method='nearest',
-             alpha=False):
-        # if land != None:
-        if scape_num != None:
-            land.scapes[scape_num].show(colorbar=colorbar, im_interp_method=im_interp_method, pop=True)
+    #method for plotting the population (or a subset of its individuals, by ID) on top of a landscape (or landscape stack)
+    def show(self, land, hide_land=False, scape_num=None, individs=None, text=False, color='black', colorbar=True, markersize=25, im_interp_method='nearest', cmap = 'terrain', alpha=False):
+        #get coords
+        if individs is None:
+            coords = self.coords
+            if text:
+                text = list(self.individs.keys())
         else:
-            land.show(colorbar=colorbar, im_interp_method=im_interp_method, pop=True)
-
-        c = np.array(list(self.get_coords()))
-        # NOTE: subtract 0.5 to line up the points with the plt.imshow() grid of the land; imshow plots each pixel centered on its index, but the points then plot against those indices, so wind up shifted +0.5 in each axis
-        x = c[:, 0] - 0.5
-        y = c[:, 1] - 0.5
-        if alpha == True:
-            alpha = 0.6
+            coords = self.get_coords(individs)
+            if text:
+                text = individs
+        if not text:
+            text = None
+        #set xlim and ylim to just outside the landscape dimensions (for nicer viz)
+        xlim, ylim = viz.get_scape_plt_lims(land)
+        #plot the landscape(s)
+        if hide_land:
+            pass
         else:
-            alpha = 1.0
+            viz.show_rasters(land, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap)
+        #and plot the individuals
+        viz.show_points(coords, scape_num = scape_num, color = color, markersize = markersize, alpha = alpha, text = text, xlim = xlim, ylim = ylim) 
 
-        plt.scatter(x, y, s=markersize, c=color, alpha=alpha);
-        plt.xlim(-0.6, land.dims[1] - 0.4);
-        plt.ylim(-0.6, land.dims[0] - 0.4)
 
-    # mpl.pyplot.plot([n[0] for n in coords], [n[1] for n in coords], 'ko', scalex = False, scaley = False, color = color, markersize = markersize, alpha = alpha)
-
-    def show_individs(self, individs, land, scape_num=None, color='black', im_interp_method='nearest', markersize=40,
-                      alpha=0.5):
-        # if land != None and scape_num != None:
-        land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
-
-        # coords = dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items() if k in individs])
-        c = np.array(list(self.get_coords(individs)))
-        # NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
-        x = c[:, 0] - 0.5
-        y = c[:, 1] - 0.5
-        plt.scatter(x, y, s=markersize, c=color, alpha=alpha);
-        plt.xlim(-0.6, land.dims[1] - 0.4);
-        plt.ylim(-0.6, land.dims[0] - 0.4)
-
-    # NOTE: perhaps worth figuring out how to label with the individual number!!
-    # for k, coord_pair in coords.items():
-    # ax = mpl.pyplot.plot(coord_pair[0], coord_pair[1], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
-
+    #method for plotting the population on top of its estimated population-density raster
     def show_density(self, land, normalize_by='census', max_1=False, color='black', markersize=40, alpha=0.5):
         dens = self.calc_density(land, normalize_by=normalize_by, max_1=max_1)
-        dens.show(im_interp_method='nearest', pop=True)
+        viz.show_rasters(dens)
+        self.show(land, hide_land=True, color=color, markersize=markersize, alpha=alpha)
 
-        c = np.array(list(self.get_coords()))
-        # NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
-        x = c[:, 0] - 0.5
-        y = c[:, 1] - 0.5
-        plt.scatter(x, y, s=markersize, c=color, alpha=alpha);
-        plt.xlim(-0.6, land.dims[1] - 0.4);
-        plt.ylim(-0.6, land.dims[0] - 0.4)
-
-    # ax = mpl.pyplot.plot([i[0] - 0.5 for i in list(c.values())], [i[1] - 0.5 for i in list(c.values())], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
-
-    # NOTE: perhaps worth figuring out how to label with the individual number!!
 
     # method for plotting individuals colored by their genotype at a given locus
     def show_genotype(self, locus, land, scape_num=None, im_interp_method='nearest', markersize=65, alpha=1,
@@ -598,6 +573,7 @@ class Population:
                  color='skyblue',
                  alpha=0.6)
 
+
     def show_pop_growth(self, params):
         T = range(len(self.Nt))
         x0 = self.N_start / self.K.sum()
@@ -606,9 +582,6 @@ class Population:
         plt.xlabel('t')
         plt.ylabel('N(t)')
 
-    # method to plot (or add to an open plot) individuals' IDs
-    def show_ind_ids(self):
-        [plt.text(v[0] - 0.5, v[1] - 0.5, i) for i, v in dict(zip(self.individs.keys(), self.get_coords()))]
 
     def pickle(self, filename):
         import cPickle

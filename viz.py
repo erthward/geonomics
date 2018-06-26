@@ -40,8 +40,10 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
     if plt.get_fignums():
         colorbar = False
 
-    #if just a Landscape (not a Landscape_Stack) is provided, or if just a single raster is desired, grab the raster into a list
-    if str(type(land)) == "<class 'landscape.Landscape'>": 
+    #if just a numpy.ndarray or a Landscape (not a Landscape_Stack) is provided, or if just a single raster is desired, grab the raster into a list
+    if str(type(land)) == "<class 'numpy.ndarray'>":
+        rasters = [land]
+    elif str(type(land)) == "<class 'landscape.Landscape'>":
         rasters = [land.raster]
     elif str(type(land)) == "<class 'landscape.Landscape_Stack'>":
         if scape_num is not None:
@@ -109,7 +111,7 @@ def show_points(points, scape_num=None, color='black', terrain_colormap = False,
         else:
             plt.scatter(x, y, s=markersize, c=color, alpha=alpha);
     else:
-        [plt.text(x[i], y[i], text[i]) for i in text]
+        [plt.text(x[n], y[n], t, color=color, size=markersize, alpha=alpha) for n,t in enumerate(text)];
 
     if xlim is not None:
         plt.xlim(xlim)
@@ -118,31 +120,16 @@ def show_points(points, scape_num=None, color='black', terrain_colormap = False,
     #plt.ylim(-0.6, land.dims[0] - 0.4)
 
 
-
+def get_scape_plt_lims(land):
+    xlim = (-1, land.dims[1])
+    ylim = (-1, land.dims[0])
+    return(xlim, ylim)
 
 
 
 
 
 #### FROM POPULATION.PY
-
-def show_individs(self, individs, land, scape_num=None, color='black', im_interp_method='nearest', markersize=40,
-                  alpha=0.5):
-    # if land != None and scape_num != None:
-    land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
-
-    # coords = dict([(k, (ind.x, ind.y)) for k, ind in self.individs.items() if k in individs])
-    c = np.array(list(self.get_coords(individs)))
-    # NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
-    x = c[:, 0] - 0.5
-    y = c[:, 1] - 0.5
-    plt.scatter(x, y, s=markersize, c=color, alpha=alpha);
-    plt.xlim(-0.6, land.dims[1] - 0.4);
-    plt.ylim(-0.6, land.dims[0] - 0.4)
-
-# NOTE: perhaps worth figuring out how to label with the individual number!!
-# for k, coord_pair in coords.items():
-# ax = mpl.pyplot.plot(coord_pair[0], coord_pair[1], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
 
 def show_density(self, land, normalize_by='census', max_1=False, color='black', markersize=40, alpha=0.5):
     dens = self.calc_density(land, normalize_by=normalize_by, max_1=max_1)

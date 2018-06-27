@@ -286,6 +286,10 @@ class Population:
                 inds_to_set = (inds_to_set,)
        
         hab = [ind.set_habitat([sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())]) for ind in inds_to_set]
+
+    
+    def set_phenotype(self):
+        [ind.set_phenotype(self.genomic_arch) for ind in self.individs.values()];
         
 
     #method to set population's coords and cells arrays
@@ -389,7 +393,9 @@ class Population:
 
 
     #method for plotting the population (or a subset of its individuals, by ID) on top of a landscape (or landscape stack)
-    def show(self, land, hide_land=False, scape_num=None, individs=None, text=False, color='black', colorbar=True, markersize=25, im_interp_method='nearest', cmap = 'terrain', alpha=False):
+    def show(self, land, hide_land=False, scape_num=None, individs=None, text=False, color='black',
+            edge_color='face', text_color='purple', colorbar=True, size=25, text_size=12, im_interp_method='nearest', 
+            land_cmap='terrain', pt_cmap=None, alpha=False, zoom_width=None, x=None, y=None):
         #get coords
         if individs is None:
             coords = self.coords
@@ -401,78 +407,66 @@ class Population:
                 text = individs
         if not text:
             text = None
-        #set xlim and ylim to just outside the landscape dimensions (for nicer viz)
-        xlim, ylim = viz.get_scape_plt_lims(land)
+        #set the plt_lims
+        plt_lims = viz.get_plt_lims(land, x, y, zoom_width)
         #plot the landscape(s)
         if hide_land:
             pass
         else:
-            viz.show_rasters(land, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap)
+            viz.show_rasters(land, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = land_cmap, plt_lims = plt_lims)
         #and plot the individuals
-        viz.show_points(coords, scape_num = scape_num, color = color, markersize = markersize, alpha = alpha, text = text, xlim = xlim, ylim = ylim) 
+        viz.show_points(coords, scape_num = scape_num, color = color, edge_color = edge_color, text_color = text_color, size = size, text_size = text_size, 
+                alpha = alpha, text = text, plt_lims = plt_lims, pt_cmap = pt_cmap)
 
 
     #method for plotting the population on top of its estimated population-density raster
-    def show_density(self, land, normalize_by='census', max_1=False, color='black', markersize=40, alpha=0.5):
+    def show_density(self, land, normalize_by='census', individs=None, text=False, max_1=False, color='black', edge_color='face', 
+            text_color='purple', size=25, text_size = 12, alpha=0.5, zoom_width=None, x=None, y=None):
         dens = self.calc_density(land, normalize_by=normalize_by, max_1=max_1)
-        viz.show_rasters(dens)
-        self.show(land, hide_land=True, color=color, markersize=markersize, alpha=alpha)
+        plt_lims = viz.get_plt_lims(land, x, y, zoom_width)
+        viz.show_rasters(dens, plt_lims = plt_lims)
+        self.show(land, hide_land=True, individs = individs, text = text, color=color, edge_color = edge_color, text_color = text_color, 
+               size=size, text_size = text_size, alpha=alpha, zoom_width = zoom_width, x = x, y = y)
 
 
     # method for plotting individuals colored by their genotype at a given locus
-    def show_genotype(self, locus, land, scape_num=None, im_interp_method='nearest', markersize=65, alpha=1,
-                      by_dominance=False):
-        if scape_num != None:
-            land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
-
-        else:
-            land.show(im_interp_method=im_interp_method, pop=True)
+    def show_genotype(self, locus, land, scape_num=None, individs=None, text=False, size=25, text_size = 12, 
+            edge_color='black', text_color='purple', colorbar=True, im_interp_method='nearest', 
+            alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
         if by_dominance == True:
             genotypes = self.get_genotype(locus, by_dominance=True)
         else:
             genotypes = self.get_genotype(locus)
 
-        colors = ['#3C22B4', '#80A6FF',
-                  '#FFFFFF']  # COLORS TO MATCH LANDSCAPE PALETTE EXTREMES, BUT WITH HYBRID A MIX OF THE EXTREMES RATHER THAN THE YELLOW AT THE MIDDLE OF THE PALETTE, FOR NICER VIEWING: blue = [0,0], light blue = [0,1], white = [1,1]
-        # colors = ['#ff4d4d', '#ac72ac', '#4d4dff'] # red = [0,0], purple = [0,1], blue = [1,1]
+        if individs is not None:
+            genotypes = {i:v for i,v in genotypes.items() if i in individs}
+
+        #colors to match mpl.cmap 'terrain' palette extremes, but with hybrid a mix of the extremes rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0], light blue = [0,1], white = [1,1]
+        colors = ['#3C22B4', '#80A6FF', '#FFFFFF']  
+
         for n, genotype in enumerate([0.0, 0.5, 1.0]):
-            inds = [i for i, g in genotypes.items() if np.atleast_1d(g)[0] == genotype]
+            genotype_individs = [i for i, g in genotypes.items() if np.atleast_1d(g)[0] == genotype]
             # plot if there are any individuals of this genotype
-            if len(inds) >= 1:
-                c = self.get_coords(inds)
-                x = c[:, 0] - 0.5
-                y = c[:, 1] - 0.5
-                plt.scatter(x, y, s=markersize, c=colors[n], alpha=alpha);
-                plt.xlim(-0.6, land.dims[1] - 0.4);
-                plt.ylim(-0.6, land.dims[0] - 0.4)
+            if len(genotype_individs) >= 1:
+                self.show(land, scape_num = scape_num, individs = genotype_individs, text = text, color = colors[n], edge_color = edge_color, 
+                    text_color = text_color, colorbar = colorbar, size = size, text_size = text_size, 
+                    im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y)
+
 
     # method for plotting individuals colored by their phenotypes for a given trait
-    def show_phenotype(self, trait, land, scape_num=None, im_interp_method='nearest', markersize=65, alpha=1):
+    def show_phenotype(self, trait, land, scape_num=None, individs=None, text=False, size=25, text_size = 12, 
+            edge_color='black', text_color='purple', colorbar=True, im_interp_method='nearest', 
+            alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
-        if scape_num != None:
-            land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
-        else:
-            land.scapes[self.genomic_arch.traits[trait].scape_num].show(im_interp_method=im_interp_method, pop=True)
+        z = dict(zip(self.individs.keys(), self.get_phenotype()[:,trait]))
+        if individs is not None:
+            z = {i:v for i,v in z.items() if i in individs}
 
-        from matplotlib.colors import LinearSegmentedColormap
-        colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
-        # colors to match landscape palette extremes, but with hybrid a mix of the extremes
-        # rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0],
-        # light blue = [0,1], white = [1,1]
-        cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
+        self.show(land, scape_num = scape_num, individs = individs, text = text, color = list(z.values()),
+                pt_cmap = 'terrain', edge_color = edge_color, text_color = text_color, colorbar = colorbar, 
+                size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y)
 
-        c = self.get_coords()
-        z = {i:v[trait] for i,v in self.get_phenotype().items()}
-
-        data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, z[i]) for i in self.individs.keys()}).values())
-
-        plt.scatter([i[0] for i in data], [i[1] for i in data], s=markersize, c=[i[2] for i in data], cmap=cmap,
-                    linewidth=1, edgecolor='black',
-                    alpha=alpha)
-        plt.xlim(-0.6, land.dims[1] - 0.4)
-        plt.ylim(-0.6, land.dims[0] - 0.4)
-        # plt.scatter(x,y, s = markersize, c = [z[i] for i in i.items()}nds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
 
     # method for plotting individuals colored and sized by their overall fitnesses
     def show_fitness(self, land, scape_num=None, im_interp_method='nearest', min_markersize=60, alpha=1):
@@ -512,7 +506,6 @@ class Population:
         plt.xlim(-0.6, land.dims[1] - 0.4)
         plt.ylim(-0.6, land.dims[0] - 0.4)
 
-        # plt.scatter(x,y, s = [min_markersize + diff for diff in markersize_differentials] , c = [fits[i] for i in inds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
 
     # method for plotting individuals colored by their phenotypes for a given trait, sized by their fitness
     def show_single_trait_fitness(self, trait, land, scape_num=None, im_interp_method='nearest', min_markersize=60,
@@ -560,8 +553,7 @@ class Population:
         plt.xlim(-0.6, land.dims[1] - 0.4)
         plt.ylim(-0.6, land.dims[0] - 0.4)
 
-        # plt.scatter(x,y, s = [min_markersize + diff for diff in markersize_differentials] , c = [z[i] for i in inds], cmap = cmap, alpha = alpha)
-        # plt.scatter(x,y, s = min_markersize/3 , c = [fits[i] for i in inds], cmap = inside_marker_cmap)
+
 
     # method for plotting a population pyramid
     # NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS

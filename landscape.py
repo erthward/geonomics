@@ -53,12 +53,13 @@ class Landscape:
     ### OTHER METHODS ###
     #####################
 
-    def show(self, colorbar=True, im_interp_method='nearest', cmap = 'terrain', zoom = None):
+    def show(self, colorbar=True, im_interp_method='nearest', cmap = 'terrain', x=None, y=None, zoom_width=None):
         if self.mask_island_vals:
             mask_val = 1e-7
         else:
             mask_val = None
-        viz.show_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, zoom = zoom, mask_val = mask_val)
+        plt_lims = viz.get_plt_lims(self, z, y, zoom_width)
+        viz.show_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, mask_val = mask_val)
 
 
 class Landscape_Stack:
@@ -82,16 +83,17 @@ class Landscape_Stack:
     ### OTHER METHODS ###
     #####################
 
-    def show(self, scape_num=None, colorbar=True, cmap = 'terrain', im_interp_method='nearest', zoom = None):
+    def show(self, scape_num=None, colorbar=True, cmap='terrain', im_interp_method='nearest', x=None, y=None, zoom_width=None):
         if True in [scape.mask_island_vals for scape in self.scapes.values()]:
             mask_val = 1e-7
         else:
             mask_val = None
-        viz.show_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, mask_val = mask_val, zoom = zoom)
+        plt_lims = viz.get_plt_lims(land, x, y, zoom_width)
+        viz.show_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, mask_val = mask_val, plt_lims = plt_lims)
 
 
     #method for plotting the movement surface (in various formats)
-    def show_movement_surf(self, style, i, j, zoom_width=5, scale_fact=4.5, color='black'):
+    def show_movement_surf(self, style, x, y, zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
         '''
         'style' can take values: 'hist', 'circ_hist', 'vect', or 'circ_draws'
         '''
@@ -100,52 +102,44 @@ class Landscape_Stack:
             return
         elif style not in ['hist', 'circ_hist', 'vect', 'circ_draws']:
             print("The 'style' argument must take one of the following values: 'hist', 'circ_hist', 'vect', 'circ_draws'")
+            return
+        elif style == 'hist':
+            plt.hist(r.choice(self.movement_surf[i,j,:], size = 10000, replace = True), bins=100, density=True, alpha=0.5)
+
         else:
-            if style == 'hist':
-                plt.hist(r.choice(self.movement_surf[i,j,:], size = 10000, replace = True), bins=100, density=True, alpha=0.5)
-            elif style == 'circ_hist':
-                scape_num = self.movement_surf_scape_num
-                v, a = np.histogram(r.choice(self.movement_surf[i,j,:], replace = True, size = 7500), bins=15)
+            #display the movement-surface raster
+            scape_num = self.movement_surf_scape_num
+            self.scapes[scape_num].show(zoom_width = zoom_width, x = x, y = y)
+
+            if style == 'circ_hist':
+                v, a = np.histogram(r.choice(self.movement_surf[y,x,:], replace = True, size = 7500), bins=15)
                 v = v / float(v.sum())
                 a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
-                x = [np.cos(a[n]) * 0.5 for n in range(len(a))]
-                y = [np.sin(a[n]) * 0.5 for n in range(len(a))]
-                x = np.array(x) * v * scale_fact
-                y = np.array(y) * v * scale_fact
-                [plt.plot((j, (j + x[n])), (i, (i + y[n])), linewidth=2, color=color) for n in range(len(x))]
-                self.scapes[scape_num].show(zoom = ((max(i - zoom_width, 0), min(i + zoom_width,
-                    self.dims[0])), (max(j - zoom_width, 0), min(j + zoom_width, self.dims[1]))))
-                #TODO: FIX HERE; Doesn't plot in correct spot if zoom_width is too small (e.g. plotting i = 5, j = 10, zoom_width = 5)
+                xs = [np.cos(a[n]) * 0.5 for n in range(len(a))]
+                ys = [np.sin(a[n]) * 0.5 for n in range(len(a))]
+                xs = np.array(xs) * v * scale_fact
+                ys = np.array(ys) * v * scale_fact
+                [plt.plot((x, (x + xs[n])), (y, (y + ys[n])), linewidth=2, color=color) for n in range(len(xs))]
            
             elif style == 'circ_draws':
-                scape_num = self.movement_surf_scape_num
-                pts = [(np.cos(a), np.sin(a)) for a in r.choice(self.movement_surf[i,j,:], size = 1000, replace = True)]
-                plt.scatter([pt[0] * 0.5 + i for pt in pts], [pt[1] * 0.5 + j for pt in pts], color='red',
-                        alpha=0.1, marker = '.')
-                self.scapes[scape_num].show(zoom = ((max(i - zoom_width, 0), min(i + zoom_width,
-                    self.dims[0])), (max(j - zoom_width, 0), min(j + zoom_width, self.dims[1]))))
+                pts = [(np.cos(a), np.sin(a)) for a in r.choice(self.movement_surf[y,x,:], size = 1000, replace = True)]
+                plt.scatter([pt[0] * 0.5 + x for pt in pts], [pt[1] * 0.5 + y for pt in pts], color='red', alpha=0.1, marker = '.')
 
             elif style == 'vect':
-                scape_num = self.movement_surf_scape_num
                 def plot_one_cell(i, j):
                     # draw sample of angles from the Gaussian KDE representing the von mises mixture distribution (KDE)
                     samp = self.movement_surf[i,j,:]
                     # create lists of the x and y (i.e. cos and sin) components of each angle in the sample
                     x_vects = np.cos(samp)
                     y_vects = np.sin(samp)
-                    # define x and y plotting coordinates for base of arrow
-                    # (just equal to the cell's j,i indicies, because I would add 0.5 to plot base of the arrow in the cell center
-                    # but then would subtract 0.5 to visually reconcile the offset between the plotting axes and the raster)
-                    x, y = j, i
                     # define the dx and dy distances used to the position the arrowhead
                     # (divide by sqrt(2)/2, to scale to the size of half of the diagonal of a cell)
                     dx = np.mean(x_vects) / np.sqrt(2)
                     dy = np.mean(y_vects) / np.sqrt(2)
                     # now plot the arrow
-                    plt.arrow(x, y, dx, dy, alpha=0.75, color='black', head_width=0.24, head_length=0.32)
+                    plt.arrow(j, i, dx, dy, alpha=0.75, color='black', head_width=0.24, head_length=0.32)
+
                 # call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
-                self.scapes[scape_num].show(zoom = ((max(i - zoom_width, 0), min(i + zoom_width,
-                    self.dims[0])), (max(j - zoom_width, 0), min(j + zoom_width, self.dims[1]))))
                 [[plot_one_cell(i, j) for i in range(self.movement_surf.shape[0])] for j in range(self.movement_surf.shape[1])]
            
 

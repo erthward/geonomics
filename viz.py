@@ -35,7 +35,7 @@ import copy
 import sys
 
 
-def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'nearest', cmap = 'terrain', zoom = None, mask_val = None):
+def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'nearest', cmap = 'terrain', plt_lims = None, mask_val = None):
     #if a figure is already open, force colorbar to False
     if plt.get_fignums():
         colorbar = False
@@ -52,8 +52,9 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
         else:
             rasters = [land.scapes[i].raster for i in range(len(land.scapes))]
 
-    #get the requested cmap 
-    cmap = getattr(plt.cm, cmap)
+    if type(cmap) == str:
+        #get the requested cmap 
+        cmap = getattr(plt.cm, cmap)
     #set the minimum plotting value
     vmin = 0
     #mask values below mask_val, if not None
@@ -67,11 +68,14 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
     #plot all the rasters...
     for n in range(len(rasters)):
         #pull out the zoomed raster, if requested
-        if zoom is not None:
-            min_i, max_i = zoom[0]
-            min_j, max_j = zoom[1]
-            rasters[n] = np.array([row[min_j:max_j] for row in rasters[n][min_i:max_i]])
+        #if zoom is not None:
+        #    min_i, max_i = zoom[0]
+        #    min_j, max_j = zoom[1]
+        #    rasters[n] = np.array([row[min_j:max_j] for row in rasters[n][min_i:max_i]])
         plt.imshow(rasters[n], interpolation=im_interp_method, cmap=cmaps[n], vmin=vmin, alpha = alphas[n])
+        if plt_lims is not None:
+            plt.xlim(plt_lims[0])
+            plt.ylim(plt_lims[1])
         #and their colorbars, if requested (but for only the first two rasters maximum, 
         #since the second and onward share the same palette)
         if colorbar and n < 2:
@@ -83,7 +87,8 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
             text.set_font_properties(font)
 
 
-def show_points(points, scape_num=None, color='black', terrain_colormap = False, markersize=25, alpha = False, text=None, xlim = None, ylim = None):
+def show_points(points, scape_num=None, color='black', edge_color='face', text_color='purple', linewidth=0.5,
+        pt_cmap=None, size=25, text_size=12, alpha=False, text=None, plt_lims=None):
     #get the x and y coordinates from the points (and subtract 0.5 to line the points up with the plt.imshow()
     #grid of a landscape raster; imshow plots each pixel centered on its index, but the points then plot on 
     #those indices, so wind up shifted +0.5 on each axis
@@ -98,32 +103,57 @@ def show_points(points, scape_num=None, color='black', terrain_colormap = False,
         alpha = 1.0
 
     #plot the points, as stipulated by arguments
-    if text is None:
-
-        if terrain_colormap: 
-            from matplotlib.colors import LinearSegmentedColormap
-            colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
-            # colors to match matplotlib colormap 'terrain' palette extremes, but with hybrid a mix of the extremes
-            # rather than the yellow at the middle of the palette, for nicer viewing
-            cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
+    if pt_cmap == 'terrain': 
+        from matplotlib.colors import LinearSegmentedColormap
+        colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
+        # colors to match matplotlib colormap 'terrain' palette extremes, but with hybrid a mix of the extremes
+        # rather than the yellow at the middle of the palette, for nicer viewing
+        cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
     
-            plt.scatter(x, y, s=markersize, c=color, cmap=cmap, linewidth=1, edgecolor='black', alpha=alpha)
-        else:
-            plt.scatter(x, y, s=markersize, c=color, alpha=alpha);
+        plt.scatter(x, y, s=size, c=color, cmap=cmap, linewidth=linewidth, edgecolor=edge_color, alpha=alpha)
     else:
-        [plt.text(x[n], y[n], t, color=color, size=markersize, alpha=alpha) for n,t in enumerate(text)];
+        plt.scatter(x, y, s=size, c=color, linewidth=linewidth, edgecolor=edge_color, alpha=alpha);
 
-    if xlim is not None:
-        plt.xlim(xlim)
-    if ylim is not None:
-        plt.ylim(ylim)
-    #plt.ylim(-0.6, land.dims[0] - 0.4)
+    #add text, if requested
+    if text is not None:
+        show_text = []
+        for n,t in enumerate(text):
+            if plt_lims is not None:
+                if plt_lims[0][0] <= x[n] <= plt_lims[0][1] and plt_lims[1][0] <= y[n] <= plt_lims[1][1]:
+                    show_text.append((x[n], y[n], t))
+            else:
+                show_text.append((x[n], y[n], t))
+        [plt.text(*item, color=text_color, size=text_size, alpha=alpha) for item in show_text];
+
+    if plt_lims is not None and len(plt_lims) == 2 and [len(item) for item in plt_lims] == [2,2]:
+        plt.xlim(plt_lims[0])
+        plt.ylim(plt_lims[1])
+    else:
+        print("plt_lims appears not to be a valid argument (i.e. a 2-tuple of 2-tuples)")
 
 
 def get_scape_plt_lims(land):
     xlim = (-1, land.dims[1])
     ylim = (-1, land.dims[0])
-    return(xlim, ylim)
+    lims = (xlim, ylim)
+    return(lims)
+
+def get_zoom_plt_lims(x, y, zoom_width):
+    #get zoom-half-width
+    zhw = zoom_width/2
+    xlim = (x- zhw, x+zhw)
+    ylim = (y- zhw, y+zhw)
+    lims = (xlim, ylim)
+    return(lims)
+   
+def get_plt_lims(land=None, x=None, y=None, zoom_width=None):
+    if zoom_width is not None and x is not None and y is not None:
+        plt_lims = get_zoom_plt_lims(x, y, zoom_width) 
+    else: 
+        plt_lims = get_scape_plt_lims(land)
+    return(plt_lims)
+
+
 
 
 
@@ -131,52 +161,8 @@ def get_scape_plt_lims(land):
 
 #### FROM POPULATION.PY
 
-def show_density(self, land, normalize_by='census', max_1=False, color='black', markersize=40, alpha=0.5):
-    dens = self.calc_density(land, normalize_by=normalize_by, max_1=max_1)
-    dens.show(im_interp_method='nearest', pop=True)
-
-    c = np.array(list(self.get_coords()))
-    # NOTE: subtract 0.5 to line up points with imshow grid; see note in the pop.show() definition for details
-    x = c[:, 0] - 0.5
-    y = c[:, 1] - 0.5
-    plt.scatter(x, y, s=markersize, c=color, alpha=alpha);
-    plt.xlim(-0.6, land.dims[1] - 0.4);
-    plt.ylim(-0.6, land.dims[0] - 0.4)
-
-# ax = mpl.pyplot.plot([i[0] - 0.5 for i in list(c.values())], [i[1] - 0.5 for i in list(c.values())], 'ko', scalex = False, scaley = False, color = color, markersize = 8.5)
-
-# NOTE: perhaps worth figuring out how to label with the individual number!!
-
-# method for plotting individuals colored by their genotype at a given locus
-def show_genotype(self, locus, land, scape_num=None, im_interp_method='nearest', markersize=65, alpha=1,
-                  by_dominance=False):
-    if scape_num != None:
-        land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
-
-    else:
-        land.show(im_interp_method=im_interp_method, pop=True)
-
-    if by_dominance == True:
-        genotypes = self.get_genotype(locus, by_dominance=True)
-    else:
-        genotypes = self.get_genotype(locus)
-
-    colors = ['#3C22B4', '#80A6FF',
-              '#FFFFFF']  # COLORS TO MATCH LANDSCAPE PALETTE EXTREMES, BUT WITH HYBRID A MIX OF THE EXTREMES RATHER THAN THE YELLOW AT THE MIDDLE OF THE PALETTE, FOR NICER VIEWING: blue = [0,0], light blue = [0,1], white = [1,1]
-    # colors = ['#ff4d4d', '#ac72ac', '#4d4dff'] # red = [0,0], purple = [0,1], blue = [1,1]
-    for n, genotype in enumerate([0.0, 0.5, 1.0]):
-        inds = [i for i, g in genotypes.items() if np.atleast_1d(g)[0] == genotype]
-        # plot if there are any individuals of this genotype
-        if len(inds) >= 1:
-            c = self.get_coords(inds)
-            x = c[:, 0] - 0.5
-            y = c[:, 1] - 0.5
-            plt.scatter(x, y, s=markersize, c=colors[n], alpha=alpha);
-            plt.xlim(-0.6, land.dims[1] - 0.4);
-            plt.ylim(-0.6, land.dims[0] - 0.4)
-
 # method for plotting individuals colored by their phenotypes for a given trait
-def show_phenotype(self, trait, land, scape_num=None, im_interp_method='nearest', markersize=65, alpha=1):
+def show_phenotype(self, trait, land, scape_num=None, im_interp_method='nearest', marker_size=65, alpha=1):
 
     if scape_num != None:
         land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
@@ -195,15 +181,15 @@ def show_phenotype(self, trait, land, scape_num=None, im_interp_method='nearest'
 
     data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, z[i]) for i in self.individs.keys()}).values())
 
-    plt.scatter([i[0] for i in data], [i[1] for i in data], s=markersize, c=[i[2] for i in data], cmap=cmap,
+    plt.scatter([i[0] for i in data], [i[1] for i in data], s=marker_size, c=[i[2] for i in data], cmap=cmap,
                 linewidth=1, edgecolor='black',
                 alpha=alpha)
     plt.xlim(-0.6, land.dims[1] - 0.4)
     plt.ylim(-0.6, land.dims[0] - 0.4)
-    # plt.scatter(x,y, s = markersize, c = [z[i] for i in i.items()}nds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
+    # plt.scatter(x,y, s = marker_size, c = [z[i] for i in i.items()}nds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
 
 # method for plotting individuals colored and sized by their overall fitnesses
-def show_fitness(self, land, scape_num=None, im_interp_method='nearest', min_markersize=60, alpha=1):
+def show_fitness(self, land, scape_num=None, im_interp_method='nearest', min_marker_size=60, alpha=1):
 
     if scape_num != None:
         land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
@@ -229,20 +215,20 @@ def show_fitness(self, land, scape_num=None, im_interp_method='nearest', min_mar
     # generate an evenly spaced range of the possible fitness values
     fit_vals = np.linspace(min_fit, 1, 50)
 
-    # use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
-    markersize_differentials = {i: 3 * np.abs(fit_vals - w[n]).argmin() for n,i in enumerate(self.individs.keys())}
+    # use index of closest possible fitness val to get a marker_size differential (to be added to min marker_size) for each individual
+    marker_size_differentials = {i: 3 * np.abs(fit_vals - w[n]).argmin() for n,i in enumerate(self.individs.keys())}
 
-    data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], markersize_differentials[i]) for i in
+    data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], marker_size_differentials[i]) for i in
                     self.individs.keys()}).values())
 
-    plt.scatter([i[0] for i in data], [i[1] for i in data], s=[min_markersize + i[3] for i in data],
+    plt.scatter([i[0] for i in data], [i[1] for i in data], s=[min_marker_size + i[3] for i in data],
                 c=[i[2] for i in data], cmap=cmap, alpha=alpha)
     plt.xlim(-0.6, land.dims[1] - 0.4)
     plt.ylim(-0.6, land.dims[0] - 0.4)
 
 
 # method for plotting individuals colored by their phenotypes for a given trait, sized by their fitness
-def show_single_trait_fitness(self, trait, land, scape_num=None, im_interp_method='nearest', min_markersize=60,
+def show_single_trait_fitness(self, trait, land, scape_num=None, im_interp_method='nearest', min_marker_size=60,
                               alpha=1):
 
     if scape_num != None:
@@ -269,20 +255,20 @@ def show_single_trait_fitness(self, trait, land, scape_num=None, im_interp_metho
     # get all individs' fitness values
     w = self.get_single_trait_fitness(trait)
 
-    # use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
-    markersize_differentials = [3 * np.abs(fit_vals - w[i]).argmin() for i in range(self.census())]
+    # use index of closest possible fitness val to get a marker_size differential (to be added to min marker_size) for each individual
+    marker_size_differentials = [3 * np.abs(fit_vals - w[i]).argmin() for i in range(self.census())]
 
     z = [v[trait] for v in self.get_phenotype()]
 
-    data = list(OD({i: (c[n][0] - 0.5, c[n][1] - 0.5, w[n], z[n], markersize_differentials[n]) for n,i in
+    data = list(OD({i: (c[n][0] - 0.5, c[n][1] - 0.5, w[n], z[n], marker_size_differentials[n]) for n,i in
                     enumerate(self.individs.keys())}).values())
 
     # separate colormap to color marker edges from black (fit = 1) to white (fit = 0) through red
     inside_marker_cmap = mpl.cm.get_cmap('RdYlGn')
 
-    plt.scatter([i[0] for i in data], [i[1] for i in data], s=[min_markersize + i[4] for i in data],
+    plt.scatter([i[0] for i in data], [i[1] for i in data], s=[min_marker_size + i[4] for i in data],
                 c=[i[3] for i in data], cmap=cmap, alpha=alpha)
-    plt.scatter([i[0] for i in data], [i[1] for i in data], s=min_markersize / 3, c=[i[2] for i in data],
+    plt.scatter([i[0] for i in data], [i[1] for i in data], s=min_marker_size / 3, c=[i[2] for i in data],
                 cmap=inside_marker_cmap)
     plt.xlim(-0.6, land.dims[1] - 0.4)
     plt.ylim(-0.6, land.dims[0] - 0.4)

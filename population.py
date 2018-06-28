@@ -357,9 +357,6 @@ class Population:
     def hist_fitness(self):
         plt.hist(list(selection.get_fitness(self).values()))
 
-    def get_single_trait_fitness(self, trait):
-        return selection.get_fitness(self, trait_num = trait)
-
     def get_dom(self, locus):
         return {locus: self.genomic_arch.h[locus]}
 
@@ -394,7 +391,7 @@ class Population:
 
     #method for plotting the population (or a subset of its individuals, by ID) on top of a landscape (or landscape stack)
     def show(self, land, hide_land=False, scape_num=None, individs=None, text=False, color='black',
-            edge_color='face', text_color='purple', colorbar=True, size=25, text_size=12, im_interp_method='nearest', 
+            edge_color='face', text_color='black', colorbar=True, size=25, text_size=9, im_interp_method='nearest', 
             land_cmap='terrain', pt_cmap=None, alpha=False, zoom_width=None, x=None, y=None):
         #get coords
         if individs is None:
@@ -421,7 +418,7 @@ class Population:
 
     #method for plotting the population on top of its estimated population-density raster
     def show_density(self, land, normalize_by='census', individs=None, text=False, max_1=False, color='black', edge_color='face', 
-            text_color='purple', size=25, text_size = 12, alpha=0.5, zoom_width=None, x=None, y=None):
+            text_color='black', size=25, text_size = 9, alpha=0.5, zoom_width=None, x=None, y=None):
         dens = self.calc_density(land, normalize_by=normalize_by, max_1=max_1)
         plt_lims = viz.get_plt_lims(land, x, y, zoom_width)
         viz.show_rasters(dens, plt_lims = plt_lims)
@@ -430,8 +427,8 @@ class Population:
 
 
     # method for plotting individuals colored by their genotype at a given locus
-    def show_genotype(self, locus, land, scape_num=None, individs=None, text=False, size=25, text_size = 12, 
-            edge_color='black', text_color='purple', colorbar=True, im_interp_method='nearest', 
+    def show_genotype(self, locus, land, scape_num=None, individs=None, text=False, size=25, text_size = 9, 
+            edge_color='black', text_color='black', colorbar=True, im_interp_method='nearest', 
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
         if by_dominance == True:
@@ -455,8 +452,8 @@ class Population:
 
 
     # method for plotting individuals colored by their phenotypes for a given trait
-    def show_phenotype(self, trait, land, scape_num=None, individs=None, text=False, size=25, text_size = 12, 
-            edge_color='black', text_color='purple', colorbar=True, im_interp_method='nearest', 
+    def show_phenotype(self, trait, land, scape_num=None, individs=None, text=False, size=25, text_size = 9, 
+            edge_color='black', text_color='black', colorbar=True, im_interp_method='nearest', 
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
         z = dict(zip(self.individs.keys(), self.get_phenotype()[:,trait]))
@@ -468,91 +465,46 @@ class Population:
                 size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y)
 
 
-    # method for plotting individuals colored and sized by their overall fitnesses
-    def show_fitness(self, land, scape_num=None, im_interp_method='nearest', min_markersize=60, alpha=1):
-
-        if scape_num != None:
-            land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
-        else:
-            land.scapes[land.n_movement_surf_scape].show(im_interp_method=im_interp_method, pop=True)
-
-        from matplotlib.colors import LinearSegmentedColormap
-        colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
-        # colors to match landscape palette extremes, but with hybrid a mix of the extremes
-        # rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0],
-        # light blue = [0,1], white = [1,1]
-        cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
-
-        # get all individs' coords
-        c = self.get_coords()
+    # method for plotting individuals colored by their overall fitnesses, or by their fitnesses for a single
+    # trait (if trait is not None)
+    def show_fitness(self, land, scape_num=None, trait_num=None, individs=None, text=False, size=100, text_size = 9, 
+            edge_color='black', text_color='black', fit_cmap = 'RdYlGn', colorbar=True, im_interp_method='nearest', 
+            alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
         # get all individs' fitness values
-        w = self.get_fitness()
+        if trait_num is None:
+            w = self.get_fitness()
+        else:
+            w = self.get_fitness(trait_num = trait_num)
 
-        # calc minimum possible fitness
+        #filter out unwanted individs, if necessary
+        w = dict(zip(self.individs.keys(), w))
+        if individs is not None:
+            w = {i:v for i,v in w.items() if i in individs}
+
+        # calc minimum possible fitness (for phenotypes within 0 <= z <= 1, which in reality isn't a
+        # constraint, but values lower than this will also be constrained to the minimum-value color for plotting)
         min_fit = np.product([1 - np.atleast_2d(t.phi).min() for t in list(self.genomic_arch.traits.values())])
 
-        # generate an evenly spaced range of the possible fitness values
-        fit_vals = np.linspace(min_fit, 1, 50)
+        #then get uneven cmap and cbar-maker (needs to be uneven to give color-resolution to values varying
+        #between 1 and the minimum-fitness value assuming all phenotypes are constrained 0<=z<=1, but then also
+        #allow gradually deepening reds for fitness values lower than that minimum value), using the min_fit val
+        cmap, make_cbar = viz.get_uneven_cmap_and_cbar_maker(min_val = min_fit, max_val = 1, cmap = fit_cmap)
+        
+        #plot the trait phenotype in larger circles first, if trait is not None
+        if trait_num is not None:
+            self.show_phenotype(trait=trait_num, land=land, scape_num=scape_num, individs=individs, text=False,
+                    size=size, text_size = text_size, edge_color=edge_color, text_color=text_color,
+                    colorbar=colorbar, im_interp_method=im_interp_method, 
+                    alpha=alpha, by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y)
+            size = round(0.2*size)
 
-        # use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
-        markersize_differentials = {i: 3 * np.abs(fit_vals - w[n]).argmin() for n,i in enumerate(self.individs.keys())}
+        self.show(land, scape_num = scape_num, individs = individs, text = text, color = list(w.values()),
+                pt_cmap = cmap, edge_color = edge_color, text_color = text_color, colorbar = colorbar, 
+                size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y)
 
-        data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], markersize_differentials[i]) for i in
-                        self.individs.keys()}).values())
-
-        plt.scatter([i[0] for i in data], [i[1] for i in data], s=[min_markersize + i[3] for i in data],
-                    c=[i[2] for i in data], cmap=cmap, alpha=alpha)
-        plt.xlim(-0.6, land.dims[1] - 0.4)
-        plt.ylim(-0.6, land.dims[0] - 0.4)
-
-
-    # method for plotting individuals colored by their phenotypes for a given trait, sized by their fitness
-    def show_single_trait_fitness(self, trait, land, scape_num=None, im_interp_method='nearest', min_markersize=60,
-                                  alpha=1):
-
-        if scape_num != None:
-            land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
-        else:
-            land.scapes[self.genomic_arch.traits[trait].scape_num].show(im_interp_method=im_interp_method, pop=True)
-
-        from matplotlib.colors import LinearSegmentedColormap
-        colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
-        # colors to match landscape palette extremes, but with hybrid a mix of the extremes
-        # rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0],
-        # light blue = [0,1], white = [1,1]
-        cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
-
-        # get all individs' coords
-        c = self.get_coords()
-
-        # calc minimum possible fitness
-        min_fit = 1 - np.atleast_2d(self.genomic_arch.traits[trait].phi).min()
-
-        # generate an evenly spaced range of the possible fitness values
-        fit_vals = np.linspace(min_fit, 1, 50)
-
-        # get all individs' fitness values
-        w = self.get_single_trait_fitness(trait)
-
-        # use index of closest possible fitness val to get a markersize differential (to be added to min markersize) for each individual
-        markersize_differentials = [3 * np.abs(fit_vals - w[i]).argmin() for i in range(self.census())]
-
-        z = [v[trait] for v in self.get_phenotype()]
-
-        data = list(OD({i: (c[n][0] - 0.5, c[n][1] - 0.5, w[n], z[n], markersize_differentials[n]) for n,i in
-                        enumerate(self.individs.keys())}).values())
-
-        # separate colormap to color marker edges from black (fit = 1) to white (fit = 0) through red
-        inside_marker_cmap = mpl.cm.get_cmap('RdYlGn')
-
-        plt.scatter([i[0] for i in data], [i[1] for i in data], s=[min_markersize + i[4] for i in data],
-                    c=[i[3] for i in data], cmap=cmap, alpha=alpha)
-        plt.scatter([i[0] for i in data], [i[1] for i in data], s=min_markersize / 3, c=[i[2] for i in data],
-                    cmap=inside_marker_cmap)
-        plt.xlim(-0.6, land.dims[1] - 0.4)
-        plt.ylim(-0.6, land.dims[0] - 0.4)
-
+        #and make a colorbar for the fitness values 
+        viz.make_fitness_cbar(make_cbar)
 
 
     # method for plotting a population pyramid

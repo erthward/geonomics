@@ -44,7 +44,8 @@ def get_fitness(pop, trait_num = None, set_fit = False):
     fit = np.clip(fit, a_min = 0.001, a_max = None)
     #set individuals' fitness attributes, if indicated
     if set_fit:
-        [ind.set_fitness(f) for f in fit];
+        indices = list(pop.individs.keys())
+        [pop.individs[indices[n]].set_fitness(f) for n,f in enumerate(fit)];
 
     return(fit)
 

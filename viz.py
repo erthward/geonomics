@@ -82,13 +82,13 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
             clb = plt.colorbar(boundaries=np.linspace(0, max(rasters[n].max(), 1), 51))
             clb.ax.set_title('Scape: %i' % n)
             ax = clb.ax
-            text = ax.title
+            title = ax.title
             font = mpl.font_manager.FontProperties(family='arial', style='normal', size=10)
-            text.set_font_properties(font)
+            title.set_font_properties(font)
 
 
-def show_points(points, scape_num=None, color='black', edge_color='face', text_color='purple', linewidth=0.5,
-        pt_cmap=None, size=25, text_size=12, alpha=False, text=None, plt_lims=None):
+def show_points(points, scape_num=None, color='black', edge_color='face', text_color='black', linewidth=0.5,
+        pt_cmap=None, size=25, text_size=9, alpha=False, text=None, plt_lims=None):
     #get the x and y coordinates from the points (and subtract 0.5 to line the points up with the plt.imshow()
     #grid of a landscape raster; imshow plots each pixel centered on its index, but the points then plot on 
     #those indices, so wind up shifted +0.5 on each axis
@@ -103,13 +103,17 @@ def show_points(points, scape_num=None, color='black', edge_color='face', text_c
         alpha = 1.0
 
     #plot the points, as stipulated by arguments
-    if pt_cmap == 'terrain': 
-        from matplotlib.colors import LinearSegmentedColormap
-        colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
-        # colors to match matplotlib colormap 'terrain' palette extremes, but with hybrid a mix of the extremes
-        # rather than the yellow at the middle of the palette, for nicer viewing
-        cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
-    
+    if pt_cmap is not None:
+        if pt_cmap == 'terrain': 
+            from matplotlib.colors import LinearSegmentedColormap
+            colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
+            # colors to match matplotlib colormap 'terrain' palette extremes, but with hybrid a mix of the extremes
+            # rather than the yellow at the middle of the palette, for nicer viewing
+            cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
+        elif type(pt_cmap) == str:
+            cmap = getattr(plt.cm, pt_cmap)
+        elif str(type(pt_cmap)) == "<class 'matplotlib.colors.LinearSegmentedColormap'>":
+            cmap = pt_cmap
         plt.scatter(x, y, s=size, c=color, cmap=cmap, linewidth=linewidth, edgecolor=edge_color, alpha=alpha)
     else:
         plt.scatter(x, y, s=size, c=color, linewidth=linewidth, edgecolor=edge_color, alpha=alpha);
@@ -138,6 +142,7 @@ def get_scape_plt_lims(land):
     lims = (xlim, ylim)
     return(lims)
 
+
 def get_zoom_plt_lims(x, y, zoom_width):
     #get zoom-half-width
     zhw = zoom_width/2
@@ -145,7 +150,8 @@ def get_zoom_plt_lims(x, y, zoom_width):
     ylim = (y- zhw, y+zhw)
     lims = (xlim, ylim)
     return(lims)
-   
+
+
 def get_plt_lims(land=None, x=None, y=None, zoom_width=None):
     if zoom_width is not None and x is not None and y is not None:
         plt_lims = get_zoom_plt_lims(x, y, zoom_width) 
@@ -154,152 +160,33 @@ def get_plt_lims(land=None, x=None, y=None, zoom_width=None):
     return(plt_lims)
 
 
+def get_uneven_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn'):
+    # define the colormap
+    cmap = getattr(plt.cm, cmap)
+    # define the bin-boundaries 
+    lower_bounds = np.linspace(0,min_val,round((2*cmap.N/3)+1))[:-1]
+    upper_bounds = np.linspace(min_val, max_val,round(cmap.N/3))
+    bounds = np.hstack((lower_bounds, upper_bounds))
+    assert len(bounds) == cmap.N
+    #normalize the colormap
+    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+    #create ticks for the colorbar
+    ticks_inds = [int(i) for i in np.round(np.linspace(0, len(bounds)-1, 10))]
+    ticks = bounds[ticks_inds]
+    ticks = [round(tick, 2) for tick in ticks]
+    #create a function for making the colorbar, to be shipped out to and called within population.Population.show_fitness()
+    def make_cbar(ax):
+        cbar = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, spacing='proportional', ticks=ticks, boundaries=bounds, format='%1i')
+        cbar.set_ticks(ticks)
+        cbar.set_ticklabels(ticks)
+    return(cmap, make_cbar)
 
-
-
-
-
-#### FROM POPULATION.PY
-
-# method for plotting individuals colored by their phenotypes for a given trait
-def show_phenotype(self, trait, land, scape_num=None, im_interp_method='nearest', marker_size=65, alpha=1):
-
-    if scape_num != None:
-        land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
-    else:
-        land.scapes[self.genomic_arch.traits[trait].scape_num].show(im_interp_method=im_interp_method, pop=True)
-
-    from matplotlib.colors import LinearSegmentedColormap
-    colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
-    # colors to match landscape palette extremes, but with hybrid a mix of the extremes
-    # rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0],
-    # light blue = [0,1], white = [1,1]
-    cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
-
-    c = self.get_coords()
-    z = {i:v[trait] for i,v in self.get_phenotype().items()}
-
-    data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, z[i]) for i in self.individs.keys()}).values())
-
-    plt.scatter([i[0] for i in data], [i[1] for i in data], s=marker_size, c=[i[2] for i in data], cmap=cmap,
-                linewidth=1, edgecolor='black',
-                alpha=alpha)
-    plt.xlim(-0.6, land.dims[1] - 0.4)
-    plt.ylim(-0.6, land.dims[0] - 0.4)
-    # plt.scatter(x,y, s = marker_size, c = [z[i] for i in i.items()}nds], cmap = cmap, alpha = alpha);plt.xlim(-0.6, land.dims[1]-0.4); plt.ylim(-0.6, land.dims[0]-0.4)
-
-# method for plotting individuals colored and sized by their overall fitnesses
-def show_fitness(self, land, scape_num=None, im_interp_method='nearest', min_marker_size=60, alpha=1):
-
-    if scape_num != None:
-        land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
-    else:
-        land.scapes[land.n_movement_surf_scape].show(im_interp_method=im_interp_method, pop=True)
-
-    from matplotlib.colors import LinearSegmentedColormap
-    colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
-    # colors to match landscape palette extremes, but with hybrid a mix of the extremes
-    # rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0],
-    # light blue = [0,1], white = [1,1]
-    cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
-
-    # get all individs' coords
-    c = self.get_coords()
-
-    # get all individs' fitness values
-    w = self.get_fitness()
-
-    # calc minimum possible fitness
-    min_fit = np.product([1 - np.atleast_2d(t.phi).min() for t in list(self.genomic_arch.traits.values())])
-
-    # generate an evenly spaced range of the possible fitness values
-    fit_vals = np.linspace(min_fit, 1, 50)
-
-    # use index of closest possible fitness val to get a marker_size differential (to be added to min marker_size) for each individual
-    marker_size_differentials = {i: 3 * np.abs(fit_vals - w[n]).argmin() for n,i in enumerate(self.individs.keys())}
-
-    data = list(OD({i: (c[i][0] - 0.5, c[i][1] - 0.5, w[i], marker_size_differentials[i]) for i in
-                    self.individs.keys()}).values())
-
-    plt.scatter([i[0] for i in data], [i[1] for i in data], s=[min_marker_size + i[3] for i in data],
-                c=[i[2] for i in data], cmap=cmap, alpha=alpha)
-    plt.xlim(-0.6, land.dims[1] - 0.4)
-    plt.ylim(-0.6, land.dims[0] - 0.4)
-
-
-# method for plotting individuals colored by their phenotypes for a given trait, sized by their fitness
-def show_single_trait_fitness(self, trait, land, scape_num=None, im_interp_method='nearest', min_marker_size=60,
-                              alpha=1):
-
-    if scape_num != None:
-        land.scapes[scape_num].show(im_interp_method=im_interp_method, pop=True)
-    else:
-        land.scapes[self.genomic_arch.traits[trait].scape_num].show(im_interp_method=im_interp_method, pop=True)
-
-    from matplotlib.colors import LinearSegmentedColormap
-    colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
-    # colors to match landscape palette extremes, but with hybrid a mix of the extremes
-    # rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0],
-    # light blue = [0,1], white = [1,1]
-    cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
-
-    # get all individs' coords
-    c = self.get_coords()
-
-    # calc minimum possible fitness
-    min_fit = 1 - np.atleast_2d(self.genomic_arch.traits[trait].phi).min()
-
-    # generate an evenly spaced range of the possible fitness values
-    fit_vals = np.linspace(min_fit, 1, 50)
-
-    # get all individs' fitness values
-    w = self.get_single_trait_fitness(trait)
-
-    # use index of closest possible fitness val to get a marker_size differential (to be added to min marker_size) for each individual
-    marker_size_differentials = [3 * np.abs(fit_vals - w[i]).argmin() for i in range(self.census())]
-
-    z = [v[trait] for v in self.get_phenotype()]
-
-    data = list(OD({i: (c[n][0] - 0.5, c[n][1] - 0.5, w[n], z[n], marker_size_differentials[n]) for n,i in
-                    enumerate(self.individs.keys())}).values())
-
-    # separate colormap to color marker edges from black (fit = 1) to white (fit = 0) through red
-    inside_marker_cmap = mpl.cm.get_cmap('RdYlGn')
-
-    plt.scatter([i[0] for i in data], [i[1] for i in data], s=[min_marker_size + i[4] for i in data],
-                c=[i[3] for i in data], cmap=cmap, alpha=alpha)
-    plt.scatter([i[0] for i in data], [i[1] for i in data], s=min_marker_size / 3, c=[i[2] for i in data],
-                cmap=inside_marker_cmap)
-    plt.xlim(-0.6, land.dims[1] - 0.4)
-    plt.ylim(-0.6, land.dims[0] - 0.4)
-
-
-
-
-
-
-
-
-
-
-
-
-
-# method for plotting a population pyramid
-# NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS
-def show_pyramid(self):
-    plt.hist([ind.age for ind in list(self.individs.values()) if ind.sex == 0], orientation='horizontal',
-             color='pink',
-             alpha=0.6)
-    plt.hist([ind.age for ind in list(self.individs.values()) if ind.sex == 1], orientation='horizontal',
-             color='skyblue',
-             alpha=0.6)
-
-def show_pop_growth(self, params):
-    T = range(len(self.Nt))
-    x0 = self.N_start / self.K.sum()
-    plt.plot(T, [demography.logistic_soln(x0, self.R, t) * self.K.sum() for t in T], color='red')
-    plt.plot(T, self.Nt, color='blue')
-    plt.xlabel('t')
-    plt.ylabel('N(t)')
+def make_fitness_cbar(make_cbar):
+    fig = plt.gcf()
+    ax2 = fig.add_axes([0.84, 0.1, 0.02, 0.78])
+    make_cbar(ax2)
+    ax2.set_title('fitness')
+    title = ax2.title
+    font = mpl.font_manager.FontProperties(family='arial', style='normal', size=10)                                                   
+    title.set_font_properties(font)
 

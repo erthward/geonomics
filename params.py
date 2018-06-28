@@ -34,11 +34,11 @@ params = {
 ##############
 
     'land' : {
-        'dims'          : (50,50),                  #x,y dimensions of landscape  
+        'dims'          : (10,10),                  #x,y dimensions of landscape  
         'num_scapes'    : 2,                        #number of landscapes desired
         'rand_land'     : True,                     #whether or not to generate random landscapes
         'interp_method' : ['linear', 'linear'],     # list of interpolation methods for generation of random landscapes, 
-        'n_rand_pts'    : 2600,                     #number of random coordinates to be used in generating random landscapes 
+        'n_rand_pts'    : 50,                     #number of random coordinates to be used in generating random landscapes 
                                                         #(only needed if rand_land = True)
                                                         #1 per landscape to be generated (as set by num_scapes)
         'landscape_pt_coords': np.array([[0,0], [0,100], [100,0], [50,40], [100,100], [30,0], [0,30], [70,100], [100,70]]),
@@ -84,8 +84,8 @@ params = {
 ################
 
     'genome' : {
-        'L'             : 1000,                     #total number of loci
-        'l_c'           : [500,250,250],            #chromosome lengths [sum(l_c) == L enforced]
+        'L'             : 200,                     #total number of loci
+        'l_c'           : [100,50,50],            #chromosome lengths [sum(l_c) == L enforced]
         'recomb_array'  : None,                     #predetermined linkage map to use for the simulated loci (optional)
         'x'             : 2,                        #ploidy (for now, leave at 2 for diploidy)
         'mu'            : 10e-9,                    #genome-wide mutation rate, per base per generation
@@ -126,7 +126,7 @@ params = {
 
     'pop' : {
         'main'      : {
-            'N_start'          : 1000               #starting population size
+            'N_start'          : 100               #starting population size
             }, # <END> 'main'
 
         'mating'    : {

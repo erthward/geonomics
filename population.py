@@ -290,6 +290,12 @@ class Population:
     
     def set_phenotype(self):
         [ind.set_phenotype(self.genomic_arch) for ind in self.individs.values()];
+
+
+    def set_fitness(self):
+        indices = list(self.individs.keys())
+        fit = self.get_fitness()
+        [self.individs[ind].set_fitness(fit[n]) for n, ind in enumerate(indices)]
         
 
     #method to set population's coords and cells arrays
@@ -484,12 +490,15 @@ class Population:
 
         # calc minimum possible fitness (for phenotypes within 0 <= z <= 1, which in reality isn't a
         # constraint, but values lower than this will also be constrained to the minimum-value color for plotting)
-        min_fit = np.product([1 - np.atleast_2d(t.phi).min() for t in list(self.genomic_arch.traits.values())])
+        if trait_num is None: 
+            min_fit = np.product([1 - np.atleast_2d(t.phi).min() for t in list(self.genomic_arch.traits.values())])
+        else:
+            min_fit = 1 - np.atleast_2d(self.genomic_arch.traits[trait_num].phi).min()
 
         #then get uneven cmap and cbar-maker (needs to be uneven to give color-resolution to values varying
         #between 1 and the minimum-fitness value assuming all phenotypes are constrained 0<=z<=1, but then also
         #allow gradually deepening reds for fitness values lower than that minimum value), using the min_fit val
-        cmap, make_cbar = viz.get_uneven_cmap_and_cbar_maker(min_val = min_fit, max_val = 1, cmap = fit_cmap)
+        cmap, make_cbar = viz.get_fitness_cmap_and_cbar_maker(min_val = min_fit, max_val = 1, cmap = fit_cmap, trait_num = trait_num)
         
         #plot the trait phenotype in larger circles first, if trait is not None
         if trait_num is not None:
@@ -504,7 +513,7 @@ class Population:
                 size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y)
 
         #and make a colorbar for the fitness values 
-        viz.make_fitness_cbar(make_cbar)
+        viz.make_fitness_cbar(make_cbar, min_fit)
 
 
     # method for plotting a population pyramid

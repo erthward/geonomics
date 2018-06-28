@@ -37,7 +37,7 @@ import sys
 
 def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'nearest', cmap = 'terrain', plt_lims = None, mask_val = None):
     #if a figure is already open, force colorbar to False
-    if plt.get_fignums():
+    if plt.get_fignums() and plt.gcf().get_axes():
         colorbar = False
 
     #if just a numpy.ndarray or a Landscape (not a Landscape_Stack) is provided, or if just a single raster is desired, grab the raster into a list
@@ -79,9 +79,9 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
         #and their colorbars, if requested (but for only the first two rasters maximum, 
         #since the second and onward share the same palette)
         if colorbar and n < 2:
-            clb = plt.colorbar(boundaries=np.linspace(0, max(rasters[n].max(), 1), 51))
-            clb.ax.set_title('Scape: %i' % n)
-            ax = clb.ax
+            cbar = plt.colorbar(boundaries=np.linspace(0, max(rasters[n].max(), 1), 51))
+            cbar.ax.set_title('scape: %i' % n)
+            ax = cbar.ax
             title = ax.title
             font = mpl.font_manager.FontProperties(family='arial', style='normal', size=10)
             title.set_font_properties(font)
@@ -160,9 +160,20 @@ def get_plt_lims(land=None, x=None, y=None, zoom_width=None):
     return(plt_lims)
 
 
-def get_uneven_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn'):
+def get_fitness_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn', max_cmap_len = 100, trait_num = None):
     # define the colormap
     cmap = getattr(plt.cm, cmap)
+    #extract all the colors into a list
+    cmap_list = [cmap(i) for i in range(cmap.N)]
+    #create new list, with the majority of the color range expressed for the values between 1 and the min_val,
+    #then the remainder stretched out between min_val and 0
+    top = np.int64(np.linspace(0,len(cmap_list)*0.15,max_cmap_len*0.8))
+    bot = np.int64(np.linspace(1+(len(cmap_list)*0.15), len(cmap_list)-1, max_cmap_len*0.2))
+    new_cmap_inds = list(np.hstack((top,bot)))
+    new_cmap_inds = list(set(new_cmap_inds))
+    new_cmap_list = [col for n,col in enumerate(cmap_list) if n in new_cmap_inds]
+    # create the new map
+    cmap = cmap.from_list('Custom cmap', new_cmap_list, len(cmap_list))
     # define the bin-boundaries 
     lower_bounds = np.linspace(0,min_val,round((2*cmap.N/3)+1))[:-1]
     upper_bounds = np.linspace(min_val, max_val,round(cmap.N/3))
@@ -171,22 +182,33 @@ def get_uneven_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn'):
     #normalize the colormap
     norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
     #create ticks for the colorbar
-    ticks_inds = [int(i) for i in np.round(np.linspace(0, len(bounds)-1, 10))]
-    ticks = bounds[ticks_inds]
+    ticks_inds = np.int64(np.linspace(0, len(bounds)-1, 10))
+    ticks = list(bounds[ticks_inds])
+    tick_closest_to_min_val = min([abs(tick-min_val) for tick in ticks])
+    ind_closest = [n for n,tick in enumerate(ticks) if abs(tick-min_val) == tick_closest_to_min_val][0]
+    ticks[ind_closest] = min_val
+    ticks = sorted(ticks)
     ticks = [round(tick, 2) for tick in ticks]
+    if trait_num is None:
+        tick_labs = ['$1-\prod_{trait=1}^{t} \phi_{t} = %0.2f$' % round(min_val,2) if n == ind_closest else str(tick) for n,tick in enumerate(ticks)]
+    else:
+        tick_labs = ['$1-\phi_{trait=%i} = %0.2f$' % (trait_num, round(min_val,2)) if n == ind_closest else str(tick) for n,tick in enumerate(ticks)]
     #create a function for making the colorbar, to be shipped out to and called within population.Population.show_fitness()
     def make_cbar(ax):
         cbar = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, spacing='proportional', ticks=ticks, boundaries=bounds, format='%1i')
         cbar.set_ticks(ticks)
-        cbar.set_ticklabels(ticks)
+        cbar.set_ticklabels(tick_labs)
     return(cmap, make_cbar)
 
-def make_fitness_cbar(make_cbar):
+def make_fitness_cbar(make_cbar, min_fit):
     fig = plt.gcf()
-    ax2 = fig.add_axes([0.84, 0.1, 0.02, 0.78])
+    ax1 = plt.gca()
+    ax2 = fig.add_axes([0.84, 0.106, 0.02, 0.7774])
     make_cbar(ax2)
+    ax2.plot([0,1],[round(min_fit,2)]*2, c = 'black', lw = 1)
     ax2.set_title('fitness')
     title = ax2.title
     font = mpl.font_manager.FontProperties(family='arial', style='normal', size=10)                                                   
     title.set_font_properties(font)
+    
 

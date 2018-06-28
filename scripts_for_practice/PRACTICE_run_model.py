@@ -4,14 +4,6 @@ exec(open('./scripts_for_practice/PRACTICE_create_land_genomic_arch_pop.py', 'r'
 
 pop.set_K(land.scapes[params['land']['movement_surf']['movement_surf_scape_num']].raster)
 
-pop.genomic_arch.traits[0].s = 0.1
-
-# pop.genomic_arch.traits[0].alpha = np.array([0.25])
-
-for i in pop.individs.keys():
-    pop.individs[i].genome[pop.genomic_arch.traits[0].loci, :] = r.binomial(1, 0.5, 2)
-    
-
 def burn(stop_after = None):
     break_burn_in = False
     burn_in_test_t = params['model']['burn']['burn_T_min']

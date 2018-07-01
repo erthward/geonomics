@@ -22,6 +22,14 @@ Documentation:              URL
 ##########################################
 '''
 
+
+#TODO:
+#   - vectorize dispersal (i.e. create all offspring and parent centroids, then draw new locations for all offspring simultaneously)
+#   - create simpler (private?) methods for making directional and distance draws, then call those within move, disperse, etc
+
+
+
+
 import numpy as np
 import numpy.random as r
 import random
@@ -35,6 +43,7 @@ from operator import itemgetter
 from numba import jit
 from collections import Counter as C
 import time
+
 
 s_vonmises.a = -np.inf
 s_vonmises.b = np.inf
@@ -153,4 +162,26 @@ def create_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
     loc_choices = list(C(loc_choices).items())
     approx = np.hstack([s_vonmises.rvs(kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])
     return(approx)
+
+
+def disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dispersal, mu_dir = 0, kappa_dir = 0): 
+    within_landscape = False
+    while within_landscape == False:
+
+        #NOTE: For now, dispersal random and equally probable in all directions, but I would love to
+        #operationalize an environmental layer that can be used here just like it is used in movement (for e.g.  wind or current dispersal)
+        direction = r_vonmises(mu_dir, kappa_dir)  
+        distance = lognormal(mu_dispersal, sigma_dispersal)
+
+        offspring_x = parent_centroid_x + np.cos(direction)*distance
+        offspring_y = parent_centroid_y + np.sin(direction)*distance
+        within_landscape = (offspring_x > 0 and offspring_x < land.dims[0]) and (offspring_y > 0 and offspring_y < land.dims[1])
+
+    return (offspring_x, offspring_y)
+
+
+   
+
+
+
 

@@ -27,8 +27,6 @@ import genome
 import individual
 import movement
 import mating
-import gametogenesis
-import dispersal
 import selection
 import mutation
 import landscape
@@ -176,7 +174,7 @@ class Population:
             offspring_key = next(reversed(self.individs)) + 1
             for n in range(n_offspring):
 
-                offspring_x, offspring_y = dispersal.disperse(land, parent_centroid_x, parent_centroid_y,
+                offspring_x, offspring_y = movement.disperse(land, parent_centroid_x, parent_centroid_y,
                         self.dispersal_mu, self.dispersal_sigma)
 
                 if self.sex:

@@ -51,11 +51,11 @@ def calc_dNdt(land, N, K, R, pop_growth_eq = 'logistic'):
 
 def kill(land, pop, death_probs):
     deaths = np.array(list(pop.individs.keys()))[np.bool8(r.binomial(n = 1, p = death_probs))]
-    ig = itemgetter(*deaths)
-    #[land.mating_grid.remove(ind) for ind in ig(pop.individs)]
-    #list(map(land.mating_grid.remove, ig(pop.individs)));
-    [pop.individs.pop(ind) for ind in deaths]
-
+    if len(deaths) > 0:
+        ig = itemgetter(*deaths)
+        #[land.mating_grid.remove(ind) for ind in ig(pop.individs)]
+        #list(map(land.mating_grid.remove, ig(pop.individs)));
+        [pop.individs.pop(ind) for ind in deaths]
     return(len(deaths))
 
 

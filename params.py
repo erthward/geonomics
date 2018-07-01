@@ -34,7 +34,7 @@ params = {
 ##############
 
     'land' : {
-        'dims'          : (10,10),                  #x,y dimensions of landscape  
+        'dims'          : (50,50),                  #x,y dimensions of landscape  
         'num_scapes'    : 2,                        #number of landscapes desired
         'rand_land'     : True,                     #whether or not to generate random landscapes
         'interp_method' : ['linear', 'linear'],     # list of interpolation methods for generation of random landscapes, 
@@ -126,7 +126,7 @@ params = {
 
     'pop' : {
         'main'      : {
-            'N_start'          : 100               #starting population size
+            'N_start'          : 1000               #starting population size
             }, # <END> 'main'
 
         'mating'    : {

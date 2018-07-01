@@ -34,7 +34,6 @@ import numpy.random as r
 from operator import itemgetter as ig
 from itertools import repeat, starmap
 
-import gametogenesis
 import genome
 
 
@@ -173,18 +172,17 @@ def determine_n_births(num_pairs, n_births_lambda):
     return (num_births)
 
 
-
-
-
 # function for mating a chosen mating-pair
 def mate_sngl_offspr(pop, pair, gamete_recomb_paths):
     # generate a gamete for each member of mating pair, stack, and transpose
     new_genome = np.vstack([pop.individs[ind].genome.flatten()[gamete_recomb_paths.pop()] for ind in pair]).T
     return(new_genome)
 
+
 def mate_sngl_pair(pop, pair, n_offspring, recomb_paths):
     offspring = [mate_sngl_offspr(pop, pair, [recomb_paths.pop() for _ in range(2)]) for off in range(n_offspring)]
     return(offspring)
+
 
 # function for mating a chosen mating-pair
 def mate(pop, mating_pairs, n_offspring, recomb_paths):
@@ -192,5 +190,3 @@ def mate(pop, mating_pairs, n_offspring, recomb_paths):
     new_genomes = list(starmap(mate_sngl_pair, zip(repeat(pop), mating_pairs, n_offspring, pairs_paths)))
     return(new_genomes)
 
-            
- 

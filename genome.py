@@ -25,9 +25,7 @@ Documentation:            URL
 import numpy as np    
 from numpy import random as r
 import random
-
 import bitarray
-import gametogenesis
 
 
 
@@ -143,21 +141,13 @@ class Genomic_Architecture:
             cPickle.dump(self, f)
 
 
-
-
-
-
-
 #----------------------------------
 # FUNCTIONS -----------------------
 #----------------------------------
 
-
-
 #generate allele_freqs
 def draw_allele_freqs(l):
     return(r.beta(1,1,l))
-
 
 
 #simulate genotypes
@@ -174,7 +164,6 @@ def draw_h(l, low = 0, high = 2):
     return(h)
 
 
-
 def construct_traits(traits_params):
     from copy import deepcopy
     params_copy = deepcopy(traits_params)
@@ -183,7 +172,6 @@ def construct_traits(traits_params):
     #then for each of i traits, unpack the ith components of the remaining params to create the trait dict
     traits = {i : Trait(i, **{k:v[i] for k,v in params_copy.items()}) for i in range(num_traits)}
     return(traits)
-
 
 
 #simulate linkage values
@@ -213,8 +201,6 @@ def draw_r(g_params, recomb_rate_fn = None):
         return(recomb_array)
 
 
-
-
 def get_chrom_breakpoints(l_c, L):
 
     breakpoints = np.array([0]+list(np.cumsum(sorted(l_c))[:-1]))
@@ -224,11 +210,14 @@ def get_chrom_breakpoints(l_c, L):
     return(breakpoints)
 
 
+#carry out recombination, using the lookup array in a Genomic_Architecture object
+def recombine(r_lookup, n_recombinants):
+    recombinants = np.array([r.choice(r_lookup[i,], size = n_recombinants, replace = True) for i in range(len(r_lookup))])
+    recombinants = np.cumsum(recombinants, axis = 0)%2
+    return(recombinants)
 
 
 def create_recomb_array(g_params):
-
-
     #get L (num of loci) and l_c (if provided; num of loci per chromsome) from params['genome'] dict
     L = g_params['L']
     if ('l_c' in g_params.keys() and g_params['l_c'] != None and len(g_params['l_c']) > 1):
@@ -286,8 +275,6 @@ def create_recomb_array(g_params):
         return(recomb_array, sorted(l_c))
 
 
-
-
 #function to create a lookup array, for raster recombination of larger numbers of loci on the fly
     #NOTE: size argument ultimately determines the minimum distance between probabilities (i.e. recombination rates)
     #that can be modeled this way
@@ -298,12 +285,10 @@ def create_recomb_paths_bitarrays(genomic_arch, lookup_array_size = 10000, num_r
     for i, rate in enumerate(genomic_arch.r):
         lookup_array[i,0:int(round(lookup_array_size*rate))] = 1
 
-    recomb_paths = gametogenesis.recombine(lookup_array, num_recomb_paths).T
+    recomb_paths = recombine(lookup_array, num_recomb_paths).T
     bitarrays = tuple([make_bitarray_recomb_subsetter(p) for p in recomb_paths])
     
     return(bitarrays)
-
-
 
 
 def make_bitarray_recomb_subsetter(recomb_path):
@@ -314,7 +299,6 @@ def make_bitarray_recomb_subsetter(recomb_path):
         tot.append(ba[i])
         tot.append(ba_inv[i])
     return(bitarray.bitarray(tot))
-
 
 
 #build the genomic architecture
@@ -372,9 +356,6 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
     return(genomic_arch)
 
 
-
-
-
 #simulate genome
 def sim_genome(genomic_arch):
     new_genome = np.ones([genomic_arch.L, genomic_arch.x], dtype = np.int8)*9 #if for some reason any loci are not properly set to either 0 or 1, they will stick out as 9s
@@ -385,8 +366,6 @@ def sim_genome(genomic_arch):
     assert np.shape(new_genome) == (genomic_arch.L, genomic_arch.x), "A new genome must wind up with shape = (L, ploidy)."
 
     return(new_genome)
-
-
 
 
 #function to reassign genomes after burn-in

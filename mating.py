@@ -167,26 +167,26 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
     return(mates)   # Return an array or arrays, each inner array containing a mating-pair
 
 
-def determine_n_births(num_pairs, n_births_lambda):
+def draw_n_births(num_pairs, n_births_lambda):
     num_births = [r.poisson(n_births_lambda - 1 + .0001) + 1 for i in range(num_pairs)]
     return (num_births)
 
 
 # function for mating a chosen mating-pair
-def mate_sngl_offspr(pop, pair, gamete_recomb_paths):
+def do_mating_sngl_offspr(pop, pair, gamete_recomb_paths):
     # generate a gamete for each member of mating pair, stack, and transpose
     new_genome = np.vstack([pop.individs[ind].genome.flatten()[gamete_recomb_paths.pop()] for ind in pair]).T
     return(new_genome)
 
 
-def mate_sngl_pair(pop, pair, n_offspring, recomb_paths):
-    offspring = [mate_sngl_offspr(pop, pair, [recomb_paths.pop() for _ in range(2)]) for off in range(n_offspring)]
+def do_mating_sngl_pair(pop, pair, n_offspring, recomb_paths):
+    offspring = [do_mating_sngl_offspr(pop, pair, [recomb_paths.pop() for _ in range(2)]) for off in range(n_offspring)]
     return(offspring)
 
 
 # function for mating a chosen mating-pair
-def mate(pop, mating_pairs, n_offspring, recomb_paths):
+def do_mating(pop, mating_pairs, n_offspring, recomb_paths):
     pairs_paths = [[next(iter(recomb_paths)) for _ in range(2*n)] for n in n_offspring]
-    new_genomes = list(starmap(mate_sngl_pair, zip(repeat(pop), mating_pairs, n_offspring, pairs_paths)))
+    new_genomes = list(starmap(do_mating_sngl_pair, zip(repeat(pop), mating_pairs, n_offspring, pairs_paths)))
     return(new_genomes)
 

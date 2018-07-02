@@ -18,18 +18,13 @@ import selection
 
 '''Functions to control demography/population dynamics.'''
 
-
-#TODO:
-    # - probably soon get rid of all the debug and print statements in the pop_dynamics function soon!
-    # - also probably get rid of any optional arguments fed into if statements that I wound up not using?
-
-
-def logistic_eqxn(R, N, K):
+#the logistic eqxn
+def calc_logistic_growth(R, N, K):
     dNdt = R*(1-(N/K))*N 
     return(dNdt)
 
 
-def logistic_soln(x0, R, t):
+def cal_logistic_soln(x0, R, t):
         return(1/(1+((1/x0)-1)*np.e**(-1*R*t)))
 
 
@@ -42,14 +37,14 @@ def calc_dNdt(land, N, K, R, pop_growth_eq = 'logistic'):
     #NOTE: For now this is the only option and the default, but could easily offer other equations later if desired
     if pop_growth_eq == 'logistic':
         #use logistic eqxn, with pop intrinsic growth rate (pop.R) to generate current growth-rate raster
-        dNdt = logistic_eqxn(R, N, K)
+        dNdt = calc_logistic_growth(R, N, K)
     
     return(landscape.Landscape(dims, dNdt))
 
 
 
 
-def kill(land, pop, death_probs):
+def do_mortality(land, pop, death_probs):
     deaths = np.array(list(pop.individs.keys()))[np.bool8(r.binomial(n = 1, p = death_probs))]
     if len(deaths) > 0:
         ig = itemgetter(*deaths)
@@ -61,7 +56,7 @@ def kill(land, pop, death_probs):
 
 
 
-def pop_dynamics(land, pop, with_selection = True, burn = False, age_stage_d = None, births_before_deaths = False, debug = None):
+def do_pop_dynamics(land, pop, with_selection = True, burn = False, age_stage_d = None, births_before_deaths = False, debug = None):
     '''Generalized function for implementation population dynamics. Will carry out one round of mating and
     death, according to parameterization laid out in params dict (which were grabbed as Population attributes).
 
@@ -139,8 +134,8 @@ def pop_dynamics(land, pop, with_selection = True, burn = False, age_stage_d = N
 
     ######if births should happen before (and thus be included in the calculation of) deaths, then mate and disperse babies now
     if births_before_deaths == True:
-        #Feed the land and mating pairs to pop.mate, to produce and disperse zygotes
-        pop.mate(land, pairs, burn)
+        #Feed the land and mating pairs to pop.do_mating, to produce and disperse zygotes
+        pop.do_mating(land, pairs, burn)
 
 
 
@@ -367,7 +362,7 @@ def pop_dynamics(land, pop, with_selection = True, burn = False, age_stage_d = N
 
     if births_before_deaths == False:
         #Feed the land and mating pairs to the mating functions, to produce and disperse zygotes
-        pop.mate(land, pairs, burn)
+        pop.do_mating(land, pairs, burn)
 
 
 
@@ -378,7 +373,7 @@ def pop_dynamics(land, pop, with_selection = True, burn = False, age_stage_d = N
     death_probs = d[pop.cells[:,1], pop.cells[:,0]]
 
     if with_selection:
-        death_probs = selection.get_prob_death(pop, death_probs)
+        death_probs = selection.calc_prob_death(pop, death_probs)
 
     assert np.alltrue(death_probs >= 0)
     assert np.alltrue(death_probs <= 1)
@@ -404,7 +399,7 @@ def pop_dynamics(land, pop, with_selection = True, burn = False, age_stage_d = N
 
     #Feed the per-individual death probabilities into the kill function, which will probabilistically generate deaths
     #and cull those individuals, and will return the number of deaths
-    num_deaths = kill(land, pop, death_probs)
+    num_deaths = do_mortality(land, pop, death_probs)
     pop.set_coords_and_cells()
     pop.n_deaths.append(num_deaths)
 

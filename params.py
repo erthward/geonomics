@@ -126,7 +126,7 @@ params = {
 
     'pop' : {
         'main'      : {
-            'N_start'          : 1000               #starting population size
+            'N_start'          :1000               #starting population size
             }, # <END> 'main'
 
         'mating'    : {

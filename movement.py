@@ -113,10 +113,10 @@ def move(pop, land):
 # 2.) Makes a random draw from a Von Mises dist centered on the direction, with a kappa value set such that the net effect, when doing this a ton of times for a given neighborhood and then plotting the resulting histogram, gives the visually/heuristically satisfying approximation of a Von Mises mixture distribution
 
 
-# Runs the Von Mises mixture sampler function (create_von_mises_mix_sampler) across the entire landscape and returns an array-like (list of
+# Runs the Von Mises mixture sampler function (make_von_mises_mix_sampler) across the entire landscape and returns an array-like (list of
 # lists) of the resulting lambda-function samplers
 
-def create_movement_surface(land, kappa=12, approx_len = 5000):
+def make_movement_surface(land, kappa=12, approx_len = 5000):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0], [3 * pi / 4, pi / 2, pi / 4]])
 
     # grab the correct landscape raster
@@ -134,13 +134,12 @@ def create_movement_surface(land, kappa=12, approx_len = 5000):
     for i in range(rast.shape[0]):
         for j in range(rast.shape[1]):
             neigh = embedded_rast[i:i + 3, j:j + 3].copy()
-            #movement_surf[i][j] = create_von_mises_mix_sampler(neigh, queen_dirs, kappa=kappa)
-            movement_surf[i, j, :] = create_von_mises_mix_sampler(neigh, queen_dirs, kappa = kappa, approx_len= approx_len)
+            movement_surf[i, j, :] = make_von_mises_mix_sampler(neigh, queen_dirs, kappa = kappa, approx_len= approx_len)
 
     return (movement_surf)
 
 
-def create_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
+def make_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
     # NOTE: Just visually, heuristically, kappa = 10 seemed like a perfect middle value (kappa ~3 gives too
     # wide of a Von Mises variance and just chooses values around the entire circle regardless of neighborhood
     # probability, whereas kappa ~20 produces noticeable reductions in probability of moving to directions

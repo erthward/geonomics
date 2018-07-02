@@ -40,7 +40,7 @@ import random
 #--------------------------------------
 
 
-def estimate_total_num_mutations(params, pop):
+def calc_estimated_total_mutations(params, pop):
     #NOTE: this would actually be a pretty poor estimate, because mutations will occur in new individuals, not some static population
 
     mean_births = np.mean(pop.n_births[-params['model']['burn']['burn_T_min']:])
@@ -53,7 +53,7 @@ def estimate_total_num_mutations(params, pop):
     return(est)
 
 
-def mutate(pop, log = False):
+def do_mutation(pop, log = False):
 
     newborns = {i:v.age for i,v in pop.individs.items() if v.age == 0}
 

@@ -144,7 +144,7 @@ class Landscape_Stack:
            
 
     # method for pickling a landscape stack
-    def pickle(self, filename):
+    def write_pickle(self, filename):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)
@@ -191,7 +191,7 @@ class Density_Grid:
         y_cells = (y - self.y_edge*self.window_width/2.)//self.window_width + self.y_edge
         
         #get cell strings from indivudals' cells
-        cells = get_cell_strings(y_cells, x_cells, self.dim_om)
+        cells = make_cell_strings(y_cells, x_cells, self.dim_om)
         #and get Counter dict of the cell strings
         counts = C(cells)
 
@@ -251,7 +251,7 @@ class Movement_Surface:
         self.movement_surf = movement_surf
         self.scape_num = scape_num
 
-    def get(x, y, z):
+    def get_directions(x, y, z):
         return(self.movement_surf[y, x, z])
 
 
@@ -260,7 +260,7 @@ class Movement_Surface:
 # --------------------------------------
 
 
-def random_surface(dims, n_rand_pts, interp_method="cubic", island_val=0, num_hab_types=2, dist='beta', alpha=0.05,
+def make_random_scape(dims, n_rand_pts, interp_method="cubic", island_val=0, num_hab_types=2, dist='beta', alpha=0.05,
                    beta=0.05):  # requires landscape to be square, such that dim = domain = range
     # NOTE: can use "nearest" interpolation to create random patches of habitat (by integer values); can change num_hab_types to > 2 to create a randomly multi-classed landscape
     # NOTE: I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
@@ -298,12 +298,12 @@ def random_surface(dims, n_rand_pts, interp_method="cubic", island_val=0, num_ha
     return Landscape(dims, I)
 
 
-def defined_surface(dims, pts, vals, interp_method="cubic",
+def make_defined_scape(dims, pts, vals, interp_method="cubic",
                     num_hab_types=2):  # pts should be provided as n-by-2 Numpy array, vals as a 1-by-n Numpy array
 
     # NOTE: There seem to be some serious issues with all of this code, because the resulting landscapes are not quite symmetrical; and making small tweaks (e.g. adding 5 to all input points' coordinates) doesn't just tweak the output landscape but instead completely gets ride of it; I have an intuition that it comes from the code that coerces all raster values to 0 <= val <= 1, becuase that doesn't look it does quite what I originally intended for it to do, but I'm not really sure... anyhow, for now it works for my initial testing purposes
 
-    # NOTE: like the random_surface function, this also requires landscape to be square, but I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
+    # NOTE: like the make_random_scape function, this also requires landscape to be square, but I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
 
     # NOTE: if discrete habitat patches desired, values should still be fed in as proportions, and will then be multipled by num_hab_types to develop habitat class values
     if interp_method == 'nearest':
@@ -327,7 +327,7 @@ def defined_surface(dims, pts, vals, interp_method="cubic",
     return Landscape(dims, I)
 
 
-def build_scape_stack(params, num_hab_types=2):
+def make_scape_stack(params, num_hab_types=2):
     # NOTE: If a multi-class (rather than binary) block-habitat raster would be of interest, would need to make
     # num_hab_types customizable)
 
@@ -356,7 +356,7 @@ def build_scape_stack(params, num_hab_types=2):
         if type(n_rand_pts) == int:
             n_rand_pts = [n_rand_pts] * num_scapes
 
-        land = Landscape_Stack( [random_surface(dims, n_rand_pts[n], interp_method=interp_method[n], num_hab_types=num_hab_types) for n in range(num_scapes)], params=params)
+        land = Landscape_Stack( [make_random_scape(dims, n_rand_pts[n], interp_method=interp_method[n], num_hab_types=num_hab_types) for n in range(num_scapes)], params=params)
 
     # or create rasters for defined landscape, if params['land']['rand_land'] == False
     elif not params['land']['rand_land']:
@@ -429,18 +429,18 @@ def build_scape_stack(params, num_hab_types=2):
 
         # create the movement surface, and set it as the land.movement_surf attribute
         import movement
-        land.movement_surf = movement.create_movement_surface(land, approx_len = land.movement_surf_approx_len)
+        land.movement_surf = movement.make_movement_surface(land, approx_len = land.movement_surf_approx_len)
 
     return land
 
 
-def create_island_mask(dims, scape):
+def make_island_mask(dims, scape):
     mask = np.ma.masked_less_equal(scape, 1e-8).mask
     return Landscape(dims, mask)
 
 
 # function for reading in a pickled landscape stack
-def load_pickled_scape_stack(filename):
+def read_pickled_scape_stack(filename):
     import cPickle
     with open(filename, 'rb') as f:
         land = cPickle.load(f)
@@ -451,7 +451,7 @@ def load_pickled_scape_stack(filename):
 ####functions for creating density-calculation grids
 
 #create strings from input cell coordinates
-def get_cell_strings(gi, gj, dim_om):
+def make_cell_strings(gi, gj, dim_om):
     #get strings for both i and j cooridnates, zfilling to the correct order-of-magnitude (of the larger landscape dimension)
     i_strs = [str(int(i)).zfill(dim_om) for i in gi.flatten()]
     j_strs = [str(int(j)).zfill(dim_om) for j in gj.flatten()]
@@ -526,7 +526,7 @@ def make_density_grid(land, ww, x_edge, y_edge):
     #cell-number integers for them, converts those to strings, then counts the number of instances of each
     #string for the population and uses those values as the counts of individuals within each density-grid
     #cell, obviating the need to loop across grid dimensions. This performs better and scales much better.
-    cells = get_cell_strings(i_cells, j_cells, dim_om)
+    cells = make_cell_strings(i_cells, j_cells, dim_om)
 
     #use the above-created data structures to create two Density_Grid objects (which will inhere to the
     #Landscape_Stack as attributes)

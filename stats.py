@@ -97,14 +97,8 @@ class Stats:
 
 
 #create the Stats object
-def create_stats_object(params):
+def make_stats_object(params):
     return(Stats(params))
-
-
-
-
-
-
 
 
 def calc_Nt(pop):
@@ -113,7 +107,7 @@ def calc_Nt(pop):
 
 
 
-def calc_LD(pop, plot = False):
+def calc_ld(pop, plot = False):
     
     #TODO: I should also include (either as an alternative within this fn, or as separate fn) the option to calculate D'
 
@@ -172,7 +166,7 @@ def calc_het(pop):
 
     
 
-def calc_MAF(pop):
+def calc_maf(pop):
     two_N = 2*float(pop.census())
     MAF = []
     for l in range(pop.genomic_arch.L):

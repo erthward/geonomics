@@ -10,15 +10,15 @@ def burn(stop_after = None):
     t = 0
     while break_burn_in == False:
         print('###############\n\n TIMESTEP %i' % t)
-        print('     POP %i\n' % pop.census())
-        pop.increment_age_stage(burn=True)
+        print('     POP %i\n' % pop.get_size())
+        pop.reset_age_stage(burn=True)
         pop.set_Nt()
-        pop.move(land)
-        extinct = demography.pop_dynamics(land, pop, with_selection=False, burn=True)
+        pop.do_movement(land)
+        extinct = demography.do_pop_dynamics(land, pop, with_selection=False, burn=True)
         t += 1
         if extinct == 1:
             break
-        break_burn_in = (len(pop.Nt) > burn_in_test_t and burn_in.adf_threshold_test(pop, burn_in_test_t, 0.05) and burn_in.tt_threshold_test( pop, burn_in_test_t, 0.05))
+        break_burn_in = (len(pop.Nt) > burn_in_test_t and burn_in.test_adf_threshold(pop, burn_in_test_t, 0.05) and burn_in.test_tt_threshold( pop, burn_in_test_t, 0.05))
         if stop_after is not None and t == stop_after:
             break
 
@@ -29,16 +29,16 @@ def burn(stop_after = None):
 def main(T, reassign_genomes=False):
     if reassign_genomes == True:
         print('\n\nReassigning genomes...\n\n')
-        genome.reassign_genomes(pop, params)
+        genome.reset_genomes(pop, params)
         [i.set_phenotype(genomic_arch) for i in pop.individs.values()];
     for t in range(T):
         print('###############\n\n TIMESTEP %i' % t)
-        print('     POP %i\n' % pop.census())
-        pop.increment_age_stage(burn=False)
+        print('     POP %i\n' % pop.get_size())
+        pop.reset_age_stage(burn=False)
         pop.set_Nt()
-        pop.move(land)
-        extinct = demography.pop_dynamics(land, pop, with_selection=True)
+        pop.do_movement(land)
+        extinct = demography.do_pop_dynamics(land, pop, with_selection=True)
         if extinct == 1:
             break
-        pop.mutate(log=False)
+        pop.do_mutation(log=False)
 

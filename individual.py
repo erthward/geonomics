@@ -79,7 +79,7 @@ class Individual:
 
 
     #function to increment age by one
-    def increment_age_stage(self):
+    def reset_age_stage(self):
         self.age += 1
 
     #sets the individual's position
@@ -99,6 +99,10 @@ class Individual:
     def set_fitness(self, fit):
         self.fitness = fit
 
+    #set the individual's genome
+    def set_genome(self, genome):
+        self.genome = genome
+
 
 
 
@@ -107,7 +111,7 @@ class Individual:
 #--------------------------------------
 
 
-def create_individual(idx, genomic_arch, dims=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0, burn =False):
+def make_individual(idx, genomic_arch, dims=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0, burn =False):
     """Create a new individual from:
             - either an instance of genome.Genomic_Architecture (i.e. for newly simulated individual) or both
               the genomic architecture and a numpy.ndarray genome (e.g. for new offspring) (one of the two must be provided),
@@ -142,13 +146,14 @@ def create_individual(idx, genomic_arch, dims=None, new_genome = None, ploidy = 
 
         if burn == False:
 
-            #use genome.sim_genome and genomic_arch variable to simulate individual's genome
-            new_genome = genome.sim_genome(genomic_arch)
+            #use genome.draw_genome and genomic_arch variable to simulate individual's genome
+            new_genome = genome.draw_genome(genomic_arch)
 
             return Individual(idx, new_genome, x, y, sex = sex, age = age)
 
         elif burn == True:
 
-            return(Individual(idx, new_genome = np.array([0]), x=x, y=y, sex = sex, age = age))
+            dummy_genome = np.atleast_2d(np.array([0,0]))
+            return(Individual(idx, new_genome = dummy_genome, x=x, y=y, sex = sex, age = age))
 
 

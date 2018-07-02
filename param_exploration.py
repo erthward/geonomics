@@ -42,7 +42,7 @@ import movement
 
 
 
-def watch_movement(pop, land, scape_num, num_timesteps, params = None, mu_direction = None, kappa_direction =
+def show_movement(pop, land, scape_num, num_timesteps, params = None, mu_direction = None, kappa_direction =
         None, mu_distance = None, sigma_distance = None, movement_surf = None, subset_pop = None, color = 'black', color_by_individ = False):
 
     '''Useful for visual exploration of the movement parameters. Either provide a params dictionary with the

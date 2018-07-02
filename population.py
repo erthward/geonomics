@@ -76,7 +76,7 @@ class Population:
         self.Nt = []  # list to record population size (appended each time
         # pop.increment_age_stage() is called)
 
-        self.n_births = []  # tracker of number of births each time pop.mate is called
+        self.n_births = []  # tracker of number of births each time pop.do_mating is called
 
         self.n_deaths = []  # tracker of number of deaths each time demography.pop_dynamics is called
 
@@ -114,7 +114,7 @@ class Population:
     ### OTHER METHODS ###
     #####################
 
-    def census(self):
+    def get_size(self):
         return len(self.individs)
 
     # method to set self.K
@@ -127,20 +127,20 @@ class Population:
 
     # method to append current pop size to the pop.Nt list
     def set_Nt(self):
-        self.Nt.append(self.census())
+        self.Nt.append(self.get_size())
 
     # method to increment all population's age by one (also adds current pop size to tracking array)
-    def increment_age_stage(self, burn=False):
+    def reset_age_stage(self, burn=False):
 
         # increment age of all individuals
-        [ind.increment_age_stage() for ind in self.individs.values()];
+        [ind.reset_age_stage() for ind in self.individs.values()];
 
         # add 1 to pop.t
         if burn == False:  # as long as this is not during burn-in, pop.t will increment
             self.t += 1
 
     # method to move all individuals simultaneously, and sample their new habitats
-    def move(self, land):
+    def do_movement(self, land):
         movement.move(self, land)
         self.set_habitat(land)
         self.set_coords_and_cells()
@@ -153,15 +153,15 @@ class Population:
         return (mating_pairs)
 
     # function for executing mating for a population
-    def mate(self, land, mating_pairs, burn=False):
+    def do_mating(self, land, mating_pairs, burn=False):
 
-        n_births = mating.determine_n_births(len(mating_pairs), self.n_births_lambda)
+        n_births = mating.draw_n_births(len(mating_pairs), self.n_births_lambda)
         total_births = sum(n_births)
         self.n_births.append(total_births)
 
         if burn == False:
-            recomb_paths = self.genomic_arch.recomb_paths.get(total_births*2)
-            new_genomes = mating.mate(self, mating_pairs, n_births, recomb_paths)
+            recomb_paths = self.genomic_arch.recomb_paths.get_paths(total_births*2)
+            new_genomes = mating.do_mating(self, mating_pairs, n_births, recomb_paths)
         
         for n_pair, pair in enumerate(mating_pairs):
 
@@ -210,8 +210,8 @@ class Population:
         print('\n\t%i individuals born' % (total_births))
 
     # method to carry out mutation
-    def mutate(self, log=False):
-        mutation.mutate(self)
+    def do_mutation(self, log=False):
+        mutation.do_mutation(self)
 
     def check_extinct(self):
         if len(self.individs.keys()) == 0:
@@ -227,7 +227,7 @@ class Population:
         Calculate an interpolated raster of local population density, using the
         Landscape_Stack.density_grid_stack object.
 
-        Valid values for normalize_by currently include 'census' and 'none'. If normalize_by = 'census', max_1 =
+        Valid values for normalize_by currently include 'pop_size' and 'none'. If normalize_by = 'pop_size', max_1 =
         True will cause the output density raster to vary between 0 and 1, rather than between 0 and the current
         max normalized density value. 
         '''
@@ -265,12 +265,6 @@ class Population:
 
         else:
             return (dens)
-
-    # NOTE: DEH 01-11-18: Reformatting the habitat-getting approach
-    # 1.) determined a 10x-faster way of setting hab vals of individs
-    # 2.) Changed query_habitat() to set_habitat()
-    # 2.) creating separate set functions for whole pop (usually called this way, so avoids conditional
-    # tests) and for scape_num and/or individ-specific calls (and ditto for the get functions)
 
 
     def set_habitat(self, land, individs = None):
@@ -358,7 +352,7 @@ class Population:
     def get_fitness(self, trait_num = None, set_fit = False):
         return selection.get_fitness(self, trait_num = trait_num, set_fit = set_fit)
 
-    def hist_fitness(self):
+    def show_hist_fitness(self):
         plt.hist(list(selection.get_fitness(self).values()))
 
     def get_dom(self, locus):
@@ -421,7 +415,7 @@ class Population:
 
 
     #method for plotting the population on top of its estimated population-density raster
-    def show_density(self, land, normalize_by='census', individs=None, text=False, max_1=False, color='black', edge_color='face', 
+    def show_density(self, land, normalize_by='pop_size', individs=None, text=False, max_1=False, color='black', edge_color='face', 
             text_color='black', size=25, text_size = 9, alpha=0.5, zoom_width=None, x=None, y=None):
         dens = self.calc_density(land, normalize_by=normalize_by, max_1=max_1)
         plt_lims = viz.get_plt_lims(land, x, y, zoom_width)
@@ -534,7 +528,7 @@ class Population:
         plt.ylabel('N(t)')
 
 
-    def pickle(self, filename):
+    def write_pickle(self, filename):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)
@@ -545,7 +539,7 @@ class Population:
 # --------------------------------------
 
 
-def create_population(genomic_arch, land, params, burn=False):
+def make_population(genomic_arch, land, params, burn=False):
     # grab necessary params from params dict
 
     dims = land.dims
@@ -557,7 +551,7 @@ def create_population(genomic_arch, land, params, burn=False):
 
     for idx in range(N):
         # use individual.create_individual to simulate individuals and add them to the population
-        ind = individual.create_individual(idx = idx, genomic_arch = genomic_arch, dims = dims)
+        ind = individual.make_individual(idx = idx, genomic_arch = genomic_arch, dims = dims)
         individs[idx] = ind
         #land.mating_grid.add(ind)
 
@@ -576,7 +570,7 @@ def create_population(genomic_arch, land, params, burn=False):
 
 
 # function for reading in a pickled pop
-def load_pickled_pop(filename):
+def read_pickled_pop(filename):
     import cPickle
     with open(filename, 'rb') as f:
         pop = cPickle.load(f)

@@ -154,13 +154,13 @@ def get_zoom_plt_lims(x, y, zoom_width):
 
 def get_plt_lims(land=None, x=None, y=None, zoom_width=None):
     if zoom_width is not None and x is not None and y is not None:
-        plt_lims = get_zoom_plt_lims(x, y, zoom_width) 
+        plt_lims = calc_zoom_plt_lims(x, y, zoom_width) 
     else: 
         plt_lims = get_scape_plt_lims(land)
     return(plt_lims)
 
 
-def get_fitness_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn', max_cmap_len = 100, trait_num = None):
+def make_fitness_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn', max_cmap_len = 100, trait_num = None):
     # define the colormap
     cmap = getattr(plt.cm, cmap)
     #extract all the colors into a list

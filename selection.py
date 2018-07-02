@@ -22,12 +22,12 @@ def calc_phenotype(ind, genomic_arch, trait):
     return(phenotype)
 
 
-def calc_fitness(t, e, z, pop):
+def calc_fitness_individ(t, e, z, pop):
     fit = 1 - t.get_phi(pop)*(abs((e[:,t.scape_num]**(not t.univ_advant)) - z[:,t.num])**t.gamma)
     return(fit)
 
 
-def get_fitness(pop, trait_num = None, set_fit = False):
+def calc_fitness(pop, trait_num = None, set_fit = False):
     traits = pop.genomic_arch.traits.values()
     #subset for single trait, if indicated
     if trait_num is not None:
@@ -37,7 +37,7 @@ def get_fitness(pop, trait_num = None, set_fit = False):
     #get all individuals' phenotypes
     z = pop.get_phenotype()
     #create lambda function with current e, z, and pop objects
-    calc_fitness_lambda = lambda t: calc_fitness(t, e, z, pop)
+    calc_fitness_lambda = lambda t: calc_fitness_individ(t, e, z, pop)
     #map the calc_sngl_trait_fitness function to all traits
     fit = np.stack(list(map(calc_fitness_lambda, traits))).prod(axis = 0)
     #for polygenic traits, loci with very large effect sizes can generate fitnesses less than 0; correct for this
@@ -53,9 +53,9 @@ def get_fitness(pop, trait_num = None, set_fit = False):
 #Get the vector of mortalities (probabilies of death) for a given density-dependent Pr(death) at a cell, the
 #environmental value(s) at that cell, the phenotype(s) of the trait(s) for the individuals found there, and the selection
 #coefficient(s) on the trait(s)
-def get_prob_death(pop, d):
+def calc_prob_death(pop, d):
 
-    w = get_fitness(pop)
+    w = calc_fitness(pop)
 
     #[death_probs.update({i: 1-(1-d[i])*w}) for i, w in W.items()];
     death_probs = 1-(1-d)*w

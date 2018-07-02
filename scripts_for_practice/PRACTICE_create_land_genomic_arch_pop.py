@@ -17,7 +17,7 @@ if params['seed']['set_seed']:
             
 
 
-land = landscape.build_scape_stack(params = params)
-genomic_arch = genome.build_genomic_arch(params = params, land = land)
-pop = population.create_population(genomic_arch = genomic_arch, land = land, params = params)
+land = landscape.make_scape_stack(params = params)
+genomic_arch = genome.make_genomic_arch(params = params, land = land)
+pop = population.make_population(genomic_arch = genomic_arch, land = land, params = params)
 

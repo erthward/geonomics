@@ -51,7 +51,7 @@ class Trait:
 
     def get_phi(self, pop):
         if type(self.phi) in (float, int):
-            phi = np.array([self.phi]*pop.census())
+            phi = np.array([self.phi]*pop.get_size())
         else:
             phi = self.phi[pop.cells[:,1], pop.cells[:,0]]
         return(phi)
@@ -61,7 +61,7 @@ class Recomb_Paths:
     def __init__(self, recomb_paths):
         self.recomb_paths = recomb_paths
 
-    def get(self, n):
+    def get_paths(self, n):
         return(random.sample(self.recomb_paths, n))
 
 
@@ -94,7 +94,7 @@ class Genomic_Architecture:
 
     
     #method for assigning loci to traits 
-    def assign_loci_to_trait(self, trait_num, mutational = False, locs = None):
+    def set_trait_loci(self, trait_num, mutational = False, locs = None):
 
         if mutational == False:  #i.e. if this is not the result of a point mutation, but instead either an initial setup or somehow manually introduced
             #number of loci to be assigned
@@ -106,13 +106,13 @@ class Genomic_Architecture:
         if locs != None:
             loci = np.array(locs)
             assert len(np.shape(loci)) == 1, 'Object containing loci provided manually is not of dimension 1'
-        #otherwise choose loci randomly, either allowing pleiotropy or not
+        #otherwise draw loci randomly, either allowing pleiotropy or not
         elif self.pleiotropy == False:
             loci = r.choice(np.where(self.non_neutral == False)[0], size = n, replace = False)
         elif self.pleiotropy == True:
             loci = r.choice(range(self.L), size = n, replace = False)
 
-        #choose effects from a Gaussian dist with mean 0 and sigma provided by trait params (as per e.g.  Yeaman and Whitlock 2011)
+        #draw effects from a Gaussian dist with mean 0 and sigma provided by trait params (as per e.g.  Yeaman and Whitlock 2011)
         effects = self.draw_alpha(trait_num, n)
 
         #check that loci and effects are of equal length
@@ -128,14 +128,14 @@ class Genomic_Architecture:
 
 
     #method for creating and assigning the r_lookup attribute
-    def create_recomb_paths(self):
-        self.recomb_paths = Recomb_Paths(create_recomb_paths_bitarrays(self))
+    def make_recomb_paths(self):
+        self.recomb_paths = Recomb_Paths(make_recomb_paths_bitarrays(self))
 
 
 
 
     #method for pickling a genomic architecture
-    def pickle(self, filename):
+    def write_pickle(self, filename):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)
@@ -164,7 +164,7 @@ def draw_h(l, low = 0, high = 2):
     return(h)
 
 
-def construct_traits(traits_params):
+def make_traits(traits_params):
     from copy import deepcopy
     params_copy = deepcopy(traits_params)
     #pop out the number of traits to create
@@ -211,13 +211,13 @@ def get_chrom_breakpoints(l_c, L):
 
 
 #carry out recombination, using the lookup array in a Genomic_Architecture object
-def recombine(r_lookup, n_recombinants):
+def make_recombinants(r_lookup, n_recombinants):
     recombinants = np.array([r.choice(r_lookup[i,], size = n_recombinants, replace = True) for i in range(len(r_lookup))])
     recombinants = np.cumsum(recombinants, axis = 0)%2
     return(recombinants)
 
 
-def create_recomb_array(g_params):
+def make_recomb_array(g_params):
     #get L (num of loci) and l_c (if provided; num of loci per chromsome) from params['genome'] dict
     L = g_params['L']
     if ('l_c' in g_params.keys() and g_params['l_c'] != None and len(g_params['l_c']) > 1):
@@ -278,14 +278,14 @@ def create_recomb_array(g_params):
 #function to create a lookup array, for raster recombination of larger numbers of loci on the fly
     #NOTE: size argument ultimately determines the minimum distance between probabilities (i.e. recombination rates)
     #that can be modeled this way
-def create_recomb_paths_bitarrays(genomic_arch, lookup_array_size = 10000, num_recomb_paths = 10000):
+def make_recomb_paths_bitarrays(genomic_arch, lookup_array_size = 10000, num_recomb_paths = 10000):
     
     lookup_array = np.zeros((len(genomic_arch.r),lookup_array_size), dtype = np.int8)
 
     for i, rate in enumerate(genomic_arch.r):
         lookup_array[i,0:int(round(lookup_array_size*rate))] = 1
 
-    recomb_paths = recombine(lookup_array, num_recomb_paths).T
+    recomb_paths = make_recombinants(lookup_array, num_recomb_paths).T
     bitarrays = tuple([make_bitarray_recomb_subsetter(p) for p in recomb_paths])
     
     return(bitarrays)
@@ -303,7 +303,7 @@ def make_bitarray_recomb_subsetter(recomb_path):
 
 #build the genomic architecture
 #NOTE: This will create the "template" for the genomic architecture that will then be used to simulate individuals and populations
-def build_genomic_arch(params, land, allow_multiple_env_vars = True):
+def make_genomic_arch(params, land, allow_multiple_env_vars = True):
 
     g_params = params['genome']
 
@@ -320,7 +320,7 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
     pleiotropy = g_params['pleiotropy']
 
 
-    trait_dict = construct_traits(g_params['traits'])
+    trait_dict = make_traits(g_params['traits'])
 
 
 
@@ -340,24 +340,24 @@ def build_genomic_arch(params, land, allow_multiple_env_vars = True):
 
     h = draw_h(L)
 
-    r, l_c = create_recomb_array(g_params)
+    r, l_c = make_recomb_array(g_params)
 
     genomic_arch = Genomic_Architecture(x, L, l_c, r, mu, p, trait_dict, h, pleiotropy, sex = True)
    
 
     #add the loci and effect sizes for each of the traits
     for trait_num in genomic_arch.traits.keys():
-        genomic_arch.assign_loci_to_trait(trait_num, mutational = False, locs = None)
+        genomic_arch.set_trait_loci(trait_num, mutational = False, locs = None)
 
     #create the r_lookup attribute
-    genomic_arch.create_recomb_paths()
+    genomic_arch.make_recomb_paths()
 
 
     return(genomic_arch)
 
 
-#simulate genome
-def sim_genome(genomic_arch):
+#make genome
+def draw_genome(genomic_arch):
     new_genome = np.ones([genomic_arch.L, genomic_arch.x], dtype = np.int8)*9 #if for some reason any loci are not properly set to either 0 or 1, they will stick out as 9s
     for homologue in range(genomic_arch.x):
         new_genome[:,homologue] = draw_genotype(genomic_arch.p)
@@ -369,12 +369,12 @@ def sim_genome(genomic_arch):
 
 
 #function to reassign genomes after burn-in
-def reassign_genomes(pop, params):
+def reset_genomes(pop, params):
     import mutation
 
     #use mean n_births at tail end of burn-in to estimate number of mutations, and randomly choose set of neutral loci 
     #of that length to go into pop.genomic_arch.mutable slot
-    n_muts = mutation.estimate_total_num_mutations(params, pop)
+    n_muts = mutation.calc_estimated_total_mutations(params, pop)
     muts = r.choice(np.where(pop.genomic_arch.non_neutral == 0)[0], n_muts, replace = False)
     pop.genomic_arch.mutables = list(muts)
 
@@ -383,11 +383,11 @@ def reassign_genomes(pop, params):
     
     #now reassign genotypes to all individuals, using genomic_arch.p
     for ind in pop.individs.keys():
-        pop.individs[ind].genome = sim_genome(pop.genomic_arch)
+        pop.individs[ind].set_genome(draw_genome(pop.genomic_arch))
 
        
 #method for loading a pickled genomic architecture
-def load_pickled_genomic_arch(filename):
+def read_pickled_genomic_arch(filename):
     import cPickle
     with open(filename, 'rb') as f:
         genomic_arch = cPickle.load(f)

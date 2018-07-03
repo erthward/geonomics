@@ -350,7 +350,7 @@ class Population:
         return(zs)
 
     def get_fitness(self, trait_num = None, set_fit = False):
-        return selection.get_fitness(self, trait_num = trait_num, set_fit = set_fit)
+        return selection.calc_fitness(self, trait_num = trait_num, set_fit = set_fit)
 
     def show_hist_fitness(self):
         plt.hist(list(selection.get_fitness(self).values()))
@@ -388,7 +388,7 @@ class Population:
 
 
     #method for plotting the population (or a subset of its individuals, by ID) on top of a landscape (or landscape stack)
-    def show(self, land, hide_land=False, scape_num=None, individs=None, text=False, color='black',
+    def show(self, land, scape_num=None, hide_land=False, individs=None, text=False, color='black',
             edge_color='face', text_color='black', colorbar=True, size=25, text_size=9, im_interp_method='nearest', 
             land_cmap='terrain', pt_cmap=None, alpha=False, zoom_width=None, x=None, y=None):
         #get coords
@@ -490,7 +490,7 @@ class Population:
         #then get uneven cmap and cbar-maker (needs to be uneven to give color-resolution to values varying
         #between 1 and the minimum-fitness value assuming all phenotypes are constrained 0<=z<=1, but then also
         #allow gradually deepening reds for fitness values lower than that minimum value), using the min_fit val
-        cmap, make_cbar = viz.get_fitness_cmap_and_cbar_maker(min_val = min_fit, max_val = 1, cmap = fit_cmap, trait_num = trait_num)
+        cmap, make_cbar = viz.make_fitness_cmap_and_cbar_maker(min_val = min_fit, max_val = 1, cmap = fit_cmap, trait_num = trait_num)
         
         #plot the trait phenotype in larger circles first, if trait is not None
         if trait_num is not None:

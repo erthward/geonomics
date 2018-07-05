@@ -21,30 +21,22 @@ Documentation:              URL
 ##########################################
 '''
 
-# TODO:
+#geonomics imports
+import genome
 
-# implement sexual selection somehow??
-
-# restrict males to mate with only one female per generation??
-
-
+#other imports
 from scipy.spatial import cKDTree
 import numpy as np
 import numpy.random as r
 from operator import itemgetter as ig
 from itertools import repeat, starmap
 
-import genome
 
-
-# --------------------------------
-# CLASSES -----------------------
-# --------------------------------
-
-
-# ----------------------------------
-# FUNCTIONS -----------------------
-# ----------------------------------
+######################################
+# -----------------------------------#
+# FUNCTIONS -------------------------#
+# -----------------------------------#
+######################################
 
 def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=False):
     b = pop.b
@@ -63,12 +55,9 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
     # (product of?) selection coefficients
 
     ######################################################
-    # First, build cKDTree and create nearest-neighbor query:
+    # First, query the scipy.spatial.cKDTree (i.e. pop.kd_tree) for nearest-neigh pairs
 
-    points = pop.get_coords()
-    tree = cKDTree(points,
-                   leafsize=100)  # NOTE: Figure out how leafsize, and how to parameterize this in order to optimize speed for any given pop...
-    dists, pairs = tree.query(points, k=2, distance_upper_bound=mating_radius)
+    dists, pairs = pop.find_neighbors(dist = mating_radius)
 
     ####################################################
     # Then, operationalize sexes, if being used, and find all available pairs within max distance

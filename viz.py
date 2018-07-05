@@ -4,7 +4,7 @@
 '''
 ##########################################
 
-Module name:          viz
+Module name:          utils.viz
 
 
 Module contains:
@@ -34,6 +34,12 @@ from operator import attrgetter
 import copy
 import sys
 
+
+######################################
+# -----------------------------------#
+# FUNCTIONS -------------------------#
+# -----------------------------------#
+######################################
 
 def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'nearest', cmap = 'terrain', plt_lims = None, mask_val = None):
     #if a figure is already open, force colorbar to False

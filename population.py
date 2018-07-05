@@ -22,7 +22,9 @@ Documentation:             URL
 
 ##########################################
 '''
-
+#geonomics imports
+import viz
+import spatial as spt
 import genome
 import individual
 import movement
@@ -31,8 +33,8 @@ import selection
 import mutation
 import landscape
 import demography
-import viz
 
+#other imports
 import numpy as np
 from numpy import random as r
 import random
@@ -47,10 +49,11 @@ from operator import attrgetter
 import sys
 
 
-# ------------------------------------
-# CLASSES ---------------------------
-# ------------------------------------
-
+######################################
+# -----------------------------------#
+# CLASSES ---------------------------#
+# -----------------------------------#
+######################################
 
 class Population:
     '''Population(self, N, individs, genomic_arch, size, birth_rate = None, death_rate = None, T = None)'''
@@ -99,6 +102,9 @@ class Population:
             1: lambda g: [np.floor(np.mean(g[i,])) for i in range(g.shape[0])]
             # relative fitness of homozygous 0 = relative fitness of heterozygote, i.e. 1-hs = 1-s
         }
+
+        #create empty attribute to hold kd_tree
+        self.kd_tree = None
 
         assert type(self.N_start) == int, "N must be an integer"
         assert type(self.individs) == OD, "self.individs must be of type collections.OrderedDict"
@@ -295,6 +301,10 @@ class Population:
         self.coords = self.get_coords()
         self.cells = np.int8(self.coords)
 
+    #method to set the population's kd_tree attribute
+    def set_kd_tree(self, leafsize = 100):
+        self.kd_tree = spt.KD_Tree(coords = self.coords, leafsize = leafsize)
+
 
     # method to get individs' habitat values
     def get_habitat(self, scape_num=None, individs=None):
@@ -386,6 +396,13 @@ class Population:
         coords = self.get_coords(individs = individs)
         return(coords[:,1])
 
+    #use the kd_tree attribute to find nearest neighbors either within the population, if within == True,
+    #or between the population and the points provided, if within == False and points is not None
+    def find_neighbors(self, dist, within=True, coords=None, k = 2):
+        if within:
+            coords = self.coords
+        dists, pairs = self.kd_tree.query(coords = coords, dist = dist, k = k)
+        return(dists, pairs)
 
     #method for plotting the population (or a subset of its individuals, by ID) on top of a landscape (or landscape stack)
     def show(self, land, scape_num=None, hide_land=False, individs=None, text=False, color='black',
@@ -534,10 +551,11 @@ class Population:
             cPickle.dump(self, f)
 
 
-# --------------------------------------
-# FUNCTIONS ---------------------------
-# --------------------------------------
-
+######################################
+# -----------------------------------#
+# FUNCTIONS -------------------------#
+# -----------------------------------#
+######################################
 
 def make_population(genomic_arch, land, params, burn=False):
     # grab necessary params from params dict
@@ -565,6 +583,9 @@ def make_population(genomic_arch, land, params, burn=False):
 
     #set phenotypes
     [i.set_phenotype(pop.genomic_arch) for i in pop.individs.values()]
+
+    #set the kd_tree
+    pop.set_kd_tree()
 
     return pop
 

@@ -56,7 +56,6 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
 
     ######################################################
     # First, query the scipy.spatial.cKDTree (i.e. pop.kd_tree) for nearest-neigh pairs
-
     dists, pairs = pop.find_neighbors(dist = mating_radius)
 
     ####################################################
@@ -96,7 +95,7 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
     # NOTE: I have NOT restricted this so that each individual can only mate once per generation, but I should
     # probably figure that out and add it here!
 
-    if repro_age != None and repro_age > 0:
+    if repro_age is not None and repro_age > 0:
         # np.array of the ages of all individuals
         ages = np.array([ind.age for ind in pop.individs.values()])
 
@@ -142,7 +141,7 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
         mating_pairs = available_pairs[mating_decisions]
 
         if mating_pairs.any():
-            # finally, link back to initially created structure, to get individuals' proper keys
+            # finally, link individuals' ordinal indices back to the initially created structure, to get individuals' proper keys
             keys = list(pop.individs.keys())
             f = ig(*mating_pairs.flatten())
             mates = np.array(f(keys)).reshape(mating_pairs.shape)

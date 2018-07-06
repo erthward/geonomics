@@ -92,9 +92,6 @@ def move(pop, land):
 
     #land.mating_grid.move(old_pos, new_pos, individual)
 
-    #reset the pop.kd_tree attribute, for nearest-neighbor searches
-    pop.set_kd_tree()
-
 
 def disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dispersal, mu_dir = 0, kappa_dir = 0): 
     within_landscape = False

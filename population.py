@@ -154,9 +154,9 @@ class Population:
 
     # function for finding all the mating pairs in a population
     def find_mating_pairs(self, land):
-
         mating_pairs = mating.find_mates(self, land)
         return (mating_pairs)
+
 
     # function for executing mating for a population
     def do_mating(self, land, mating_pairs, burn=False):
@@ -301,6 +301,7 @@ class Population:
         self.coords = self.get_coords()
         self.cells = np.int8(self.coords)
 
+
     #method to set the population's kd_tree attribute
     def set_kd_tree(self, leafsize = 100):
         self.kd_tree = spt.KD_Tree(coords = self.coords, leafsize = leafsize)
@@ -399,8 +400,18 @@ class Population:
     #use the kd_tree attribute to find nearest neighbors either within the population, if within == True,
     #or between the population and the points provided, if within == False and points is not None
     def find_neighbors(self, dist, within=True, coords=None, k = 2):
+        #NOTE: In lieu of a more sophisticated way of determining whether the kd_tree needs to be updated 
+        #(i.e. if the population have undergone movement, mating, or mortality since the last time it was 
+        #constructed), and in an effort to minimize the number of times it is constructed each time (since
+        #it's not an inconsequential runtime, so telling the model to rebuild it after each move, birth, or
+        #death step could be unncessarily costly), for now I am just telling the tree to be rebuilt each time 
+        #the pop.find_neighbors() method is called!
+        self.set_kd_tree()
+        #if neighbors are to be found within the population, set coords to self.coords
+        #(otherwise, the coords to find nearest neighbors with should have been provided)
         if within:
             coords = self.coords
+        #query the tree
         dists, pairs = self.kd_tree.query(coords = coords, dist = dist, k = k)
         return(dists, pairs)
 

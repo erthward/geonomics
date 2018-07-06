@@ -94,7 +94,7 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
 
 
 def show_points(points, scape_num=None, color='black', edge_color='face', text_color='black', linewidth=0.5,
-        pt_cmap=None, size=25, text_size=9, alpha=False, text=None, plt_lims=None):
+        pt_cmap=None, size=25, text_size=9, alpha=False, text=None, plt_lims=None, vmin=None, vmax=None):
     #get the x and y coordinates from the points (and subtract 0.5 to line the points up with the plt.imshow()
     #grid of a landscape raster; imshow plots each pixel centered on its index, but the points then plot on 
     #those indices, so wind up shifted +0.5 on each axis
@@ -120,9 +120,11 @@ def show_points(points, scape_num=None, color='black', edge_color='face', text_c
             cmap = getattr(plt.cm, pt_cmap)
         elif str(type(pt_cmap)) == "<class 'matplotlib.colors.LinearSegmentedColormap'>":
             cmap = pt_cmap
-        plt.scatter(x, y, s=size, c=color, cmap=cmap, linewidth=linewidth, edgecolor=edge_color, alpha=alpha)
+        plt.scatter(x, y, s=size, c=color, cmap=cmap, linewidth=linewidth, edgecolor=edge_color, 
+                alpha=alpha, vmin = vmin, vmax = vmax)
     else:
-        plt.scatter(x, y, s=size, c=color, linewidth=linewidth, edgecolor=edge_color, alpha=alpha);
+        plt.scatter(x, y, s=size, c=color, linewidth=linewidth, edgecolor=edge_color, alpha=alpha, 
+                vmin = vmin, vmax = vmax)
 
     #add text, if requested
     if text is not None:

@@ -418,7 +418,7 @@ class Population:
     #method for plotting the population (or a subset of its individuals, by ID) on top of a landscape (or landscape stack)
     def show(self, land, scape_num=None, hide_land=False, individs=None, text=False, color='black',
             edge_color='face', text_color='black', colorbar=True, size=25, text_size=9, im_interp_method='nearest', 
-            land_cmap='terrain', pt_cmap=None, alpha=False, zoom_width=None, x=None, y=None):
+            land_cmap='terrain', pt_cmap=None, alpha=False, zoom_width=None, x=None, y=None, vmin = None, vmax = None):
         #get coords
         if individs is None:
             coords = self.coords
@@ -438,8 +438,7 @@ class Population:
         else:
             viz.show_rasters(land, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = land_cmap, plt_lims = plt_lims)
         #and plot the individuals
-        viz.show_points(coords, scape_num = scape_num, color = color, edge_color = edge_color, text_color = text_color, size = size, text_size = text_size, 
-                alpha = alpha, text = text, plt_lims = plt_lims, pt_cmap = pt_cmap)
+        viz.show_points(coords, scape_num = scape_num, color = color, edge_color = edge_color, text_color = text_color, size = size, text_size = text_size, alpha = alpha, text = text, plt_lims = plt_lims, pt_cmap = pt_cmap, vmin = vmin, vmax = vmax)
 
 
     #method for plotting the population on top of its estimated population-density raster
@@ -474,7 +473,8 @@ class Population:
             if len(genotype_individs) >= 1:
                 self.show(land, scape_num = scape_num, individs = genotype_individs, text = text, color = colors[n], edge_color = edge_color, 
                     text_color = text_color, colorbar = colorbar, size = size, text_size = text_size, 
-                    im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y)
+                    im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y,
+                    vmin = 0, vmax = 1)
 
 
     # method for plotting individuals colored by their phenotypes for a given trait
@@ -482,13 +482,14 @@ class Population:
             edge_color='black', text_color='black', colorbar=True, im_interp_method='nearest', 
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
-        z = dict(zip(self.individs.keys(), self.get_phenotype()[:,trait]))
+        z = OD(zip(self.individs.keys(), self.get_phenotype()[:,trait]))
         if individs is not None:
             z = {i:v for i,v in z.items() if i in individs}
 
         self.show(land, scape_num = scape_num, individs = individs, text = text, color = list(z.values()),
                 pt_cmap = 'terrain', edge_color = edge_color, text_color = text_color, colorbar = colorbar, 
-                size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y)
+                size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, 
+                zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1)
 
 
     # method for plotting individuals colored by their overall fitnesses, or by their fitnesses for a single
@@ -504,12 +505,13 @@ class Population:
             w = self.get_fitness(trait_num = trait_num)
 
         #filter out unwanted individs, if necessary
-        w = dict(zip(self.individs.keys(), w))
+        w = OD(zip(self.individs.keys(), w))
         if individs is not None:
             w = {i:v for i,v in w.items() if i in individs}
 
         # calc minimum possible fitness (for phenotypes within 0 <= z <= 1, which in reality isn't a
         # constraint, but values lower than this will also be constrained to the minimum-value color for plotting)
+        #NOTE: the np.atleast_2d(...).min() construct makes this work both for fixed and spatially varying phi
         if trait_num is None: 
             min_fit = np.product([1 - np.atleast_2d(t.phi).min() for t in list(self.genomic_arch.traits.values())])
         else:
@@ -522,10 +524,12 @@ class Population:
         
         #plot the trait phenotype in larger circles first, if trait is not None
         if trait_num is not None:
+            #plot the outer (phenotype) circles
             self.show_phenotype(trait=trait_num, land=land, scape_num=scape_num, individs=individs, text=False,
                     size=size, text_size = text_size, edge_color=edge_color, text_color=text_color,
                     colorbar=colorbar, im_interp_method=im_interp_method, 
                     alpha=alpha, by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y)
+            #make size smaller for the next layer of inner (fitness) circles
             size = round(0.2*size)
 
         self.show(land, scape_num = scape_num, individs = individs, text = text, color = list(w.values()),

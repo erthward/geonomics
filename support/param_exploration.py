@@ -27,7 +27,7 @@ from numpy.random import vonmises, lognormal
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-import movement
+from ops import movement
 
 
 

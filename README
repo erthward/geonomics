@@ -1,5 +1,4 @@
 Author: DEH
 Date: 11/13/2015
-Repo: landscape_genomics_sim
-Summary: Home to my landscape genomics simulation model, which could potentially be a chapter of my
-dissertation.
+Repo: geonomics
+Summary: Home to the Python landscape genomics simulator

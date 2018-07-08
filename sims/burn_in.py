@@ -12,8 +12,8 @@ from scipy.stats import ttest_rel as tt
 from statsmodels.tsa.stattools import adfuller as adf
 from sklearn.preprocessing import normalize
 
-import landscape
-import mating
+from structs import landscape
+from ops import mating
 
 
 

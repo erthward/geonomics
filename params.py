@@ -177,14 +177,26 @@ params = {
 ################
 
     'change' : {
-            'demographic' : {
+            'pop' : {
                      'pop_size' : 1,                        # float/int, or list/tuple of length T containing floats/ints, 
                                                             #expressing the target population size over model time as a ratio 
                                                             #of the starting size (N)
                 },
-            'environmental' : {
+            'land' : {
+                      0 : {
+                            'end_scape' : np.zeros((50,50)),
+                            't_start' : 500,
+                            't_end'   : 1000,
+                            'n'       : 25
+                            },
+                      1 : {
+                            'end_scape' : np.zeros((50,50)),
+                            't_start' : 0,
+                            't_end'   : 1000,
+                            'n'       : 50
+                            }
                 },
-            'params' : {
+            'gen' : {
                 }
         }, # <END> 'change'
 

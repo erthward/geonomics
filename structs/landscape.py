@@ -23,8 +23,8 @@ Documentation:        URL
 ##########################################
 '''
 #geonomics imports
-import viz
-import spatial as spt
+from utils import viz
+from utils import spatial as spt
 
 #other imports
 import numpy as np
@@ -38,10 +38,11 @@ from scipy import interpolate
 from shapely import geometry as g
 
 
-# ------------------------------------
-# CLASSES ---------------------------
-# ------------------------------------
-
+######################################
+# -----------------------------------#
+# CLASSES ---------------------------#
+# -----------------------------------#
+######################################
 
 class Landscape:
     def __init__(self, dims, raster, res=1):
@@ -64,7 +65,7 @@ class Landscape:
             mask_val = 1e-7
         else:
             mask_val = None
-        plt_lims = viz.get_plt_lims(self, z, y, zoom_width)
+        plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
         viz.show_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, mask_val = mask_val)
 
 
@@ -78,8 +79,7 @@ class Landscape_Stack:
         self.dims = list(self.scapes.values())[0].dims
         #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
         self.dim_om = max([len(str(d)) for d in self.dims]) 
-        #set the resoultion (i.e. cell-size); defaults to 1, set to a different value 
-        #if landscape read in from a GIS raster
+        #set the resoultion (i.e. cell-size); defaults to 1, set to a different value if landscape read in from a GIS raster
         self.res = res
         self.movement_surf = None
         self.movement_surf_approx_len = None
@@ -98,7 +98,7 @@ class Landscape_Stack:
             mask_val = 1e-7
         else:
             mask_val = None
-        plt_lims = viz.get_plt_lims(land, x, y, zoom_width)
+        plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
         viz.show_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, mask_val = mask_val, plt_lims = plt_lims)
 
 
@@ -160,9 +160,11 @@ class Landscape_Stack:
             cPickle.dump(self, f)
 
 
-# --------------------------------------
-# FUNCTIONS ---------------------------
-# --------------------------------------
+######################################
+# -----------------------------------#
+# FUNCTIONS -------------------------#
+# -----------------------------------#
+######################################
 
 def make_random_scape(dims, n_rand_pts, interp_method="cubic", island_val=0, num_hab_types=2, dist='beta', alpha=0.05,
                    beta=0.05):  # requires landscape to be square, such that dim = domain = range
@@ -332,7 +334,7 @@ def make_scape_stack(params, num_hab_types=2):
             land.n_scapes += 1  # then increment total scape nums by 1
 
         # create the movement surface, and set it as the land.movement_surf attribute
-        import movement
+        from ops import movement
         land.movement_surf = spt.Movement_Surface(land, kappa = 12)
 
     return land
@@ -348,6 +350,5 @@ def read_pickled_scape_stack(filename):
     import cPickle
     with open(filename, 'rb') as f:
         land = cPickle.load(f)
-
-    return land
+    return(land)
 

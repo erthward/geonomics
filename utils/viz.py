@@ -49,9 +49,9 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
     #if just a numpy.ndarray or a Landscape (not a Landscape_Stack) is provided, or if just a single raster is desired, grab the raster into a list
     if str(type(land)) == "<class 'numpy.ndarray'>":
         rasters = [land]
-    elif str(type(land)) == "<class 'landscape.Landscape'>":
+    elif str(type(land)) == "<class 'structs.landscape.Landscape'>":
         rasters = [land.raster]
-    elif str(type(land)) == "<class 'landscape.Landscape_Stack'>":
+    elif str(type(land)) == "<class 'structs.landscape.Landscape_Stack'>":
         if scape_num is not None:
             rasters = [land.scapes[scape_num].raster]
         #else just create a list of all rasters

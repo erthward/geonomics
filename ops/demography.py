@@ -26,9 +26,8 @@ Documentation:        URL
 '''
 
 #geonomics imports
-import landscape
-import mating
-import selection
+from structs import landscape
+from ops import mating, selection
 
 #other imports
 import numpy as np

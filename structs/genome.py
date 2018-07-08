@@ -28,12 +28,11 @@ import random
 import bitarray
 
 
-
-
-#------------------------------------
-# CLASSES ---------------------------
-#------------------------------------
-
+######################################
+# -----------------------------------#
+# CLASSES ---------------------------#
+# -----------------------------------#
+######################################
 
 class Trait:
     def __init__(self, num, phi, n_loci, scape_num, alpha_dist_sigma, gamma, univ_advant):
@@ -141,9 +140,11 @@ class Genomic_Architecture:
             cPickle.dump(self, f)
 
 
-#----------------------------------
-# FUNCTIONS -----------------------
-#----------------------------------
+######################################
+# -----------------------------------#
+# FUNCTIONS -------------------------#
+# -----------------------------------#
+######################################
 
 #generate allele_freqs
 def draw_allele_freqs(l):
@@ -370,7 +371,7 @@ def draw_genome(genomic_arch):
 
 #function to reassign genomes after burn-in
 def reset_genomes(pop, params):
-    import mutation
+    from ops import mutation
 
     #use mean n_births at tail end of burn-in to estimate number of mutations, and randomly choose set of neutral loci 
     #of that length to go into pop.genomic_arch.mutable slot

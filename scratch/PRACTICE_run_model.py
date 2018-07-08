@@ -1,6 +1,6 @@
 exec(open('./params.py', 'r').read())
-exec(open('./scripts_for_practice/PRACTICE_imports_and_reloads.py', 'r').read())
-exec(open('./scripts_for_practice/PRACTICE_create_land_genomic_arch_pop.py', 'r').read())
+exec(open('./scratch/PRACTICE_imports_and_reloads.py', 'r').read())
+exec(open('./scratch/PRACTICE_create_land_genomic_arch_pop.py', 'r').read())
 
 pop.set_K(land.scapes[params['land']['movement_surf']['movement_surf_scape_num']].raster)
 

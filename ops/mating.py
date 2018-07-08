@@ -22,7 +22,7 @@ Documentation:              URL
 '''
 
 #geonomics imports
-import genome
+from structs import genome
 
 #other imports
 from scipy.spatial import cKDTree

@@ -23,16 +23,10 @@ Documentation:             URL
 ##########################################
 '''
 #geonomics imports
-import viz
-import spatial as spt
-import genome
-import individual
-import movement
-import mating
-import selection
-import mutation
-import landscape
-import demography
+from utils import viz
+from utils import spatial as spt
+from structs import genome, landscape, individual
+from ops import movement, mating, selection, mutation, demography
 
 #other imports
 import numpy as np
@@ -363,9 +357,6 @@ class Population:
     def get_fitness(self, trait_num = None, set_fit = False):
         return selection.calc_fitness(self, trait_num = trait_num, set_fit = set_fit)
 
-    def show_hist_fitness(self):
-        plt.hist(list(selection.get_fitness(self).values()))
-
     def get_dom(self, locus):
         return {locus: self.genomic_arch.h[locus]}
 
@@ -539,6 +530,10 @@ class Population:
         #and make a colorbar for the fitness values 
         viz.make_fitness_cbar(make_cbar, min_fit)
 
+
+    def show_hist_fitness(self):
+        plt.hist(list(selection.get_fitness(self).values()))
+ 
 
     # method for plotting a population pyramid
     # NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS

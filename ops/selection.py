@@ -1,8 +1,37 @@
 #!/usr/bin/python
+#selection.py
+
+
+'''
+##########################################
+
+Module name:          ops.selection
+
+
+Module contains:
+                      - Functions to implement fitness and selection
+ 
+
+Author:               Drew Ellison Hart
+Email:                drew.hart@berkeley.edu
+Github:               URL
+Start date:           04-28-17
+Documentation:        URL
+
+
+##########################################
+'''
+
 
 import numpy as np
 from collections import OrderedDict as OD
 
+
+######################################
+# -----------------------------------#
+# FUNCTIONS -------------------------#
+# -----------------------------------#
+######################################
 
 #Get the phenotypic values of all individuals for a given trait
 def calc_phenotype(ind, genomic_arch, trait):

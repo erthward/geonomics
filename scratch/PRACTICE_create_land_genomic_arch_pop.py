@@ -6,7 +6,7 @@ dictionary.'''
 
 
 import numpy.random as r
-import landscape, genome, population
+from structs import landscape, genome, population
 
 
 #set seed, if requested

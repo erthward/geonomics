@@ -23,20 +23,20 @@ Documentation:            URL
 ##########################################
 '''
 
+#geonomics imports
+from structs import genome
+from ops import movement, selection
 
-import genome
-import movement
-import selection
-
-
+#other imports
 import numpy as np
 import numpy.random as r
 
 
-#------------------------------------
-# CLASSES ---------------------------
-#------------------------------------
-
+######################################
+# -----------------------------------#
+# CLASSES ---------------------------#
+# -----------------------------------#
+######################################
 
 class Individual:
     def __init__(self, idx, new_genome, x, y, sex = None, age=0):
@@ -104,12 +104,11 @@ class Individual:
         self.genome = genome
 
 
-
-
-#--------------------------------------
-# FUNCTIONS ---------------------------
-#--------------------------------------
-
+######################################
+# -----------------------------------#
+# FUNCTIONS -------------------------#
+# -----------------------------------#
+######################################
 
 def make_individual(idx, genomic_arch, dims=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0, burn =False):
     """Create a new individual from:

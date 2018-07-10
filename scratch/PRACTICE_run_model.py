@@ -4,6 +4,9 @@ exec(open('./scratch/PRACTICE_create_land_genomic_arch_pop.py', 'r').read())
 
 pop.set_K(land.scapes[params['land']['movement_surf']['movement_surf_scape_num']].raster)
 
+exec(open('./sims/change.py', 'r').read())
+lc = Land_Changer(land, params)
+
 def burn(stop_after = None):
     break_burn_in = False
     burn_in_test_t = params['model']['burn']['burn_T_min']
@@ -34,6 +37,7 @@ def main(T, reassign_genomes=False):
     for t in range(T):
         print('###############\n\n TIMESTEP %i' % t)
         print('     POP %i\n' % pop.get_size())
+        lc.make_change(t)
         pop.reset_age_stage(burn=False)
         pop.set_Nt()
         pop.do_movement(land)

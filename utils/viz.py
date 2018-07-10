@@ -41,7 +41,7 @@ import sys
 # -----------------------------------#
 ######################################
 
-def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'nearest', cmap = 'terrain', plt_lims = None, mask_val = None):
+def show_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest', cmap='terrain', plt_lims=None, mask_val=None, vmin=0, vmax=1):
     #if a figure is already open, force colorbar to False
     if plt.get_fignums() and plt.gcf().get_axes():
         colorbar = False
@@ -61,8 +61,6 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
     if type(cmap) == str:
         #get the requested cmap 
         cmap = getattr(plt.cm, cmap)
-    #set the minimum plotting value
-    vmin = 0
     #mask values below mask_val, if not None
     if mask_val is not None:
         cmap.set_under(color = 'black')
@@ -78,14 +76,16 @@ def show_rasters(land, scape_num = None, colorbar = True, im_interp_method = 'ne
         #    min_i, max_i = zoom[0]
         #    min_j, max_j = zoom[1]
         #    rasters[n] = np.array([row[min_j:max_j] for row in rasters[n][min_i:max_i]])
-        plt.imshow(rasters[n], interpolation=im_interp_method, cmap=cmaps[n], vmin=vmin, alpha = alphas[n])
+        plt.imshow(rasters[n], interpolation=im_interp_method, cmap=cmaps[n], vmin = vmin, vmax = vmax, alpha = alphas[n])
         if plt_lims is not None:
             plt.xlim(plt_lims[0])
             plt.ylim(plt_lims[1])
         #and their colorbars, if requested (but for only the first two rasters maximum, 
         #since the second and onward share the same palette)
         if colorbar and n < 2:
-            cbar = plt.colorbar(boundaries=np.linspace(0, max(rasters[n].max(), 1), 51))
+            cbar_max_bound = max(rasters[n].max(), 1)
+            cbar_bounds = np.linspace(0, cbar_max_bound, 51)
+            cbar = plt.colorbar(boundaries=cbar_bounds)
             cbar.ax.set_title('scape: %i' % n)
             ax = cbar.ax
             title = ax.title

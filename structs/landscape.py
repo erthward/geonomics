@@ -60,13 +60,13 @@ class Landscape:
     ### OTHER METHODS ###
     #####################
 
-    def show(self, colorbar=True, im_interp_method='nearest', cmap = 'terrain', x=None, y=None, zoom_width=None):
+    def show(self, colorbar=True, im_interp_method='nearest', cmap = 'terrain', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
         if self.mask_island_vals:
             mask_val = 1e-7
         else:
             mask_val = None
         plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
-        viz.show_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, mask_val = mask_val)
+        viz.show_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, mask_val = mask_val, vmin = vmin, vmax = vmax)
 
 
 class Landscape_Stack:
@@ -93,13 +93,13 @@ class Landscape_Stack:
     ### OTHER METHODS ###
     #####################
 
-    def show(self, scape_num=None, colorbar=True, cmap='terrain', im_interp_method='nearest', x=None, y=None, zoom_width=None):
+    def show(self, scape_num=None, colorbar=True, cmap='terrain', im_interp_method='nearest', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
         if True in [scape.mask_island_vals for scape in self.scapes.values()]:
             mask_val = 1e-7
         else:
             mask_val = None
         plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
-        viz.show_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, mask_val = mask_val, plt_lims = plt_lims)
+        viz.show_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, mask_val = mask_val, plt_lims = plt_lims, vmin = vmin, vmax = vmax)
 
 
     #method for plotting the movement surface (in various formats)

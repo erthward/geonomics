@@ -65,7 +65,7 @@ params = {
                                                                                 #params['island_val'] = 0
                         }, # <END> 'islands'
         'movement_surf'     : {
-                'movement_surf'                 : True,                     #use a landscape layer as a resistance surface, or habitat quality 
+                'movement_surf'                 : False,                     #use a landscape layer as a resistance surface, or habitat quality 
                                                                                 #layer, to direct movement?
                 'movement_surf_scape_num'         : 1,                        #scape number to use as the movement surface
                 'movement_surf_approx_len'      : 7500,                     #length of the lookup vectors (numpy arrays) used to approximate 
@@ -178,24 +178,25 @@ params = {
 
     'change' : {
             'pop' : {
-                     'pop_size' : 1,                        # float/int, or list/tuple of length T containing floats/ints, 
-                                                            #expressing the target population size over model time as a ratio 
-                                                            #of the starting size (N)
-                },
+                    'dem'   :   {
+                        },
+                    'other' :   {
+                        }
+                    },
             'land' : {
                       0 : {
                             'end_scape' : np.zeros((50,50)),
-                            't_start' : 500,
-                            't_end'   : 1000,
-                            'n'       : 25
+                            't_start' : 0,
+                            't_end'   : 100,
+                            'n'       : 5
                             },
                       1 : {
                             'end_scape' : np.zeros((50,50)),
                             't_start' : 0,
                             't_end'   : 1000,
-                            'n'       : 50
+                            'n'       : 2
                             }
-                },
+                    },
             'gen' : {
                 }
         }, # <END> 'change'

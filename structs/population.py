@@ -258,7 +258,7 @@ class Population:
             dens[dens > max_val] = max_val
 
         if as_landscape == True:
-            dens = landscape.Landscape(land.dims, dens)
+            dens = landscape.Landscape(land.dim, dens)
 
         if set_N:
             self.set_N(dens)
@@ -293,7 +293,7 @@ class Population:
     #method to set population's coords and cells arrays
     def set_coords_and_cells(self):
         self.coords = self.get_coords()
-        self.cells = np.int8(self.coords)
+        self.cells = np.int32(np.floor(self.coords))
 
 
     #method to set the population's kd_tree attribute
@@ -369,7 +369,7 @@ class Population:
         if float == True:
             coords = np.float32(coords)
         else:
-            coords = np.int8(coords)
+            coords = np.int32(np.floor(coords))
 
         return(coords)
             
@@ -570,16 +570,16 @@ class Population:
 def make_population(genomic_arch, land, params, burn=False):
     # grab necessary params from params dict
 
-    dims = land.dims
+    dim = land.dim
 
-    assert dims.__class__.__name__ in ['tuple', 'list'], "dims should be expressed as a tuple or a list"
+    assert dim.__class__.__name__ in ['tuple', 'list'], "dim should be expressed as a tuple or a list"
     individs = OD()
     
     N = params['pop']['main']['N_start']
 
     for idx in range(N):
         # use individual.create_individual to simulate individuals and add them to the population
-        ind = individual.make_individual(idx = idx, genomic_arch = genomic_arch, dims = dims)
+        ind = individual.make_individual(idx = idx, genomic_arch = genomic_arch, dim = dim)
         individs[idx] = ind
         #land.mating_grid.add(ind)
 

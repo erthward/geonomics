@@ -279,7 +279,7 @@ def make_recomb_array(g_params):
 #function to create a lookup array, for raster recombination of larger numbers of loci on the fly
     #NOTE: size argument ultimately determines the minimum distance between probabilities (i.e. recombination rates)
     #that can be modeled this way
-def make_recomb_paths_bitarrays(genomic_arch, lookup_array_size = 10000, num_recomb_paths = 10000):
+def make_recomb_paths_bitarrays(genomic_arch, lookup_array_size = 100000, num_recomb_paths = 100000):
     
     lookup_array = np.zeros((len(genomic_arch.r),lookup_array_size), dtype = np.int8)
 

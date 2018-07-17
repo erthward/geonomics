@@ -145,8 +145,8 @@ def show_points(points, scape_num=None, color='black', edge_color='face', text_c
 
 
 def get_scape_plt_lims(land):
-    xlim = (-1, land.dims[1])
-    ylim = (-1, land.dims[0])
+    xlim = (-1, land.dim[1])
+    ylim = (-1, land.dim[0])
     lims = (xlim, ylim)
     return(lims)
 

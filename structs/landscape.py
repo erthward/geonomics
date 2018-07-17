@@ -23,7 +23,7 @@ Documentation:        URL
 ##########################################
 '''
 #geonomics imports
-from utils import viz
+from utils import viz, io
 from utils import spatial as spt
 
 #other imports
@@ -45,15 +45,18 @@ from shapely import geometry as g
 ######################################
 
 class Landscape:
-    def __init__(self, dims, raster, res=1):
-        self.dims = dims
-        #set the resoultion (i.e. cell-size); defaults to 1, set to a different value 
-        #if landscape read in from a GIS raster
+    def __init__(self, raster, dim, res=(1,1), ulc = (0,0)):
+        self.idx = None
+        self.dim = dim
+        #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc) to defaults; will be reset if landscape read in from a GIS raster
         self.res = res  
+        self.ulc = ulc
         self.raster = raster
+        self.scale_min = None
+        self.scale_max = None
         self.island_mask = False
         self.mask_island_vals = False
-        assert type(self.dims) in [tuple, list], "dims must be expressed on a tuple or a list"
+        assert type(self.dim) in [tuple, list], "dim must be expressed on a tuple or a list"
         assert type(self.raster) == np.ndarray, "raster should be a numpy.ndarray"
 
     #####################
@@ -70,17 +73,22 @@ class Landscape:
 
 
 class Landscape_Stack:
-    def __init__(self, raster_list, params=None, res=1):
-        self.scapes = dict(zip(range(len(raster_list)), raster_list))
-        assert False not in [raster.__class__.__name__ == 'Landscape' for raster in
-                             raster_list], 'All landscapes supplied in raster_list must be of type landscape.Landscape.'
-        self.n_scapes = len(raster_list)
-        assert len(set([land.dims for land in list(self.scapes.values())])) == 1, 'Dimensions of all landscapes must be even.'
-        self.dims = list(self.scapes.values())[0].dims
+    def __init__(self, array_list, params=None, res=(1,1), ulc = (0,0)):
+        self.scapes = dict(zip(range(len(array_list)), array_list))
+        assert False not in [scape.__class__.__name__ == 'Landscape' for scape in
+                             array_list], 'All landscapes supplied in array_list must be of type landscape.Landscape.'
+        #set the scapes' idx attributes
+        [setattr(v, 'idx', k) for k, v in self.scapes.items()]
+        self.n_scapes = len(array_list)
+        assert len(set([land.dim for land in list(self.scapes.values())])) == 1, 'Dimensions of all landscapes must be even.'
+        #set the dim to the 0th landscape's dim (should already have been checked that all scapes' dim attributes are equal)
+        self.dim = list(self.scapes.values())[0].dim
         #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
-        self.dim_om = max([len(str(d)) for d in self.dims]) 
-        #set the resoultion (i.e. cell-size); defaults to 1, set to a different value if landscape read in from a GIS raster
-        self.res = res
+        self.dim_om = max([len(str(d)) for d in self.dim]) 
+        #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc) to 0th scape's values (equality
+        #across scapes should already have been checked); will be reset if landscape read in from a GIS raster
+        self.res = list(self.scapes.values())[0].res
+        self.ulc = list(self.scapes.values())[0].ulc
         self.movement_surf = None
         self.movement_surf_approx_len = None
         self.movement_surf_scape_num = None
@@ -92,6 +100,9 @@ class Landscape_Stack:
     #####################
     ### OTHER METHODS ###
     #####################
+
+    def set_raster(self, scape_num, raster):
+        self.scapes[scape_num].raster = raster
 
     def show(self, scape_num=None, colorbar=True, cmap='terrain', im_interp_method='nearest', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
         if True in [scape.mask_island_vals for scape in self.scapes.values()]:
@@ -166,7 +177,7 @@ class Landscape_Stack:
 # -----------------------------------#
 ######################################
 
-def make_random_scape(dims, n_rand_pts, interp_method="cubic", island_val=0, num_hab_types=2, dist='beta', alpha=0.05,
+def make_random_scape(dim, n_rand_pts, interp_method="cubic", island_val=0, num_hab_types=2, dist='beta', alpha=0.05,
                    beta=0.05):  # requires landscape to be square, such that dim = domain = range
     # NOTE: can use "nearest" interpolation to create random patches of habitat (by integer values); can change num_hab_types to > 2 to create a randomly multi-classed landscape
     # NOTE: I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
@@ -176,7 +187,7 @@ def make_random_scape(dims, n_rand_pts, interp_method="cubic", island_val=0, num
     # ~0.05-0.10 --> slightly more complex, occasionally landscape of low regions divided by a major high region (or vice versa)
     # ~0.10-0.50 --> landscape can be broken up into numerous fragmented patches (though sometimes still relatively homogeneous, with one or two small, extremely different patches
     # ~0.50-1.00 --> more highly fragmented version of above
-    max_dim = max(dims)
+    max_dim = max(dim)
     if interp_method == 'nearest':
         if dist == 'unif':
             vals = r.rand(n_rand_pts) * (num_hab_types - 1)
@@ -198,14 +209,13 @@ def make_random_scape(dims, n_rand_pts, interp_method="cubic", island_val=0, num
         I = I + abs(I.min()) + (
                 0.01 * r.rand())  # NOTE: adding a small jitter to keep values from reaching == 0 or == 1, as would likely be the case with linear interpolation
         I = I / (I.max() + (0.01 * r.rand()))
-    if dims[0] != dims[1]:
-        pass  # NOTE: figure out how to get it to use the dims tuple to subset an approriate size if dims not equal
+    if dim[0] != dim[1]:
+        pass  # NOTE: figure out how to get it to use the dim tuple to subset an approriate size if dim not equal
 
-    return Landscape(dims, I)
+    return I
 
 
-def make_defined_scape(dims, pts, vals, interp_method="cubic",
-                    num_hab_types=2):  # pts should be provided as n-by-2 Numpy array, vals as a 1-by-n Numpy array
+def make_defined_scape(dim, pts, vals, interp_method="cubic", num_hab_types=2):  # pts should be provided as n-by-2 Numpy array, vals as a 1-by-n Numpy array
 
     # NOTE: There seem to be some serious issues with all of this code, because the resulting landscapes are not quite symmetrical; and making small tweaks (e.g. adding 5 to all input points' coordinates) doesn't just tweak the output landscape but instead completely gets ride of it; I have an intuition that it comes from the code that coerces all raster values to 0 <= val <= 1, becuase that doesn't look it does quite what I originally intended for it to do, but I'm not really sure... anyhow, for now it works for my initial testing purposes
 
@@ -218,7 +228,7 @@ def make_defined_scape(dims, pts, vals, interp_method="cubic",
     # add 0.5 to all pts, to center them with respect to the raster display, to make intended symmetry actually symmetrical
     # pts = pts + 0.5
 
-    max_dim = max(dims)
+    max_dim = max(dim)
     grid_x, grid_y = np.mgrid[1:max_dim:complex("%ij" % max_dim), 1:max_dim:complex("%ij" % max_dim)]
     I = interpolate.griddata(pts, vals, (grid_x, grid_y), method=interp_method)
     if interp_method == 'nearest':  # i.e., if being used to generate random habitat patches...
@@ -228,9 +238,9 @@ def make_defined_scape(dims, pts, vals, interp_method="cubic",
                 0.01 * r.rand())  # NOTE: adding a small jitter to keep values from reaching == 0 or == 1,
         # as would likely be the case with linear interpolation
         I = I / (I.max() + (0.01 * r.rand()))
-    if dims[0] != dims[1]:
-        pass  # NOTE: figure out how to get it to use the dims tuple to subset an approriate size if dims not equal
-    return Landscape(dims, I)
+    if dim[0] != dim[1]:
+        pass  # NOTE: figure out how to get it to use the dim tuple to subset an approriate size if dim not equal
+    return I
 
 
 def make_scape_stack(params, num_hab_types=2):
@@ -249,7 +259,9 @@ def make_scape_stack(params, num_hab_types=2):
     else:
         interp_method = params['land']['interp_method']
 
-    dims = params['land']['dims']
+    dim = params['land']['dim']
+    res = params['land']['res']
+    ulc = params['land']['ulc']
 
     # create rasters for random landscape, if params['land']['rand_land'] == True
     if params['land']['rand_land']:
@@ -261,8 +273,9 @@ def make_scape_stack(params, num_hab_types=2):
         #  create different scales of heterogeneity for different landscape layers
         if type(n_rand_pts) == int:
             n_rand_pts = [n_rand_pts] * num_scapes
-
-        land = Landscape_Stack( [make_random_scape(dims, n_rand_pts[n], interp_method=interp_method[n], num_hab_types=num_hab_types) for n in range(num_scapes)], params=params)
+        
+        scape_list = [Landscape(make_random_scape(dim, n_rand_pts[n], interp_method=interp_method[n], num_hab_types=num_hab_types), dim = dim, res = res, ulc = ulc) for n in range(num_scapes)]
+        land = Landscape_Stack(scape_list, params=params)
 
     # or create rasters for defined landscape, if params['land']['rand_land'] == False
     elif not params['land']['rand_land']:
@@ -276,9 +289,13 @@ def make_scape_stack(params, num_hab_types=2):
         # get vals
         vals = params['land']['landscape_pt_vals']
 
-        land = Landscape_Stack(
-            [defined_surface(dims, pts[n], vals[n], interp_method=interp_method[n], num_hab_types=num_hab_types) for n
-             in range(num_scapes)])
+        scape_list = [Landscape(make_defined_scape(dim, pts[n], vals[n], interp_method=interp_method[n], num_hab_types=num_hab_types), dim = dim, res = res, ulc = ulc) for n in range(num_scapes)]
+        land = Landscape_Stack(scape_list, params = params)
+
+    #replace certain scapes with GIS layers, and reset the scapes' ulc and res attributes, if necessary
+    gis_params = params['land']['gis']
+    if len(gis_params['scape_nums']) == len(gis_params['filepaths']) and len(gis_params['scape_nums']) > 0 and list(C(gis_params['scape_nums']).keys()) != [None] and list(C(gis_params['filepaths']).keys()) != [None]:
+        set_gis_rasters(land, **gis_params)
 
     # if params['islands']['island_val'] > 0, then use the movement_surf raster to create T/F mask-raster, added as an
     # additional landscape, to be used to kill all individuals straying off 'islands'
@@ -327,7 +344,7 @@ def make_scape_stack(params, num_hab_types=2):
 
             # then create an island mask and add as the last landscape (to use to quickly cull individuals outside
             # the 'islands')
-            island_mask = create_island_mask(dims, land.scapes[land.movement_surf_scape_num].raster)
+            island_mask = create_island_mask(dim, land.scapes[land.movement_surf_scape_num].raster)
             island_mask.island_mask = True  # set Lanscape.island_mask attribute to True
             land.scapes[land.n_scapes] = island_mask  # set as the last scape
             land.n_island_mask_scape = land.n_scapes  # the Landscape_Stack n_island_mask_scape attribute to last scape num
@@ -340,11 +357,58 @@ def make_scape_stack(params, num_hab_types=2):
     return land
 
 
-def make_island_mask(dims, scape):
+def make_island_mask(scape):
     mask = np.ma.masked_less_equal(scape, 1e-8).mask
-    return Landscape(dims, mask)
+    return Landscape(mask)
 
 
+def set_gis_rasters(land, scape_nums, filepaths, scale_min_vals, scale_max_vals):
+    #make scape_num and filepath lists if they're not
+    if type(scape_nums) is int:
+        scape_nums = [scape_nums]
+    if type(filepaths) is str:
+        filepaths = [filepaths]
+    assert len(scape_nums) == len(filepaths), 'ERROR: Different numbers of GIS raster file numbers and scape numbers to replace with them have been provided.'
+    res_list = []
+    ulc_list = []
+    rast_arrays = []
+    for n,filepath in enumerate(filepaths):
+        #get the array, dim, top-left, and res from io.read_raster
+        rast_array, rast_dim, rast_ulc, rast_res = io.read_raster(filepath)
+        #check that the dimensions are right
+        assert rast_dim == land.dim, 'ERROR: land.dim and the dimensions of the input raster %s appear to differ. Please clip %s to the correct dimensions and try again. %s has dimensions (%i, %i), but land has dimensions (%i,%i)' % (filepath, filepath, filepath, rast_dim[0], rast_dim[1], land.dim[0], land.dim[1])
+        #scale the raster to 0<=x<=1
+        rast_array, scale_min, scale_max = spt.scale_raster(rast_array, min_inval = scale_min_vals[n], max_inval = scale_max_vals[n])
+        #add the rast_array to the rast_arrays list
+        rast_arrays.append(rast_array)
+        #and add the land's ulc and res attributes to the appropriate lists
+        res_list.append(tuple(rast_res))
+        ulc_list.append(tuple(rast_ulc))
+        #and update scale_min_vals and scale_max_vals if the values used in spt.scale_raster() don't equal the
+        #values from params (should only occur if the params values provided were None)
+        if scale_min != scale_min_vals[n]:
+            scale_min_vals[n] = scale_min
+        if scale_max != scale_max_vals[n]:
+            scale_max_vals[n] = scale_max
+
+
+    #check that there is only one unique tuple each in res_list and ulc list (otherwise rasters are not in the same projection and/or registration)
+    res_C = C(res_list)
+    ulc_C = C(ulc_list)
+    assert len(res_C) == 1 and list(res_C.values())[0] == len(res_list), 'ERROR: Some of the GIS rasters read in appear to differ in resolution.'
+    assert len(ulc_C) == 1 and list(ulc_C.values())[0] == len(ulc_list), 'ERROR: Some of the GIS rasters read in appear to differ in registration (i.e. top-left corner).'
+   
+    #set the land's correct scape to this raster
+    [land.set_raster(scape_num, rast) for scape_num, rast in zip(scape_nums, rast_arrays)]
+    #then assign the land.res and land.ulc attributes, and the scapes' identical attributes, accordingly
+    land.res = res_list[0]
+    land.ulc = ulc_list[0]
+    [setattr(scape, 'res', land.res) for scape in land.scapes.values()]
+    [setattr(scape, 'ulc', land.ulc) for scape in land.scapes.values()]
+    [setattr(land.scapes[n], 'scale_min', scale_min) for n, scale_min in zip(scape_nums, scale_min_vals)]
+    [setattr(land.scapes[n], 'scale_max', scale_max) for n, scale_max in zip(scape_nums, scale_max_vals)]
+
+    
 # function for reading in a pickled landscape stack
 def read_pickled_scape_stack(filename):
     import cPickle

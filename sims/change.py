@@ -71,18 +71,22 @@ class Changer:
         #self.set_changes(land, params)
        
     def set_next_change(self):
-        self.next_change = next(self.changes)
+        try:
+            self.next_change = next(self.changes)
+        except StopIteration:
+            self.next_change = None
 
     def make_change(self, t):
         #if this is the right timestep for the next change
-        if t == self.next_change[0]:
-            print("\n\nRUNNING THE NEXT CHANGE:\n\t%s" % str(self.next_change))
-            #call the next_change function to make the change
-            self.next_change[1]()
-            #then load the next change after that
-            self.set_next_change()
-            #then recurse this function, so that multiple changes will happen this timestep if need be
-            self.make_change(t)
+        if self.next_change is not None:
+            if t == self.next_change[0]:
+                print("\n\nRUNNING THE NEXT CHANGE:\n\t%s" % str(self.next_change))
+                #call the next_change function to make the change
+                self.next_change[1]()
+                #then load the next change after that
+                self.set_next_change()
+                #then recurse this function, so that multiple changes will happen this timestep if need be
+                self.make_change(t)
 
 
 class Land_Changer(Changer):
@@ -103,7 +107,10 @@ class Land_Changer(Changer):
         scapes = {}
         surfs = {}
         for scape_num in land_change_params.keys():
-            scape_series = make_linear_scape_series(land.scapes[scape_num].raster, **land_change_params[scape_num])
+            scape_series, dim, res, ulc = make_linear_scape_series(land.scapes[scape_num].raster, **land_change_params[scape_num])
+            assert dim == land.dim, 'ERROR: dimensionality of scape_series fed into Land_Changer does not match that of the land to be changed.'
+            assert res == land.res or res is None, 'ERROR: resolution of scape_series fed into Land_Changer does not match that of the land to be changed.'
+            assert ulc == land.ulc or ulc is None, 'ERROR: upper-left corner of scape_series fed into Land_Changer does not match that of the land to be changed.'
             scapes[scape_num] = scape_series
             if scape_num == land.movement_surf_scape_num:
                 surf_series = make_movement_surf_series(land, scape_series)
@@ -205,6 +212,14 @@ class Sim_Changer:
 #function that takes a starting scape, an ending scape, a number of timesteps, and a Model object,
 #and returns a linearly interpolated stack of scapes
 def make_linear_scape_series(start_scape, end_scape, t_start, t_end, n):
+    if type(end_scape) is str:
+        end_scape, dim, ulc, res = io.read_raster(end_scape)
+
+    elif type(end_scape) is np.ndarray:
+        dim = end_scape.shape
+        ulc = None
+        res = None
+        
     #get (rounded) evenly spaced timesteps at which to implement the changes
     timesteps = np.int64(np.round(np.linspace(t_start, t_end, n)))
     #flatten the starting and ending scapes
@@ -221,7 +236,7 @@ def make_linear_scape_series(start_scape, end_scape, t_start, t_end, n):
     assert len(scape_series) == len(timesteps), "ERROR: the number of changing scapes created is not the same as the number of timesteps to be assigned to them"
     #zip the timesteps and the scapes together and return them as a list
     scape_series = list(zip(timesteps, scape_series))
-    return(scape_series)
+    return(scape_series, dim, res, ulc)
 
 
 #function that takes a Landscape_Stack, a scape_num and a dictionary of {t_change:new_scape} 
@@ -237,14 +252,10 @@ def make_movement_surf_series(land, scape_series, kappa=12):
     surf_series = []
     for t, scape in scape_series:
         #change the appropriate scape in the Landscape_Stack
-        copy_land.scapes[copy_land.movement_surf_scape_num].raster = scape
+        copy_land.set_raster(copy_land.movement_surf_scape_num, scape)
         #then create a Movement_Surface using the copied Landscape_Stack
         surf_series.append((t, spt.Movement_Surface(copy_land, kappa = kappa)))
     return(surf_series)
-
-
-def change_scape(land, scape_num, new_scape):
-    land.scapes[scape_num].raster = new_scape
 
 
 def change_movement_surf(land, new_movement_surf):
@@ -254,7 +265,7 @@ def change_movement_surf(land, new_movement_surf):
 
 def get_scape_change_fn(land, scape_num, new_scape):
     def fn(land = land, scape_num = scape_num, new_scape = new_scape):
-        change_scape(land = land, scape_num = scape_num, new_scape = new_scape)
+        land.set_raster(scape_num, new_scape)
     return(fn)
 
 
@@ -276,40 +287,47 @@ def get_land_change_fn(land, scape_num, item):
     # for Pop_Changer #
     ###################
                                                            
-#'bottleneck' ('instant', or 'gradual')
-#'decrease'   ( rate and period of exponential decrease, or target size)
-#'increase'   ( rate and period of exponential increase, or target size)
-#'stochastic' ( range of fluctuations)
-#'cyclical'
-#'custom'
-
-def get_dem_change_fns(pop , trajectory, rate=None, start=None, end=None, instant=False, size_target=None, size_range=None, min_size=None, max_size=None, size_format='frac'):
-    if traj in ['increase', 'decrease']:
-        fn = get_monotonic_dem_change_fns(pop = pop, rate = rate, start = start, end = end, instant = instant, size_target = size_target, size_format = size_format)
+def get_dem_change_fns(pop , trajectory, rate=None, start=None, end=None, size_target=None, size_range=None, min_size=None, max_size=None):
+    if traj == 'monotonic':
+        fn = get_monotonic_dem_change_fns(pop = pop, rate = rate, start = start, end = end, size_target = size_target)
     elif traj == 'stochastic':
-        fn = get_stochastic_dem_change_fns(instant = instant, start = start, end = end, size_range = size_range, size_format = size_format)
+        fn = get_stochastic_dem_change_fns(pop = pop, start = start, end = end, size_range = size_range)
     elif traj == 'cyclical':
-        fn = get_cyclical_dem_change_fns(start = start, end = end, size_range = size_range, min_size = min_size, max_size = max_size, size_format = size_format)
+        fn = get_cyclical_dem_change_fns(pop = pop, start = start, end = end, size_range = size_range, min_size = min_size, max_size = max_size)
     elif traj == 'custom':
-        fn = get_custom_dem_change_fns(timesteps = timesteps, sizes = sizes, size_format = size_format)
+        fn = get_custom_dem_change_fns(pop = pop, timesteps = timesteps, sizes = sizes)
         
 
-def make_monotonic_dem_change(pop, rate, start=None, end=None, size_target=None, size_format='frac'):
+def make_monotonic_dem_change(pop, rate, start=None, end=None, size_target=None):
     pop.K *= rate
 
 
-def get_monotonic_dem_change_fns(pop, rate, start=None, end=None, size_target=None, size_format = 'frac'):
-    #get the timesteps for the demogprahic changes (subtract 1 from start to Python's 0th timestep as 1)
+def get_monotonic_dem_change_fns(pop, rate, start, end, size_target=None):
+    #get the timesteps for the demogprahic changes (subtract 1 from start to set Python's 0th timestep as 1)
     #NOTE: setting start and end to the same value will create a single-timestep change (e.g. a sudden bottleneck)
     timesteps = range(start-1, end) 
     fns = []
     for t in timesteps:
-        def fn(pop = pop, rate = rate, size_format = size_format):
-            make_monotonic_dem_change(pop = pop, rate = rate, size_format = size_format)
+        def fn(pop = pop, rate = rate, size_target = size_target):
+            make_monotonic_dem_change(pop = pop, rate = rate)
         fns.append(fn)
     change_fns = list(zip(timesteps, fns))
     return(change_fns)
 
+
+def make_stochastic_dem_change(pop, size_range, dist = 'unif'):
+    change = None 
+
+
+def get_stochastic_dem_change_fns(pop, size_range, start, end, dist = 'unif'):
+    timesteps = range(start-1, end)
+    fns = []
+    for t in timesteps:
+        def fn(pop=pop, rate=rate, size_target=size_target, dist=dist):
+            make_stochastic_dem_change(pop = pop, size_range = size_range, dist = dist)
+        fns.append(fn)
+    change_fns = list(zip(timesteps, fns))
+    return(change_fns)
 
 
 

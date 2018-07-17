@@ -110,7 +110,7 @@ class Individual:
 # -----------------------------------#
 ######################################
 
-def make_individual(idx, genomic_arch, dims=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0, burn =False):
+def make_individual(idx, genomic_arch, dim=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0, burn =False):
     """Create a new individual from:
             - either an instance of genome.Genomic_Architecture (i.e. for newly simulated individual) or both
               the genomic architecture and a numpy.ndarray genome (e.g. for new offspring) (one of the two must be provided),
@@ -138,10 +138,10 @@ def make_individual(idx, genomic_arch, dims=None, new_genome = None, ploidy = No
 
 
     elif new_genome == None:
-        assert dims != None, "landscape dims required to simulate a new individual without reproduction"
+        assert dim != None, "landscape dim required to simulate a new individual without reproduction"
 
         #randomly assign individual a valid starting location
-        x,y = r.rand(2)*dims
+        x,y = r.rand(2)*dim
 
         if burn == False:
 

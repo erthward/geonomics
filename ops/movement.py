@@ -82,9 +82,9 @@ def move(pop, land):
     new_x = old_x + cos(direction)*distance
     #and clip the values to be within the landscape dimensions
        #NOTE: subtract a very small value to avoid having the dimension itself set as a coordinate, which rounds down to a cell id one beyond the largest cell id the landscape
-    new_x = np.clip(new_x, a_min = 0, a_max = land.dims[1]-0.00001) 
+    new_x = np.clip(new_x, a_min = 0, a_max = land.dim[1]-0.00001) 
     new_y = old_y + sin(direction)*distance
-    new_y = np.clip(new_y, a_min = 0, a_max = land.dims[0]-0.00001)
+    new_y = np.clip(new_y, a_min = 0, a_max = land.dim[0]-0.00001)
 
     #then feed the new locations into each individual's set_pos method
     [ind.set_pos(new_x[n], new_y[n]) for n, ind in enumerate(pop.individs.values())]
@@ -103,7 +103,9 @@ def disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dis
 
         offspring_x = parent_centroid_x + np.cos(direction)*distance
         offspring_y = parent_centroid_y + np.sin(direction)*distance
-        within_landscape = (offspring_x > 0 and offspring_x < land.dims[0]) and (offspring_y > 0 and offspring_y < land.dims[1])
+        offspring_x = np.clip(offspring_x, a_min = 0, a_max = land.dim[1]-0.00001) 
+        offspring_y = np.clip(offspring_y, a_min = 0, a_max = land.dim[1]-0.00001) 
+        within_landscape = (offspring_x > 0 and offspring_x < land.dim[0]) and (offspring_y > 0 and offspring_y < land.dim[1])
 
     return (offspring_x, offspring_y)
 

@@ -44,21 +44,21 @@ from shapely import geometry as g
 ######################################
 
 class Density_Grid:
-    def __init__(self, dims, dim_om, window_width, gi, gj, cells, areas, x_edge, y_edge):
+    def __init__(self, dim, dim_om, window_width, gi, gj, cells, areas, x_edge, y_edge):
 
-        #same as land.dims
-        self.dims = dims
+        #same as land.dim
+        self.dim = dim
 
         #resolution (i.e. cell-size); defaults to 1
         self.res = 1
 
-        #order of magnitude of the largest dimension in self.dims (used for zero-padding the cell strings)
+        #order of magnitude of the largest dimension in self.dim (used for zero-padding the cell strings)
         self.dim_om = dim_om
 
        #window width to be used for grid-cell windows within which population will be counted
         self.window_width = window_width
        
-        #self.x_edge/y_edge are True if this grid has cells centered on the edge (i.e. 0 and the dims val) for this dimension, else False
+        #self.x_edge/y_edge are True if this grid has cells centered on the edge (i.e. 0 and the dim val) for this dimension, else False
         self.x_edge = x_edge
         self.y_edge = y_edge
        
@@ -105,7 +105,7 @@ class Density_Grid_Stack:
     def __init__(self, land, window_width = None):
    
         #dimensions
-        self.dims = land.dims
+        self.dim = land.dim
 
         #resolution (i.e. cell-size)
         self.res = land.res
@@ -117,7 +117,7 @@ class Density_Grid_Stack:
         #occurring. But when I get the time, I need to puzzle through the density_grid_stack code again and
         #figure out why it throws errors in those cases, and how to rectify it
         if window_width == None:
-            facts = [(i,abs(i-0.1*max(self.dims))) for i in range(1,max(self.dims)+1) if max(self.dims)%i == 0]
+            facts = [(i,abs(i-0.1*max(self.dim))) for i in range(1,max(self.dim)+1) if max(self.dim)%i == 0]
             closest_fact = min([f[1] for f in facts])
             window_width = [f[0] for f in facts if f[1] == closest_fact][0]
 
@@ -128,7 +128,7 @@ class Density_Grid_Stack:
         self.dim_om = land.dim_om
 
         #get meshgrids of the i and j cell-center coordinates of the landscape-raster cells (to be interpolated to for density calculation)
-        self.land_gi, self.land_gj = np.meshgrid(np.arange(0, self.dims[0])+0.5, np.arange(0, self.dims[1])+0.5)
+        self.land_gi, self.land_gj = np.meshgrid(np.arange(0, self.dim[0])+0.5, np.arange(0, self.dim[1])+0.5)
 
         #create inner and outer density grids from the land and window-width
         self.grids = dict([(n,g) for n,g in enumerate(make_density_grids(land, self.window_width))])
@@ -150,7 +150,7 @@ class Movement_Surface:
     def __init__(self, land, kappa = 12):
 
         #dimensions
-        self.dims = land.dims
+        self.dim = land.dim
         #resolution (i.e. cell-size); defaults to 1
         self.res = land.res
 
@@ -195,22 +195,22 @@ def make_cell_strings(gi, gj, dim_om):
 #make a density grid, based on the Landscape_Stack, the chosen window-width, 
 #and the Boolean arguments dictating whether or not the grid's 
 #x- and y-dimension cells should be centered on the landscape 
-#edges (i.e. 0 and dims[_])
+#edges (i.e. 0 and dim[_])
 def make_density_grid(land, ww, x_edge, y_edge):
     
     #half-window width
     hww = ww/2.
 
     #get land dimensions
-    dims = land.dims
+    dim = land.dim
     dim_om = land.dim_om
    
     #create a dictionary of cell ranges, one for when cells center on edge values 
-    #(i.e. 0 and dims[n] for either dimension), 
+    #(i.e. 0 and dim[n] for either dimension), 
     #the other for when they don't 
-    #(i.e. run from hww to dims[n] - hww)
-    edge_range_dict = {True:  np.arange(0, dims[0]+ww, ww), 
-                       False: np.arange(0+hww, dims[0]+hww, ww)}
+    #(i.e. run from hww to dim[n] - hww)
+    edge_range_dict = {True:  np.arange(0, dim[0]+ww, ww), 
+                       False: np.arange(0+hww, dim[0]+hww, ww)}
     
     #create the meshgrid of the centerpoints of neighborhoods (or cells) within which population will be counted
     #(x_edge and y_edge arguments determine whether this grid's 
@@ -225,7 +225,7 @@ def make_density_grid(land, ww, x_edge, y_edge):
 
 
     #create a single, large Polygon object of the landscape quadrilateral
-    land_poly_coords = ((0,0), (dims[0], 0), (dims[0], dims[1]), (0, dims[1]))
+    land_poly_coords = ((0,0), (dim[0], 0), (dim[0], dim[1]), (0, dim[1]))
     land_poly = g.Polygon(land_poly_coords)
    
     
@@ -258,7 +258,7 @@ def make_density_grid(land, ww, x_edge, y_edge):
 
     #use the above-created data structures to create two Density_Grid objects (which will inhere to the
     #Landscape_Stack as attributes)
-    grid = Density_Grid(dims, dim_om, ww, gi, gj, cells, areas, x_edge= x_edge, y_edge = y_edge)
+    grid = Density_Grid(dim, dim_om, ww, gi, gj, cells, areas, x_edge= x_edge, y_edge = y_edge)
     return(grid)
 
 
@@ -316,7 +316,7 @@ def make_movement_surface(land, kappa=12, approx_len = 5000):
     embedded_rast[1:embedded_rast.shape[0] - 1, 1:embedded_rast.shape[1] - 1] = rast
 
     # create list of lists (aping an array) for storage of resulting functions
-    #movement_surf = [[None for j in range(land.dims[1])] for i in range(land.dims[0])]
+    #movement_surf = [[None for j in range(land.dim[1])] for i in range(land.dim[0])]
     #NOTE: nevermind that, create an actual array and store vectors approximating the functions!
     movement_surf = np.float16(np.zeros((rast.shape[0], rast.shape[1], approx_len)))
 
@@ -325,4 +325,13 @@ def make_movement_surface(land, kappa=12, approx_len = 5000):
             neigh = embedded_rast[i:i + 3, j:j + 3].copy()
             movement_surf[i, j, :] = make_von_mises_mix_sampler(neigh, queen_dirs, kappa = kappa, approx_len= approx_len)
     return (movement_surf)
+
+#linearly scale a raster to 0 <= x <= 1, and return the function to back-convert as well
+def scale_raster(rast, min_inval=None, max_inval=None, min_outval=0, max_outval=1):
+    if min_inval is None:
+        min_inval = rast.min()
+    if max_inval is None:
+        max_inval = rast.max()
+    scale_rast = (rast - min_inval)/(max_inval - min_inval)
+    return(scale_rast, min_inval, max_inval)
 

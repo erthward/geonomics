@@ -34,7 +34,9 @@ params = {
 ##############
 
     'land' : {
-        'dims'          : (50,50),                  #x,y dimensions of landscape  
+        'dim'          : (90,90),                   #x- and y-dimensionality of landscape  
+        'res'          : (1,1),                     #landscape resolution in x and y dimensions (for crosswalking with real-world distances; defaults to meaningless (1,1), will be reset if GIS rasters are read in 
+        'ulc'          : (0,0),                     #upper-left corner of the landscape; defaults to meaningless (0,0), can be set to alternative values for crosswalking with real-world data, and will be reset if GIS rasters are read in 
         'num_scapes'    : 2,                        #number of landscapes desired
         'rand_land'     : True,                     #whether or not to generate random landscapes
         'interp_method' : ['linear', 'linear'],     # list of interpolation methods for generation of random landscapes, 
@@ -55,6 +57,12 @@ params = {
         'density_grid_window_width': None,          #with window-width used for the Density_Grid_Stack used to calculate
                                                         #population density (if set to None, defaults to the closest factor 
                                                         #of the larger landscape dimension to 1/10th of that dimension)
+        'gis'           : {
+                    'scape_nums'                 : [1],   #list of the scape_nums for which GIS layers should be read in
+                    'filepaths'                  : ['/home/ihavehands/Desktop/yos_30yr_normals_90x90.tif'], #list of the filepaths to read into the scapes indicated by the scape_num list
+                    'scale_min_vals'                   : [-1.37],    #minimum values to use for rescaling the rasters (will be rescaled to 0<=x<=1); may be different than the actual minimum values in the rasters, if they will be changing to future rasters with values outside the range of these rasters
+                    'scale_max_vals'                   : [19.11]   #maxmimum input values against which to rescale the rasters to (will be rescaled to 0<=x<=1)
+                    },
         'islands'       : {
                     'islands'                   : False,                    #create habitat islands (outside which individuals cannot move without dying)?
                     'island_val'                : 0,                            #if greater than 0 (and of course less than 1), the value will be used to
@@ -65,9 +73,9 @@ params = {
                                                                                 #params['island_val'] = 0
                         }, # <END> 'islands'
         'movement_surf'     : {
-                'movement_surf'                 : False,                     #use a landscape layer as a resistance surface, or habitat quality 
+                'movement_surf'                 : True,                     #use a landscape layer as a resistance surface, or habitat quality 
                                                                                 #layer, to direct movement?
-                'movement_surf_scape_num'         : 1,                        #scape number to use as the movement surface
+                'movement_surf_scape_num'         : 0,                        #scape number to use as the movement surface
                 'movement_surf_approx_len'      : 7500,                     #length of the lookup vectors (numpy arrays) used to approximate 
                                                                                 #the VonMises mixture distributions at each cell
                 'movement_surf_vonmises_kappa'  : 2,                        #kappa value to use in the von Mises mixture distributions (KDEs) 
@@ -84,8 +92,8 @@ params = {
 ################
 
     'genome' : {
-        'L'             : 200,                     #total number of loci
-        'l_c'           : [100,50,50],            #chromosome lengths [sum(l_c) == L enforced]
+        'L'             : 1000,                     #total number of loci
+        'l_c'           : [500],            #chromosome lengths [sum(l_c) == L enforced]
         'recomb_array'  : None,                     #predetermined linkage map to use for the simulated loci (optional)
         'x'             : 2,                        #ploidy (for now, leave at 2 for diploidy)
         'mu'            : 10e-9,                    #genome-wide mutation rate, per base per generation
@@ -101,19 +109,19 @@ params = {
         'pleiotropy'    : True,                     #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?) false
         'recomb_rate_custom_fn': None,              #if provided, must be a function that returns a single recombination rate value (r) when called
         'traits'        : {
-                    'num'       : 3,                        #number of traits to simulate
-                    'scape_num' : [0,0,0],                  #list of the landscape numbers to be used for selection on each trait 
+                    'num'       : 1,                        #number of traits to simulate
+                    'scape_num' : [1],                  #list of the landscape numbers to be used for selection on each trait 
                                                                 #(i.e.  list length should equal value of 'num' on previous line, 
                                                                 #as should lengths of subsequent lists)
-                    'phi' : [0.05, 0.05, 0.05],             #phenotypic selection coefficient for trait; 
+                    'phi' : [0.1],             #phenotypic selection coefficient for trait; 
                                                                 #for each trait, can either be a numeric value, or can be an array 
                                                                 #of spatially-contingent s values of dimensions equal to land.dims
-                    'n_loci': [1, 100, 1],                  #number of loci assigned to trait
-                    'alpha_dist_sigma': [0.5, 0.5, 0.5],    #NOTE: for sigma = 0.5, one average locus is enough to generate both optimum 
+                    'n_loci': [10],                  #number of loci assigned to trait
+                    'alpha_dist_sigma': [0.5],    #NOTE: for sigma = 0.5, one average locus is enough to generate both optimum 
                                                                 #genotypes; for 0.025, 10 loci should (on average, but depends of course on 
                                                                 #the random sample of alphas drawn!); and so on linearly
-                    'gamma': [1, 1, 1],                     #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
-                    'univ_advant' : [False, False, True]    #is the phenotype unviersally advantageous? 
+                    'gamma': [1],                     #gamma exponent for the trait's fitness function (<1 = concave up, 1 = linear, >1 = convex up)
+                    'univ_advant' : [False]    #is the phenotype unviersally advantageous? 
                                                                 #if so, phenotypes closer to 1 will have higher fitness at all locations
                         } # <END> 'traits'
         
@@ -126,14 +134,14 @@ params = {
 
     'pop' : {
         'main'      : {
-            'N_start'          :1000               #starting population size
+            'N_start'          :2000               #starting population size
             }, # <END> 'main'
 
         'mating'    : {
             'repro_age'     : 0,                    #age at sexual maturity (int or float for non-sexual species, tuple or list 
                                                         #of two ints/floats for sexual species; set to 'None' to not make this 
                                                         #an age-structured species
-            'max_age'       : 15,                      #age beyond which all individuals will automatically die; default to None
+            'max_age'       : 3,                      #age beyond which all individuals will automatically die; default to None
             'sex'           : False,                #is this a sexual species? 
             'dist_weighted_birth' : False,          #should the probability of birth be weighted by the distance between 
                                                         #individuals in a pair?
@@ -144,7 +152,7 @@ params = {
                                                         #variation in intrinsic rate (e.g. expression as a raster) and/or for 
                                                         #density-dependent births as well as deaths
             'n_births_lambda': 4,                   #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
-            'mating_radius' : 0.5                   #radius of mate-searching area
+            'mating_radius' : 1                   #radius of mate-searching area
             }, # <END> 'mating'
 
         'mortality'     : {
@@ -184,18 +192,19 @@ params = {
                         }
                     },
             'land' : {
-                      0 : {
-                            'end_scape' : np.zeros((50,50)),
-                            't_start' : 0,
-                            't_end'   : 100,
-                            'n'       : 5
-                            },
                       1 : {
-                            'end_scape' : np.zeros((50,50)),
-                            't_start' : 0,
-                            't_end'   : 1000,
+                            'end_scape' : np.zeros((90,90)),
+                            't_start' : 1500,
+                            't_end'   : 2000,
+                            'n'       : 10
+                            },
+                      0 : {
+                            'end_scape' : np.zeros((90,90)),
+                            't_start' : 1500,
+                            't_end'   : 2000,
                             'n'       : 2
                             }
+                     
                     },
             'gen' : {
                 }

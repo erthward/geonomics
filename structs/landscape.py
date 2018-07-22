@@ -45,19 +45,19 @@ from shapely import geometry as g
 ######################################
 
 class Landscape:
-    def __init__(self, raster, dim, res=(1,1), ulc = (0,0)):
+    def __init__(self, rast, dim, res=(1,1), ulc = (0,0)):
         self.idx = None
         self.dim = dim
         #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc) to defaults; will be reset if landscape read in from a GIS raster
         self.res = res  
         self.ulc = ulc
-        self.raster = raster
+        self.rast = rast
         self.scale_min = None
         self.scale_max = None
         self.island_mask = False
         self.mask_island_vals = False
         assert type(self.dim) in [tuple, list], "dim must be expressed on a tuple or a list"
-        assert type(self.raster) == np.ndarray, "raster should be a numpy.ndarray"
+        assert type(self.rast) == np.ndarray, "rast should be a numpy.ndarray"
 
     #####################
     ### OTHER METHODS ###
@@ -89,9 +89,9 @@ class Landscape_Stack:
         #across scapes should already have been checked); will be reset if landscape read in from a GIS raster
         self.res = list(self.scapes.values())[0].res
         self.ulc = list(self.scapes.values())[0].ulc
-        self.movement_surf = None
-        self.movement_surf_approx_len = None
-        self.movement_surf_scape_num = None
+        self.move_surf = None
+        self.move_surf_approx_len = None
+        self.move_surf_scape_num = None
         self.density_grid_stack = None
         self.n_island_mask_scape = None
         #self.mating_grid = mating_grid.MatingGrid(params=params)
@@ -101,8 +101,8 @@ class Landscape_Stack:
     ### OTHER METHODS ###
     #####################
 
-    def set_raster(self, scape_num, raster):
-        self.scapes[scape_num].raster = raster
+    def set_raster(self, scape_num, rast):
+        self.scapes[scape_num].rast = rast
 
     def show(self, scape_num=None, colorbar=True, cmap='terrain', im_interp_method='nearest', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
         if True in [scape.mask_island_vals for scape in self.scapes.values()]:
@@ -114,26 +114,26 @@ class Landscape_Stack:
 
 
     #method for plotting the movement surface (in various formats)
-    def show_movement_surf(self, style, x, y, zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
+    def show_movement_surface(self, style, x, y, zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
         '''
         'style' can take values: 'hist', 'circ_hist', 'vect', or 'circ_draws'
         '''
-        if self.movement_surf is None:
+        if self.move_surf is None:
             print('This landscape stack appears to have no movement surface layer. Function not valid.')
             return
         elif style not in ['hist', 'circ_hist', 'vect', 'circ_draws']:
             print("The 'style' argument must take one of the following values: 'hist', 'circ_hist', 'vect', 'circ_draws'")
             return
         elif style == 'hist':
-            plt.hist(r.choice(self.movement_surf[i,j,:], size = 10000, replace = True), bins=100, density=True, alpha=0.5)
+            plt.hist(r.choice(self.move_surf[i,j,:], size = 10000, replace = True), bins=100, density=True, alpha=0.5)
 
         else:
             #display the movement-surface raster
-            scape_num = self.movement_surf_scape_num
+            scape_num = self.move_surf_scape_num
             self.scapes[scape_num].show(zoom_width = zoom_width, x = x, y = y)
 
             if style == 'circ_hist':
-                v, a = np.histogram(r.choice(self.movement_surf[y,x,:], replace = True, size = 7500), bins=15)
+                v, a = np.histogram(r.choice(self.move_surf[y,x,:], replace = True, size = 7500), bins=15)
                 v = v / float(v.sum())
                 a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
                 xs = [np.cos(a[n]) * 0.5 for n in range(len(a))]
@@ -143,13 +143,13 @@ class Landscape_Stack:
                 [plt.plot((x, (x + xs[n])), (y, (y + ys[n])), linewidth=2, color=color) for n in range(len(xs))]
            
             elif style == 'circ_draws':
-                pts = [(np.cos(a), np.sin(a)) for a in r.choice(self.movement_surf[y,x,:], size = 1000, replace = True)]
+                pts = [(np.cos(a), np.sin(a)) for a in r.choice(self.move_surf[y,x,:], size = 1000, replace = True)]
                 plt.scatter([pt[0] * 0.5 + x for pt in pts], [pt[1] * 0.5 + y for pt in pts], color='red', alpha=0.1, marker = '.')
 
             elif style == 'vect':
                 def plot_one_cell(i, j):
                     # draw sample of angles from the Gaussian KDE representing the von mises mixture distribution (KDE)
-                    samp = self.movement_surf[i,j,:]
+                    samp = self.move_surf[i,j,:]
                     # create lists of the x and y (i.e. cos and sin) components of each angle in the sample
                     x_vects = np.cos(samp)
                     y_vects = np.sin(samp)
@@ -161,7 +161,7 @@ class Landscape_Stack:
                     plt.arrow(j, i, dx, dy, alpha=0.75, color='black', head_width=0.24, head_length=0.32)
 
                 # call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
-                [[plot_one_cell(i, j) for i in range(self.movement_surf.shape[0])] for j in range(self.movement_surf.shape[1])]
+                [[plot_one_cell(i, j) for i in range(self.move_surf.shape[0])] for j in range(self.move_surf.shape[1])]
            
 
     # method for pickling a landscape stack
@@ -297,7 +297,7 @@ def make_scape_stack(params, num_hab_types=2):
     if len(gis_params['scape_nums']) == len(gis_params['filepaths']) and len(gis_params['scape_nums']) > 0 and list(C(gis_params['scape_nums']).keys()) != [None] and list(C(gis_params['filepaths']).keys()) != [None]:
         set_gis_rasters(land, **gis_params)
 
-    # if params['islands']['island_val'] > 0, then use the movement_surf raster to create T/F mask-raster, added as an
+    # if params['islands']['island_val'] > 0, then use the move_surf raster to create T/F mask-raster, added as an
     # additional landscape, to be used to kill all individuals straying off 'islands'
 
     #create the land.density_grid_stack object
@@ -308,10 +308,10 @@ def make_scape_stack(params, num_hab_types=2):
 
     # create a movement surface, if params call for it
     # NOTE: THIS WILL TAKE A WHILE TO COMPUTER UP-FRONT!
-    if params['land']['movement_surf']['movement_surf']:
+    if params['land']['move_surf']['move_surf']:
 
-        land.movement_surf_scape_num = params['land']['movement_surf']['movement_surf_scape_num']
-        land.movement_surf_approx_len = params['land']['movement_surf']['movement_surf_approx_len']
+        land.move_surf_scape_num = params['land']['move_surf']['move_surf_scape_num']
+        land.move_surf_approx_len = params['land']['move_surf']['move_surf_approx_len']
 
         if params['land']['islands']['islands']:
 
@@ -319,7 +319,7 @@ def make_scape_stack(params, num_hab_types=2):
                 iv = params['land']['islands']['island_val']
 
                 # zero out the appropriate parts of the movement raster
-                movement_rast = land.scapes[land.movement_surf_scape_num].raster
+                movement_rast = land.scapes[land.move_surf_scape_num].rast
                 # zero out the appropriate parts of the movement raster (but not exactly 0, because
                 # creates division-by-zero problems in the pop_dynamics calculations)
                 movement_rast[movement_rast < iv] = 1e-8
@@ -332,27 +332,27 @@ def make_scape_stack(params, num_hab_types=2):
                     ma) == np.ndarray, "The pickled file located at the path provided in params['land']['islands']['island_mask'] does not appear to be a numpy ndarray. "
 
                 # get the movement raster scape number
-                movement_rast = land.scapes[land.movement_surf_scape_num].raster
+                movement_rast = land.scapes[land.move_surf_scape_num].rast
                 # zero out the appropriate parts of the movement raster (but not exactly 0, because
                 # creates division-by-zero problems in the pop_dynamics calculations)
                 movement_rast[ma == 0] = 1e-8
 
-            # replace the movement_surf_scape raster with the updated raster with all outside-habitat values set to 1e-8
-            land.scapes[land.movement_surf_scape_num].raster = movement_rast
+            # replace the move_surf_scape raster with the updated raster with all outside-habitat values set to 1e-8
+            land.scapes[land.move_surf_scape_num].rast = movement_rast
             # set the Landscape.mask_island_vals flag on the movement surf to True, for plotting purposes
-            land.scapes[land.movement_surf_scape_num].mask_island_vals = True
+            land.scapes[land.move_surf_scape_num].mask_island_vals = True
 
             # then create an island mask and add as the last landscape (to use to quickly cull individuals outside
             # the 'islands')
-            island_mask = create_island_mask(dim, land.scapes[land.movement_surf_scape_num].raster)
+            island_mask = create_island_mask(dim, land.scapes[land.move_surf_scape_num].rast)
             island_mask.island_mask = True  # set Lanscape.island_mask attribute to True
             land.scapes[land.n_scapes] = island_mask  # set as the last scape
             land.n_island_mask_scape = land.n_scapes  # the Landscape_Stack n_island_mask_scape attribute to last scape num
             land.n_scapes += 1  # then increment total scape nums by 1
 
-        # create the movement surface, and set it as the land.movement_surf attribute
+        # create the movement surface, and set it as the land.move_surf attribute
         from ops import movement
-        land.movement_surf = spt.Movement_Surface(land, kappa = 12)
+        land.move_surf = spt.Movement_Surface(land, kappa = 12)
 
     return land
 

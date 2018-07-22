@@ -43,7 +43,7 @@ from ops import movement
 
 
 def show_movement(pop, land, scape_num, num_timesteps, params = None, mu_direction = None, kappa_direction =
-        None, mu_distance = None, sigma_distance = None, movement_surf = None, subset_pop = None, color = 'black', color_by_individ = False):
+        None, mu_distance = None, sigma_distance = None, move_surf = None, subset_pop = None, color = 'black', color_by_individ = False):
 
     '''Useful for visual exploration of the movement parameters. Either provide a params dictionary with the
     necessary information in it, or provide the necessary parameters piecemeal.'''
@@ -70,8 +70,8 @@ def show_movement(pop, land, scape_num, num_timesteps, params = None, mu_directi
             toy_m_params['mu_distance'] = mu_distance 
         if sigma_distance != None:
             toy_m_params['sigma_distance'] = sigma_distance
-        if movement_surf != None:
-            toy_m_params['movement_surf'] = movement_surf
+        if move_surf != None:
+            toy_m_params['move_surf'] = move_surf
 
         toy_params['pop']['movement'] = toy_m_params
 
@@ -83,12 +83,12 @@ def show_movement(pop, land, scape_num, num_timesteps, params = None, mu_directi
         toy_m_params['kappa_direction'] = kappa_direction
         toy_m_params['mu_distance'] = mu_distance 
         toy_m_params['sigma_distance'] = sigma_distance
-        if movement_surf != None:
-            toy_m_params['movement_surf'] = movement_surf
-        elif land.movement_surf == None:
-            toy_m_params['movement_surf'] = False
+        if move_surf != None:
+            toy_m_params['move_surf'] = move_surf
+        elif land.move_surf == None:
+            toy_m_params['move_surf'] = False
         else:
-            toy_m_params['movement_surf'] = True
+            toy_m_params['move_surf'] = True
 
         toy_params = {'pop':{'movement':toy_m_params}}
 

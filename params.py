@@ -59,7 +59,7 @@ params = {
                                                         #of the larger landscape dimension to 1/10th of that dimension)
         'gis'           : {
                     'scape_nums'                 : [1],   #list of the scape_nums for which GIS layers should be read in
-                    'filepaths'                  : ['/home/ihavehands/Desktop/yos_30yr_normals_90x90.tif'], #list of the filepaths to read into the scapes indicated by the scape_num list
+                    'filepaths'                  : ['/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif'], #list of the filepaths to read into the scapes indicated by the scape_num list
                     'scale_min_vals'                   : [-1.37],    #minimum values to use for rescaling the rasters (will be rescaled to 0<=x<=1); may be different than the actual minimum values in the rasters, if they will be changing to future rasters with values outside the range of these rasters
                     'scale_max_vals'                   : [19.11]   #maxmimum input values against which to rescale the rasters to (will be rescaled to 0<=x<=1)
                     },
@@ -72,18 +72,18 @@ params = {
                                                                                 #(i.e. outside 'islands'); to use, provide filepath here and set 
                                                                                 #params['island_val'] = 0
                         }, # <END> 'islands'
-        'movement_surf'     : {
-                'movement_surf'                 : True,                     #use a landscape layer as a resistance surface, or habitat quality 
+        'move_surf'     : {
+                'move_surf'                 : True,                     #use a landscape layer as a resistance surface, or habitat quality 
                                                                                 #layer, to direct movement?
-                'movement_surf_scape_num'         : 0,                        #scape number to use as the movement surface
-                'movement_surf_approx_len'      : 7500,                     #length of the lookup vectors (numpy arrays) used to approximate 
+                'move_surf_scape_num'         : 0,                        #scape number to use as the movement surface
+                'move_surf_approx_len'      : 7500,                     #length of the lookup vectors (numpy arrays) used to approximate 
                                                                                 #the VonMises mixture distributions at each cell
-                'movement_surf_vonmises_kappa'  : 2,                        #kappa value to use in the von Mises mixture distributions (KDEs) 
+                'move_surf_vonmises_kappa'  : 2,                        #kappa value to use in the von Mises mixture distributions (KDEs) 
                                                                                 #underlying resistance surface movement
-                'movement_surf_gauss_KDE_bandwidth' : 0.2                   #bandwidth value to use in the Gaussian KDEs that are created to 
+                'move_surf_gauss_KDE_bandwidth' : 0.2                   #bandwidth value to use in the Gaussian KDEs that are created to 
                                                                                 #approximate the von Mises mixture distributions (KDEs) 
                                                                                 #underlying resistance surface movement
-                            } # <END> 'movement_surf'
+                            } # <END> 'move_surf'
         }, # <END> 'landscape'
  
 
@@ -132,52 +132,61 @@ params = {
 #### POP ####
 #############
 
-    'pop' : {
-        'main'      : {
-            'N_start'          :2000               #starting population size
-            }, # <END> 'main'
+    'pops' : {
+        '0'  :   {
+            'name'       : 'pop0',         #each population can take any arbitrary name that will not clobber an existing variable
+            'start'      : {
+               'N'       : 2000,             #starting population size
+               'K_scape_num'   : 0,                #the scape_num of the raster to use as the carrying-capacity raster (K)
+               'K_fact'        : 2                 #the factor to multiply the K raster by in order to generate pop.K
+               }, # <END> 'main'
 
-        'mating'    : {
-            'repro_age'     : 0,                    #age at sexual maturity (int or float for non-sexual species, tuple or list 
-                                                        #of two ints/floats for sexual species; set to 'None' to not make this 
-                                                        #an age-structured species
-            'max_age'       : 3,                      #age beyond which all individuals will automatically die; default to None
-            'sex'           : False,                #is this a sexual species? 
-            'dist_weighted_birth' : False,          #should the probability of birth be weighted by the distance between 
-                                                        #individuals in a pair?
-            'R'             : 0.5,                  #pop intrinsic growth rate
-            'b'             : 0.2,                  #population intrinsic birth rate (implemented as the probability 
-                                                        #that an identified potential mating pair successfully mates); 
-                                                        #NOTE: this may later need to be re-implemented to allow for spatial 
-                                                        #variation in intrinsic rate (e.g. expression as a raster) and/or for 
-                                                        #density-dependent births as well as deaths
-            'n_births_lambda': 4,                   #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
-            'mating_radius' : 1                   #radius of mate-searching area
-            }, # <END> 'mating'
+            'mating'    : {
+               'repro_age'     : 0,                    #age at sexual maturity (int or float for non-sexual species, tuple or list 
+                                                           #of two ints/floats for sexual species; set to 'None' to not make this 
+                                                           #an age-structured species
+               'max_age'       : 3,                      #age beyond which all individuals will automatically die; default to None
+               'sex'           : False,                #is this a sexual species? 
+               'dist_weighted_birth' : False,          #should the probability of birth be weighted by the distance between 
+                                                           #individuals in a pair?
+               'R'             : 0.5,                  #pop intrinsic growth rate
+               'b'             : 0.2,                  #population intrinsic birth rate (implemented as the probability 
+                                                           #that an identified potential mating pair successfully mates); 
+                                                           #NOTE: this may later need to be re-implemented to allow for spatial 
+                                                           #variation in intrinsic rate (e.g. expression as a raster) and/or for 
+                                                           #density-dependent births as well as deaths
+               'n_births_lambda': 4,                   #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
+               'mating_radius' : 1                   #radius of mate-searching area
+               }, # <END> 'mating'
 
-        'mortality'     : {
-            'n_deaths_sigma'            : 0.2,      # std for the normal distribution used to choose the r.v. of deaths 
-                                                        #per timestep (mean of this distribution is the overshoot, 
-                                                        #as calculated from pop.size and pop.census())
-            'density_dependent_fitness' : True,     #should fitness be density dependent? (note: helps to avoid 
-            'd_min'                     : 0.01,     #minimum neutral (i.e. non-selection driven) probability of death
-            'd_max'                     : 0.90,     #maximum neutral probability of death
-            'islands'                   : False
+            'mortality'     : {
+               'n_deaths_sigma'            : 0.2,      # std for the normal distribution used to choose the r.v. of deaths 
+                                                           #per timestep (mean of this distribution is the overshoot, 
+                                                           #as calculated from pop.size and pop.census())
+               'density_dependent_fitness' : True,     #should fitness be density dependent? (note: helps to avoid 
+               'd_min'                     : 0.01,     #minimum neutral (i.e. non-selection driven) probability of death
+               'd_max'                     : 0.90,     #maximum neutral probability of death
+               'islands'                   : False
 
-        }, # <END> 'mortality'
-                                                        #subpopulation 'clumping')
-        'movement'   : {
-            'movement'          : True,                 #is this a mobile species?
-            'direction_mu'      : 0,                    #mu for von mises distribution defining movement directions
-            'direction_kappa'   : 0,                    #kappa for von mises distribution
-            'distance_mu'       : 0.5,                  #mean movement-distance (lognormal distribution)
-            'distance_sigma'    : 0.5,                  #sd of movement distance
-            'dispersal_mu'      : 0.5,                  #mean dispersal distance (lognormal distribution)
-            'dispersal_sigma'   : 0.5,                  #sd of dispersal distance
-            'movement_surf'     : True                  #use the movement surface for this population?
-        } # <END> 'movement'
-    
-    }, # <END> 'pop'
+        }   , # <END> 'mortality'
+                                                           #subpopulation 'clumping')
+            'movement'   : {
+               'movement'          : True,                 #is this a mobile species?
+               'direction_mu'      : 0,                    #mu for von mises distribution defining movement directions
+               'direction_kappa'   : 0,                    #kappa for von mises distribution
+               'distance_mu'       : 0.5,                  #mean movement-distance (lognormal distribution)
+               'distance_sigma'    : 0.5,                  #sd of movement distance
+               'dispersal_mu'      : 0.5,                  #mean dispersal distance (lognormal distribution)
+               'dispersal_sigma'   : 0.5,                  #sd of dispersal distance
+               'move_surf'     : True                  #use the movement surface for this population?
+            }    # <END> 'movement'
+        } # <END> '0'
+
+            
+    #NOTE: COPY AND PASTE 0 HERE AND GIVE A DIFFERENT NAME, TO CREATE ADDITIONAL POPULATIONS IF DESIRED
+   
+
+    }, # <END> 'pops'
 
 
 ################
@@ -185,10 +194,44 @@ params = {
 ################
 
     'change' : {
-            'pop' : {
-                    'dem'   :   {
+            'pops' : {
+                    'dem'   :   {                       
+                        'pop0'  : {                     #to which population should the following changes apply?
+                                                            #(all population sizes are expressed relative to the carrying-capacity 
+                                                            #raster at the time that the demographic change event begins (i.e. as
+                                                            #factors by which pop.K will be multiplied; thus they can also be thought 
+                                                            #of as multipliers of the expected total population size (i.e. pop.K.sum())
+                                                            #and they will generally change the average population size by that multiple, 
+                                                            #but of course not precisely, because population size is stochastic. If you 
+                                                            #seek exact control of total population size, please seek a simpler simulation 
+                                                            #model, perhaps a coalescent one.
+
+                            0 : {                               #can add an arbitrary number of demographic change events for 
+                                                                    #each population, each event identified by a distinct integer
+                                'kind'          : 'custom',  #what kind of change event? ('monotonic', 'stochastic', 'cyclical', 'custom')
+                                'start'         : 200,          #at which timestep should the event start?
+                                'end'           : 1200,          #at which timestep should the event end?
+                                'rate'          : .98,         #at what rate should the population change each timestep 
+                                                                    #(positive for growth, negative for reduction)
+                                'interval'      : 11,         #at what interval should stochastic change take place (None defaults to every timestep)
+                                'dist'          : 'uniform',    #what distribution to draw stochastic population sizes from (valid values: 'uniform', 'normal')
+                                'size_target'   : None,         #what is the target size of the demographic change event (defaults to None)
+                                'n_cycles'      : 20,         #how many cycles of cyclical change should occur during the event?
+                                'size_range'    : (0.5, 1.5),     #a tuple of the min and max population sizes to be used in stochastic or cyclical changes
+                                'timesteps'     : [10,100,1000,1100,1150,1200],         #at which timesteps should custom changes take place?
+                                'sizes'         : [3,2,1.5,2,0.5,1]          #what custom size-changes should occur at the above-stipulated timesteps?
+                                }
+                            }
                         },
-                    'other' :   {
+                    'other' :   {       
+                        'pop0'  : {                     #to which population should the following changes apply?
+                            'b' : {                         #keys are the parameters to be changed, and values
+                                                                #are dictionaries containing a list of timesteps at which to changed those
+                                                                #parameters and a list of values to which to change them
+                                'timesteps'     : None,
+                                'values'        : None
+                                }
+                            }
                         }
                     },
             'land' : {

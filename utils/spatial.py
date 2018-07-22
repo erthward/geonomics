@@ -154,13 +154,13 @@ class Movement_Surface:
         #resolution (i.e. cell-size); defaults to 1
         self.res = land.res
 
-        self.scape_num = land.movement_surf_scape_num
-        self.approx_len = land.movement_surf_approx_len
+        self.scape_num = land.move_surf_scape_num
+        self.approx_len = land.move_surf_approx_len
         self.surf = make_movement_surface(land, approx_len = self.approx_len, kappa = kappa)
 
         assert self.approx_len == self.surf.shape[2], "ERROR: Movement_Surface.approx_len != Movement_Surface.surf.shape[2]"
 
-    def get_directions(self, x, y):
+    def draw_directions(self, x, y):
         choices = r.randint(low = 0, high = self.approx_len, size = len(x))
         return(self.surf[y, x, choices])
 
@@ -309,22 +309,22 @@ def make_movement_surface(land, kappa=12, approx_len = 5000):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0], [3 * pi / 4, pi / 2, pi / 4]])
 
     # grab the correct landscape raster
-    rast = land.scapes[land.movement_surf_scape_num].raster.copy()
+    rast = land.scapes[land.move_surf_scape_num].rast.copy()
 
     # create embedded raster (so that the edge probabilities are appropriately calculated)
     embedded_rast = np.zeros(shape=[n + 2 for n in rast.shape])
     embedded_rast[1:embedded_rast.shape[0] - 1, 1:embedded_rast.shape[1] - 1] = rast
 
     # create list of lists (aping an array) for storage of resulting functions
-    #movement_surf = [[None for j in range(land.dim[1])] for i in range(land.dim[0])]
+    #move_surf = [[None for j in range(land.dim[1])] for i in range(land.dim[0])]
     #NOTE: nevermind that, create an actual array and store vectors approximating the functions!
-    movement_surf = np.float16(np.zeros((rast.shape[0], rast.shape[1], approx_len)))
+    move_surf = np.float16(np.zeros((rast.shape[0], rast.shape[1], approx_len)))
 
     for i in range(rast.shape[0]):
         for j in range(rast.shape[1]):
             neigh = embedded_rast[i:i + 3, j:j + 3].copy()
-            movement_surf[i, j, :] = make_von_mises_mix_sampler(neigh, queen_dirs, kappa = kappa, approx_len= approx_len)
-    return (movement_surf)
+            move_surf[i, j, :] = make_von_mises_mix_sampler(neigh, queen_dirs, kappa = kappa, approx_len= approx_len)
+    return (move_surf)
 
 #linearly scale a raster to 0 <= x <= 1, and return the function to back-convert as well
 def scale_raster(rast, min_inval=None, max_inval=None, min_outval=0, max_outval=1):

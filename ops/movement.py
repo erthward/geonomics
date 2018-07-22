@@ -57,19 +57,19 @@ def move(pop, land):
     old_x_cells, old_y_cells = [a.flatten() for a in np.split(pop.get_cells(), 2, axis = 1)]
 
     # choose direction using movement surface, if applicable
-    if pop.movement_surf:
+    if pop.move_surf:
 
         #and use those choices to draw movement directions
-        direction = land.movement_surf.get_directions(old_y_cells, old_x_cells)
+        direction = land.move_surf.draw_directions(old_y_cells, old_x_cells)
 
 
         # NOTE: Pretty sure that I don't need to constrain values output for the Gaussian KDE that is approximating the von Mises mixture distribution to 0<=val<=2*pi, because e.g. cos(2*pi + 1) = cos(1), etc...
-        # NOTE: indexed out of movement_surf as y then x because becuase the list of lists (like a numpy array structure) is indexed i then j, i.e. vertical, then horizontal
+        # NOTE: indexed out of move_surf as y then x because becuase the list of lists (like a numpy array structure) is indexed i then j, i.e. vertical, then horizontal
 
 
 
     # else, choose direction using a random walk with a uniform vonmises
-    elif not pop.movement_surf:
+    elif not pop.move_surf:
 
         direction = r_vonmises(pop.direction_mu, pop.direction_kappa, size = len(old_x))
        

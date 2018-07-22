@@ -50,13 +50,13 @@ def show_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest'
     if str(type(land)) == "<class 'numpy.ndarray'>":
         rasters = [land]
     elif str(type(land)) == "<class 'structs.landscape.Landscape'>":
-        rasters = [land.raster]
+        rasters = [land.rast]
     elif str(type(land)) == "<class 'structs.landscape.Landscape_Stack'>":
         if scape_num is not None:
-            rasters = [land.scapes[scape_num].raster]
+            rasters = [land.scapes[scape_num].rast]
         #else just create a list of all rasters
         else:
-            rasters = [land.scapes[i].raster for i in range(len(land.scapes))]
+            rasters = [land.scapes[i].rast for i in range(len(land.scapes))]
 
     if type(cmap) == str:
         #get the requested cmap 

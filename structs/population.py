@@ -52,7 +52,9 @@ import sys
 class Population:
     '''Population(self, N, individs, genomic_arch, size, birth_rate = None, death_rate = None, T = None)'''
 
-    def __init__(self, p_params, individs, genomic_arch):
+    def __init__(self, pop_params, individs, genomic_arch):
+
+        self.name = pop_params['name']
 
         self.it = None  # attribute to keep track of iteration number this pop is being used for
         # (optional; will be set by the iteration.py module if called)
@@ -62,9 +64,9 @@ class Population:
         # this makes it easy to continue tracking from the beginning
 
         #grab all of the params['pop'] parameters as Population attributes
-        for section in ['main', 'mating', 'mortality', 'movement']:
-            for att in p_params[section].keys():
-                setattr(self, att, p_params[section][att])
+        for section in ['mating', 'mortality', 'movement']:
+            for att in pop_params[section].keys():
+                setattr(self, att, pop_params[section][att])
 
         self.N = None  # attribute to hold a landscape.Landscape object of the current population density
 
@@ -100,7 +102,6 @@ class Population:
         #create empty attribute to hold kd_tree
         self.kd_tree = None
 
-        assert type(self.N_start) == int, "N must be an integer"
         assert type(self.individs) == OD, "self.individs must be of type collections.OrderedDict"
         assert list(set([i.__class__.__name__ for i in list(self.individs.values())])) == [
             'Individual'], "self.individs must be a dictionary containing only instances of the individual.Individual class"
@@ -277,7 +278,7 @@ class Population:
             if type(inds_to_set) is individual.Individual:
                 inds_to_set = (inds_to_set,)
        
-        hab = [ind.set_habitat([sc.raster[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())]) for ind in inds_to_set]
+        hab = [ind.set_habitat([sc.rast[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())]) for ind in inds_to_set]
 
     
     def set_phenotype(self):
@@ -548,7 +549,7 @@ class Population:
 
     def show_pop_growth(self, params):
         T = range(len(self.Nt))
-        x0 = self.N_start / self.K.sum()
+        x0 = self.Nt[0] / self.K.sum()
         plt.plot(T, [demography.logistic_soln(x0, self.R, t) * self.K.sum() for t in T], color='red')
         plt.plot(T, self.Nt, color='blue')
         plt.xlabel('t')
@@ -567,23 +568,29 @@ class Population:
 # -----------------------------------#
 ######################################
 
-def make_population(genomic_arch, land, params, burn=False):
-    # grab necessary params from params dict
-
+def make_population(genomic_arch, land, pop_params, burn=False):
     dim = land.dim
 
     assert dim.__class__.__name__ in ['tuple', 'list'], "dim should be expressed as a tuple or a list"
-    individs = OD()
-    
-    N = params['pop']['main']['N_start']
 
+    #get the population's starting params
+    start_params = pop_params['start'] 
+    #and extract the starting pop size from it
+    N = start_params.pop('N')
+
+    #create an ordered dictionary to hold the individuals, and fill it up
+    individs = OD()
     for idx in range(N):
         # use individual.create_individual to simulate individuals and add them to the population
         ind = individual.make_individual(idx = idx, genomic_arch = genomic_arch, dim = dim)
         individs[idx] = ind
         #land.mating_grid.add(ind)
 
-    pop = Population(p_params = params['pop'],  individs=individs, genomic_arch=genomic_arch)
+    #then create the population from those individuals
+    pop = Population(pop_params = pop_params,  individs=individs, genomic_arch=genomic_arch)
+   
+    #use the remaining start_params to set the carrying-capacity raster (K)
+    pop.set_K(make_K(pop, land, **start_params))
 
     #set initial habitat values
     pop.set_habitat(land)
@@ -597,7 +604,25 @@ def make_population(genomic_arch, land, params, burn=False):
     #set the kd_tree
     pop.set_kd_tree()
 
-    return pop
+    return(pop)
+
+
+def make_populations(genomic_arch, land, params, burn=False):
+    for key in params['pops'].keys():
+        pop_params = params['pops'][key]
+        pop_name = pop_params['name']
+        assert pop_name not in vars().keys(), 'ERROR: The name %s (given to population %i) will clobber an existing variable.  Please change its name in the params file and retry.' % (pop_name, key)
+        vars().update({pop_name : make_population(genomic_arch = genomic_arch, land = land, pop_params = pop_params, burn = burn)})
+        assert pop_name in vars().keys(), 'ERROR: Variable %s (population %i) appears not to have been created as a global variable.' % (pop_name, key)
+
+
+#function that uses the params['pop']['start']['K_<>'] parameters 
+#to make the starting carrying-capacity raster
+def make_K(pop, land, K_scape_num, K_fact):
+    K_rast = land.scapes[K_scape_num].rast * K_fact
+    return(K_rast)
+
+
 
 
 # function for reading in a pickled pop

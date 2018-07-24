@@ -8,7 +8,7 @@ Module name:          landscape
 
 
 Module contains:
-                      - definition of the Landscape type
+                      - definition of the Scape and Land classes
                       - function for creating a random landscape, based on input parameters
                       - associated functions
 
@@ -44,7 +44,7 @@ from shapely import geometry as g
 # -----------------------------------#
 ######################################
 
-class Landscape:
+class Scape:
     def __init__(self, rast, dim, res=(1,1), ulc = (0,0)):
         self.idx = None
         self.dim = dim
@@ -72,40 +72,64 @@ class Landscape:
         viz.show_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, mask_val = mask_val, vmin = vmin, vmax = vmax)
 
 
-class Landscape_Stack:
-    def __init__(self, array_list, params=None, res=(1,1), ulc = (0,0)):
-        self.scapes = dict(zip(range(len(array_list)), array_list))
-        assert False not in [scape.__class__.__name__ == 'Landscape' for scape in
-                             array_list], 'All landscapes supplied in array_list must be of type landscape.Landscape.'
-        #set the scapes' idx attributes
-        [setattr(v, 'idx', k) for k, v in self.scapes.items()]
-        self.n_scapes = len(array_list)
-        assert len(set([land.dim for land in list(self.scapes.values())])) == 1, 'Dimensions of all landscapes must be even.'
-        #set the dim to the 0th landscape's dim (should already have been checked that all scapes' dim attributes are equal)
-        self.dim = list(self.scapes.values())[0].dim
+class Land(dict):
+
+    #######################
+    ### SPECIAL METHODS ###
+    #######################
+
+    def __init__(self, scapes, params=None, res=(1,1), ulc = (0,0)):
+        #check the scapes dict is correct, then update the Land with it
+        assert False not in [scape.__class__.__name__ == 'Scape' for scape in scapes.values()], 'ERROR: All landscapes supplied in scapes must be of type landscape.Scape.'
+        self.update(scapes)
+        #set the scapes attribute to the dict values (it still changes dynamically as things update, it runs
+        #3x faster than calling values() during the model, and it makes code nicer looking
+        self.scapes = self.values()
+        #set the number of scapes in the stack
+        self.n_scapes = len(self)
+        #set the idx attributes on the scapes
+        [setattr(v, 'idx', k) for k, v in self.items()]
+
+        #check that scapes' dimensions are all the same
+        assert len(set([land.dim for land in list(self.values())])) == 1, 'ERROR: Dimensions of all landscapes must be equal.'
+        #then set the dim to the 0th landscape's dim 
+        self.dim = list(self.values())[0].dim
         #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
         self.dim_om = max([len(str(d)) for d in self.dim]) 
         #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc) to 0th scape's values (equality
         #across scapes should already have been checked); will be reset if landscape read in from a GIS raster
-        self.res = list(self.scapes.values())[0].res
-        self.ulc = list(self.scapes.values())[0].ulc
+        self.res = [*self.values()][0].res
+        self.ulc = [*self.values()][0].ulc
+
+        #create other attributes (currently default to None)
         self.move_surf = None
         self.move_surf_approx_len = None
         self.move_surf_scape_num = None
         self.density_grid_stack = None
         self.n_island_mask_scape = None
-        #self.mating_grid = mating_grid.MatingGrid(params=params)
 
+    #define the __str__ and __repr__ special methods
+    #NOTE: this doesn't excellently fit the Python docs' specification for __repr__; I should massage this #some more once I'm done writing the codebase
+    def __str__(self):
+        type_str = str(type(self))
+        scapes_str = '\n%i Scapes:\n' % self.n_scapes
+        scapes_str = scapes_str + ',\n'.join(sorted(['\t' + str(k) + ': ' + str(v) for k,v in self.items()])) + '},'
+        vars_str = "\nParams:\n\t" + ',\n\t'.join(sorted([str(k) + ': ' + str(v) for k,v in vars(self).items()])) + '}}'
+        return('\n'.join([type_str, scapes_str, vars_str]))
+
+    def __repr__(self):
+        repr_str = self.__str__()
+        return(repr_str)
 
     #####################
     ### OTHER METHODS ###
     #####################
 
     def set_raster(self, scape_num, rast):
-        self.scapes[scape_num].rast = rast
+        self[scape_num].rast = rast
 
     def show(self, scape_num=None, colorbar=True, cmap='terrain', im_interp_method='nearest', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
-        if True in [scape.mask_island_vals for scape in self.scapes.values()]:
+        if True in [scape.mask_island_vals for scape in self.values()]:
             mask_val = 1e-7
         else:
             mask_val = None
@@ -130,7 +154,7 @@ class Landscape_Stack:
         else:
             #display the movement-surface raster
             scape_num = self.move_surf_scape_num
-            self.scapes[scape_num].show(zoom_width = zoom_width, x = x, y = y)
+            self[scape_num].show(zoom_width = zoom_width, x = x, y = y)
 
             if style == 'circ_hist':
                 v, a = np.histogram(r.choice(self.move_surf[y,x,:], replace = True, size = 7500), bins=15)
@@ -249,13 +273,13 @@ def make_scape_stack(params, num_hab_types=2):
 
     # grab necessary parameters from the params dict
 
-    if params['land']['num_scapes'] == None:
-        num_scapes = 1
+    if params['land']['n_scapes'] == None:
+        n_scapes = 1
     else:
-        num_scapes = params['land']['num_scapes']
+        n_scapes = params['land']['n_scapes']
 
     if params['land']['interp_method'] == None:
-        interp_method = ['cubic'] * num_scapes
+        interp_method = ['cubic'] * n_scapes
     else:
         interp_method = params['land']['interp_method']
 
@@ -272,10 +296,10 @@ def make_scape_stack(params, num_hab_types=2):
         # spatial heterogeneity will be roughly equal for all layers); otherwise, a list or tuple of n_rand_pts could
         #  create different scales of heterogeneity for different landscape layers
         if type(n_rand_pts) == int:
-            n_rand_pts = [n_rand_pts] * num_scapes
+            n_rand_pts = [n_rand_pts] * n_scapes
         
-        scape_list = [Landscape(make_random_scape(dim, n_rand_pts[n], interp_method=interp_method[n], num_hab_types=num_hab_types), dim = dim, res = res, ulc = ulc) for n in range(num_scapes)]
-        land = Landscape_Stack(scape_list, params=params)
+        scapes = {n : Scape(make_random_scape(dim, n_rand_pts[n], interp_method=interp_method[n], num_hab_types=num_hab_types), dim = dim, res = res, ulc = ulc) for n in range(n_scapes)}
+        land = Land(scapes, params=params)
 
     # or create rasters for defined landscape, if params['land']['rand_land'] == False
     elif not params['land']['rand_land']:
@@ -284,13 +308,13 @@ def make_scape_stack(params, num_hab_types=2):
         pts = params['land']['landscape_pt_coords']
         # if only a single array of pts provided, multiply them into a list to use for each separate landscape layer
         if type(pts) == np.ndarray:
-            pts = [pts] * num_scapes
+            pts = [pts] * n_scapes
 
         # get vals
         vals = params['land']['landscape_pt_vals']
 
-        scape_list = [Landscape(make_defined_scape(dim, pts[n], vals[n], interp_method=interp_method[n], num_hab_types=num_hab_types), dim = dim, res = res, ulc = ulc) for n in range(num_scapes)]
-        land = Landscape_Stack(scape_list, params = params)
+        scapes = {n : Scape(make_defined_scape(dim, pts[n], vals[n], interp_method=interp_method[n], num_hab_types=num_hab_types), dim = dim, res = res, ulc = ulc) for n in range(n_scapes)}
+        land = Land(scapes, params = params)
 
     #replace certain scapes with GIS layers, and reset the scapes' ulc and res attributes, if necessary
     gis_params = params['land']['gis']
@@ -319,7 +343,7 @@ def make_scape_stack(params, num_hab_types=2):
                 iv = params['land']['islands']['island_val']
 
                 # zero out the appropriate parts of the movement raster
-                movement_rast = land.scapes[land.move_surf_scape_num].rast
+                movement_rast = land[land.move_surf_scape_num].rast
                 # zero out the appropriate parts of the movement raster (but not exactly 0, because
                 # creates division-by-zero problems in the pop_dynamics calculations)
                 movement_rast[movement_rast < iv] = 1e-8
@@ -332,22 +356,22 @@ def make_scape_stack(params, num_hab_types=2):
                     ma) == np.ndarray, "The pickled file located at the path provided in params['land']['islands']['island_mask'] does not appear to be a numpy ndarray. "
 
                 # get the movement raster scape number
-                movement_rast = land.scapes[land.move_surf_scape_num].rast
+                movement_rast = land[land.move_surf_scape_num].rast
                 # zero out the appropriate parts of the movement raster (but not exactly 0, because
                 # creates division-by-zero problems in the pop_dynamics calculations)
                 movement_rast[ma == 0] = 1e-8
 
             # replace the move_surf_scape raster with the updated raster with all outside-habitat values set to 1e-8
-            land.scapes[land.move_surf_scape_num].rast = movement_rast
-            # set the Landscape.mask_island_vals flag on the movement surf to True, for plotting purposes
-            land.scapes[land.move_surf_scape_num].mask_island_vals = True
+            land[land.move_surf_scape_num].rast = movement_rast
+            # set the Land.mask_island_vals flag on the movement surf to True, for plotting purposes
+            land[land.move_surf_scape_num].mask_island_vals = True
 
             # then create an island mask and add as the last landscape (to use to quickly cull individuals outside
             # the 'islands')
-            island_mask = create_island_mask(dim, land.scapes[land.move_surf_scape_num].rast)
+            island_mask = create_island_mask(dim, land[land.move_surf_scape_num].rast)
             island_mask.island_mask = True  # set Lanscape.island_mask attribute to True
-            land.scapes[land.n_scapes] = island_mask  # set as the last scape
-            land.n_island_mask_scape = land.n_scapes  # the Landscape_Stack n_island_mask_scape attribute to last scape num
+            land[land.n_scapes] = island_mask  # set as the last scape
+            land.n_island_mask_scape = land.n_scapes  # the Land n_island_mask_scape attribute to last scape num
             land.n_scapes += 1  # then increment total scape nums by 1
 
         # create the movement surface, and set it as the land.move_surf attribute
@@ -359,7 +383,7 @@ def make_scape_stack(params, num_hab_types=2):
 
 def make_island_mask(scape):
     mask = np.ma.masked_less_equal(scape, 1e-8).mask
-    return Landscape(mask)
+    return Scape(mask)
 
 
 def set_gis_rasters(land, scape_nums, filepaths, scale_min_vals, scale_max_vals):
@@ -403,10 +427,10 @@ def set_gis_rasters(land, scape_nums, filepaths, scale_min_vals, scale_max_vals)
     #then assign the land.res and land.ulc attributes, and the scapes' identical attributes, accordingly
     land.res = res_list[0]
     land.ulc = ulc_list[0]
-    [setattr(scape, 'res', land.res) for scape in land.scapes.values()]
-    [setattr(scape, 'ulc', land.ulc) for scape in land.scapes.values()]
-    [setattr(land.scapes[n], 'scale_min', scale_min) for n, scale_min in zip(scape_nums, scale_min_vals)]
-    [setattr(land.scapes[n], 'scale_max', scale_max) for n, scale_max in zip(scape_nums, scale_max_vals)]
+    [setattr(scape, 'res', land.res) for scape in land.values()]
+    [setattr(scape, 'ulc', land.ulc) for scape in land.values()]
+    [setattr(land[n], 'scale_min', scale_min) for n, scale_min in zip(scape_nums, scale_min_vals)]
+    [setattr(land[n], 'scale_max', scale_max) for n, scale_max in zip(scape_nums, scale_max_vals)]
 
     
 # function for reading in a pickled landscape stack

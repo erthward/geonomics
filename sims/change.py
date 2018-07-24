@@ -128,7 +128,7 @@ class Land_Changer(Changer):
         scapes = {}
         surfs = {}
         for scape_num in land_change_params.keys():
-            scape_series, dim, res, ulc = make_linear_scape_series(land.scapes[scape_num].rast, **land_change_params[scape_num])
+            scape_series, dim, res, ulc = make_linear_scape_series(land[scape_num].rast, **land_change_params[scape_num])
             assert dim == land.dim, 'ERROR: dimensionality of scape_series fed into Land_Changer does not match that of the land to be changed.'
             assert res == land.res or res is None, 'ERROR: resolution of scape_series fed into Land_Changer does not match that of the land to be changed.'
             assert ulc == land.ulc or ulc is None, 'ERROR: upper-left corner of scape_series fed into Land_Changer does not match that of the land to be changed.'
@@ -271,37 +271,37 @@ class Sim_Changer:
     ####################
     
 #function that takes a starting scape, an ending scape, a number of timesteps, and a Model object,
-#and returns a linearly interpolated stack of scapes
-def make_linear_scape_series(start_scape, end_scape, t_start, t_end, n):
-    if type(end_scape) is str:
-        end_scape, dim, ulc, res = io.read_raster(end_scape)
+#and returns a linearly interpolated stack of rasters
+def make_linear_scape_series(start_rast, end_rast, t_start, t_end, n):
+    if type(end_rast) is str:
+        end_rast, dim, ulc, res = io.read_raster(end_rast)
 
-    elif type(end_scape) is np.ndarray:
-        dim = end_scape.shape
+    elif type(end_rast) is np.ndarray:
+        dim = end_rast.shape
         ulc = None
         res = None
         
     #get (rounded) evenly spaced timesteps at which to implement the changes
     timesteps = np.int64(np.round(np.linspace(t_start, t_end, n)))
-    #flatten the starting and ending scapes
-    start = start_scape.flatten()
-    end = end_scape.flatten()
+    #flatten the starting and ending rasters
+    start = start_rast.flatten()
+    end = end_rast.flatten()
     #get a column of values for each grid cell on the landscape, linearly spaced between that cell's start and end values
-    #NOTE: linspace(..., ..., n+1)[1:] gives us the changed scapes for n steps, leaving off the starting scape
+    #NOTE: linspace(..., ..., n+1)[1:] gives us the changed rasters for n steps, leaving off the starting scape
     #value because that's already the existing scape so we don't want that added into our changes
-    scape_series = np.vstack([np.linspace(start[i], end[i], n+1)[1:] for i in range(len(start))])
-    #then reshape each timeslice into the dimensions of start_scape
-    scape_series = [scape_series[:,i].reshape(start_scape.shape) for i in range(scape_series.shape[1])]
+    rast_series = np.vstack([np.linspace(start[i], end[i], n+1)[1:] for i in range(len(start))])
+    #then reshape each timeslice into the dimensions of start_rast
+    rast_series = [rast_series[:,i].reshape(start_rast.shape) for i in range(rast_series.shape[1])]
     #check that all the lenghts match up
-    assert len(scape_series) == n, "ERROR: len(scape_series) != n"
-    assert len(scape_series) == len(timesteps), "ERROR: the number of changing scapes created is not the same as the number of timesteps to be assigned to them"
-    #zip the timesteps and the scapes together and return them as a list
-    scape_series = list(zip(timesteps, scape_series))
-    return(scape_series, dim, res, ulc)
+    assert len(rast_series) == n, "ERROR: len(rast_series) != n"
+    assert len(rast_series) == len(timesteps), "ERROR: the number of changing rasters created is not the same as the number of timesteps to be assigned to them"
+    #zip the timesteps and the rasters together and return them as a list
+    rast_series = list(zip(timesteps, rast_series))
+    return(rast_series, dim, res, ulc)
 
 
 #function that takes a Landscape_Stack, a scape_num and a dictionary of {t_change:new_scape} 
-#and creates an Env_Changer object that will change out Landscape_Stack.scapes[scape_num] for new_scape at
+#and creates an Env_Changer object that will change out Land[scape_num] for new_scape at
 #each requisite t_change timestep
 def make_custom_scape_series(scape_dict):
     pass

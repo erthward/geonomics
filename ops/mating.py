@@ -63,7 +63,7 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
 
     if sex:
         # np.array of the sexes of all individuals
-        sexes = np.array([ind.sex for ind in pop.individs.values()])
+        sexes = np.array([ind.sex for ind in pop.inds])
 
         # array of couplings for all females with nearest individual < mating_radius
         available_females = np.array(dists[:, 1] != np.inf) & np.array(sexes[pairs[:,
@@ -97,7 +97,7 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
 
     if repro_age is not None and repro_age > 0:
         # np.array of the ages of all individuals
-        ages = np.array([ind.age for ind in pop.individs.values()])
+        ages = np.array([ind.age for ind in pop.inds])
 
         if sex:  # if sexual species, repro_age expected to be a tuple or list of numerics of length 2
 
@@ -142,9 +142,8 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
 
         if mating_pairs.any():
             # finally, link individuals' ordinal indices back to the initially created structure, to get individuals' proper keys
-            keys = list(pop.individs.keys())
             f = ig(*mating_pairs.flatten())
-            mates = np.array(f(keys)).reshape(mating_pairs.shape)
+            mates = np.array(f([*pop])).reshape(mating_pairs.shape)
         else:
             mates = np.array([])
 
@@ -163,7 +162,7 @@ def draw_n_births(num_pairs, n_births_lambda):
 # function for mating a chosen mating-pair
 def do_mating_sngl_offspr(pop, pair, gamete_recomb_paths):
     # generate a gamete for each member of mating pair, stack, and transpose
-    new_genome = np.vstack([pop.individs[ind].genome.flatten()[gamete_recomb_paths.pop()] for ind in pair]).T
+    new_genome = np.vstack([pop[ind].genome.flatten()[gamete_recomb_paths.pop()] for ind in pair]).T
     return(new_genome)
 
 

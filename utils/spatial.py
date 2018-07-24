@@ -111,9 +111,9 @@ class Density_Grid_Stack:
         self.res = land.res
 
 
-        #NOTE: This is a quick hack to find the closest whole-number factor of the larger of the landscape
+        #NOTE: This is a quick hack to find the closest whole-number factor of the larger of the land
         #dimensions and set to 1/10th of that dimension, and set that as the window_width.
-        #This is so the windows fit evenly across the landscape. Otherwise, strange numerical errors are
+        #This is so the windows fit evenly across the land. Otherwise, strange numerical errors are
         #occurring. But when I get the time, I need to puzzle through the density_grid_stack code again and
         #figure out why it throws errors in those cases, and how to rectify it
         if window_width == None:
@@ -182,7 +182,7 @@ class KD_Tree:
 
 #create strings from input cell coordinates
 def make_cell_strings(gi, gj, dim_om):
-    #get strings for both i and j cooridnates, zfilling to the correct order-of-magnitude (of the larger landscape dimension)
+    #get strings for both i and j cooridnates, zfilling to the correct order-of-magnitude (of the larger land dimensions)
     i_strs = [str(int(i)).zfill(dim_om) for i in gi.flatten()]
     j_strs = [str(int(j)).zfill(dim_om) for j in gj.flatten()]
 
@@ -192,10 +192,9 @@ def make_cell_strings(gi, gj, dim_om):
     return(cells)
 
 
-#make a density grid, based on the Landscape_Stack, the chosen window-width, 
-#and the Boolean arguments dictating whether or not the grid's 
-#x- and y-dimension cells should be centered on the landscape 
-#edges (i.e. 0 and dim[_])
+#make a density grid, based on the Land object, the chosen window-width, 
+#and the Boolean arguments dictating whether or not the grid's x- and y-
+#dimension cells should be centered on the land edges (i.e. 0 and dim[_])
 def make_density_grid(land, ww, x_edge, y_edge):
     
     #half-window width
@@ -215,7 +214,7 @@ def make_density_grid(land, ww, x_edge, y_edge):
     #create the meshgrid of the centerpoints of neighborhoods (or cells) within which population will be counted
     #(x_edge and y_edge arguments determine whether this grid's 
     #x and y cells are centered on the lanscape edges or not)
-    #NOTE: these are expressed as points in continuous space from 0 to each landscape dimension, NOT as cell
+    #NOTE: these are expressed as points in continuous space from 0 to each land dimension, NOT as cell
     #numbers (which will be calculated below)
     gj, gi = np.meshgrid(edge_range_dict[x_edge], edge_range_dict[y_edge])
     
@@ -232,7 +231,7 @@ def make_density_grid(land, ww, x_edge, y_edge):
     #create a list of quadrilaterals centered on each of the points in the grid
     polys = [g.Polygon(((j[n]-hww, i[n]-hww), (j[n]-hww, i[n]+hww), (j[n]+hww, i[n]+hww), (j[n]+hww, i[n]-hww))) for n in range(len(j))]
 
-    #use the Polygons' intersection method to calculate the total area within the landscape that is covered
+    #use the Polygons' intersection method to calculate the total area of the land that is covered
     #by each grid cell (which will be used as the denominator for calculating neighborhood population densities
     #from neighborhood population counts)
     areas = np.reshape([p.intersection(land_poly).area for p in polys], gj.shape)
@@ -257,7 +256,7 @@ def make_density_grid(land, ww, x_edge, y_edge):
     cells = make_cell_strings(i_cells, j_cells, dim_om)
 
     #use the above-created data structures to create two Density_Grid objects (which will inhere to the
-    #Landscape_Stack as attributes)
+    #Land object as attributes)
     grid = Density_Grid(dim, dim_om, ww, gi, gj, cells, areas, x_edge= x_edge, y_edge = y_edge)
     return(grid)
 
@@ -309,7 +308,7 @@ def make_movement_surface(land, kappa=12, approx_len = 5000):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0], [3 * pi / 4, pi / 2, pi / 4]])
 
     # grab the correct landscape raster
-    rast = land.scapes[land.move_surf_scape_num].rast.copy()
+    rast = land[land.move_surf_scape_num].rast.copy()
 
     # create embedded raster (so that the edge probabilities are appropriately calculated)
     embedded_rast = np.zeros(shape=[n + 2 for n in rast.shape])

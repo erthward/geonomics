@@ -82,12 +82,12 @@ def calc_n_pairs(pairs, land, pop):
         #get their coordinates
         pairs_coords = pop.get_coords(individs = pairs.flatten())
         #take just the x and y coordinates from pairs_coords, reshape them to match pairs.shape 
-        #(i.e.nx2, where n = pop.get_size()), and then mean across axis 1 (to get the pair's centroid
+        #(i.e.nx2, where n = len(pop)), and then mean across axis 1 (to get the pair's centroid
         #x and y coordinates)
         p_x = pairs_coords[:,0].reshape(pairs.shape).mean(axis = 1) 
         p_y = pairs_coords[:,1].reshape(pairs.shape).mean(axis = 1) 
 
-        #use the Landscape_Stack.density_grid_stack to calculate a raster of the expected number of pairs
+        #use the Land.density_grid_stack to calculate a raster of the expected number of pairs
         #NOTE: because the window_width of that object is much wider than dispersal_mu in the parameterizations
         #I've typically been running, this produces much wider areas of high values in the 
         #N_b, N_d, and hence d rasters than the old method did (which had its window_width set to dispersal_mu,
@@ -174,12 +174,10 @@ def calc_d(N_d, N, d_min, d_max):
 
 
 def do_mortality(land, pop, death_probs):
-    deaths = np.array(list(pop.individs.keys()))[np.bool8(r.binomial(n = 1, p = death_probs))]
+    deaths = np.array([*pop])[np.bool8(r.binomial(n = 1, p = death_probs))]
     if len(deaths) > 0:
         ig = itemgetter(*deaths)
-        #[land.mating_grid.remove(ind) for ind in ig(pop.individs)]
-        #list(map(land.mating_grid.remove, ig(pop.individs)));
-        [pop.individs.pop(ind) for ind in deaths]
+        [pop.pop(ind) for ind in deaths];
     return(len(deaths))
 
     

@@ -79,17 +79,16 @@ def move(pop, land):
     distance = wald(pop.distance_mu, pop.distance_sigma, size = len(old_x))
 
     #create the new locations by adding x- and y-dim line segments to their current positions, using trig
+    #then clip the values to be within the landscape dimensions
+       #NOTE: subtract a very small value to avoid having the dimension itself set as a coordinate, 
+       #which rounds down to a cell id one beyond the largest cell id the landscape
     new_x = old_x + cos(direction)*distance
-    #and clip the values to be within the landscape dimensions
-       #NOTE: subtract a very small value to avoid having the dimension itself set as a coordinate, which rounds down to a cell id one beyond the largest cell id the landscape
     new_x = np.clip(new_x, a_min = 0, a_max = land.dim[1]-0.00001) 
     new_y = old_y + sin(direction)*distance
     new_y = np.clip(new_y, a_min = 0, a_max = land.dim[0]-0.00001)
 
     #then feed the new locations into each individual's set_pos method
-    [ind.set_pos(new_x[n], new_y[n]) for n, ind in enumerate(pop.individs.values())]
-
-    #land.mating_grid.move(old_pos, new_pos, individual)
+    [ind.set_pos(x, y) for ind, x, y in zip(pop.inds, new_x, new_y)];
 
 
 def disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dispersal, mu_dir = 0, kappa_dir = 0): 

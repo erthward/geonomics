@@ -46,17 +46,17 @@ def show_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest'
     if plt.get_fignums() and plt.gcf().get_axes():
         colorbar = False
 
-    #if just a numpy.ndarray or a Landscape (not a Landscape_Stack) is provided, or if just a single raster is desired, grab the raster into a list
+    #if just a numpy.ndarray or a Scape (not a Land object) is provided, or if just a single raster is desired, grab the raster into a list
     if str(type(land)) == "<class 'numpy.ndarray'>":
         rasters = [land]
-    elif str(type(land)) == "<class 'structs.landscape.Landscape'>":
+    elif str(type(land)) == "<class 'structs.landscape.Scape'>":
         rasters = [land.rast]
-    elif str(type(land)) == "<class 'structs.landscape.Landscape_Stack'>":
+    elif str(type(land)) == "<class 'structs.landscape.Land'>":
         if scape_num is not None:
-            rasters = [land.scapes[scape_num].rast]
+            rasters = [land[scape_num].rast]
         #else just create a list of all rasters
         else:
-            rasters = [land.scapes[i].rast for i in range(len(land.scapes))]
+            rasters = [scape.rast for scape in land.scapes]
 
     if type(cmap) == str:
         #get the requested cmap 

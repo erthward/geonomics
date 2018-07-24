@@ -72,9 +72,10 @@ def calc_fitness(pop, trait_num = None, set_fit = False):
     #for polygenic traits, loci with very large effect sizes can generate fitnesses less than 0; correct for this
     fit = np.clip(fit, a_min = 0.001, a_max = None)
     #set individuals' fitness attributes, if indicated
-    if set_fit:
-        indices = list(pop.individs.keys())
-        [pop.individs[indices[n]].set_fitness(f) for n,f in enumerate(fit)];
+    [ind.set_fitness(f) for ind,f in zip(pop.inds, fit)];
+    #if set_fit:
+    #    indices = [*pop]
+    #    [pop[indices[n]].set_fitness(f) for n,f in enumerate(fit)];
 
     return(fit)
 

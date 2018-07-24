@@ -55,7 +55,7 @@ def calc_estimated_total_mutations(params, pop):
 
 def do_mutation(pop, log = False):
 
-    newborns = {i:v.age for i,v in pop.individs.items() if v.age == 0}
+    newborns = {i:v.age for i,v in pop.items() if v.age == 0}
 
     mutation = r.binomial(1, pop.genomic_arch.mu*pop.genomic_arch.L*len(newborns))
 
@@ -70,7 +70,7 @@ def do_mutation(pop, log = False):
         chrom = r.binomial(1,0.5)
 
         #then mutate this individual at this locus
-        pop.individs[ind].genome[loc,chrom] = 1
+        pop[ind].genome[loc,chrom] = 1
 
 
 

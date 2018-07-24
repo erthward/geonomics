@@ -50,7 +50,7 @@ class Trait:
 
     def get_phi(self, pop):
         if type(self.phi) in (float, int):
-            phi = np.array([self.phi]*pop.get_size())
+            phi = np.array([self.phi]*len(pop))
         else:
             phi = self.phi[pop.cells[:,1], pop.cells[:,0]]
         return(phi)
@@ -65,7 +65,7 @@ class Recomb_Paths:
 
 
 class Genomic_Architecture:
-    def __init__(self, x, L, l_c, r, mu, p, trait_dict, h, pleiotropy, sex):
+    def __init__(self, x, L, l_c, r, mu, p, trait_dict, h, pleiotropy, sex, recomb_lookup_array_size = None, n_recomb_paths = None):
         self.x = x              #ploidy (NOTE: for now will be 2 by default; later could consider enabling polyploidy)
         self.L = L              #total length (i.e. number of markers)
         self.l_c = l_c          #length of each chromosome
@@ -81,6 +81,8 @@ class Genomic_Architecture:
         self.sex = sex
 
         self.traits = trait_dict
+        self.recomb_lookup_array_size = recomb_lookup_array_size
+        self.n_recomb_paths = n_recomb_paths
 
     
    
@@ -129,6 +131,14 @@ class Genomic_Architecture:
     #method for creating and assigning the r_lookup attribute
     def make_recomb_paths(self):
         self.recomb_paths = Recomb_Paths(make_recomb_paths_bitarrays(self))
+
+
+    def show_freqs(self, pop):
+        populome = np.hstack([ind.genome for ind in pop.values()])
+        freqs = populome.sum(axis = 1)/(2*populome.shape[0])
+        plt.plot(range(self.L), self.p, ':r')
+        plt.plot(range(self.L), freqs, '_b')
+        plt.show()
 
 
 
@@ -279,14 +289,20 @@ def make_recomb_array(g_params):
 #function to create a lookup array, for raster recombination of larger numbers of loci on the fly
     #NOTE: size argument ultimately determines the minimum distance between probabilities (i.e. recombination rates)
     #that can be modeled this way
-def make_recomb_paths_bitarrays(genomic_arch, lookup_array_size = 100000, num_recomb_paths = 100000):
+def make_recomb_paths_bitarrays(genomic_arch, lookup_array_size = 10000, n_recomb_paths = 100000):
+    
+    if genomic_arch.recomb_lookup_array_size is not None:
+        lookup_array_size = genomic_arch.recomb_lookup_array_size
+
+    if genomic_arch.n_recomb_paths is not None:
+        n_recomb_paths = genomic_arch.n_recomb_paths
     
     lookup_array = np.zeros((len(genomic_arch.r),lookup_array_size), dtype = np.int8)
 
     for i, rate in enumerate(genomic_arch.r):
         lookup_array[i,0:int(round(lookup_array_size*rate))] = 1
 
-    recomb_paths = make_recombinants(lookup_array, num_recomb_paths).T
+    recomb_paths = make_recombinants(lookup_array, n_recomb_paths).T
     bitarrays = tuple([make_bitarray_recomb_subsetter(p) for p in recomb_paths])
     
     return(bitarrays)
@@ -308,33 +324,24 @@ def make_genomic_arch(params, land, allow_multiple_env_vars = True):
 
     g_params = params['genome']
 
-    p_params = params['pop']
-
-
-    #NOTE: 11/19/17: DO I STILL WANT TO OPERATIONALIZE GLOBALLY SELECTIVE LOCI??
-
+    p_params = params['pops']
 
     #grab necessary parameters from the g_params dict
     L = g_params['L']
     mu = g_params['mu']
     x = g_params['x']
     pleiotropy = g_params['pleiotropy']
-
+    try:
+        recomb_lookup_array_size = g_params['recomb_lookup_array_size']
+    except:
+        recomb_lookup_array_size = None
+    try:
+        n_recomb_paths = g_params['n_recomb_paths']
+    except:
+        n_recomb_paths = None
 
     trait_dict = make_traits(g_params['traits'])
-
-
-
-
-    #NOTE: THIS SEEMS LIKE A VESTIGE FROM SOME PREVIOUS IDEA THAT IS NOW NOT CLEAR TO ME... INVESTIGATE, THEN LIKELY TEAR OUT
-    sex = p_params['mating']['sex']  #NOTE: HOW TO CHANGE THIS TO MAKE USE OF THE 'sex' PARAM IN p_params???
-    if True:
-        sex = False
-
-
-
-    #NOTE: x = ploidy, for now set to 2 (i.e.  diploidy)
-    #NOTE: how to operationalize sexuality?! for now defaults to False
+    
 
     p = draw_allele_freqs(L)  
         #TODO: DECIDE HOW TO OPERATIONALIZE MUTATIONS; PERHAPS WANT TO CREATE A BUNCH OF p=0 LOCI HERE, AS MUTATIONAL TARGETS FOR LATER?
@@ -343,8 +350,8 @@ def make_genomic_arch(params, land, allow_multiple_env_vars = True):
 
     r, l_c = make_recomb_array(g_params)
 
-    genomic_arch = Genomic_Architecture(x, L, l_c, r, mu, p, trait_dict, h, pleiotropy, sex = True)
-   
+    genomic_arch = Genomic_Architecture(x, L, l_c, r, mu, p, trait_dict, h, pleiotropy, sex = True,
+            recomb_lookup_array_size = recomb_lookup_array_size, n_recomb_paths = n_recomb_paths)
 
     #add the loci and effect sizes for each of the traits
     for trait_num in genomic_arch.traits.keys():
@@ -352,7 +359,6 @@ def make_genomic_arch(params, land, allow_multiple_env_vars = True):
 
     #create the r_lookup attribute
     genomic_arch.make_recomb_paths()
-
 
     return(genomic_arch)
 
@@ -383,8 +389,7 @@ def reset_genomes(pop, params):
     pop.genomic_arch.p[muts] = 0
     
     #now reassign genotypes to all individuals, using genomic_arch.p
-    for ind in pop.individs.keys():
-        pop.individs[ind].set_genome(draw_genome(pop.genomic_arch))
+    [ind.set_genome(draw_genome(pop.genomic_arch)) for ind in pop.values()]
 
        
 #method for loading a pickled genomic architecture

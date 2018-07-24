@@ -1,8 +1,8 @@
-exec(open('./params.py', 'r').read())
-exec(open('./scratch/PRACTICE_imports_and_reloads.py', 'r').read())
-exec(open('./scratch/PRACTICE_create_land_genomic_arch_pop.py', 'r').read())
+#exec(open('./params.py', 'r').read())
+#exec(open('./scratch/PRACTICE_imports_and_reloads.py', 'r').read())
+#exec(open('./scratch/PRACTICE_create_land_genomic_arch_pop.py', 'r').read())
 
-#pop.set_K(land.scapes[params['land']['movement_surf']['movement_surf_scape_num']].raster)
+#pop.set_K(land[params['land']['movement_surf']['movement_surf_scape_num']].raster)
 
 #lc = Land_Changer(land, params)
 
@@ -12,7 +12,7 @@ def burn(stop_after = None):
     t = 0
     while break_burn_in == False:
         print('###############\n\n TIMESTEP %i' % t)
-        print('     POP %i\n' % pop.get_size())
+        print('     POP %i\n' % len(pop))
         pop.reset_age_stage(burn=True)
         pop.set_Nt()
         pop.do_movement(land)
@@ -32,10 +32,10 @@ def main(T, reassign_genomes=False):
     if reassign_genomes == True:
         print('\n\nReassigning genomes...\n\n')
         genome.reset_genomes(pop, params)
-        [i.set_phenotype(genomic_arch) for i in pop.individs.values()];
+        [ind.set_phenotype(ga) for ind in pop.inds];
     for t in range(T):
         print('###############\n\n TIMESTEP %i' % t)
-        print('     POP %i\n' % pop.get_size())
+        print('     POP %i\n' % len(pop))
         #lc.make_change(t)
         pop.reset_age_stage(burn=False)
         pop.set_Nt()

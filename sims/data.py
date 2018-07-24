@@ -200,11 +200,11 @@ def sample_data(pop, land, params, sampling_scheme, n = None, points = None, rad
     sample = {}
     
     if sampling_scheme == 'all':
-        sample.update(pop.individs.items())
+        sample.update(pop.items())
     
     elif sampling_scheme == 'random':
-        ids = r.choice(pop.individs.keys(), size = n, replace = False)
-        sample.update({i:v for i,v in pop.individs.items() if i in ids})
+        ids = r.choice([*pop], size = n, replace = False)
+        sample.update({i:v for i,v in pop.items() if i in ids})
 
     elif sampling_scheme == 'points': 
         sample.update(point_sample(pop, n, points, radius))
@@ -254,7 +254,7 @@ def point_sample(pop, n, points, radius):
     #about better code, not mission-critical
     
     for b in buffs:
-        inds = {i:v for i,v in pop.individs.items() if b.contains(geometry.Point(v.x, v.y))}
+        inds = {i:v for i,v in pop.items() if b.contains(geometry.Point(v.x, v.y))}
         if len(inds) > n:
             point_sample = rand_sample(list(inds.keys()), n)
             sample.update({i:v for i,v in inds.items() if i in point_sample}) 

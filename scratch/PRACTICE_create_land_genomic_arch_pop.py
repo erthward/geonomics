@@ -18,6 +18,8 @@ if params['seed']['set_seed']:
 
 
 land = landscape.make_scape_stack(params = params)
-genomic_arch = genome.make_genomic_arch(params = params, land = land)
-pop = population.make_population(genomic_arch = genomic_arch, land = land, params = params)
+arch = genome.make_genomic_arch(params = params, land = land)
+com = population.make_community(genomic_arch = arch, land = land, params = params)
+
+pop = com[0]
 

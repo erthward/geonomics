@@ -49,47 +49,50 @@ import sys
 # -----------------------------------#
 ######################################
 
-class Population:
+class Population(OD):
     '''Population(self, N, individs, genomic_arch, size, birth_rate = None, death_rate = None, T = None)'''
 
-    def __init__(self, pop_params, individs, genomic_arch):
+    #######################
+    ### SPECIAL METHODS ###
+    #######################
 
+    def __init__(self, inds, pop_params, genomic_arch):
+
+        #check the inds object is correct
+        assert type(inds) in (OD, dict), "ERROR: inds must be of type dict or type collections.Ordered_Dict"
+        assert list(set([i.__class__.__name__ for i in list(inds.values())])) == [ 'Individual'], "ERROR: inds must be a dictionary containing only instances of the individual.Individual class"
+        
+        #then add the individuals
+        self.update(inds) # update with the input dict of all individuals, as instances of individual.Individual class
+        self.inds = self.values()
+
+        #set other attributes
         self.name = pop_params['name']
-
         self.it = None  # attribute to keep track of iteration number this pop is being used for
-        # (optional; will be set by the iteration.py module if called)
-
+            # (optional; will be set by the iteration.py module if called)
         self.t = 0  # attribute to keep of track of number of timesteps the population has evolved
-        # NOTE: This way, if model is stopped, changes are made, then it is run further,
-        # this makes it easy to continue tracking from the beginning
+            # NOTE: This way, if model is stopped, changes are made, then it is run further,
+            # this makes it easy to continue tracking from the beginning
+        self.start_N = len(self)
+        self.N = None  # attribute to hold a landscape.Scape object of the current population density
+        self.K = None  # attribute to hold an landscape.Scape object of the local carrying capacity (i.e. 'target' dynamic equilibrium population density)
+        self.Nt = []  # list to record population size (appended each time
+        # pop.increment_age_stage() is called)
+        self.n_births = []  # tracker of number of births each time pop.do_mating is called
+        self.n_deaths = []  # tracker of number of deaths each time demography.pop_dynamics is called
+        #attributes for storing numpy arrays of all individuals' coordinates and cells, to avoid repeat compute time each turn
+        self.coords = None
+        self.cells = None
+        #create empty attribute to hold kd_tree
+        self.kd_tree = None
 
         #grab all of the params['pop'] parameters as Population attributes
         for section in ['mating', 'mortality', 'movement']:
             for att in pop_params[section].keys():
                 setattr(self, att, pop_params[section][att])
 
-        self.N = None  # attribute to hold a landscape.Landscape object of the current population density
-
-        self.K = None  # attribute to hold an landscape.Landscape object of the local carrying capacity (i.e. 'target' dynamic equilibrium population density)
-
-        self.Nt = []  # list to record population size (appended each time
-        # pop.increment_age_stage() is called)
-
-        self.n_births = []  # tracker of number of births each time pop.do_mating is called
-
-        self.n_deaths = []  # tracker of number of deaths each time demography.pop_dynamics is called
-
-        self.individs = individs  # dict of all individuals, as instances of individual.Individual class
-
-        self.initial_size = len(self.individs)
-
-        #attributes for storing numpy arrays of all individuals' coordinates and cells, to avoid repeat compute time each turn
-        self.coords = None
-        self.cells = None
-
-        self.genomic_arch = genomic_arch
-        # Add other demographic parameters?? Other stuff in general??
-
+        #TODO: probably get rid of this, or move it elsewhere in the package?
+        #set the heterozygote effects dictionary
         self.heterozygote_effects = {
             0: lambda g: [np.ceil(np.mean(g[i,])) for i in range(g.shape[0])],
             # relative fitness of homozygous 1 = relative fitness of heterozygote, i.e. 1 = 1-hs
@@ -99,42 +102,60 @@ class Population:
             # relative fitness of homozygous 0 = relative fitness of heterozygote, i.e. 1-hs = 1-s
         }
 
-        #create empty attribute to hold kd_tree
-        self.kd_tree = None
-
-        assert type(self.individs) == OD, "self.individs must be of type collections.OrderedDict"
-        assert list(set([i.__class__.__name__ for i in list(self.individs.values())])) == [
-            'Individual'], "self.individs must be a dictionary containing only instances of the individual.Individual class"
+        #set the Genomic_Architecture object
+        self.genomic_arch = genomic_arch
         assert self.genomic_arch.__class__.__name__ == 'Genomic_Architecture', "self.genomic_arch must be an instance of the genome.Genomic_Architecture class"
 
-
+        #create a couple getter functions, for use in getting all individs' coordinates and certain individs' coordinates
         self.__coord_attrgetter__ = attrgetter('x', 'y')
         self.__individ_coord_attrgetter__ = attrgetter('idx', 'x', 'y')
+
+    #define the __str__ and __repr__ special methods
+    #NOTE: this is not really a great representation; the Python docs indicate that __repr__ should ideally
+    #provide a representation could be used to recreate the object, but if that is not possible then it 
+    #should at least provide a string of the form '<... some useful description ...>; I've attempted to do
+    #the latter, inspired by a combo of what I've seen in a few other packages (pandas, netCDF4, osgeo) 
+    #(though perhaps I should more closely consider how to handle the params in a more nuanced, precise way once I'm
+    #done writing the codebase, because right now this leaves out params that have lists and dictionarires at
+    #values, and also includes some parameters that are input in params.py but not all, and some params that
+    #are created internally but not all
+    def __str__(self):
+        type_str = str(type(self))
+        inds_str = '\n%i Individuals:\n\t' % len(self)
+        first_ind_str = OD(self.items()).__str__().split('), ')[0] + ')\n\t...\n\t'
+        last_ind_str = ', '.join(self.items().__str__().split(', ')[-2:])
+        inds_str = inds_str + first_ind_str + last_ind_str + '\n'
+        params = sorted([str(k) + ': ' +str(v) for k,v in vars(self).items() if type(v) in (str, int, bool, float)], key = lambda x: x.lower()) 
+        params_str = "Parameters:\n\t" + ',\n\t'.join(params) 
+        return('\n'.join([type_str, inds_str, params_str]))
+
+    def __repr__(self):
+        repr_str = self.__str__()
+        return(repr_str)
+
 
     #####################
     ### OTHER METHODS ###
     #####################
 
-    def get_size(self):
-        return len(self.individs)
-
     # method to set self.K
-    def set_K(self, K):  # NOTE: Requires a landscape.Landscape instance
+    def set_K(self, K):  # NOTE: Requires a landscape.Scape instance
         self.K = K
 
     # method to set self.N
-    def set_N(self, N):  # NOTE: Requires a landscape.Landscape instance
+    def set_N(self, N):  # NOTE: Requires a landscape.Scape instance
         self.N = N
 
     # method to append current pop size to the pop.Nt list
     def set_Nt(self):
-        self.Nt.append(self.get_size())
+        self.Nt.append(len(self))
+        #self.Nt.append(self.get_size())
 
     # method to increment all population's age by one (also adds current pop size to tracking array)
     def reset_age_stage(self, burn=False):
 
         # increment age of all individuals
-        [ind.reset_age_stage() for ind in self.individs.values()];
+        [ind.reset_age_stage() for ind in self.inds];
 
         # add 1 to pop.t
         if burn == False:  # as long as this is not during burn-in, pop.t will increment
@@ -166,13 +187,13 @@ class Population:
         
         for n_pair, pair in enumerate(mating_pairs):
 
-            parent_centroid_x = (self.individs[pair[0]].x + self.individs[pair[1]].x)/2
-            parent_centroid_y = (self.individs[pair[0]].y + self.individs[pair[1]].y)/2
+            parent_centroid_x = (self[pair[0]].x + self[pair[1]].x)/2
+            parent_centroid_y = (self[pair[0]].y + self[pair[1]].y)/2
 
             n_offspring = n_births[n_pair]
             n_gametes = 2 * n_offspring
 
-            offspring_key = next(reversed(self.individs)) + 1
+            offspring_key = next(reversed(self)) + 1
             for n in range(n_offspring):
 
                 offspring_x, offspring_y = movement.disperse(land, parent_centroid_x, parent_centroid_y,
@@ -185,25 +206,22 @@ class Population:
 
                 if burn == False:
                     if self.sex == True:
-                        self.individs[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, offspring_sex, age)
+                        self[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, offspring_sex, age)
                     else:
-                        self.individs[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, age)
+                        self[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, age)
                
                     #set new individual's phenotype (won't be set during burn-in, becuase no genomes assigned)
-                    self.individs[offspring_key].set_phenotype(self.genomic_arch)
+                    self[offspring_key].set_phenotype(self.genomic_arch)
 
 
                 elif burn:
                     if self.sex == True:
-                        self.individs[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y, offspring_sex, age)
+                        self[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y, offspring_sex, age)
                     else:
-                        self.individs[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y,
+                        self[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y,
                                                                              age)
-                #land.mating_grid.add(self.individs[offspring_key])
-
                 offspring_key += 1
 
-                
         # sample all individuals' habitat values, to initiate for offspring
         self.set_habitat(land)
         self.set_coords_and_cells()
@@ -215,7 +233,7 @@ class Population:
         mutation.do_mutation(self)
 
     def check_extinct(self):
-        if len(self.individs.keys()) == 0:
+        if len(self) == 0:
             print('\n\nYOUR POPULATION WENT EXTINCT!\n\n')
             return (1)
             # sys.exit()
@@ -226,7 +244,7 @@ class Population:
 
         '''
         Calculate an interpolated raster of local population density, using the
-        Landscape_Stack.density_grid_stack object.
+        Land.density_grid_stack object.
 
         Valid values for normalize_by currently include 'pop_size' and 'none'. If normalize_by = 'pop_size', max_1 =
         True will cause the output density raster to vary between 0 and 1, rather than between 0 and the current
@@ -259,7 +277,7 @@ class Population:
             dens[dens > max_val] = max_val
 
         if as_landscape == True:
-            dens = landscape.Landscape(land.dim, dens)
+            dens = landscape.Scape(land.dim, dens)
 
         if set_N:
             self.set_N(dens)
@@ -270,25 +288,23 @@ class Population:
 
     def set_habitat(self, land, individs = None):
         if individs is None:
-            inds_to_set = self.individs.values()
-        
+            inds_to_set = self.inds
         else:
             ig = itemgetter(*individs)
-            inds_to_set = ig(self.individs)
+            inds_to_set = ig(self)
             if type(inds_to_set) is individual.Individual:
                 inds_to_set = (inds_to_set,)
-       
-        hab = [ind.set_habitat([sc.rast[int(ind.y), int(ind.x)] for sc in list(land.scapes.values())]) for ind in inds_to_set]
+        hab = [ind.set_habitat([scape.rast[int(ind.y), int(ind.x)] for scape in land.scapes]) for ind in inds_to_set]
 
     
     def set_phenotype(self):
-        [ind.set_phenotype(self.genomic_arch) for ind in self.individs.values()];
+        [ind.set_phenotype(self.genomic_arch) for ind in self.inds];
 
 
     def set_fitness(self):
-        indices = list(self.individs.keys())
+        indices = [*self]  #get list of individs' indices
         fit = self.get_fitness()
-        [self.individs[ind].set_fitness(fit[n]) for n, ind in enumerate(indices)]
+        [self[i].set_fitness(fit[n]) for n, i in enumerate(indices)]
         
 
     #method to set population's coords and cells arrays
@@ -306,36 +322,35 @@ class Population:
     def get_habitat(self, scape_num=None, individs=None):
         if individs is None:
             if scape_num is None:
-                habs = np.array([ind.habitat for i, ind in self.individs.items()])
+                habs = np.array([ind.habitat for ind in self.inds])
             else:
-                habs = np.array([ind.habitat[scape_num] for i, ind in self.individs.items()])
+                habs = np.array([ind.habitat[scape_num] for ind in self.inds])
         else:
             ig = itemgetter(*individs)
             if scape_num is None:
-                habs = {i:ind.habitat for i, ind in self.individs.items()}
+                habs = {i:ind.habitat for i, ind in self.items()}
                 habs = np.array(ig(habs))
             else:
-                habs = {i:ind.habitat[scape_num] for i, ind in self.individs.items()}
+                habs = {i:ind.habitat[scape_num] for i, ind in self.items()}
                 habs = np.array(ig(habs))
         return(habs)
 
     def get_age(self, individs=None):
         if individs is None:
-            ages = np.array([ind.age for ind in self.individs.values()])
+            ages = np.array([ind.age for ind in self.inds])
         else:
             ig = itemgetter(*individs)
-            ages = {i: ind.age for i, ind in self.individs.items()}
+            ages = {i: ind.age for i, ind in self.items()}
             ages = np.array(ig(ages))
         return(ages)
 
     def get_genotype(self, locus, return_format='mean', individs=None, by_dominance=False):
 
         if individs is None:
-            individs = self.individs.keys()
-            # individs = range(len(self.genomic_arch.s[chromosome]))
+            individs = [*self]
 
         if return_format == 'biallelic':
-            return {i: self.individs[i].genome[locus, :] for i in self.individs.keys() if i in individs}
+            return {i: self[i].genome[locus, :] for i in [*self] if i in individs}
 
         elif return_format == 'mean':
             if by_dominance == True:
@@ -343,15 +358,15 @@ class Population:
             else:
                 h = 0.5
             return dict(zip(individs, self.heterozygote_effects[h](
-                np.array([ind.genome[locus,] for i, ind in self.individs.items() if i in individs]))))
+                np.array([ind.genome[locus,] for i, ind in self.items() if i in individs]))))
 
     # convenience method for getting whole population's phenotype
     def get_phenotype(self, individs=None):
         if individs is None:
-            zs = np.array([ind.phenotype for ind in self.individs.values()])
+            zs = np.array([ind.phenotype for ind in self.inds])
         else: 
             ig = itemgetter(*individs)
-            zs = {i:ind.phenotype for i, ind in self.individs.items()}
+            zs = {i:ind.phenotype for i, ind in self.items()}
             zs = np.array(ig(zs))
         return(zs)
 
@@ -361,13 +376,13 @@ class Population:
     def get_dom(self, locus):
         return {locus: self.genomic_arch.h[locus]}
 
-    def get_coords(self, individs = None, float = True):
-        coords = list(map(self.__coord_attrgetter__, self.individs.values()))
+    def get_coords(self, individs = None, as_float = True):
+        coords = list(map(self.__coord_attrgetter__, self.inds))
         if individs is not None: 
             ig = itemgetter(*individs)
-            coords = ig(dict(zip(self.individs.keys(), coords)))
+            coords = ig(dict(zip([*self], coords)))
 
-        if float == True:
+        if as_float == True:
             coords = np.float32(coords)
         else:
             coords = np.int32(np.floor(coords))
@@ -376,7 +391,7 @@ class Population:
             
             
     def get_cells(self, individs = None):
-        cells = self.get_coords(individs = individs, float = False)
+        cells = self.get_coords(individs = individs, as_float = False)
         return(cells)
   
 
@@ -415,7 +430,7 @@ class Population:
         if individs is None:
             coords = self.coords
             if text:
-                text = list(self.individs.keys())
+                text = [*self]
         else:
             coords = self.get_coords(individs)
             if text:
@@ -474,7 +489,7 @@ class Population:
             edge_color='black', text_color='black', colorbar=True, im_interp_method='nearest', 
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
-        z = OD(zip(self.individs.keys(), self.get_phenotype()[:,trait]))
+        z = OD(zip([*self], self.get_phenotype()[:,trait]))
         if individs is not None:
             z = {i:v for i,v in z.items() if i in individs}
 
@@ -497,7 +512,7 @@ class Population:
             w = self.get_fitness(trait_num = trait_num)
 
         #filter out unwanted individs, if necessary
-        w = OD(zip(self.individs.keys(), w))
+        w = OD(zip([*self], w))
         if individs is not None:
             w = {i:v for i,v in w.items() if i in individs}
 
@@ -539,10 +554,10 @@ class Population:
     # method for plotting a population pyramid
     # NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS
     def show_pyramid(self):
-        plt.hist([ind.age for ind in list(self.individs.values()) if ind.sex == 0], orientation='horizontal',
+        plt.hist([ind.age for ind in list(self.inds) if ind.sex == 0], orientation='horizontal',
                  color='pink',
                  alpha=0.6)
-        plt.hist([ind.age for ind in list(self.individs.values()) if ind.sex == 1], orientation='horizontal',
+        plt.hist([ind.age for ind in list(self.inds) if ind.sex == 1], orientation='horizontal',
                  color='skyblue',
                  alpha=0.6)
 
@@ -562,6 +577,14 @@ class Population:
             cPickle.dump(self, f)
 
 
+#NOTE: this class won't be doing too much right away, but it lays the foundation 
+#for enabling interactions between populations (i.e. species) further down the road
+class Community(dict):
+    def __init__(self, pops):
+        self.update(pops)
+        self.n_pops = len(pops)
+        
+        
 ######################################
 # -----------------------------------#
 # FUNCTIONS -------------------------#
@@ -579,15 +602,15 @@ def make_population(genomic_arch, land, pop_params, burn=False):
     N = start_params.pop('N')
 
     #create an ordered dictionary to hold the individuals, and fill it up
-    individs = OD()
+    inds = OD()
     for idx in range(N):
         # use individual.create_individual to simulate individuals and add them to the population
         ind = individual.make_individual(idx = idx, genomic_arch = genomic_arch, dim = dim)
-        individs[idx] = ind
+        inds[idx] = ind
         #land.mating_grid.add(ind)
 
     #then create the population from those individuals
-    pop = Population(pop_params = pop_params,  individs=individs, genomic_arch=genomic_arch)
+    pop = Population(inds = inds, pop_params = pop_params, genomic_arch=genomic_arch)
    
     #use the remaining start_params to set the carrying-capacity raster (K)
     pop.set_K(make_K(pop, land, **start_params))
@@ -599,7 +622,7 @@ def make_population(genomic_arch, land, pop_params, burn=False):
     pop.set_coords_and_cells()
 
     #set phenotypes
-    [i.set_phenotype(pop.genomic_arch) for i in pop.individs.values()]
+    [i.set_phenotype(pop.genomic_arch) for i in pop.values()]
 
     #set the kd_tree
     pop.set_kd_tree()
@@ -607,19 +630,15 @@ def make_population(genomic_arch, land, pop_params, burn=False):
     return(pop)
 
 
-def make_populations(genomic_arch, land, params, burn=False):
-    for key in params['pops'].keys():
-        pop_params = params['pops'][key]
-        pop_name = pop_params['name']
-        assert pop_name not in vars().keys(), 'ERROR: The name %s (given to population %i) will clobber an existing variable.  Please change its name in the params file and retry.' % (pop_name, key)
-        vars().update({pop_name : make_population(genomic_arch = genomic_arch, land = land, pop_params = pop_params, burn = burn)})
-        assert pop_name in vars().keys(), 'ERROR: Variable %s (population %i) appears not to have been created as a global variable.' % (pop_name, key)
+def make_community(genomic_arch, land, params, burn=False):
+    pops = {k: make_population(genomic_arch, land, params['pops'][k], burn) for k in params['pops'].keys()}
+    return(Community(pops))
 
 
 #function that uses the params['pop']['start']['K_<>'] parameters 
 #to make the starting carrying-capacity raster
 def make_K(pop, land, K_scape_num, K_fact):
-    K_rast = land.scapes[K_scape_num].rast * K_fact
+    K_rast = land[K_scape_num].rast * K_fact
     return(K_rast)
 
 

@@ -34,15 +34,15 @@ params = {
 ##############
 
     'land' : {
-        'dim'          : (90,90),                   #x- and y-dimensionality of landscape  
+        'dim'          : (25,25),                   #x- and y-dimensionality of landscape  
         'res'          : (1,1),                     #landscape resolution in x and y dimensions (for crosswalking with real-world distances; defaults to meaningless (1,1), will be reset if GIS rasters are read in 
         'ulc'          : (0,0),                     #upper-left corner of the landscape; defaults to meaningless (0,0), can be set to alternative values for crosswalking with real-world data, and will be reset if GIS rasters are read in 
-        'num_scapes'    : 2,                        #number of landscapes desired
+        'n_scapes'    : 2,                        #number of landscapes desired
         'rand_land'     : True,                     #whether or not to generate random landscapes
         'interp_method' : ['linear', 'linear'],     # list of interpolation methods for generation of random landscapes, 
         'n_rand_pts'    : 50,                     #number of random coordinates to be used in generating random landscapes 
                                                         #(only needed if rand_land = True)
-                                                        #1 per landscape to be generated (as set by num_scapes)
+                                                        #1 per landscape to be generated (as set by n_scapes)
         'landscape_pt_coords': np.array([[0,0], [0,100], [100,0], [50,40], [100,100], [30,0], [0,30], [70,100], [100,70]]),
                                                     #coords of points to use to interpolate defined landscape layers (can be provided as 
                                                         #either a single nx2 Numpy array, where n matches the number of points in 
@@ -59,7 +59,7 @@ params = {
                                                         #of the larger landscape dimension to 1/10th of that dimension)
         'gis'           : {
                     'scape_nums'                 : [1],   #list of the scape_nums for which GIS layers should be read in
-                    'filepaths'                  : ['/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif'], #list of the filepaths to read into the scapes indicated by the scape_num list
+                    'filepaths'                  : [], #'/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif'], #list of the filepaths to read into the scapes indicated by the scape_num list
                     'scale_min_vals'                   : [-1.37],    #minimum values to use for rescaling the rasters (will be rescaled to 0<=x<=1); may be different than the actual minimum values in the rasters, if they will be changing to future rasters with values outside the range of these rasters
                     'scale_max_vals'                   : [19.11]   #maxmimum input values against which to rescale the rasters to (will be rescaled to 0<=x<=1)
                     },
@@ -93,7 +93,7 @@ params = {
 
     'genome' : {
         'L'             : 1000,                     #total number of loci
-        'l_c'           : [500],            #chromosome lengths [sum(l_c) == L enforced]
+        'l_c'           : [500, 500],               #chromosome lengths [sum(l_c) == L enforced]
         'recomb_array'  : None,                     #predetermined linkage map to use for the simulated loci (optional)
         'x'             : 2,                        #ploidy (for now, leave at 2 for diploidy)
         'mu'            : 10e-9,                    #genome-wide mutation rate, per base per generation
@@ -108,6 +108,12 @@ params = {
                                                         #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP
         'pleiotropy'    : True,                     #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?) false
         'recomb_rate_custom_fn': None,              #if provided, must be a function that returns a single recombination rate value (r) when called
+        'recomb_lookup_array_size': int(1e3),       #the size of the recombination-path lookup array to have
+        #read in at one time (needs to be comfortably larger than the anticipated totaly number of
+        #recombination paths to be drawn at once, i.e. than 2 times the anticipated most number of births at once)
+        'n_recomb_paths': int(1e4),               #the total number of distinct recombination paths to
+        #generate at the outset, to approximate truly free recombination at the recombination rates specified
+        #by the genomic architecture (hence the larger the value the less the likelihood of mis-approximation artifacts)
         'traits'        : {
                     'num'       : 1,                        #number of traits to simulate
                     'scape_num' : [1],                  #list of the landscape numbers to be used for selection on each trait 
@@ -133,10 +139,10 @@ params = {
 #############
 
     'pops' : {
-        '0'  :   {
-            'name'       : 'pop0',         #each population can take any arbitrary name that will not clobber an existing variable
+        0  :   {
+            'name'       : 'pop0',         #each population can take a string as a name
             'start'      : {
-               'N'       : 2000,             #starting population size
+               'N'       : 200,             #starting population size
                'K_scape_num'   : 0,                #the scape_num of the raster to use as the carrying-capacity raster (K)
                'K_fact'        : 2                 #the factor to multiply the K raster by in order to generate pop.K
                }, # <END> 'main'
@@ -236,13 +242,13 @@ params = {
                     },
             'land' : {
                       1 : {
-                            'end_scape' : np.zeros((90,90)),
+                            'end_rast' : np.zeros((90,90)),
                             't_start' : 1500,
                             't_end'   : 2000,
                             'n'       : 10
                             },
                       0 : {
-                            'end_scape' : np.zeros((90,90)),
+                            'end_rast' : np.zeros((90,90)),
                             't_start' : 1500,
                             't_end'   : 2000,
                             'n'       : 2
@@ -266,7 +272,7 @@ params = {
                             },
         'freq'              : 15,                   #can be an integer (in which case data will be collected every that many timesteps, plus at the end)
                                                         #or a list of specific timesteps
-        'include_land'      : False,                #if True, will save the Landscape_Stack object each time other data is saved (probably only useful 
+        'include_land'      : False,                #if True, will save the Land object each time other data is saved (probably only useful 
                                                         #if land is changing in some way not manually coded by the user)
         'gen_data_format'   : 'VCF',                #can be 'VCF', 'FASTA', or 'ms'
         'geo_data_format'   : ['CSV', 'Geotiff'],   #1st argument for points, 2nd for raster; currently 1.) CSV, Shapefile and 2.) Geotiff available
@@ -277,7 +283,7 @@ params = {
 
 
 ###############
-#### OTHER ####
+#### STATS ####
 ###############
 
     'stats' : {     #dictionary defining which stats to be calculated, and parameters on their calculation (including frequency, in timesteps, of collection)

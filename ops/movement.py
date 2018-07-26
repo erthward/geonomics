@@ -49,7 +49,7 @@ s_vonmises.b = np.inf
 # -----------------------------------#
 ######################################
 
-def move(pop, land):
+def move(pop):
     
     #get individuals' coordinates (soon to be their old coords, so 'old_x' and 'old_y')
     old_x, old_y = [a.flatten() for a in np.split(pop.get_coords(), 2, axis = 1)]
@@ -60,7 +60,7 @@ def move(pop, land):
     if pop.move_surf:
 
         #and use those choices to draw movement directions
-        direction = land.move_surf.draw_directions(old_y_cells, old_x_cells)
+        direction = pop.move_surf.draw_directions(old_y_cells, old_x_cells)
 
 
         # NOTE: Pretty sure that I don't need to constrain values output for the Gaussian KDE that is approximating the von Mises mixture distribution to 0<=val<=2*pi, because e.g. cos(2*pi + 1) = cos(1), etc...
@@ -83,9 +83,9 @@ def move(pop, land):
        #NOTE: subtract a very small value to avoid having the dimension itself set as a coordinate, 
        #which rounds down to a cell id one beyond the largest cell id the landscape
     new_x = old_x + cos(direction)*distance
-    new_x = np.clip(new_x, a_min = 0, a_max = land.dim[1]-0.00001) 
+    new_x = np.clip(new_x, a_min = 0, a_max = pop.land_dim[1]-0.00001) 
     new_y = old_y + sin(direction)*distance
-    new_y = np.clip(new_y, a_min = 0, a_max = land.dim[0]-0.00001)
+    new_y = np.clip(new_y, a_min = 0, a_max = pop.land_dim[0]-0.00001)
 
     #then feed the new locations into each individual's set_pos method
     [ind.set_pos(x, y) for ind, x, y in zip(pop.inds, new_x, new_y)];

@@ -111,18 +111,16 @@ class Changer:
 
 
 class Land_Changer(Changer):
-    def __init__(self, land, params):
+    def __init__(self, land, land_change_params):
         super(Land_Changer, self).__init__()
         #set the type-label of the changer
         self.type = 'land'
 
     #call self.set_changes() to set self.changes and self.next_change
-        self.set_changes(land, params)
+        self.set_changes(land, land_change_params)
 
-    #method to set the changes stipulated in params dict for the land object
-    def set_changes(self, land, params):
-        #pull out the separate parts of the params file
-        land_change_params = params['change']['land']
+    #method to set the changes stipulated in land_change_params dict for the land object
+    def set_changes(self, land, land_change_params):
 
         #get the linearly spaced time-series of scapes for each scape_num
         scapes = {}
@@ -167,7 +165,7 @@ class Land_Changer(Changer):
 
 
 class Pop_Changer(Changer):
-    def __init__(self, pop, params):
+    def __init__(self, pop, pop_change_params):
         self.type = 'pop'
         
         #an attribute that is used by some dem-change fns, as a baseline population size at the start of the
@@ -175,36 +173,33 @@ class Pop_Changer(Changer):
         self.base_K = None
 
     #call self.set_changes() to set self.changes and self.next_change
-        self.set_changes(pop, params)
+        self.set_changes(pop, pop_change_params)
 
     #method to set the base_K attribute to pop.K
     def set_base_K(self, pop):
         self.base_K = pop.K
 
     #method to set the changes stipulated in params dict for the pop object
-    def set_changes(self, pop, params):
-        #pull out the relevant part of the params file
-        pop_change_params = params['change']['pops']
-        dem_change_params = pop_change_params['dem']
-        other_change_params = pop_change_params['other']
+    def set_changes(self, pop, pop_change_params):
+        #pull out the parts of the params
+        dem_change_params = pop_change_params.dem
+        parameter_change_params = pop_change_params.parameters
 
         #set the demographic changes, if applicable
         dem_change_fns = []
-        if pop.name in dem_change_params.keys():
-            if True in [v is not None for v in dem_change_params[pop.name].values()]:
-                for event_key, event_params in dem_change_params[pop.name].items():
-                    dem_change_fns.extend(get_dem_change_fns(pop, **event_params))
+        for event, event_params in dem_change_params.items():
+            if True in [v is not None for v in event_params.values()]:
+                dem_change_fns.extend(get_dem_change_fns(pop, **event_params))
 
         #set the other changes, if applicable
-        other_change_fns = []
-        if pop.name in other_change_params.keys():
-            for param in other_change_params[pop.name].keys():
-                if True in [v is not None for v in other_change_params[pop.name][param].values()]:
-                    other_change_fns.extend(get_other_change_fns(pop, param, **other_change_params[pop.name][param]))
+        parameter_change_fns = []
+        for parameter, parameter_params in parameter_change_params.items():
+            if True in [v is not None for v in parameter_params.values()]:
+                parameter_change_fns.extend(get_parameter_change_fns(pop, parameter, **parameter_change_params))
 
         #put all the changes in chronological order
-        if len(dem_change_fns) + len(other_change_fns) > 0:
-            change_fns = dem_change_fns + other_change_fns
+        if len(dem_change_fns) + len(parameter_change_fns) > 0:
+            change_fns = dem_change_fns + parameter_change_fns
             change_fns = sorted(change_fns, key = lambda x: x[0])
 
             #make self.changes an iterator over that list
@@ -461,27 +456,24 @@ def get_custom_dem_change_fns(pop, timesteps, sizes):
     return(change_fns)
 
 
-        ##############
-        #   params   #
-        ##############
+        ##################
+        #   parameters   #
+        ##################
 
-def make_other_change_fns(pop, param, timesteps, values):
+def make_parameter_change_fns(pop, parameter, timesteps, vals):
     fns = []
-    for value in values:
-        def fn(pc, param, pop = pop, value = value):
-            setattr(pop, param, value)
+    for val in vals:
+        def fn(pc, parameter, pop = pop, val = val):
+            setattr(pop, parameter, val)
         fns.append(fn)
     change_fns = list(zip(timesteps, fns))
     return(change_fns)
 
 
-def get_other_change_fns(pop, param, timesteps, values):
-    assert len(timesteps) == len(values), "ERROR: For custom changes of the '%s' paramter, timesteps and values must be iterables of equal length." % param
-    change_fns = make_other_change_fns(pop, param, timesteps, values)
+def get_parameter_change_fns(pop, parameter, timesteps, vals):
+    assert len(timesteps) == len(vals), "ERROR: For custom changes of the '%s' paramter, timesteps and vals must be iterables of equal length." % param
+    change_fns = make_parameter_change_fns(pop, param, timesteps, vals)
     return(change_fns)
-
-
-    
 
 
     ###################

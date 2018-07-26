@@ -98,7 +98,7 @@ class Density_Grid:
         #and divide the array values by the appropriate grid-cell areas to get the densities
         grid_dens = grid_counts/self.areas
 
-        return(grid_dens)
+        return grid_dens 
 
 
 class Density_Grid_Stack:
@@ -143,26 +143,26 @@ class Density_Grid_Stack:
         #then interpolate from those points and values to the centerpoints of all of the land centerpoints
         dens = interpolate.griddata(pts, vals, (self.land_gj, self.land_gi), method = 'cubic')
 
-        return(dens)
+        return dens 
 
 
 class Movement_Surface:
-    def __init__(self, land, kappa = 12):
+    def __init__(self, land, scape_num, approximation_len = 5000, vm_kappa = 12, gauss_KDE_bw = 0.2):
 
         #dimensions
         self.dim = land.dim
         #resolution (i.e. cell-size); defaults to 1
         self.res = land.res
 
-        self.scape_num = land.move_surf_scape_num
-        self.approx_len = land.move_surf_approx_len
-        self.surf = make_movement_surface(land, approx_len = self.approx_len, kappa = kappa)
+        self.scape_num = scape_num
+        self.approximation_len = approximation_len
+        self.surf = make_movement_surface(land, approximation_len = self.approximation_len, vm_kappa = vm_kappa, gauss_KDE_bw = gauss_KDE_bw)
 
-        assert self.approx_len == self.surf.shape[2], "ERROR: Movement_Surface.approx_len != Movement_Surface.surf.shape[2]"
+        assert self.approximation_len == self.surf.shape[2], "ERROR: Movement_Surface.approximation_len not equal to Movement_Surface.surf.shape[2]"
 
     def draw_directions(self, x, y):
         choices = r.randint(low = 0, high = self.approx_len, size = len(x))
-        return(self.surf[y, x, choices])
+        return self.surf[y, x, choices] 
 
     
 class KD_Tree:
@@ -189,7 +189,7 @@ def make_cell_strings(gi, gj, dim_om):
     #join those strings to one single string, unique for each cell
     cells = [''.join(c) for c in list(zip(i_strs,j_strs))]
 
-    return(cells)
+    return cells 
 
 
 #make a density grid, based on the Land object, the chosen window-width, 
@@ -258,7 +258,7 @@ def make_density_grid(land, ww, x_edge, y_edge):
     #use the above-created data structures to create two Density_Grid objects (which will inhere to the
     #Land object as attributes)
     grid = Density_Grid(dim, dim_om, ww, gi, gj, cells, areas, x_edge= x_edge, y_edge = y_edge)
-    return(grid)
+    return grid 
 
 
 #create 4 density grids, one for each offset (i.e. each combination of offset by 0 and by 0.5*window_width)
@@ -294,17 +294,15 @@ def make_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
         n_probs = [i / sum_n for i in n]
     else:
         n_probs = [.125]*8
-    #s_vonmises.a = -np.inf
-    #s_vonmises.b = np.inf
     loc_choices = r.choice(d, approx_len, replace = True, p = n_probs)
     loc_choices = list(C(loc_choices).items())
     approx = np.hstack([s_vonmises.rvs(kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])
-    return(approx)
+    return approx 
 
 
 # Runs the Von Mises mixture sampler function (make_von_mises_mix_sampler) across the entire landscape and returns an array-like (list of
 # lists) of the resulting lambda-function samplers
-def make_movement_surface(land, kappa=12, approx_len = 5000):
+def make_movement_surface(land, approximation_len=5000, vm_kappa=12, gauss_KDE_bw=0.2):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0], [3 * pi / 4, pi / 2, pi / 4]])
 
     # grab the correct landscape raster
@@ -323,7 +321,8 @@ def make_movement_surface(land, kappa=12, approx_len = 5000):
         for j in range(rast.shape[1]):
             neigh = embedded_rast[i:i + 3, j:j + 3].copy()
             move_surf[i, j, :] = make_von_mises_mix_sampler(neigh, queen_dirs, kappa = kappa, approx_len= approx_len)
-    return (move_surf)
+    return move_surf
+
 
 #linearly scale a raster to 0 <= x <= 1, and return the function to back-convert as well
 def scale_raster(rast, min_inval=None, max_inval=None, min_outval=0, max_outval=1):

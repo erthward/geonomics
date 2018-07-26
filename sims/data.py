@@ -11,7 +11,7 @@ Module contents:          - definition of data class (i.e. a structured containe
                           - definition of data formatting functions
                           - definition of functions for sampling data, 
                             at specified frequencies and with specified arguments, 
-                            according to the contents of the params['data'] section
+                            according to the contents of the params['model']['data'] section
 
 
 Author:                   Drew Ellison Hart
@@ -56,7 +56,9 @@ class Data:
                              'Geotiff': write_geotiff
                              }
 
-
+        #pull necessary stuff from params
+        T = params.model.its.main.T
+        data_params = params.model.data
 
         #create a Data.data object, where all of the collected data will be stored
         self.data = {'0':{
@@ -69,34 +71,34 @@ class Data:
      
         
         #grab the params['data'] content into a self.params attribute
-        self.params = params['data']
+        self.params = data_params
 
         #and set the sampling times in it accordingly
-        assert type(self.params['freq'] in (list, float, int))
+        assert type(self.params.freq in (list, float, int))
 
-        if type(self.params['freq']) == list:
-            if 0 not in self.params['freq']:
-                self.params['freq'] = [0] + self.params['freq']
-            if params['T'] not in self.params['freq']:
-                self.params['freq'] = self.params['freq'] + [params['T']]
+        if type(self.params.freq) == list:
+            if 0 not in self.params.freq:
+                self.params.freq = [0] + self.params.freq
+            if T not in self.params.freq:
+                self.params.freq = self.params.freq + [T]
             
-        elif type(self.params['freq']) in (float, int): 
-            self.params['freq'] = range(0, params['T'], int(self.params['freq'])) + [params['T']]
+        elif type(self.params.freq) in (float, int): 
+            self.params.freq = range(0, T, int(self.params.freq)) + [T]
 
 
 
 
 
-    #a collection method, to be called each timestep, which will collect needed data and then calls the functions to calculate them all and adds the results to self.stats
-    def collect(self, pop, land, params, drop_after_write = True):
+    #a do_collection method, to be called each timestep, which will collect needed data and then calls the functions to calculate them all and adds the results to self.stats
+    def do_collection(self, pop, land, params, drop_after_write = True):
 
         #if it's the appropriate time
-        if pop.t in self.params['freq']:
+        if pop.t in self.params.freq:
 
             #sample data according to the scheme defined 
-            self.data[pop.t] = sample_data(pop, land, params, self.params['sampling_scheme'], **self.params['sampling_args'])
+            self.data[pop.t] = sample_data(pop, land, **self.params.sampling_args)
 
-            if 'write_intermittent':
+            if self.params.write_intermittent:
                 self.write(pop, drop_after_write = drop_after_write)
 
 
@@ -120,28 +122,28 @@ class Data:
 
 
         #get filename components
-        rn = self.params['run_name']        #run_name (could be used to identify separate paramterizations
+        rn = self.params.run_name        #run_name (could be used to identify separate paramterizations
                                             #and/or separate populations/species modeled simultaneously)
         it = pop.it                         #iteration number
         t = pop.t                           #timestep
         #t = max(self.data.keys())           #timestep
-        gen_df = self.params['gen_data_format']    #gen data format
-        geo_df = self.params['geo_data_format']    #geo data formats
+        gen_df = self.params.gen_data_format    #gen data format
+        geo_df = self.params.geo_data_format    #geo data formats
 
         #get filenames
         gen_data_file = '%s_it%i_t%i_.%s' % (rn, it, t, self.extension_dict[gen_df])
         geo_vect_data_file = '%s_it%i_t%i_.%s' % (rn, it, t, self.extension_dict[geo_df[0]])
-        if self.params['include_land']:
+        if self.params.include_land:
             geo_rast_data_file = '%s_it%i_t%i_.%s' % (rn, it, t, self.extension_dict[gen_df[1]])
 
 
         #get data
         
         
-        #format the data as stipulated in params['data']
-        gen_data = format_gen_data(self.data[t], self.params['gen_data_format'])
+        #format the data as stipulated in params.model.data
+        gen_data = format_gen_data(self.data[t], self.params.gen_data_format)
 
-        geo_data = format_geo_data(self.data, self.params['geo_data_format'])
+        geo_data = format_geo_data(self.data, self.params.geo_data_format)
 
 
 
@@ -155,7 +157,7 @@ class Data:
             #write geo_data
             self.geo_data_write_fn_dict[geo_data[0]](geo_vect_data_file)
         
-            if self.params['include_land'] == True:
+            if self.params.include_land == True:
                 self.geo_data_write_fn_dict[geo_data[1]](geo_rast_data_file)
             
             if  drop_after_write == True:
@@ -178,9 +180,9 @@ class Data:
 #----------------------------------
 
 
-def sample_data(pop, land, params, sampling_scheme, n = None, points = None, radius = None, transect_endpoints = None, n_transect_points = None):
+def sample_data(pop, land, scheme, n = None, points = None, radius = None, transect_endpoints = None, n_transect_points = None):
 
-    '''<sampling_scheme> can be: 
+    '''<scheme> can be: 
                     'all'       --> takes whole population
                     'random'    --> takes random sample of size <n>
                                     from anywhere on landscape
@@ -199,17 +201,17 @@ def sample_data(pop, land, params, sampling_scheme, n = None, points = None, rad
     #get a dict of the individuals to be sampled
     sample = {}
     
-    if sampling_scheme == 'all':
+    if scheme == 'all':
         sample.update(pop.items())
     
-    elif sampling_scheme == 'random':
+    elif scheme == 'random':
         ids = r.choice([*pop], size = n, replace = False)
         sample.update({i:v for i,v in pop.items() if i in ids})
 
-    elif sampling_scheme == 'points': 
+    elif scheme == 'points': 
         sample.update(point_sample(pop, n, points, radius))
 
-    elif sampling_scheme == 'transect':
+    elif scheme == 'transect':
         transect_pts = [get_transect_points(eps, n_transect_points) for eps in transect_endpoints]
         [sample.update(point_sample(pop, n, points, radius)) for points in transect_pts]
 
@@ -219,8 +221,7 @@ def sample_data(pop, land, params, sampling_scheme, n = None, points = None, rad
 
     sampled_data = {'genomic_arch': pop.genomic_arch,
                     'individs': sample,
-                    'land': land,
-                    'params': params
+                    'land': land
                     }
 
 

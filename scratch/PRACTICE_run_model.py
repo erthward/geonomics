@@ -15,7 +15,7 @@ def burn(stop_after = None):
         print('     POP %i\n' % len(pop))
         pop.reset_age_stage(burn=True)
         pop.set_Nt()
-        pop.do_movement(land)
+        pop.do_movement()
         extinct = demography.do_pop_dynamics(land, pop, with_selection=False, burn=True)
         t += 1
         if extinct == 1:
@@ -39,7 +39,7 @@ def main(T, reassign_genomes=False):
         #lc.make_change(t)
         pop.reset_age_stage(burn=False)
         pop.set_Nt()
-        pop.do_movement(land)
+        pop.do_movement()
         extinct = demography.do_pop_dynamics(land, pop, with_selection=True)
         if extinct == 1:
             break

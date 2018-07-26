@@ -11,7 +11,7 @@ Module contents:          - definition of Stats class (i.e. structured container
                             for stats calculated during model run)
                           - definition of functions for calculating various stats, 
                             at specified frequencies and with specified arguments, 
-                            according to the contents of the params['stats'] section
+                            according to the contents of the params.model.stats section
 
 
 Author:                   Drew Ellison Hart
@@ -54,10 +54,12 @@ class Stats:
 
         #create a Stats.stats object, where all of the stats calculated will be stored
         self.stats = {}
-        for stat, stat_params in params['stats'].items():
-            if stat_params['calc'] == True:
-                self.stats[stat] = {'data': [np.nan]*int(np.floor(params['T']/float(stat_params['freq']))),
-                                    'freq': stat_params['freq'],
+        T = params.model.its.main.T
+        stats_params = params.model.stats
+        for stat, stat_params in stats_params.items():
+            if stat_params.calc:
+                self.stats[stat] = {'data': [np.nan]*int(np.floor(T/float(stat_params.freq))),
+                                    'freq': stat_params.freq,
                                     #create tuple of other, stat-specific parameters, 
                                     #to later be unpacked as arguments to the appropriate stat function
                                     'other_params': dict([(k,v) for k,v in stat_params.items() if k not in ['calc', 'freq']])
@@ -101,10 +103,10 @@ def make_stats_object(params):
     return(Stats(params))
 
 
+#TODO: either get rid of this, or just make it check the pop.Nt list instead
 def calc_Nt(pop):
-    Nt = pop.census()
+    Nt = len(pop)
     return(Nt)
-
 
 
 def calc_ld(pop, plot = False):
@@ -165,7 +167,7 @@ def calc_het(pop):
     return(het)
 
     
-
+#TODO: replace this loop with the populome approach
 def calc_maf(pop):
     two_N = 2*float(pop.census())
     MAF = []

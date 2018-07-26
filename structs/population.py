@@ -22,11 +22,11 @@ Documentation:             URL
 
 ##########################################
 '''
+
 #geonomics imports
-from utils import viz
-from utils import spatial as spt
+from utils import viz, spatial as spt
 from structs import genome, landscape, individual
-from ops import movement, mating, selection, mutation, demography
+from ops import movement, mating, selection, mutation, demography, change
 
 #other imports
 import numpy as np
@@ -50,13 +50,12 @@ import sys
 ######################################
 
 class Population(OD):
-    '''Population(self, N, individs, genomic_arch, size, birth_rate = None, death_rate = None, T = None)'''
 
     #######################
     ### SPECIAL METHODS ###
     #######################
 
-    def __init__(self, inds, pop_params, genomic_arch):
+    def __init__(self, name, inds, land, pop_params, genomic_architecture):
 
         #check the inds object is correct
         assert type(inds) in (OD, dict), "ERROR: inds must be of type dict or type collections.Ordered_Dict"
@@ -67,7 +66,8 @@ class Population(OD):
         self.inds = self.values()
 
         #set other attributes
-        self.name = pop_params['name']
+        self.name = name
+        self.land_dim = land.dim
         self.it = None  # attribute to keep track of iteration number this pop is being used for
             # (optional; will be set by the iteration.py module if called)
         self.t = 0  # attribute to keep of track of number of timesteps the population has evolved
@@ -83,13 +83,29 @@ class Population(OD):
         #attributes for storing numpy arrays of all individuals' coordinates and cells, to avoid repeat compute time each turn
         self.coords = None
         self.cells = None
-        #create empty attribute to hold kd_tree
-        self.kd_tree = None
 
-        #grab all of the params['pop'] parameters as Population attributes
+        #create empty attributes to hold spatial objects that will be created after the population is instantiated
+        self.kd_tree = None  
+        #create empty attribute to hold the Density_Grid_Stack
+        self.dens_grids = None
+
+        #create empty attribute for a spatial.Movement_Surface
+        #which may be created, depending on paramters
+        self.move_surf = None
+
+        #create empty attributes for islands and related attributes,
+        #which may be created, depending on paramters
+        self.n_island_mask_scape = None
+
+        #create an empty changer attribute, which will be reset if the parameters define changes for this pop
+        self.changer = None
+
+        #grab all of the mating, mortality, and movement parameters as Population attributes
         for section in ['mating', 'mortality', 'movement']:
-            for att in pop_params[section].keys():
-                setattr(self, att, pop_params[section][att])
+            for att,val in pop_params[section].items():
+                #leave out the move_surf and islands components, which will be handled separately
+                if not isinstance(val, dict):
+                    setattr(self, att, pop_params[section][att])
 
         #TODO: probably get rid of this, or move it elsewhere in the package?
         #set the heterozygote effects dictionary
@@ -103,8 +119,8 @@ class Population(OD):
         }
 
         #set the Genomic_Architecture object
-        self.genomic_arch = genomic_arch
-        assert self.genomic_arch.__class__.__name__ == 'Genomic_Architecture', "self.genomic_arch must be an instance of the genome.Genomic_Architecture class"
+        self.gen_arch = genomic_architecture
+        assert self.gen_arch.__class__.__name__ == 'Genomic_Architecture', "self.gen_arch must be an instance of the genome.Genomic_Architecture class"
 
         #create a couple getter functions, for use in getting all individs' coordinates and certain individs' coordinates
         self.__coord_attrgetter__ = attrgetter('x', 'y')
@@ -127,11 +143,11 @@ class Population(OD):
         inds_str = inds_str + first_ind_str + last_ind_str + '\n'
         params = sorted([str(k) + ': ' +str(v) for k,v in vars(self).items() if type(v) in (str, int, bool, float)], key = lambda x: x.lower()) 
         params_str = "Parameters:\n\t" + ',\n\t'.join(params) 
-        return('\n'.join([type_str, inds_str, params_str]))
+        return '\n'.join([type_str, inds_str, params_str])
 
     def __repr__(self):
         repr_str = self.__str__()
-        return(repr_str)
+        return repr_str
 
 
     #####################
@@ -163,16 +179,14 @@ class Population(OD):
 
     # method to move all individuals simultaneously, and sample their new habitats
     def do_movement(self, land):
-        movement.move(self, land)
+        movement.move(self)
         self.set_habitat(land)
         self.set_coords_and_cells()
-
 
     # function for finding all the mating pairs in a population
     def find_mating_pairs(self, land):
         mating_pairs = mating.find_mates(self, land)
-        return (mating_pairs)
-
+        return mating_pairs
 
     # function for executing mating for a population
     def do_mating(self, land, mating_pairs, burn=False):
@@ -182,7 +196,7 @@ class Population(OD):
         self.n_births.append(total_births)
 
         if burn == False:
-            recomb_paths = self.genomic_arch.recomb_paths.get_paths(total_births*2)
+            recomb_paths = self.gen_arch.recomb_paths.get_paths(total_births*2)
             new_genomes = mating.do_mating(self, mating_pairs, n_births, recomb_paths)
         
         for n_pair, pair in enumerate(mating_pairs):
@@ -211,7 +225,7 @@ class Population(OD):
                         self[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, age)
                
                     #set new individual's phenotype (won't be set during burn-in, becuase no genomes assigned)
-                    self[offspring_key].set_phenotype(self.genomic_arch)
+                    self[offspring_key].set_phenotype(self.gen_arch)
 
 
                 elif burn:
@@ -232,19 +246,24 @@ class Population(OD):
     def do_mutation(self, log=False):
         mutation.do_mutation(self)
 
+    #method to make population changes
+    def make_change(self):
+        self.changer.make_change(self.t)
+
+    #method to check if the population has gone extinct
     def check_extinct(self):
         if len(self) == 0:
-            print('\n\nYOUR POPULATION WENT EXTINCT!\n\n')
-            return (1)
+            print('\n\nYOUR POPULATION WENT EXTINCT.\n\n')
+            return 1
             # sys.exit()
         else:
-            return (0)
+            return 0
 
-    def calc_density(self, land, normalize_by= None, min_0=True, max_1=False, max_val=None, as_landscape = False, set_N=False):
+    def calc_density(self, normalize_by= None, min_0=True, max_1=False, max_val=None, as_landscape = False, set_N=False):
 
         '''
-        Calculate an interpolated raster of local population density, using the
-        Land.density_grid_stack object.
+        Calculate an interpolated raster of local population density, using spatial.Density_Grid_Stack object
+        in self.dens_grids.
 
         Valid values for normalize_by currently include 'pop_size' and 'none'. If normalize_by = 'pop_size', max_1 =
         True will cause the output density raster to vary between 0 and 1, rather than between 0 and the current
@@ -254,7 +273,7 @@ class Population(OD):
         x = self.get_x_coords()
         y = self.get_y_coords()
 
-        dens = land.density_grid_stack.calc_density(x, y)
+        dens = self.dens_grids.calc_density(x, y)
 
         if normalize_by is not None:
 
@@ -283,7 +302,7 @@ class Population(OD):
             self.set_N(dens)
 
         else:
-            return (dens)
+            return dens
 
 
     def set_habitat(self, land, individs = None):
@@ -298,7 +317,7 @@ class Population(OD):
 
     
     def set_phenotype(self):
-        [ind.set_phenotype(self.genomic_arch) for ind in self.inds];
+        [ind.set_phenotype(self.gen_arch) for ind in self.inds];
 
 
     def set_fitness(self):
@@ -313,9 +332,14 @@ class Population(OD):
         self.cells = np.int32(np.floor(self.coords))
 
 
-    #method to set the population's kd_tree attribute
+    #method to set the population's spatial.KD_Tree attribute
     def set_kd_tree(self, leafsize = 100):
         self.kd_tree = spt.KD_Tree(coords = self.coords, leafsize = leafsize)
+
+
+    #method to set the population's spatial.Density_Grid_Stack attribute
+    def set_dens_grids(self, land, widow_width = None):
+        self.dens_grids = spt.Density_Grid_Stack(land = land, window_width = self.dens_grid_window_width)
 
 
     # method to get individs' habitat values
@@ -333,7 +357,7 @@ class Population(OD):
             else:
                 habs = {i:ind.habitat[scape_num] for i, ind in self.items()}
                 habs = np.array(ig(habs))
-        return(habs)
+        return habs
 
     def get_age(self, individs=None):
         if individs is None:
@@ -342,7 +366,7 @@ class Population(OD):
             ig = itemgetter(*individs)
             ages = {i: ind.age for i, ind in self.items()}
             ages = np.array(ig(ages))
-        return(ages)
+        return ages
 
     def get_genotype(self, locus, return_format='mean', individs=None, by_dominance=False):
 
@@ -354,7 +378,7 @@ class Population(OD):
 
         elif return_format == 'mean':
             if by_dominance == True:
-                h = self.genomic_arch.h[locus]
+                h = self.gen_arch.h[locus]
             else:
                 h = 0.5
             return dict(zip(individs, self.heterozygote_effects[h](
@@ -368,13 +392,13 @@ class Population(OD):
             ig = itemgetter(*individs)
             zs = {i:ind.phenotype for i, ind in self.items()}
             zs = np.array(ig(zs))
-        return(zs)
+        return zs
 
     def get_fitness(self, trait_num = None, set_fit = False):
         return selection.calc_fitness(self, trait_num = trait_num, set_fit = set_fit)
 
     def get_dom(self, locus):
-        return {locus: self.genomic_arch.h[locus]}
+        return {locus: self.gen_arch.h[locus]}
 
     def get_coords(self, individs = None, as_float = True):
         coords = list(map(self.__coord_attrgetter__, self.inds))
@@ -387,22 +411,22 @@ class Population(OD):
         else:
             coords = np.int32(np.floor(coords))
 
-        return(coords)
+        return coords
             
             
     def get_cells(self, individs = None):
         cells = self.get_coords(individs = individs, as_float = False)
-        return(cells)
+        return cells
   
 
     def get_x_coords(self, individs=None):
         coords = self.get_coords(individs = individs)
-        return(coords[:,0])
+        return coords[:,0]
 
 
     def get_y_coords(self, individs=None):
         coords = self.get_coords(individs = individs)
-        return(coords[:,1])
+        return coords[:,1]
 
     #use the kd_tree attribute to find nearest neighbors either within the population, if within == True,
     #or between the population and the points provided, if within == False and points is not None
@@ -520,9 +544,9 @@ class Population(OD):
         # constraint, but values lower than this will also be constrained to the minimum-value color for plotting)
         #NOTE: the np.atleast_2d(...).min() construct makes this work both for fixed and spatially varying phi
         if trait_num is None: 
-            min_fit = np.product([1 - np.atleast_2d(t.phi).min() for t in list(self.genomic_arch.traits.values())])
+            min_fit = np.product([1 - np.atleast_2d(t.phi).min() for t in list(self.gen_arch.traits.values())])
         else:
-            min_fit = 1 - np.atleast_2d(self.genomic_arch.traits[trait_num].phi).min()
+            min_fit = 1 - np.atleast_2d(self.gen_arch.traits[trait_num].phi).min()
 
         #then get uneven cmap and cbar-maker (needs to be uneven to give color-resolution to values varying
         #between 1 and the minimum-fitness value assuming all phenotypes are constrained 0<=z<=1, but then also
@@ -562,7 +586,7 @@ class Population(OD):
                  alpha=0.6)
 
 
-    def show_pop_growth(self, params):
+    def show_pop_growth(self):
         T = range(len(self.Nt))
         x0 = self.Nt[0] / self.K.sum()
         plt.plot(T, [demography.logistic_soln(x0, self.R, t) * self.K.sum() for t in T], color='red')
@@ -576,72 +600,114 @@ class Population(OD):
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)
 
-
-#NOTE: this class won't be doing too much right away, but it lays the foundation 
-#for enabling interactions between populations (i.e. species) further down the road
-class Community(dict):
-    def __init__(self, pops):
-        self.update(pops)
-        self.n_pops = len(pops)
-        
-        
 ######################################
 # -----------------------------------#
 # FUNCTIONS -------------------------#
 # -----------------------------------#
 ######################################
 
-def make_population(genomic_arch, land, pop_params, burn=False):
-    dim = land.dim
+#function that uses the params.pops[<pop_num>].init.['K_<>'] parameters 
+#to make the initial carrying-capacity raster
+def make_K(pop, land, K_scape_num, K_fact):
+    K_rast = land[K_scape_num].rast * K_fact
+    return K_rast 
 
-    assert dim.__class__.__name__ in ['tuple', 'list'], "dim should be expressed as a tuple or a list"
 
-    #get the population's starting params
-    start_params = pop_params['start'] 
-    #and extract the starting pop size from it
-    N = start_params.pop('N')
+def make_population(land, pop_params, burn=False):
+    #get pop's intializing params
+    init_params = pop_params.init
 
+    #if this population should have genomes, create the genomic architecture
+    if 'genome' in pop_params.keys():
+        g_params = params.genome
+        #make genomic_architecture
+        gen_arch = genome.make_genomic_architecture(g_params = g_params)
+
+    #make individs
+    N = init_params.pop('N')
     #create an ordered dictionary to hold the individuals, and fill it up
     inds = OD()
     for idx in range(N):
         # use individual.create_individual to simulate individuals and add them to the population
-        ind = individual.make_individual(idx = idx, genomic_arch = genomic_arch, dim = dim)
+        ind = individual.make_individual(idx = idx, offspring = False, dim = land.dim, genomic_architecture = gen_arch, burn = burn)
         inds[idx] = ind
-        #land.mating_grid.add(ind)
-
-    #then create the population from those individuals
-    pop = Population(inds = inds, pop_params = pop_params, genomic_arch=genomic_arch)
-   
-    #use the remaining start_params to set the carrying-capacity raster (K)
-    pop.set_K(make_K(pop, land, **start_params))
-
+    
+    #create the population from those individuals
+    name = init_params.pop('name')
+    pop = Population(name = name, inds = inds, land = land, pop_params = pop_params, genomic_arch=gen_arch)
+  
+    #use the remaining init_params to set the carrying-capacity raster (K)
+    pop.set_K(make_K(pop, land, **init_params)
     #set initial habitat values
     pop.set_habitat(land)
-
     #set initial coords and cells
     pop.set_coords_and_cells()
-
-    #set phenotypes
-    [i.set_phenotype(pop.genomic_arch) for i in pop.values()]
-
     #set the kd_tree
     pop.set_kd_tree()
 
-    return(pop)
+    #set phenotypes, if the population has genomes
+    if pop.gen_arch is not None:
+        [ind.set_phenotype(pop.gen_arch) for ind in pop.inds]
 
+    #make density_grid
+    pop.set_dens_grids(land = land)
 
-def make_community(genomic_arch, land, params, burn=False):
-    pops = {k: make_population(genomic_arch, land, params['pops'][k], burn) for k in params['pops'].keys()}
-    return(Community(pops))
+    #if movement and movement_surf
+    if pop_params.movement.move:
+        if 'move_surf' in pop_params.movement.keys():
+            ms_params = pop_params.movement.move_surf
+            #TODO: Once I have a meta-function that takes arguments about whether or not a movement_surface is
+            #desired for each pop, and the same for islands, and then generates a template params file, then I
+            #will get rid of the 'make' keys here and in the islands section below
+            make_ms = ms_params.pop('make')
+            if make_ms:
+                #grab the scape number for the scape that the movement surface is to be based on
+                move_surf_scape_num = ms_params.pop('move_surf_scape_num')
+                #then grab the move_surf scape's raster
+                move_rast = land[move_surf_scape_num].rast
 
+###ISLANDS############################################################################################################
+                #TODO: EITHER GET RID OF, OR DEEPLY RETHINK, THE ISLANDS THING
+                #make the islands layer if required
+                if 'islands' in pop_params.mortality.keys():
+                    is_params = pop_params.moratlity.islands
+                    make_is = is_params.pop('make')
+                    if make_is:
+                        move_rast[move_rast < is_params.island_val] = 1e-8
+                            #TODO: if I keep this functionality, consider adding a params option to read in the mask
+                            #from a raster file or numpy array or both
+                        #set the scape's mask_island_vals attribute
+                        land[move_surf_scape_num].mask_island_vals = True
+                            #TODO: if I keep this functionality, also come up with a better way to tell the land 
+                            #to mask the 1e-8 vals when plotting the raster
+                        #create a new scape for the island mask
+                        is_mask = landscape.Scape(np.ma.masked_less_equal(move_rast, 1e-8).mask)
+                        #set its island_mask attribute to True
+                        is_mask.island_mask = True
+                        #then set it as the last scape in the Land object
+                        land[land.n_scapes] = is_mask
+                        #and set the land's island_mask_scape_num attribute
+                        land.island_mask_scape_num = land.n_scapes
+                        #and increment land.n_scapes by 1
+                        land.n_scapes += 1
+                #reset the raster from the scape the move_surf is based on back to the raster we grabbed from
+                #it earlier, in case any changes were made by the islands functionality
+                    #TODO: because multiple populations could use the same scape for different things, it actually
+                    #makes no sense to do this any more!
+                land[move_surf_scape_num].rast = move_rast
+######################################################################################################################
 
-#function that uses the params['pop']['start']['K_<>'] parameters 
-#to make the starting carrying-capacity raster
-def make_K(pop, land, K_scape_num, K_fact):
-    K_rast = land[K_scape_num].rast * K_fact
-    return(K_rast)
+                #make the movement surface and set it as the pop's move_surf attribute
+                pop.move_surf = spt.Movement_Surface(land = land, **ms_params)
 
+    #if this population has changes parameterized, create a Pop_Changer object for it
+    if 'change' in pop_params.keys():
+        #grab the change params
+        ch_params = pop_params.change
+        #make Pop_Changer and set it to the pop's changer attribute
+        pop.changer = change.Pop_Changer(pop, ch_params)
 
+    return pop 
 
 
 # function for reading in a pickled pop
@@ -649,5 +715,5 @@ def read_pickled_pop(filename):
     import cPickle
     with open(filename, 'rb') as f:
         pop = cPickle.load(f)
-
     return pop
+

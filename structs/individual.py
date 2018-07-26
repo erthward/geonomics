@@ -39,7 +39,7 @@ import numpy.random as r
 ######################################
 
 class Individual:
-    def __init__(self, idx, new_genome, x, y, sex = None, age=0):
+    def __init__(self, idx, x, y, age=0, new_genome=None, sex=None):
 
         self.idx = idx
 
@@ -110,49 +110,50 @@ class Individual:
 # -----------------------------------#
 ######################################
 
-def make_individual(idx, genomic_arch, dim=None, new_genome = None, ploidy = None, parental_centerpoint = None, sex = None, age=0, burn =False):
-    """Create a new individual from:
-            - either an instance of genome.Genomic_Architecture (i.e. for newly simulated individual) or both
-              the genomic architecture and a numpy.ndarray genome (e.g. for new offspring) (one of the two must be provided),
-            - x and y-coordinates
-            - sex
-            - age.
-            """
+def make_individual(idx, offspring=True, dim=None, genomic_architecture=None, new_genome = None, sex=None, parental_centerpoint = None, age=0, burn=False):
 
-    #LOOP FOR SIMULATION OF NEW INDIVIDUALS FOR STARTING POPULATION
+    """Create a new individual.
 
-    if new_genome != None:
-        assert parental_centerpoint != None, "parental_centerpoint needed to create new offspring"
-        assert parental_centerpoint.__class__.__name__ in ['tuple', 'list'], "parental_centerpoint should be a tuple or a list"
-        assert parental_centerpoint[0] >= 0 and parental_centerpoint[1] >= 0, "parental_centerpoint coordinates must be within landscape, but %s was provided" % str(parental_centerpoint)
-        assert ploidy != None, "ploidy needed to create new genome from genomic content"
+        If it is to have a genome, that can be created from either an instance of 
+        genome.Genomic_Architecture (i.e. for a newly simulated individual) or 
+        both the genomic architecture and a numpy.ndarray genome (e.g. for a new 
+        offspring).
+    
+        It will be assigned x- and y-coordinates, using the dim argument (i.e. the
+        landscape dimensionality) if it is a newly simulated individual rather 
+        than offspring.
 
+        It will be assigned a random sex, unless sex is provided.
 
-        x,y = dispersal.disperse(parental_centerpoint) #NOTE: needs to be written!
-
-
-        sex = r.binomial(1,0.5)  #NOTE: For now, sex randomly chosen at 50/50. Change if later decide to implement sex chroms!!!
-
-
-        return Individual(idx, new_genome, x, y, sex = sex, age = 0)
-
-
-    elif new_genome == None:
-        assert dim != None, "landscape dim required to simulate a new individual without reproduction"
-
+        It will be assigned age 0, unless specifically fed otherwise.
+        """
+    #set the x,y location of the individual
+    if offspring:
+        #TODO: probably remove these assert statements; don't see any reason I need to keep running them, so it's just unnecessary comuptation during the model
+        #assert parental_centerpoint != None, "parental_centerpoint needed to create new offspring"
+        #assert parental_centerpoint.__class__.__name__ in ['tuple', 'list'], "parental_centerpoint should be a tuple or a list"
+        #assert parental_centerpoint[0] >= 0 and parental_centerpoint[1] >= 0, "parental_centerpoint coordinates must be within landscape, but %s was provided" % str(parental_centerpoint)
+        #get a starting position from the parental_centerpoint
+        x,y = dispersal.disperse(parental_centerpoint) 
+    else:
         #randomly assign individual a valid starting location
         x,y = r.rand(2)*dim
 
-        if burn == False:
+    #set the genome, if necessary
+    if genomic_architecture is not None or new_genome is not None:
+        #if not offspring (i.e. a new random individual), draw a new genome
+        if not offspring:
+            #if this is not for the burn-in, draw a proper genome
+            if not burn:
+                new_genome = genome.draw_genome(genomic_architecture)
+            #otherwise, just a dummy genome
+            else:
+                new_genome = np.atleast_2d([0,0])
 
-            #use genome.draw_genome and genomic_arch variable to simulate individual's genome
-            new_genome = genome.draw_genome(genomic_arch)
+    #set the sex, if necessary
+    if sex is None:
+        #NOTE: For now sex randomly chosen at 50/50. Change if decide to implement sex chroms, or pop.sex_ratio
+        sex = r.binomial(1,0.5)  
 
-            return Individual(idx, new_genome, x, y, sex = sex, age = age)
-
-        elif burn == True:
-
-            dummy_genome = np.atleast_2d(np.array([0,0]))
-            return(Individual(idx, new_genome = dummy_genome, x=x, y=y, sex = sex, age = age))
-
+    return Individual(idx = idx, x = x, y = y, age = age, new_genome = new_genom, sex = sex)
 

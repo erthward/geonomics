@@ -35,8 +35,9 @@ import bitarray
 ######################################
 
 class Trait:
-    def __init__(self, num, phi, n_loci, scape_num, alpha_dist_sigma, gamma, univ_advant):
-        self.num = num
+    def __init__(self, idx, name, phi, n_loci, scape_num, alpha_dist_sigma, gamma, univ_advant):
+        self.idx = idx
+        self.name = name
         self.phi = phi
         self.n_loci = n_loci
         self.scape_num = scape_num
@@ -179,9 +180,10 @@ def make_traits(traits_params):
     from copy import deepcopy
     params_copy = deepcopy(traits_params)
     #pop out the number of traits to create
-    num_traits = params_copy.pop('num') 
+    num_traits = len(params_copy)
     #then for each of i traits, unpack the ith components of the remaining params to create the trait dict
-    traits = {i : Trait(i, **{k:v[i] for k,v in params_copy.items()}) for i in range(num_traits)}
+    traits = {k: Trait(k, **v) for k,v in params_copy.items()}
+    #traits = {i : Trait(i, **{k:v[i] for k,v in params_copy.items()}) for i in range(num_traits)}
     return(traits)
 
 
@@ -195,7 +197,7 @@ def draw_r(g_params, recomb_rate_fn = None):
 
     #otherwise, use default function with either default or custom param vals
     else: 
-        L = g_params['L']
+        L = g_params.L
 
         param_vals = {'alpha_r': 7e2, 'beta_r': 7e3}
 
@@ -229,26 +231,26 @@ def make_recombinants(r_lookup, n_recombinants):
 
 
 def make_recomb_array(g_params):
-    #get L (num of loci) and l_c (if provided; num of loci per chromsome) from params['genome'] dict
-    L = g_params['L']
+    #get L (num of loci) and l_c (if provided; num of loci per chromsome) from the genome params dict
+    L = g_params.L
     if ('l_c' in g_params.keys() and g_params['l_c'] != None and len(g_params['l_c']) > 1):
-        l_c = g_params['l_c']
+        l_c = g_params.l_c
         #and if l_c provided, check chrom lenghts sum to total number of loci
         assert sum(l_c) == L, 'The chromosome lengths provided do not sum to the number of loci provided.'
     else:
         l_c = [L]
 
 
-    #if g_params['recomb_array'] (i.e a linkage map) manually provided (will break if not a list, tuple, or np.array), 
+    #if g_params.recomb_array (i.e a linkage map) manually provided (will break if not a list, tuple, or np.array), 
     #then set that as the recomb_array, and check that len(recomb_array) == L
     if ('recomb_array' in g_params.keys() and g_params['recomb_array'] != None):
-        recomb_array = np.array(g_params['recomb_array'])
-        assert len(recomb_array) == L, "Length of recomb_array provided not equal to params['genome']['L']."
+        recomb_array = np.array(g_params.recomb_array)
+        assert len(recomb_array) == L, "Length of recomb_array provided not equal to stipulated genome length ('L')."
 
         #NOTE: #Always necessary to set the first locus r = 1/ploidy, to ensure independent assortment of homologous chromosomes
         recomb_array[0] = 0.5
         #NOTE: for now, obligate diploidy
-        #recomb_array[0] = 1/g_params['x'] 
+        #recomb_array[0] = 1/g_params.x 
 
         return(recomb_array)
 
@@ -258,8 +260,8 @@ def make_recomb_array(g_params):
 
         #if a custom recomb_fn is provided, grab it
         if ('recomb_rate_custom_fn' in g_params.values() and g_params['recomb_rate_custom_fn'] is not None):
-            recomb_rate_fn = g_params['custom_fns']
-            assert callable(recomb_rate_fn), "The recomb_rate_fn provided in params['genome']['recomb_rate_custom_fn'] appear not to be defined properly as a callable function."
+            recomb_rate_fn = g_params.recomb_rate_custom_fn
+            assert callable(recomb_rate_fn), "The 'recomb_rate_custom_fn' provided in the parameters appears not to be defined properly as a callable function."
             #then call the draw_r() function for each locus, using custom recomb_fn
             recomb_array = draw_r(g_params, recomb_fn = recomb_rate_fn)
 
@@ -280,7 +282,7 @@ def make_recomb_array(g_params):
         #NOTE: #Always necessary to set the first locus r = 0.5, to ensure independent assortment of homologous chromosomes
         recomb_array[0] = 0.5
         #NOTE: for now, obligate diploidy
-        #recomb_array[0] = 1/g_params['x']
+        #recomb_array[0] = 1/g_params.x
 
 
         return(recomb_array, sorted(l_c))
@@ -320,27 +322,23 @@ def make_bitarray_recomb_subsetter(recomb_path):
 
 #build the genomic architecture
 #NOTE: This will create the "template" for the genomic architecture that will then be used to simulate individuals and populations
-def make_genomic_arch(params, land, allow_multiple_env_vars = True):
-
-    g_params = params['genome']
-
-    p_params = params['pops']
+def make_genomic_architecture(g_params):
 
     #grab necessary parameters from the g_params dict
-    L = g_params['L']
-    mu = g_params['mu']
-    x = g_params['x']
-    pleiotropy = g_params['pleiotropy']
+    L = g_params.L
+    mu = g_params.mu
+    x = g_params.x
+    pleiotropy = g_params.pleiotropy
     try:
-        recomb_lookup_array_size = g_params['recomb_lookup_array_size']
+        recomb_lookup_array_size = g_params.recomb_lookup_array_size
     except:
         recomb_lookup_array_size = None
     try:
-        n_recomb_paths = g_params['n_recomb_paths']
+        n_recomb_paths = g_params.n_recomb_paths
     except:
         n_recomb_paths = None
 
-    trait_dict = make_traits(g_params['traits'])
+    trait_dict = make_traits(g_params.traits)
     
 
     p = draw_allele_freqs(L)  

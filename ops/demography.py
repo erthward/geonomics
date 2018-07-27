@@ -76,7 +76,7 @@ class Debug_Plotter:
 # -----------------------------------#
 ######################################
 
-def calc_n_pairs(pairs, land, pop):
+def calc_n_pairs(pairs, pop):
     #if there are pairs
     if pairs.size > 0:
         #get their coordinates
@@ -87,20 +87,20 @@ def calc_n_pairs(pairs, land, pop):
         p_x = pairs_coords[:,0].reshape(pairs.shape).mean(axis = 1) 
         p_y = pairs_coords[:,1].reshape(pairs.shape).mean(axis = 1) 
 
-        #use the Land.density_grid_stack to calculate a raster of the expected number of pairs
+        #use the pop.dens_grids to calculate a raster of the expected number of pairs
         #NOTE: because the window_width of that object is much wider than dispersal_mu in the parameterizations
         #I've typically been running, this produces much wider areas of high values in the 
         #N_b, N_d, and hence d rasters than the old method did (which had its window_width set to dispersal_mu,
         #leading of course to huge lags in the old calc_density algorithm)
         #need to think about whether I need to attend to this, and if so, how
-        n_pairs = np.clip(land.density_grid_stack.calc_density(p_x, p_y), a_min = 0, a_max = None)
+        n_pairs = np.clip(pop.dens_grids.calc_density(p_x, p_y), a_min = 0, a_max = None)
 
         #remove NaNs
         n_pairs[np.isnan(n_pairs)] = 0
 
     #otherwise just return a 0 raster
     else:
-        n_pairs = np.zeros(land.dim)
+        n_pairs = np.zeros(pop.land_dim)
 
     return(n_pairs)
 
@@ -203,7 +203,7 @@ def do_pop_dynamics(land, pop, with_selection = True, burn = False, births_befor
     pairs = pop.find_mating_pairs(land = land)
 
     #calc num_pairs raster (use the calc_pop_density function on the centroids of the mating pairs)
-    n_pairs = calc_n_pairs(pairs = pairs, land = land, pop = pop)
+    n_pairs = calc_n_pairs(pairs = pairs, pop = pop)
     #run checks on n_pairs
     if asserts:
         assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())  
@@ -219,7 +219,7 @@ def do_pop_dynamics(land, pop, with_selection = True, burn = False, births_befor
         pop.do_mating(land, pairs, burn)
 
     #calc N raster, set it as pop.N, then get it  
-    pop.calc_density(land = land, set_N = True)
+    pop.calc_density(set_N = True)
     N = pop.N
     #run checks on N
     if asserts:

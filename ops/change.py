@@ -29,7 +29,7 @@ import numpy.random as r
 from operator import attrgetter as ag
 from collections import OrderedDict as OD
 import itertools as it
-import copy
+from copy import deepcopy
 
 
 #TODO:
@@ -116,6 +116,11 @@ class Land_Changer(Changer):
         #set the type-label of the changer
         self.type = 'land'
 
+        #create an empty dict to hold all the basic change info (end_rast, timesteps) for 
+        #each scape that will change (so that other objects, such as movement_surfaces, can access this
+        #information and use it to build their own change-series)
+        self.change_info = {}
+
     #call self.set_changes() to set self.changes and self.next_change
         self.set_changes(land, land_change_params)
 
@@ -131,33 +136,20 @@ class Land_Changer(Changer):
             assert res == land.res or res is None, 'ERROR: resolution of scape_series fed into Land_Changer does not match that of the land to be changed.'
             assert ulc == land.ulc or ulc is None, 'ERROR: upper-left corner of scape_series fed into Land_Changer does not match that of the land to be changed.'
             scapes[scape_num] = scape_series
-            if scape_num == land.move_surf_scape_num:
-                surf_series = make_movement_surface_series(land, scape_series)
-                surfs[scape_num] = surf_series
-        
-        #check that timesteps are the same for the surf_series and scape_series items pertaining to the
-        #movement-surface scape
-        if land.move_surf_scape_num in scapes.keys():
-            assert [i[0] for i in scapes[land.move_surf_scape_num]] == [i[0] for i in surfs[land.move_surf_scape_num]], 'ERROR: scape_series and surf_series do not contain the same timesteps for the movement surface scape'
-        
+
+            #set the Land_Changer.change_info attribute, so that it can be grabbed later for building move_surf and other objects
+            self.change_info[scape_num] = {**land_change_params[scape_num]}
+            self.change_info[scape_num]['end_rast'] = scape_series[-1][1]
+
         #get everything in chronological order (with scape-change functions coming before surf-change
         #functions if they're in the same timestep)
         scape_changes = []
         for scape_num in scapes.keys():
             scape_changes.extend([(t, scape_num, scape) for t,scape in scapes[scape_num]])
-            #if scape_num == land.move_surf_scape_num:
-                #all_changes.extend([(t, scape_num, surf) for t,surf in surfs[scape_num]])
         scape_changes = sorted(scape_changes, key = lambda x: x[0])
-        all_changes = []
-        for change in scape_changes:
-            all_changes.append(change)
-            if change[1] == land.move_surf_scape_num:
-                corresp_surf_change = [(t, change[1], surf) for t, surf in surfs[change[1]] if list(surfs.keys())[0] == change[1] and t == change[0]]
-                assert len(corresp_surf_change) == 1, "ERROR: Found more than one surface-change function corresponding to a given scape-change function (i.e. for a given timestep and scape_num combo)"
-                all_changes.append(corresp_surf_change[0])
 
         #make a list of change_fns for the changes in all_changes, and make self.changes an iterator over that list
-        change_fns = [(change[0], get_land_change_fn(land, *change[1:])) for change in all_changes]
+        change_fns = [(change[0], get_scape_change_fn(land, *change[1:])) for change in scape_changes]
         change_fns = iter(change_fns)
         self.changes = change_fns
         #load the first change to happen into the self.next_change attribute
@@ -165,7 +157,7 @@ class Land_Changer(Changer):
 
 
 class Pop_Changer(Changer):
-    def __init__(self, pop, pop_change_params):
+    def __init__(self, pop, pop_change_params, land=None):
         self.type = 'pop'
         
         #an attribute that is used by some dem-change fns, as a baseline population size at the start of the
@@ -173,17 +165,28 @@ class Pop_Changer(Changer):
         self.base_K = None
 
     #call self.set_changes() to set self.changes and self.next_change
-        self.set_changes(pop, pop_change_params)
+        self.set_changes(pop, pop_change_params, land)
 
     #method to set the base_K attribute to pop.K
     def set_base_K(self, pop):
         self.base_K = pop.K
 
     #method to set the changes stipulated in params dict for the pop object
-    def set_changes(self, pop, pop_change_params):
+    def set_changes(self, pop, pop_change_params, land=None):
         #pull out the parts of the params
         dem_change_params = pop_change_params.dem
         parameter_change_params = pop_change_params.parameters
+
+        #check if this pop has a move_surf, and if there are land-changes that affect its scape
+        move_surf_change_fns = []
+        if pop.move_surf is not None and land is not None and pop.move_surf.scape_num in land.changer.change_info.keys():
+            #if so, grab that scape's land change params and create a move_surf_series with them, to be 
+            #added to this pop's change fns
+            lc_move_surf_params = land.changer.change_info[pop.move_surf.scape_num]
+            #create a time-series of movement surfaces 
+            surf_series = make_movement_surface_series(start_scape = land[pop.move_surf.scape_num], **lc_move_surf_params)
+            #and create change fns from them
+            move_surf_change_fns.extend(get_move_surf_change_fns(pop, surf_series))
 
         #set the demographic changes, if applicable
         dem_change_fns = []
@@ -198,8 +201,8 @@ class Pop_Changer(Changer):
                 parameter_change_fns.extend(get_parameter_change_fns(pop, parameter, **parameter_change_params))
 
         #put all the changes in chronological order
-        if len(dem_change_fns) + len(parameter_change_fns) > 0:
-            change_fns = dem_change_fns + parameter_change_fns
+        if len(dem_change_fns) + len(parameter_change_fns) + len(move_surf_change_fns) > 0:
+            change_fns = dem_change_fns + parameter_change_fns + move_surf_change_fns
             change_fns = sorted(change_fns, key = lambda x: x[0])
 
             #make self.changes an iterator over that list
@@ -267,7 +270,7 @@ class Sim_Changer:
     
 #function that takes a starting scape, an ending scape, a number of timesteps, and a Model object,
 #and returns a linearly interpolated stack of rasters
-def make_linear_scape_series(start_rast, end_rast, t_start, t_end, n):
+def make_linear_scape_series(start_rast, end_rast, start_t, end_t, n_steps):
     if type(end_rast) is str:
         end_rast, dim, ulc, res = io.read_raster(end_rast)
 
@@ -277,18 +280,18 @@ def make_linear_scape_series(start_rast, end_rast, t_start, t_end, n):
         res = None
         
     #get (rounded) evenly spaced timesteps at which to implement the changes
-    timesteps = np.int64(np.round(np.linspace(t_start, t_end, n)))
+    timesteps = np.int64(np.round(np.linspace(start_t, end_t, n_steps)))
     #flatten the starting and ending rasters
     start = start_rast.flatten()
     end = end_rast.flatten()
     #get a column of values for each grid cell on the landscape, linearly spaced between that cell's start and end values
     #NOTE: linspace(..., ..., n+1)[1:] gives us the changed rasters for n steps, leaving off the starting scape
     #value because that's already the existing scape so we don't want that added into our changes
-    rast_series = np.vstack([np.linspace(start[i], end[i], n+1)[1:] for i in range(len(start))])
+    rast_series = np.vstack([np.linspace(start[i], end[i], n_steps+1)[1:] for i in range(len(start))])
     #then reshape each timeslice into the dimensions of start_rast
     rast_series = [rast_series[:,i].reshape(start_rast.shape) for i in range(rast_series.shape[1])]
     #check that all the lenghts match up
-    assert len(rast_series) == n, "ERROR: len(rast_series) != n"
+    assert len(rast_series) == n_steps, "ERROR: len(rast_series) != n_steps"
     assert len(rast_series) == len(timesteps), "ERROR: the number of changing rasters created is not the same as the number of timesteps to be assigned to them"
     #zip the timesteps and the rasters together and return them as a list
     rast_series = list(zip(timesteps, rast_series))
@@ -302,52 +305,48 @@ def make_custom_scape_series(scape_dict):
     pass
 
 
-def make_movement_surface_series(land, scape_series, kappa=12):
-    #create a deepcopy of the Landscape_Stack, to change the scape out for and then use to make movement surfaces
-    copy_land = copy.deepcopy(land)
-    surf_series = []
-    for t, scape in scape_series:
-        #change the appropriate scape in the Landscape_Stack
-        copy_land.set_raster(copy_land.move_surf_scape_num, scape)
-        #then create a Movement_Surface using the copied Landscape_Stack
-        surf_series.append((t, spt.Movement_Surface(copy_land, kappa = kappa)))
-    return(surf_series)
-
-
-def change_movement_surface(land, new_move_surf):
-    assert type(new_move_surf) == spt.Movement_Surface, "ERROR: new_move_surf does not appear to be of type utils.spatial.Movement_Surface"
-    land.move_surf = new_move_surf
-
-
 def get_scape_change_fn(land, scape_num, new_scape):
     def fn(lc, land = land, scape_num = scape_num, new_scape = new_scape):
         land.set_raster(scape_num, new_scape)
     return(fn)
 
 
-def get_surf_change_fn(land, scape_num, new_surf):
-    def fn(lc, land = land, scape_num = scape_num, new_surf = new_surf):
-        change_movement_surface(land = land, new_move_surf = new_surf)
-    return(fn)
-
-
-def get_land_change_fn(land, scape_num, item):
-    type_fns = {np.ndarray              : get_scape_change_fn, 
-                spt.Movement_Surface    : get_surf_change_fn
-                }
-    change_fn = type_fns[type(item)](land, scape_num, item)
-    return(change_fn)
-
-
     ###################
     # for Pop_Changer #
     ###################
 
+def make_movement_surface_series(start_scape, end_rast, start_t, end_t, n_steps, t_res_reduct_factor=1):
+    #get the time-series of scapes across the land-change event (can be at a reduced temporal resolution determined
+    #by t_res_reduct_factor, because probably unnecessary to change the move_surf every time the land changes,
+    #and the move_surf can be a fairly large object to hold in memory; but t_res_reduct_factor defaults to 1)
+    scape_series, dim, res, ulc = make_linear_scape_series(start_scape.rast, end_rast, start_t, end_t, int(n_steps*t_res_reduct_factor))
+    #then get the series of move_surf objects
+    surf_series = []
+    dummy_scape = deepcopy(start_scape)
+    for t, rast in scape_series:
+        #change the scape's raster
+        dummy_scape.rast = rast 
+        #then create a Movement_Surface using the copied Landscape_Stack
+            #TODO: At the moment this doesn't have access to the move_surf params set in the params file!
+            #Should probably unpack those into a pop.move_surf_params attribute, then feed them thru to here
+        surf_series.append((t, spt.Movement_Surface(dummy_scape)))
+    return(surf_series)
+
+
+def get_move_surf_change_fns(pop, surf_series):
+    timesteps = []
+    fns = []
+    for t, new_surf in surf_series:
+        def fn(pc, pop=pop, new_surf = new_surf):
+            pop.move_surf = new_surf
+        timesteps.append(t)
+        fns.append(fn)
+    change_fns = zip(timesteps, fns)
+    return(change_fns)
 
         ###############
         # demographic #
         ###############
-
                                                            
 def get_dem_change_fns(pop, kind, start=None, end=None, rate=None, interval=None, size_target=None, n_cycles=None, size_range=None, dist='uniform', min_size=None, max_size=None, timesteps=None, sizes=None, increase_first=True):
     if kind == 'monotonic':

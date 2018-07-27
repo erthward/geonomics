@@ -10,14 +10,14 @@ from structs import landscape, genome, population
 
 
 #set seed, if requested
-if params['seed']['set_seed']: 
-    random.seed(params['seed']['seed_num'])
-    r.seed(params['seed']['seed_num'])
+if params.model.seed.set:
+    random.seed(params.model.seed.num)
+    r.seed(params.model.seed.num)
 
             
 
 
 land = landscape.make_land(params = params)
-com = community.make_community(land = land, params = params, burn = True)
-pop = com[0]
+comm = community.make_community(land = land, params = params, burn = True)
+pop = comm[0]
 

@@ -95,6 +95,7 @@ class Population(OD):
 
         #create empty attributes for islands and related attributes,
         #which may be created, depending on paramters
+        self.islands = None
         self.n_island_mask_scape = None
 
         #create an empty changer attribute, which will be reset if the parameters define changes for this pop
@@ -218,22 +219,21 @@ class Population(OD):
 
                 age = 0
 
-                if burn == False:
-                    if self.sex == True:
-                        self[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, offspring_sex, age)
+                if not burn:
+                    if self.sex:
+                        self[offspring_key] = individual.Individual(idx = offspring_key, new_genome = new_genomes[n_pair][n], x = offspring_x, y = offspring_y, sex = offspring_sex, age =age)
                     else:
-                        self[offspring_key] = individual.Individual(offspring_key, new_genomes[n_pair][n], offspring_x, offspring_y, age)
+                        self[offspring_key] = individual.Individual(idx = offspring_key, new_genome = new_genomes[n_pair][n], x = offspring_x, y = offspring_y, age = age)
                
                     #set new individual's phenotype (won't be set during burn-in, becuase no genomes assigned)
                     self[offspring_key].set_phenotype(self.gen_arch)
 
 
                 elif burn:
-                    if self.sex == True:
-                        self[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y, offspring_sex, age)
+                    if self.sex:
+                        self[offspring_key] = individual.Individual(idx = offspring_key, new_genome = np.array([0]), x = offspring_x, y = offspring_y, sex = offspring_sex, age = age)
                     else:
-                        self[offspring_key] = individual.Individual(offspring_key, np.array([0]), offspring_x, offspring_y,
-                                                                             age)
+                        self[offspring_key] = individual.Individual(idx = offspring_key, new_genome = np.array([0]), x = offspring_x, y = offspring_y, age = age)
                 offspring_key += 1
 
         # sample all individuals' habitat values, to initiate for offspring
@@ -475,7 +475,7 @@ class Population(OD):
     #method for plotting the population on top of its estimated population-density raster
     def show_density(self, land, normalize_by='pop_size', individs=None, text=False, max_1=False, color='black', edge_color='face', 
             text_color='black', size=25, text_size = 9, alpha=0.5, zoom_width=None, x=None, y=None):
-        dens = self.calc_density(land, normalize_by=normalize_by, max_1=max_1)
+        dens = self.calc_density(normalize_by=normalize_by, max_1=max_1)
         plt_lims = viz.get_plt_lims(land, x, y, zoom_width)
         viz.show_rasters(dens, plt_lims = plt_lims)
         self.show(land, hide_land=True, individs = individs, text = text, color=color, edge_color = edge_color, text_color = text_color, 
@@ -619,7 +619,7 @@ def make_population(land, pop_params, burn=False):
 
     #if this population should have genomes, create the genomic architecture
     if 'genome' in pop_params.keys():
-        g_params = params.genome
+        g_params = pop_params.genome
         #make genomic_architecture
         gen_arch = genome.make_genomic_architecture(g_params = g_params)
 
@@ -634,10 +634,10 @@ def make_population(land, pop_params, burn=False):
     
     #create the population from those individuals
     name = init_params.pop('name')
-    pop = Population(name = name, inds = inds, land = land, pop_params = pop_params, genomic_arch=gen_arch)
+    pop = Population(name = name, inds = inds, land = land, pop_params = pop_params, genomic_architecture=gen_arch)
   
     #use the remaining init_params to set the carrying-capacity raster (K)
-    pop.set_K(make_K(pop, land, **init_params)
+    pop.set_K(make_K(pop, land, **init_params))
     #set initial habitat values
     pop.set_habitat(land)
     #set initial coords and cells
@@ -646,7 +646,7 @@ def make_population(land, pop_params, burn=False):
     pop.set_kd_tree()
 
     #set phenotypes, if the population has genomes
-    if pop.gen_arch is not None:
+    if pop.gen_arch is not None and not burn:
         [ind.set_phenotype(pop.gen_arch) for ind in pop.inds]
 
     #make density_grid
@@ -662,7 +662,7 @@ def make_population(land, pop_params, burn=False):
             make_ms = ms_params.pop('make')
             if make_ms:
                 #grab the scape number for the scape that the movement surface is to be based on
-                move_surf_scape_num = ms_params.pop('move_surf_scape_num')
+                move_surf_scape_num = ms_params.pop('scape_num')
                 #then grab the move_surf scape's raster
                 move_rast = land[move_surf_scape_num].rast
 
@@ -670,7 +670,7 @@ def make_population(land, pop_params, burn=False):
                 #TODO: EITHER GET RID OF, OR DEEPLY RETHINK, THE ISLANDS THING
                 #make the islands layer if required
                 if 'islands' in pop_params.mortality.keys():
-                    is_params = pop_params.moratlity.islands
+                    is_params = pop_params.mortality.islands
                     make_is = is_params.pop('make')
                     if make_is:
                         move_rast[move_rast < is_params.island_val] = 1e-8
@@ -698,14 +698,17 @@ def make_population(land, pop_params, burn=False):
 ######################################################################################################################
 
                 #make the movement surface and set it as the pop's move_surf attribute
-                pop.move_surf = spt.Movement_Surface(land = land, **ms_params)
+                pop.move_surf = spt.Movement_Surface(land[move_surf_scape_num], **ms_params)
 
     #if this population has changes parameterized, create a Pop_Changer object for it
     if 'change' in pop_params.keys():
         #grab the change params
         ch_params = pop_params.change
         #make Pop_Changer and set it to the pop's changer attribute
-        pop.changer = change.Pop_Changer(pop, ch_params)
+        if land.changer is not None:
+            pop.changer = change.Pop_Changer(pop, ch_params, land = land)
+        else:
+            pop.changer = change.Pop_Changer(pop, ch_params, land = None)
 
     return pop 
 

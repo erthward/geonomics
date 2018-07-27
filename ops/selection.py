@@ -34,7 +34,7 @@ from collections import OrderedDict as OD
 ######################################
 
 #Get the phenotypic values of all individuals for a given trait
-def calc_phenotype(ind, genomic_arch, trait):
+def calc_phenotype(ind, trait):
     #get number of loci and their allelic effect sizes
     n_loci = trait.n_loci
     alpha = trait.alpha
@@ -57,7 +57,7 @@ def calc_fitness_individ(t, e, z, pop):
 
 
 def calc_fitness(pop, trait_num = None, set_fit = False):
-    traits = pop.genomic_arch.traits.values()
+    traits = pop.gen_arch.traits.values()
     #subset for single trait, if indicated
     if trait_num is not None:
         traits = [list(traits)[trait_num]]

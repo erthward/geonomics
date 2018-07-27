@@ -30,6 +30,7 @@ from scipy.stats import vonmises as s_vonmises
 s_vonmises.a = -np.inf
 s_vonmises.b = np.inf
 from collections import Counter as C
+from copy import deepcopy
 from operator import itemgetter as ig
 from itertools import repeat, starmap
 from scipy import interpolate
@@ -147,21 +148,30 @@ class Density_Grid_Stack:
 
 
 class Movement_Surface:
-    def __init__(self, land, scape_num, approximation_len = 5000, vm_kappa = 12, gauss_KDE_bw = 0.2):
-
+    def __init__(self, move_scape, approximation_len = 5000, vm_kappa = 12, gauss_KDE_bw = 0.2):
         #dimensions
-        self.dim = land.dim
+        self.dim = move_scape.dim
         #resolution (i.e. cell-size); defaults to 1
-        self.res = land.res
+        self.res = move_scape.res
 
-        self.scape_num = scape_num
+        #set the default values, in case they're accidentally fed in as None values in the params
+        if approximation_len is None:
+            approximation_len = 5000
+        if vm_kappa is None:
+            vm_kappa = 12
+            #NOTE: when I eventually have a mix = True/False argument (to make shallow gradients work better),
+            #should probably set this to a lower value if mix == False
+        if gauss_KDE_bw is None:
+            gauss_KDE_bw = 0.2
+
+        self.scape_num = move_scape.idx
         self.approximation_len = approximation_len
-        self.surf = make_movement_surface(land, approximation_len = self.approximation_len, vm_kappa = vm_kappa, gauss_KDE_bw = gauss_KDE_bw)
+        self.surf = make_movement_surface(move_scape.rast, approximation_len = self.approximation_len, vm_kappa = vm_kappa, gauss_KDE_bw = gauss_KDE_bw)
 
         assert self.approximation_len == self.surf.shape[2], "ERROR: Movement_Surface.approximation_len not equal to Movement_Surface.surf.shape[2]"
 
     def draw_directions(self, x, y):
-        choices = r.randint(low = 0, high = self.approx_len, size = len(x))
+        choices = r.randint(low = 0, high = self.approximation_len, size = len(x))
         return self.surf[y, x, choices] 
 
     
@@ -272,16 +282,16 @@ def make_density_grids(land, ww):
 
 
 # Function to generate a simulative Von Mises mixture distribution sampler function
-def make_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
+def make_von_mises_mix_sampler(neigh, dirs, vm_kappa=12, approximation_len = 5000):
     # Returns a lambda function that is a quick and reliable way to simulate draws from a Von Mises mixture distribution:
     # 1.) Chooses a direction by neighborhood-weighted probability
-    # 2.) Makes a random draw from a Von Mises dist centered on the direction, with a kappa value set such that the net effect, 
+    # 2.) Makes a random draw from a Von Mises dist centered on the direction, with a vm_kappa value set such that the net effect, 
     #when doing this a ton of times for a given neighborhood and then plotting the resulting histogram, gives the 
     #visually/heuristically satisfying approximation of a Von Mises mixture distribution
 
-    # NOTE: Just visually, heuristically, kappa = 10 seemed like a perfect middle value (kappa ~3 gives too
+    # NOTE: Just visually, heuristically, vm_kappa = 10 seemed like a perfect middle value (vm_kappa ~3 gives too
     # wide of a Von Mises variance and just chooses values around the entire circle regardless of neighborhood
-    # probability, whereas kappa ~20 produces noticeable reductions in probability of moving to directions
+    # probability, whereas vm_kappa ~20 produces noticeable reductions in probability of moving to directions
     # between the 8 queen's neighborhood directions (i.e. doesn't simulate the mixing well enough), and would
     # generate artefactual movement behavior); 12 also seemed to really well in generating probability valleys
     # when tested on neighborhoods that should generate bimodal distributions
@@ -294,19 +304,19 @@ def make_von_mises_mix_sampler(neigh, dirs, kappa=12, approx_len = 5000):
         n_probs = [i / sum_n for i in n]
     else:
         n_probs = [.125]*8
-    loc_choices = r.choice(d, approx_len, replace = True, p = n_probs)
+    loc_choices = r.choice(d, approximation_len, replace = True, p = n_probs)
     loc_choices = list(C(loc_choices).items())
-    approx = np.hstack([s_vonmises.rvs(kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])
+    approx = np.hstack([s_vonmises.rvs(vm_kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])
     return approx 
 
 
 # Runs the Von Mises mixture sampler function (make_von_mises_mix_sampler) across the entire landscape and returns an array-like (list of
 # lists) of the resulting lambda-function samplers
-def make_movement_surface(land, approximation_len=5000, vm_kappa=12, gauss_KDE_bw=0.2):
+def make_movement_surface(rast, approximation_len=5000, vm_kappa=12, gauss_KDE_bw=0.2):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0], [3 * pi / 4, pi / 2, pi / 4]])
 
     # grab the correct landscape raster
-    rast = land[land.move_surf_scape_num].rast.copy()
+    rast = deepcopy(rast)
 
     # create embedded raster (so that the edge probabilities are appropriately calculated)
     embedded_rast = np.zeros(shape=[n + 2 for n in rast.shape])
@@ -315,12 +325,12 @@ def make_movement_surface(land, approximation_len=5000, vm_kappa=12, gauss_KDE_b
     # create list of lists (aping an array) for storage of resulting functions
     #move_surf = [[None for j in range(land.dim[1])] for i in range(land.dim[0])]
     #NOTE: nevermind that, create an actual array and store vectors approximating the functions!
-    move_surf = np.float16(np.zeros((rast.shape[0], rast.shape[1], approx_len)))
+    move_surf = np.float16(np.zeros((rast.shape[0], rast.shape[1], approximation_len)))
 
     for i in range(rast.shape[0]):
         for j in range(rast.shape[1]):
             neigh = embedded_rast[i:i + 3, j:j + 3].copy()
-            move_surf[i, j, :] = make_von_mises_mix_sampler(neigh, queen_dirs, kappa = kappa, approx_len= approx_len)
+            move_surf[i, j, :] = make_von_mises_mix_sampler(neigh, queen_dirs, vm_kappa = vm_kappa, approximation_len= approximation_len)
     return move_surf
 
 

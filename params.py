@@ -66,34 +66,42 @@ params = {
 
                 'init': {
                     #initiating parameters for this scape
-                    'name':         'scape0',
+                    'name':             'scape0',
                         #each scape can take a unique string name (e.g. 'scape0', '1994', 'mean_T')
-                    'rand':         True,
-                        #whether or not to generate this scape using
-                            #interpolation from randomly located random values
-                    'n_rand_pts':   50,
-                        #number of random coordinates to be used in generating random landscapes 
-                            #(only needed if rand == True)
-                    'interp_method': 'linear',
-                        # interpolation method (valid: 'linear', 'cubic', 'nearest')
-                    'defined_scape_pt_coords': np.array([[0,0], [0,100], [100,0], [50,40], [100,100], [30,0], [0,30], [70,100], [100,70]]),
-                        #coords of points to use to interpolate defined scape (provided as 
-                            #a nx2 Numpy array, where n matches the number of points in 
-                            #the scape_pt_vals array, to be used as the points
-                            #to be interpolated; only needed if rand == False)
-                    'defined_scape_pt_vals': np.array([-0.5,0.5,0.5,0.5,1.5, -0.5, -0.5, 1.5, 1.5]),
-                            #point values to use to interpolate defined landscape layers (a  1xn Numpy array, 
-                                #where n matches the number of points in scape_pt_coords arrays;
-                                #only needed if rand == False)
-                    'gis_filepath': '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
+#                    'rand': {
+#                        #parameters for making a scape using interpolation from randomly located random values
+#                        'n_pts':                        None,
+#                            #number of random coordinates to be used in generating random landscapes 
+#                                #(only needed if rand == True)
+#                        'interp_method':                None
+#                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
+#                        },
+#                    'defined': {
+#                        #parameters for making a scape using interpolation from a defined set of valued points
+#                        'pts':                    None,
+#                            #coords of points to use to interpolate defined scape (provided as 
+#                                #a nx2 Numpy array, where n matches the number of points in 
+#                                #the scape_pt_vals array, to be used as the points
+#                                #to be interpolated; only needed if rand == False)
+#                        'vals':                      None,
+#                            #point values to use to interpolate defined landscape layers (a  1xn Numpy array, 
+#                                #where n matches the number of points in scape_pt_coords arrays;
+#                                #only needed if rand == False)
+#                        'interp_method':                None
+#                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
+#                        },
+                    'gis': {
+                        #parameters for making a scape using a GIS raster file
+                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
                             #filepath to read into this scape
-                    'gis_scale_min': -1.37,
+                        'scale_min_val':                -1.37,
                             #minimum values to use for rescaling the raster (will be
-                                #rescaled to 0<=x<=1); may be different than the actual minimum value in the raster,
-                                #especially if raster will be changing to a future raster with values outside the 
-                                #range of this one
-                    'gis_scale_max': 19.11   
+                                #rescaled to 0<=x<=1); NOTE: this may be different than the actual minimum 
+                                #value in the raster, especially if raster will be changing to a future raster 
+                                #with values outside the range of this one
+                        'scale_max_val':                19.11   
                             #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
+                        }
                     }, # <END> 'init'
 
         ################
@@ -104,11 +112,12 @@ params = {
                     #land-change events for this scape
                     'end_rast':         np.zeros((90,90)),
                         #scape to be set as the endpoint of the land-change event
-                    't_start':          1500,
+                    'start_t':          1500,
                         #timestep on which to start the land-change event
-                    't_end':            2000,
+                    'end_t':            2000,
                         #timestep on which to end the land-change event
-                    'n':                10
+                    'n_steps':          10
+                        #number of stepwise changes to make between t_start and t_end
                         }
                 }, # <END> scape 0
 
@@ -239,7 +248,7 @@ params = {
                         'approximation_len':            7500,
                             #length of the lookup vectors (numpy arrays) used to approximate
                                 #the VonMises mixture distributions at each cell
-                        'vonmises_kappa':               None,
+                        'vm_kappa':                     None,
                             #kappa value to use in the von Mises mixture distributions (KDEs) 
                                 #underlying resistance surface movement
                         'gauss_KDE_bw':                 None
@@ -407,15 +416,15 @@ params = {
 
     'model': {
         'seed': {
-            'set_seed':     True,
+            'set':     True,
                 #set the seed? (for reproducibility)
-            'seed_num':     23432
+            'num':     23432
                 #value used to seed random number generators
             }, # <END> 'seed'
 
         'its': {
             'burn': {
-                'burn_T_min':   50
+                'T_min':   50
                     #minimum burn-in runtime
                 }, # <END> 'burn'
             'main': {

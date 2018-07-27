@@ -63,7 +63,7 @@ class Individual:
 
 
 
-        assert type(self.genome) == np.ndarray, "An individual's genome must be an instance of numpy.ndarray."
+        #assert type(self.genome) == np.ndarray or self.genome is None, "An individual's genome must either be None or an instance of numpy.ndarray."
         assert type(self.x) == float and self.x >= 0, "invalid value for x: %s, %s" % (str(self.x), type(self.x))
         assert type(self.y) == float and self.y >= 0, "invalid value for y: %s, %s" % (str(self.y), type(self.y))
         assert self.sex == None or self.sex in [0,1]
@@ -92,8 +92,8 @@ class Individual:
         self.habitat = hab
 
     #set the individual's phenotype for all traits
-    def set_phenotype(self, genomic_arch):
-        self.phenotype = [selection.calc_phenotype(self, genomic_arch, trait) for trait in genomic_arch.traits.values()]
+    def set_phenotype(self, genomic_architecture):
+        self.phenotype = [selection.calc_phenotype(self, trait) for trait in genomic_architecture.traits.values()]
 
     #set the individual's fitness
     def set_fitness(self, fit):
@@ -155,5 +155,5 @@ def make_individual(idx, offspring=True, dim=None, genomic_architecture=None, ne
         #NOTE: For now sex randomly chosen at 50/50. Change if decide to implement sex chroms, or pop.sex_ratio
         sex = r.binomial(1,0.5)  
 
-    return Individual(idx = idx, x = x, y = y, age = age, new_genome = new_genom, sex = sex)
+    return Individual(idx = idx, x = x, y = y, age = age, new_genome = new_genome, sex = sex)
 

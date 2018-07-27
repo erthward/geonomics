@@ -48,6 +48,6 @@ class Community(dict):
 
 #function for making a community using a Land object and params
 def make_community(land, params, burn=False):
-    pops = {k: population.make_population(land = land, pop_params = params.pops[k], burn = burn) for k in params.pops.keys()}
+    pops = {k: population.make_population(land = land, pop_params = params.comm.pops[k], burn = burn) for k in params.comm.pops.keys()}
     return Community(pops) 
 

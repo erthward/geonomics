@@ -271,6 +271,8 @@ class Sim_Changer:
 #function that takes a starting scape, an ending scape, a number of timesteps, and a Model object,
 #and returns a linearly interpolated stack of rasters
 def make_linear_scape_series(start_rast, end_rast, start_t, end_t, n_steps):
+    assert start_rast.shape == end_rast.shape, 'ERROR: The starting raster and ending raster for the land-change event are not of the same dimensions: START: %s,  END %s' % (str(start_rast.shape), str(end_rast.shape))
+
     if type(end_rast) is str:
         end_rast, dim, ulc, res = io.read_raster(end_rast)
 

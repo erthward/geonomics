@@ -40,7 +40,7 @@ params = {
     ##############
 
         'main': {
-            'dim':                      (90,90),
+            'dim':                      (50,50),
                 #x- and y-dimensionality of landscape  
             'res':                      (1,1),
                 #landscape resolution in x and y dimensions (for crosswalking with real-world 
@@ -68,14 +68,14 @@ params = {
                     #initiating parameters for this scape
                     'name':             'scape0',
                         #each scape can take a unique string name (e.g. 'scape0', '1994', 'mean_T')
-#                    'rand': {
-#                        #parameters for making a scape using interpolation from randomly located random values
-#                        'n_pts':                        None,
-#                            #number of random coordinates to be used in generating random landscapes 
-#                                #(only needed if rand == True)
-#                        'interp_method':                None
-#                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
-#                        },
+                    'rand': {
+                        #parameters for making a scape using interpolation from randomly located random values
+                        'n_pts':                        500,
+                            #number of random coordinates to be used in generating random landscapes 
+                                #(only needed if rand == True)
+                        'interp_method':                'cubic'
+                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
+                        }
 #                    'defined': {
 #                        #parameters for making a scape using interpolation from a defined set of valued points
 #                        'pts':                    None,
@@ -90,18 +90,88 @@ params = {
 #                        'interp_method':                None
 #                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
 #                        },
-                    'gis': {
-                        #parameters for making a scape using a GIS raster file
-                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
-                            #filepath to read into this scape
-                        'scale_min_val':                -1.37,
-                            #minimum values to use for rescaling the raster (will be
-                                #rescaled to 0<=x<=1); NOTE: this may be different than the actual minimum 
-                                #value in the raster, especially if raster will be changing to a future raster 
-                                #with values outside the range of this one
-                        'scale_max_val':                19.11   
-                            #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
+#                    'gis': {
+#                        #parameters for making a scape using a GIS raster file
+#                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
+#                            #filepath to read into this scape
+#                        'scale_min_val':                -1.37,
+#                            #minimum values to use for rescaling the raster (will be
+#                                #rescaled to 0<=x<=1); NOTE: this may be different than the actual minimum 
+#                                #value in the raster, especially if raster will be changing to a future raster 
+#                                #with values outside the range of this one
+#                        'scale_max_val':                19.11   
+#                            #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
+#                        }
+                    } # <END> 'init'
+
+        ################
+        #### change ####
+        ################
+
+#                'change': {
+#                    #land-change events for this scape
+#                    'end_rast':         np.zeros((90,90)),
+#                        #scape to be set as the endpoint of the land-change event
+#                    'start_t':          1500,
+#                        #timestep on which to start the land-change event
+#                    'end_t':            2000,
+#                        #timestep on which to end the land-change event
+#                    'n_steps':          10
+#                        #number of stepwise changes to make between t_start and t_end
+#                        }
+                }, # <END> scape 0
+
+
+    #*****
+    #NOTE: COPY AND PASTE THE scape SECTION HERE AND GIVE A DIFFERENT INDEX TO CREATE ADDITIONAL SCAPES FOR
+    #THIS LAND
+    #*****
+
+            1: {
+                #this integer key should be incremented for each successive scape
+
+        ##############
+        #### init ####
+        ##############
+
+                'init': {
+                    #initiating parameters for this scape
+                    'name':             'scape1',
+                        #each scape can take a unique string name (e.g. 'scape0', '1994', 'mean_T')
+                    'rand': {
+                        #parameters for making a scape using interpolation from randomly located random values
+                        'n_pts':                        500,
+                            #number of random coordinates to be used in generating random landscapes 
+                                #(only needed if rand == True)
+                        'interp_method':                'nearest'
+                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
                         }
+#                    'defined': {
+#                        #parameters for making a scape using interpolation from a defined set of valued points
+#                        'pts':                    None,
+#                            #coords of points to use to interpolate defined scape (provided as 
+#                                #a nx2 Numpy array, where n matches the number of points in 
+#                                #the scape_pt_vals array, to be used as the points
+#                                #to be interpolated; only needed if rand == False)
+#                        'vals':                      None,
+#                            #point values to use to interpolate defined landscape layers (a  1xn Numpy array, 
+#                                #where n matches the number of points in scape_pt_coords arrays;
+#                                #only needed if rand == False)
+#                        'interp_method':                None
+#                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
+#                        },
+#                    'gis': {
+#                        #parameters for making a scape using a GIS raster file
+#                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
+#                            #filepath to read into this scape
+#                        'scale_min_val':                -1.37,
+#                            #minimum values to use for rescaling the raster (will be
+#                                #rescaled to 0<=x<=1); NOTE: this may be different than the actual minimum 
+#                                #value in the raster, especially if raster will be changing to a future raster 
+#                                #with values outside the range of this one
+#                        'scale_max_val':                19.11   
+#                            #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
+#                        }
                     }, # <END> 'init'
 
         ################
@@ -110,7 +180,7 @@ params = {
 
                 'change': {
                     #land-change events for this scape
-                    'end_rast':         np.zeros((90,90)),
+                    'end_rast':         np.zeros((50,50)),
                         #scape to be set as the endpoint of the land-change event
                     'start_t':          1500,
                         #timestep on which to start the land-change event
@@ -119,14 +189,7 @@ params = {
                     'n_steps':          10
                         #number of stepwise changes to make between t_start and t_end
                         }
-                }, # <END> scape 0
-
-
-    #*****
-    #NOTE: COPY AND PASTE THE scape 0 SECTION HERE AND GIVE A DIFFERENT INDEX TO CREATE ADDITIONAL SCAPES FOR
-    #THIS LAND
-    #*****
-
+                }, # <END> scape 1
 
             } # <END> 'scapes' 
 
@@ -168,7 +231,7 @@ params = {
                         #age at sexual maturity (int or float for non-sexual species, tuple or list 
                             #of two ints/floats for sexual species; set to 'None' to not make this 
                             #an age-structured species
-                    'max_age':              3,
+                    'max_age':              5,
                         #age beyond which all individuals will automatically die; default to None
                     'sex':                  False,
                         #is this a sexual species? 
@@ -264,38 +327,46 @@ params = {
             ################
 
                 'genome': {
-                    'L':                    1000,
+                    'L':                        1000,
                         #total number of loci
-                    'l_c':                  [500, 500],
+                    'l_c':                      [500, 500],
                         #chromosome lengths [sum(l_c) == L enforced]
-                    'recomb_array':         None,
+                    'recomb_array':             None,
                         #predetermined linkage map to use for the simulated loci (optional)
-                    'x':                    2,
-                        #ploidy (for now, leave at 2 for diploidy)
-                    'mu':                   10e-9,
-                        #genome-wide mutation rate, per base per generation
-                    'alpha_r':              0.5,
+                    'mu_neut':          1e-9,
+                        #genome-wide neutral mutation rate, per base per generation
+                            #(set to 0 to disable neutral mutation)
+                    'mu_delet':            1e-9,
+                        #genome-wide deleterious mutation rate, per base per generation
+                            #(set to 0 to disable deleterious mutation)
+                            #NOTE: these mutations will fall outside the loci involved in any traits
+                            #being simulated, and are simply treated as universally deleterious, with the same
+                            #negative influence on fitness regardless of spatial context
+                    'mut_log':              False,
+                        #whether or not to store a mutation log; if true, will be saved as mut_log.txt
+                        #within each iteration's subdirectory
+                    'mean_delet_alpha_dist':      -0.1,
+                    'std_delet_alpha_dist':   0,
+                        #mean and standard deviation of effect size of deleterious mutations (std = 0 will fix all
+                            #mutations for the mean value)
+                    'alpha_r_dist':                  0.5,
                         #alpha for beta distribution of linkage values  
                             #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333, 
                             #with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
-                    'beta_r':               400,
+                    'beta_r_dist':                   400,
                         #beta for beta distribution of linkage values
-                    'alpha_mut_s':          25,
-                        # alpha param for the beta distribution describing the highly advantageous selection coeffs for mutations
-                    'beta_mut_s':           0.5,
-                        # beta param for the beta distribution describing the highly advantageous selection coeffs for mutations
-                    'use_dom':              False,
+                    'use_dom':                  False,
                         #whether or not to use dominance (default to False)
                             #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP
-                    'pleiotropy':           True,
+                    'pleiotropy':               True,
                         #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?) false
-                    'recomb_rate_custom_fn': None,
+                    'recomb_rate_custom_fn':    None,
                         #if provided, must be a function that returns a single recombination rate value (r) when called
                     'recomb_lookup_array_size': int(1e3),
                         #the size of the recombination-path lookup array to have
                             #read in at one time (needs to be comfortably larger than the anticipated totaly number of
                             #recombination paths to be drawn at once, i.e. than 2 times the anticipated most number of births at once)
-                    'n_recomb_paths':       int(1e4),
+                    'n_recomb_paths':           int(1e4),
                         #the total number of distinct recombination paths to
                             #generate at the outset, to approximate truly free recombination at the recombination rates specified
                             #by the genomic architecture (hence the larger the value the less the likelihood of mis-approximation artifacts)
@@ -313,12 +384,16 @@ params = {
                                     #values (with dimensions equal to land.dims)
                             'n_loci':           10,
                                 #number of loci to be assigned to this trait
-                            'alpha_dist_sigma': 0.5,
-                                #the standard deviation of the normal distribution used to choose effect sizes
-                                #for this trait's loci
-                                #NOTE: for sigma = 0.5, one average locus is enough to generate both optimum 
-                                    #genotypes; for 0.025, 10 loci should (on average, but depends of course on 
-                                    #the random sample of alphas drawn!); and so on linearly
+                            'mu_nonneut':      1e-9,
+                                #mutation rate for this trait (if set to 0, or if genome['mutation'] == False, no mutation will occur)
+                                    #(set to 0 to disable mutation for this trait)
+                            'mean_alpha_dist' : 0,
+                            'std_alpha_dist' : 0.5,
+                                #the mean and standard deviation of the normal distribution used to choose effect size
+                                    #(alpha) for this trait's loci
+                                    #NOTE: for mean = 0, std = 0.5, one average locus is enough to generate both optimum 
+                                    #genotypes; for mean = 0, std = 0.025, 10 loci should generate both (on average, but depends of course on 
+                                    #the random sample of alphas drawn); and so on linearly
                             'gamma':            1,
                                 #gamma exponent for the trait's fitness function (determines the shape of the
                                 #curve of fitness as a function of absolute difference between an individual's
@@ -328,16 +403,44 @@ params = {
                                     #have higher fitness at all locations on the land
                             }, # <END> trait 0
 
+                        
+                        1: {
+                            #an arbitrary number of traits can be provided for a genomic_architecture object
+                            'name':             'trait1',
+                                #each trait must be a given a string name (e.g. 'trait0', 'scape0_trait', 'min_temp_trait', 'bill_length')
+                            'scape_num':        1,
+                                #the landscape numbers to be used for selection on this trait 
+                            'phi':              0.1,
+                                #phenotypic selection coefficient for this trait; can either be a 
+                                    #numeric value, or can be an array of spatialized selection 
+                                    #values (with dimensions equal to land.dims)
+                            'n_loci':           1,
+                                #number of loci to be assigned to this trait
+                            'mu_nonneut':      1e-9,
+                                #mutation rate for this trait (if set to 0, or if genome['mutation'] == False, no mutation will occur)
+                            'mean_alpha_dist' : 0,
+                            'std_alpha_dist' : 0.5,
+                                #the mean and standard deviation of the normal distribution used to choose effect size
+                                    #(alpha) for this trait's loci
+                                    #NOTE: for mean = 0, std = 0.5, one average locus is enough to generate both optimum 
+                                    #genotypes; for mean = 0, std = 0.025, 10 loci should generate both (on average, but depends of course on 
+                                    #the random sample of alphas drawn); and so on linearly
+                            'gamma':            1,
+                                #gamma exponent for the trait's fitness function (determines the shape of the
+                                #curve of fitness as a function of absolute difference between an individual's
+                                #phenotype and its environment; <1 = concave up, 1 = linear, >1 = convex up)
+                            'univ_advant':      False
+                                #is the trait unviersally advantageous? if so, phenotypes closer to 1 will 
+                                    #have higher fitness at all locations on the land
+                            }, # <END> trait 1
+
         #*****
-        #NOTE: COPY AND PASTE THE trait 0 SECTION HERE AND GIVE A DIFFERENT NAME TO CREATE ADDITIONAL TRAITS
+        #NOTE: COPY AND PASTE THE trait SECTION HERE AND GIVE A DIFFERENT NAME TO CREATE ADDITIONAL TRAITS
         #FOR THIS GENOMIC ARCHITECTURE
         #*****
 
                         }, # <END> 'traits'
 
-                    'change': {
-                        #genome-change events for this genomic architecture
-                        }
                     }, # <END> 'genome'
 
             ################
@@ -398,10 +501,10 @@ params = {
 
                         } # <END> 'change'
 
-                    } # <END> pop 0
+                    }, # <END> pop 0
 
         #*****
-        #NOTE: COPY AND PASTE THE pop 0 SECTION HERE AND GIVE A DIFFERENT NAME TO CREATE ADDITIONAL
+        #NOTE: COPY AND PASTE THE pop SECTION HERE AND GIVE A DIFFERENT NAME TO CREATE ADDITIONAL
         #POPULATIONS FOR THIS COMMUNITY
         #*****
 

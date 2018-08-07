@@ -32,55 +32,102 @@ import random
 #------------------------------------
 
 
-
-
-
 #--------------------------------------
 # FUNCTIONS ---------------------------
 #--------------------------------------
 
-
 def calc_estimated_total_mutations(params, pop):
     #NOTE: this would actually be a pretty poor estimate, because mutations will occur in new individuals, not some static population
-
     mean_births = np.mean(pop.n_births[-params.model.its.burn.T_min:])
-    est = mean_births * pop.gen_arch.L * params.model.its.main.T * pop.gen_arch.mu
-
+    est = mean_births * pop.gen_arch.L * params.model.its.main.T * pop.gen_arch.mu_tot
     #give a decent overestimate
-
     est = int(2.5 * est)
-
-    return(est)
-
-
-def do_mutation(pop, log = False):
-
-    newborns = {i:v.age for i,v in pop.items() if v.age == 0}
-
-    mutation = r.binomial(1, pop.gen_arch.mu*pop.gen_arch.L*len(newborns))
+    return est 
 
 
-    if mutation == 1:
-        #randomly choose an individual
-        ind = r.choice(list(newborns.keys()))
-        #randomly choose a locus from among the mutables
-        r.shuffle(pop.gen_arch.mutables)
-        loc = pop.gen_arch.mutables.pop()
-        #randomly choose a chromosome
-        chrom = r.binomial(1,0.5)
+def do_neutral_mutation(pop, offspring, locus=None, individ=None):
+    #randomly choose an individual to mutate, if not provided
+    if individ is None:
+        individ = r.choice(offspring)
+    else:
+        assert individ in pop.keys(), 'ERROR: The individual provided is not in pop.keys().'
+    #randomly choose a locus from among the mutables, if not provided
+    if locus is None:
+        locus = r.choice([*pop.gen_arch.mutable_loci])
+    else:
+        assert locus in pop.gen_arch.mutable_loci, 'ERROR: The locus provided is not in the pop.gen_arch.mutable_loci set.'
+    #remove the locus from the mutable_loci set
+    pop.gen_arch.mutable_loci.remove(locus)
+    #randomly choose a chromosome on which to place the mutation in the individual
+    chrom = r.binomial(1,0.5)
+    #then mutate this individual at this locus
+    pop[individ].genome[locus,chrom] = 1
+    return(individ, locus)
 
-        #then mutate this individual at this locus
-        pop[ind].genome[loc,chrom] = 1
+
+def do_deleterious_mutation():
+    pass
 
 
+def do_trait_mutation(pop, offspring, trait_num, locus=None, alpha=None, individ=None):
+    #choose new loci to add to this trait, if not provided
+    if locus is None:
+        locus = pop.gen_arch.draw_trait_loci()
+        assert locus in pop.gen_arch.mutable_loci, 'ERROR: The locus provided is not in pop.gen_arch.mutable_loci.'
+    #remove the locus from the mutable_loci and neut_loci sets
+    pop.gen_arch.mutable_loci.remove(locus)
+    pop.gen_arch.neut_loci.remove(locus)
+    #add the locus to the nonneut_loci set
+    pop.gen_arch.nonneut_loci.update({locus})
+    #choose an effect size for this locus, if not provided
+    if alpha is None:
+        alpha = pop.gen_arch.draw_alpha(trait_num)
+    #then update the trait's loci and alpha attributes accordingly
+    pop.gen_arch.set_trait_loci(trait_num, mutational = True, loci = locus, alpha = alpha)
+    #draw an individual to mutate from the list of offspring provided, unless individ is provided
+    if individ is None:
+        individ = r.choice(offspring)
+    #TODO: Need to check that the individual provided is among the list of offspring? Or make offspring an optional arg too?
+    #create the mutation
+    pop[individ].genome[locus,r.binomial(1, 0.5)] = 1 
+    #return the individual and locus
+    return(individ, locus)
 
 
-        #NOTE: Change this to something more generalizable in the main script
-        if log == True:
-            with open('./mutation_log.txt', 'a') as f:
-                f.write('locus: %i,t: %i' % (locus, t))
-        
-        print('#\n#\n#\n#\n#\n#\n#\n')
-        print('MUTATION:\n\t INDIVIDUAL %i,  LOCUS %i\n\t timestep %i\n\n' % (ind, loc, pop.t))
-        print('#\n#\n#\n#\n#\n#\n#\n')
+def do_planned_mutation(planned_mut_params):
+    pass
+
+
+def do_mutation(offspring, pop, log=None):
+    #draw number of mutations from a binomial trial with number of trials equal to
+    #len(offspring)*pop.gen_arch.L and prob = sum(all mutation rates)
+    n_muts = r.binomial(n = len(offspring) * pop.gen_arch.L, p = pop.gen_arch.mu_tot)
+    print('# MUTS : %i' % n_muts)
+
+    #if n_muts >0, draw which type of mutation each resulting mutation should be 
+    #(weighted by relative mutation rates)
+    if n_muts > 0:
+        muts = pop.gen_arch.draw_mut_types(num = n_muts)
+
+        #for each mutation, add the corresponding mutation function to a queue
+        mut_queue = []
+        for mut in muts:
+            #add the appropriate mut_fn to the queue
+            mut_fn = pop.gen_arch.mut_fns[mut]
+            mut_queue.append(mut_fn)
+
+        #add to the queue any planned mutations, if necessary
+        if pop.gen_arch.planned_muts:
+            if pop.gen_arch.planned_muts.next[0] <= pop.t:
+                mut_queue.append(planned_muts.next[1])
+                pop.gen_arch.planned_muts.set_next()
+
+        #execute all functions in the queue
+        for fn in mut_queue:
+            individ, locus = fn(pop, offspring)
+            log_msg = 'MUTATION:\n\t INDIVIDUAL %i,  LOCUS %i\n\t timestep %i\n\n' % (individ, locus, pop.t)
+            if log:
+                with open(log, 'a') as f:
+                    f.write(log_msg)
+            print(log_msg)
 

@@ -111,7 +111,7 @@ def calc_logistic_growth(R, N, K):
     return(dNdt)
 
 
-def cal_logistic_soln(x0, R, t):
+def calc_logistic_soln(x0, R, t):
         return(1/(1+((1/x0)-1)*np.e**(-1*R*t)))
 
 

@@ -55,7 +55,7 @@ class Population(OD):
     ### SPECIAL METHODS ###
     #######################
 
-    def __init__(self, name, inds, land, pop_params, genomic_architecture):
+    def __init__(self, name, inds, land, pop_params, genomic_architecture=None):
 
         #check the inds object is correct
         assert type(inds) in (OD, dict), "ERROR: inds must be of type dict or type collections.Ordered_Dict"
@@ -122,6 +122,12 @@ class Population(OD):
         #set the Genomic_Architecture object
         self.gen_arch = genomic_architecture
         assert self.gen_arch.__class__.__name__ == 'Genomic_Architecture', "self.gen_arch must be an instance of the genome.Genomic_Architecture class"
+
+        #set the self.mutate attribute (a boolean indicating whether or not to enact mutation, which is True if gen_arch.mu_tot > 0
+        self.mutate = self.gen_arch.mu_tot > 0
+
+        #set the self.mut_log attribute, which dictates whether or not a mutation log should be written for this pop
+        self.mut_log = pop_params.genome.mut_log
 
         #create a couple getter functions, for use in getting all individs' coordinates and certain individs' coordinates
         self.__coord_attrgetter__ = attrgetter('x', 'y')
@@ -192,14 +198,21 @@ class Population(OD):
     # function for executing mating for a population
     def do_mating(self, land, mating_pairs, burn=False):
 
+        #draw the number of births for each pair, and append total births to self.n_births list
         n_births = mating.draw_n_births(len(mating_pairs), self.n_births_lambda)
         total_births = sum(n_births)
         self.n_births.append(total_births)
 
-        if burn == False:
+        #create the offspring_ids
+        next_offspring_key = next(reversed(self))+1
+        offspring_keys = set(range(next_offspring_key, next_offspring_key + total_births))
+        #copy the keys, for use in mutation.do_mutation()
+        keys_list = [*offspring_keys]
+
+        if not burn:
             recomb_paths = self.gen_arch.recomb_paths.get_paths(total_births*2)
             new_genomes = mating.do_mating(self, mating_pairs, n_births, recomb_paths)
-        
+       
         for n_pair, pair in enumerate(mating_pairs):
 
             parent_centroid_x = (self[pair[0]].x + self[pair[1]].x)/2
@@ -208,43 +221,48 @@ class Population(OD):
             n_offspring = n_births[n_pair]
             n_gametes = 2 * n_offspring
 
-            offspring_key = next(reversed(self)) + 1
             for n in range(n_offspring):
+
+                #get the next offspring_key
+                offspring_key = offspring_keys.pop()
 
                 offspring_x, offspring_y = movement.disperse(land, parent_centroid_x, parent_centroid_y,
                         self.dispersal_mu, self.dispersal_sigma)
-
-                if self.sex:
-                    offspring_sex = r.binomial(1, 0.5)
-
+                
+                #set the age to 0
                 age = 0
 
-                if not burn:
-                    if self.sex:
-                        self[offspring_key] = individual.Individual(idx = offspring_key, new_genome = new_genomes[n_pair][n], x = offspring_x, y = offspring_y, sex = offspring_sex, age =age)
+                #set the sex correctly
+                if self.sex:
+                    sex = r.binomial(1, 0.5)
+                else:
+                    sex = None
+
+                #set the new_genome correctly
+                if self.gen_arch is not None:
+                    if burn:
+                        new_genome = np.array([0])
                     else:
-                        self[offspring_key] = individual.Individual(idx = offspring_key, new_genome = new_genomes[n_pair][n], x = offspring_x, y = offspring_y, age = age)
-               
-                    #set new individual's phenotype (won't be set during burn-in, becuase no genomes assigned)
+                        new_genome = new_genomes[n_pair][n]
+                else:
+                    new_genome = None
+                       
+                #create the new individual
+                self[offspring_key] = individual.Individual(idx = offspring_key, age = age, new_genome = new_genome, x = offspring_x, y = offspring_y, sex = sex)
+              
+                #set new individual's phenotype (won't be set during burn-in, because no genomes assigned; won't be set if the population has not gen_arch)
+                if self.gen_arch is not None and not burn:
                     self[offspring_key].set_phenotype(self.gen_arch)
-
-
-                elif burn:
-                    if self.sex:
-                        self[offspring_key] = individual.Individual(idx = offspring_key, new_genome = np.array([0]), x = offspring_x, y = offspring_y, sex = offspring_sex, age = age)
-                    else:
-                        self[offspring_key] = individual.Individual(idx = offspring_key, new_genome = np.array([0]), x = offspring_x, y = offspring_y, age = age)
-                offspring_key += 1
 
         # sample all individuals' habitat values, to initiate for offspring
         self.set_habitat(land)
         self.set_coords_and_cells()
 
-        print('\n\t%i individuals born' % (total_births))
+        # do mutation if necessary
+        if self.mutate:
+            mutation.do_mutation(keys_list, self, log = self.mut_log)
 
-    # method to carry out mutation
-    def do_mutation(self, log=False):
-        mutation.do_mutation(self)
+        print('\n\t%i individuals born' % (total_births))
 
     #method to make population changes
     def make_change(self):
@@ -428,6 +446,15 @@ class Population(OD):
         coords = self.get_coords(individs = individs)
         return coords[:,1]
 
+    #method to return an n-length list of random individs; return individuals, or indices, as indicated
+    def get_rand_individs(self, n, return_format='index'):
+        assert return_format in ['index', 'individual'], "ERROR: return_format can take only 'index' or 'individual' as values (defaults to 'index')."
+        choices = choices = r.choice(list(range(len(pop))), n)
+        inds = np.array(list(pop.keys()))[choices]
+        if return_format=='individual':
+            inds = [pop[ind] for ind in inds]
+        return(inds)
+
     #use the kd_tree attribute to find nearest neighbors either within the population, if within == True,
     #or between the population and the points provided, if within == False and points is not None
     def find_neighbors(self, dist, within=True, coords=None, k = 2):
@@ -450,6 +477,9 @@ class Population(OD):
     def show(self, land, scape_num=None, hide_land=False, individs=None, text=False, color='black',
             edge_color='face', text_color='black', colorbar=True, size=25, text_size=9, im_interp_method='nearest', 
             land_cmap='terrain', pt_cmap=None, alpha=False, zoom_width=None, x=None, y=None, vmin = None, vmax = None):
+        #convert individs to a list (in case comes in as a numpy array)
+        if individs is not None and not isinstance(individs, list):
+            individs = list(individs)
         #get coords
         if individs is None:
             coords = self.coords
@@ -572,24 +602,47 @@ class Population(OD):
 
 
     def show_hist_fitness(self):
-        plt.hist(list(selection.get_fitness(self).values()))
+        plt.hist(list(self.get_fitness()))
  
 
     # method for plotting a population pyramid
     # NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS
-    def show_pyramid(self):
-        plt.hist([ind.age for ind in list(self.inds) if ind.sex == 0], orientation='horizontal',
-                 color='pink',
-                 alpha=0.6)
-        plt.hist([ind.age for ind in list(self.inds) if ind.sex == 1], orientation='horizontal',
-                 color='skyblue',
-                 alpha=0.6)
-
+    def show_demographic_pyramid(self):
+        #make dict of female and male colors
+        col_dict = {-1: 'cyan', 1: 'pink'}
+        #create a figure
+        fig = plt.figure()
+        #variables to grab the max count
+        max_count = 0
+        #for each sex
+        for sex_val in [*col_dict]:
+            #get a counter
+            counts = C([ind.age for ind in self.values() if ind.sex == int(sex_val < 0)])
+            #grab the ages from it
+            ages = [*counts]
+            #and grab the counts from it (multiplying by -1 for females, to set one sex on either side of x=0, for the pyramid)
+            counts = [sex_val*count for count in counts.values()] 
+            #update the max_count var
+            max_count = max(max(counts), max_count)
+            #then create the horizontal barplot
+            plt.barh(ages, counts, color = col_dict[sex_val])
+        #use max_count to set the x-limits and y-limits
+        plt.xlim((-1*max_count-2, max_count+2))
+        #set the axis labels
+        plt.xlabel('Population (individuals)')
+        plt.ylabel('Age (timesteps)')
+        #then set the xlabels to positive numbers on either side
+        locs, labels = plt.xticks()
+        plt.xticks(locs, [str(int(loc)) for loc in np.abs(locs)])
+        #add sex symbols as title
+        plt.suptitle('\u2642%s\u2640' % ''.join([' ' for _ in range(20)]), size = 30)
+        #show
+        plt.show()
 
     def show_pop_growth(self):
         T = range(len(self.Nt))
         x0 = self.Nt[0] / self.K.sum()
-        plt.plot(T, [demography.logistic_soln(x0, self.R, t) * self.K.sum() for t in T], color='red')
+        plt.plot(T, [demography.calc_logistic_soln(x0, self.R, t) * self.K.sum() for t in T], color='red')
         plt.plot(T, self.Nt, color='blue')
         plt.xlabel('t')
         plt.ylabel('N(t)')
@@ -621,7 +674,7 @@ def make_population(land, pop_params, burn=False):
     if 'genome' in pop_params.keys():
         g_params = pop_params.genome
         #make genomic_architecture
-        gen_arch = genome.make_genomic_architecture(g_params = g_params)
+        gen_arch = genome.make_genomic_architecture(pop_params = pop_params)
 
     #make individs
     N = init_params.pop('N')

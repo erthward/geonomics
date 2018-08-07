@@ -43,5 +43,4 @@ def main(T, reassign_genomes=False):
         extinct = demography.do_pop_dynamics(land, pop, with_selection=True)
         if extinct == 1:
             break
-        pop.do_mutation(log=False)
 

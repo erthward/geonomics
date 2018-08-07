@@ -35,7 +35,7 @@ import bitarray
 ######################################
 
 class Trait:
-    def __init__(self, idx, name, phi, n_loci, mu_nonneut, scape_num, mean_alpha_dist, std_alpha_dist, gamma, univ_advant):
+    def __init__(self, idx, name, phi, n_loci, mu_nonneut, scape_num, alpha_dist_sigma, gamma, univ_advant):
         self.idx = idx
         self.name = name
         self.phi = phi
@@ -44,12 +44,11 @@ class Trait:
             mu_nonneut = 0
         self.mu_nonneut = mu_nonneut
         self.scape_num = scape_num
-        self.mean_alpha_dist = mean_alpha_dist
-        self.std_alpha_dist = std_alpha_dist
+        self.alpha_dist_sigma = alpha_dist_sigma
         self.gamma = gamma
         self.univ_advant = univ_advant
 
-        self.loci = np.int64([])
+        self.loci = np.array([])
         self.alpha = np.array([])
 
 
@@ -60,9 +59,6 @@ class Trait:
             phi = self.phi[pop.cells[:,1], pop.cells[:,0]]
         return(phi)
 
-    def set_loci(self, loci):
-        self.loci = np.hstack((self.loci, np.array([*loci])))
-        self.n_loci = self.loci.size
 
 class Recomb_Paths:
     def __init__(self, recomb_paths):
@@ -111,18 +107,15 @@ class Genomic_Architecture:
         mus = mus + [trt.mu_nonneut for trt in self.traits.values()]
         self.mu_tot = sum(mus)
   
+
     #method for drawing an effect size for one or many loci 
     def draw_alpha(self, trait_num, n):
-        alpha = r.normal(self.traits[trait_num].mean_alpha_dist, self.traits[trait_num].std_alpha_dist, n)
-        if self.traits[trait_num].n_loci == 1:
+        alpha = r.normal(0, self.traits[trait_num].alpha_dist_sigma, n)
+        if n == 1:
             alpha = np.abs(alpha)
         return(alpha)
 
-    #method for drawing new trait loci (for a mutation)
-    def draw_trait_loci(self, n=1):
-        loci = r.choice([*self.neut_loci], size = n, replace = False)
-        return(loci)
-
+    
     #method to draw mutation types for any number of mutations chosen to occur in a given timestep 
     def draw_mut_types(self, num):
         type_dict = {'neut': self.mu_neut,
@@ -137,54 +130,48 @@ class Genomic_Architecture:
         choices = r.choice(types, p = probs, size = num, replace = True)
         return(choices)
 
-    #a method to set the heterozygosity values at certain loci
-    def set_heterozgosity(self, loci, het_value):
-        pass
-  
+   
     #method for assigning loci to traits 
-    def set_trait_loci(self, trait_num, mutational=False, loci=None, alpha=None):
+    def set_trait_loci(self, trait_num, mutational=False, alpha=None, loci=None):
+
         #if this is not the result of a point mutation, but instead either an initial setup or manually
-        #introduced, then grab the number of loci to be assigned
+        #introduced, number of loci to be assigned
         if mutational == False:  
             n = self.traits[trait_num].n_loci
-        #otherwise, assign a single locus
         else:
             n = 1
-        #if loci are provided manually, use those
-        if loci is not None:
-            if not np.iterable(loci):
-                loci = [loci]
+
+        #if locations provided manually, use those
+        if loci != None:
+            assert np.shape(loci) == 1, 'Object containing loci provided manually is not of dimension 1'
             loci = set([*loci])
-        #else, draw loci randomly, either allowing pleiotropy or not
+        #otherwise draw loci randomly, either allowing pleiotropy or not
         elif not self.pleiotropy:
-            loci = set(r.choice([*self.neut_loci], size = n, replace = False))
+            loci = set(r.choice([*self.neutral], size = n, replace = False))
         elif self.pleiotropy:
             loci = set(r.choice(range(self.L), size = n, replace = False))
-        #update the trait's loci
-        self.traits[trait_num].set_loci(loci)
-        #add these loci to self.non-neutral and remove from self.neut_loci, to keep track of all loci underlying any traits (for purpose of avoiding pleiotropy)
-        self.nonneut_loci.update(loci)
-        self.neut_loci.difference_update(loci)
-        #if the effect size(s) is/are provided, use those
-        if alpha is not None:
-            if not np.iterable(alpha):
-                alpha = np.array([alpha])
-            effects = alpha
-        #else, draw effects from a Gaussian dist with mean 0 and sigma provided by trait params (as per e.g.  Yeaman and Whitlock 2011)
-        else:
-            effects = self.draw_alpha(trait_num, n)
+
+        #draw effects from a Gaussian dist with mean 0 and sigma provided by trait params (as per e.g.  Yeaman and Whitlock 2011)
+        effects = self.draw_alpha(trait_num, n)
+
         #check that loci and effects are of equal length
         assert len(loci) == len(effects), 'Lengths of the two arrays containing the new trait loci and their effects are not equal.'
-        #then add the effects to the trait's alpha array
-        self.traits[trait_num].alpha = np.hstack((self.traits[trait_num].alpha, effects))
 
-    
+        #add these loci to the trait's 'loci' array
+        self.traits[trait_num].loci = np.array([*self.traits[trait_num].loci] + list(loci))
+        #and add their effects to the 'alpha' array
+        self.traits[trait_num].alpha = np.array([*self.traits[trait_num].alpha] + list(effects))
+
+        #add these loci to self.non-neutral and remove from self.neutral, to keep track of all loci underlying any traits (for purpose of avoiding pleiotropy)
+        self.non_neutral.update(loci)
+        self.neutral.difference_update(loci)
+
+
     #method for creating and assigning the r_lookup attribute
     def make_recomb_paths(self):
         self.recomb_paths = Recomb_Paths(make_recomb_paths_bitarrays(self))
 
 
-    #method for showing all allele frequencies for the population
     def show_freqs(self, pop):
         populome = np.hstack([ind.genome for ind in pop.values()])
         freqs = populome.sum(axis = 1)/(2*populome.shape[0])
@@ -397,7 +384,7 @@ def make_genomic_architecture(pop_params):
     for trait_num in gen_arch.traits.keys():
         gen_arch.set_trait_loci(trait_num, mutational = False, loci = None)
 
-    assert len(set(range(gen_arch.L)).difference(gen_arch.neut_loci.union(gen_arch.nonneut_loci))) == 0, 'ERROR: The union of the gen_arch.neut_loci and gen_arch.nonneut_loci sets does not contain all loci indicated by gen_arch.L'
+    assert len(set(range(gen_arch.L)).difference(gen_arch.neutral.union(gen_arch.non_neutral))) == 0, 'ERROR: The union of the gen_arch.neutral and gen_arch.non_neutral sets does not contain all loci indicated by gen_arch.L'
 
     #create the r_lookup attribute
     gen_arch.make_recomb_paths()
@@ -422,12 +409,12 @@ def reset_genomes(pop, params):
     from ops import mutation
 
     #use mean n_births at tail end of burn-in to estimate number of mutations, and randomly choose set of neutral loci 
-    #of that length to go into the pop.gen_arch.mutable_loci attribute
+    #of that length to go into the pop.gen_arch.mutable attribute
     n_muts = mutation.calc_estimated_total_mutations(params, pop)
     #add 25, just a random small number, to be safe in case n_muts evals to 0
     n_muts += 25
-    muts = set(r.choice([*pop.gen_arch.neut_loci], n_muts, replace = False))
-    pop.gen_arch.mutable_loci.update(muts)
+    muts = set(r.choice([*pop.gen_arch.neutral], n_muts, replace = False))
+    pop.gen_arch.mutables.update(muts)
 
     #set those loci's p values to 0 (i.e. non-segregating)
     pop.gen_arch.p[np.array([*muts])] = 0

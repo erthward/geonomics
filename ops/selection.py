@@ -52,7 +52,7 @@ def calc_phenotype(ind, trait):
 
 
 def calc_fitness_individ(t, e, z, pop):
-    fit = 1 - t.get_phi(pop)*(abs((e[:,t.scape_num]**(not t.univ_advant)) - z[:,t.num])**t.gamma)
+    fit = 1 - t.get_phi(pop)*(abs((e[:,t.scape_num]**(not t.univ_advant)) - z[:,t.idx])**t.gamma)
     return(fit)
 
 

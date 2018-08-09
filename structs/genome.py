@@ -21,9 +21,13 @@ Documentation:            URL
 ##########################################
 '''
 
+#geonomics imports
+from ops import mutation
 
+#other imports
 import numpy as np    
 from numpy import random as r
+from collections import OrderedDict as OD
 import random
 import bitarray
 
@@ -35,14 +39,14 @@ import bitarray
 ######################################
 
 class Trait:
-    def __init__(self, idx, name, phi, n_loci, mu_nonneut, scape_num, mean_alpha_dist, std_alpha_dist, gamma, univ_advant):
+    def __init__(self, idx, name, phi, n_loci, mu, scape_num, mean_alpha_dist, std_alpha_dist, gamma, univ_advant):
         self.idx = idx
         self.name = name
         self.phi = phi
         self.n_loci = n_loci
-        if mu_nonneut is None:
-            mu_nonneut = 0
-        self.mu_nonneut = mu_nonneut
+        if mu is None:
+            mu = 0
+        self.mu = mu
         self.scape_num = scape_num
         self.mean_alpha_dist = mean_alpha_dist
         self.std_alpha_dist = std_alpha_dist
@@ -96,9 +100,9 @@ class Genomic_Architecture:
 
         #attributes for deleterious loci
         self.mu_delet = g_params.mu_delet                #genome-wide deleterious mutation rate
-        self.delet_loci = set()
-        self.mean_delet_alpha_dist = g_params.mean_delet_alpha_dist
-        self.std_delet_alpha_dist = g_params.std_delet_alpha_dist
+        self.delet_loci = OD()
+        self.shape_delet_s_dist = g_params.shape_delet_s_dist
+        self.scale_delet_s_dist = g_params.scale_delet_s_dist
         
         #attribute for trait (i.e. adaptive) loci
         self.traits = make_traits(g_params.traits)
@@ -108,26 +112,30 @@ class Genomic_Architecture:
         self.mutable_loci = set()    #a set containing eligible loci for mutation; after burn-in, will be updated
             #set self.mu_tot, the total per-site, per-generation mutation rate
         mus = [mu for mu in (self.mu_neut, self.mu_delet) if mu is not None]
-        mus = mus + [trt.mu_nonneut for trt in self.traits.values()]
+        mus = mus + [trt.mu for trt in self.traits.values()]
         self.mu_tot = sum(mus)
-  
-    #method for drawing an effect size for one or many loci 
-    def draw_alpha(self, trait_num, n):
-        alpha = r.normal(self.traits[trait_num].mean_alpha_dist, self.traits[trait_num].std_alpha_dist, n)
-        if self.traits[trait_num].n_loci == 1:
-            alpha = np.abs(alpha)
-        return(alpha)
-
-    #method for drawing new trait loci (for a mutation)
-    def draw_trait_loci(self, n=1):
-        loci = r.choice([*self.neut_loci], size = n, replace = False)
-        return(loci)
-
+        self.mut_fns = self.make_mut_fns_dict()
+        
+    #method to make a mut_fns dict, containing a function for each type of mutation for this population
+    def make_mut_fns_dict(self):
+        mut_fns = {}
+        if self.mu_neut > 0:
+            fn = lambda pop,offspring: mutation.do_neutral_mutation(pop, offspring)
+            mut_fns.update({'neut': fn})
+        if self.mu_delet > 0:
+            fn = lambda pop,offspring: mutation.do_deleterious_mutation(pop, offspring)
+            mut_fns.update({'delet': fn})
+        for trait_num in self.traits:
+            if self.traits[trait_num].mu > 0:
+                fn = lambda pop,offspring: mutation.do_trait_mutation(pop, offspring, trait_num)
+                mut_fns.update({'t%i' % trait_num: fn})
+        return mut_fns
+ 
     #method to draw mutation types for any number of mutations chosen to occur in a given timestep 
     def draw_mut_types(self, num):
         type_dict = {'neut': self.mu_neut,
                  'delet': self.mu_delet,
-                **{'t%i' % (k):v.mu_nonneut for k,v in self.traits.items()} }
+                **{'t%i' % (k):v.mu for k,v in self.traits.items()} }
         types = []
         probs = []
         for k,v in type_dict.items():
@@ -137,6 +145,30 @@ class Genomic_Architecture:
         choices = r.choice(types, p = probs, size = num, replace = True)
         return(choices)
 
+    #method for drawing an effect size for one or many loci 
+    def draw_trait_alpha(self, trait_num, n=1):
+        alpha = r.normal(self.traits[trait_num].mean_alpha_dist, self.traits[trait_num].std_alpha_dist, n)
+        #set all effects to positive if the trait is monogenic (because effects will be added to 0)
+        if self.traits[trait_num].n_loci == 1:
+            alpha = np.abs(alpha)
+        return(alpha)
+
+    #method for drawing new trait or deleterious loci (for a mutation) from the currently neutral loci
+    def draw_mut_loci(self):
+        loci = r.choice([*self.mutable_loci])
+        #TODO: SHOULD I INCLUDE HERE A STATEMENT THAT CHECKS IF len(gen_arch.mutable_loci) IS <= SOME SMALL
+        #VALUE, AND IF SO FINDS FIXED SITES IN THE POPULATION AND ADDS THEM TO IT??? (so that I'm not running
+        #that time-intensive procedure often, but to make sure I'm almost certain not to run out of mutable
+        #sites (unless I by chance draw more mutations in the next turn than there are remaining mutables))
+        #DOES THIS IMPLY ANY STRANGE, POTENTIALLY PROBLEMATIC POPGEN ARTEFACTS?
+        return(loci)
+
+    #method for drawing new deleterious mutational fitness effects
+    def draw_delet_s(self):
+        s = r.gamma(self.shape_delet_s_dist, self.scale_delet_s_dist)
+        s = min(s, 1)
+        return(s)
+    
     #a method to set the heterozygosity values at certain loci
     def set_heterozgosity(self, loci, het_value):
         pass
@@ -170,9 +202,9 @@ class Genomic_Architecture:
             if not np.iterable(alpha):
                 alpha = np.array([alpha])
             effects = alpha
-        #else, draw effects from a Gaussian dist with mean 0 and sigma provided by trait params (as per e.g.  Yeaman and Whitlock 2011)
+        #else, draw effects from a Gaussian dist with mean 0 and sigma provided by trait params (as per e.g. Yeaman and Whitlock 2011)
         else:
-            effects = self.draw_alpha(trait_num, n)
+            effects = self.draw_trait_alpha(trait_num, n)
         #check that loci and effects are of equal length
         assert len(loci) == len(effects), 'Lengths of the two arrays containing the new trait loci and their effects are not equal.'
         #then add the effects to the trait's alpha array

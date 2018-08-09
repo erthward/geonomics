@@ -21,7 +21,7 @@ Documentation:                URL
 ##########################################
 '''
 
-
+#other imports
 import numpy as np
 from numpy import random as r
 import random
@@ -65,33 +65,50 @@ def do_neutral_mutation(pop, offspring, locus=None, individ=None):
     return(individ, locus)
 
 
-def do_deleterious_mutation():
-    pass
-
-
-def do_trait_mutation(pop, offspring, trait_num, locus=None, alpha=None, individ=None):
-    #choose new loci to add to this trait, if not provided
+def do_nonneutral_mutation(pop, offspring, locus=None, individ=None):
+    #choose a new locus, if not provided
     if locus is None:
-        locus = pop.gen_arch.draw_trait_loci()
+        locus = pop.gen_arch.draw_mut_loci()
         assert locus in pop.gen_arch.mutable_loci, 'ERROR: The locus provided is not in pop.gen_arch.mutable_loci.'
     #remove the locus from the mutable_loci and neut_loci sets
     pop.gen_arch.mutable_loci.remove(locus)
     pop.gen_arch.neut_loci.remove(locus)
     #add the locus to the nonneut_loci set
     pop.gen_arch.nonneut_loci.update({locus})
-    #choose an effect size for this locus, if not provided
-    if alpha is None:
-        alpha = pop.gen_arch.draw_alpha(trait_num)
-    #then update the trait's loci and alpha attributes accordingly
-    pop.gen_arch.set_trait_loci(trait_num, mutational = True, loci = locus, alpha = alpha)
     #draw an individual to mutate from the list of offspring provided, unless individ is provided
     if individ is None:
         individ = r.choice(offspring)
     #TODO: Need to check that the individual provided is among the list of offspring? Or make offspring an optional arg too?
     #create the mutation
     pop[individ].genome[locus,r.binomial(1, 0.5)] = 1 
-    #return the individual and locus
-    return(individ, locus)
+    #return the locus and individual
+    return(locus, individ)
+
+
+def do_trait_mutation(pop, offspring, trait_num, alpha=None, locus=None, individ=None):
+    #run the do_nonneutral_mutation function, to select locus and individ (unless already provided) and update
+    #the mutable_loci, neut_loci, and nonneut_loci sets, and change one of this locus' alleles to 1 in the mutated individual
+    locus, individ = do_nonneutral_mutation(pop = pop, offspring = offspring, locus = locus, individ = individ)
+    #choose an effect size for this locus, if not provided
+    if alpha is None:
+        alpha = pop.gen_arch.draw_trait_alpha(trait_num)
+    #update the trait's loci and alpha attributes accordingly
+    pop.gen_arch.set_trait_loci(trait_num, mutational = True, loci = locus, alpha = alpha)
+    #return the locus and individual
+    return(locus, individ)
+
+
+def do_deleterious_mutation(pop, offspring, locus=None, s=None, individ=None):
+    #run the do_nonneutral_mutation function, to select locus and individ (unless already provided) and update
+    #the mutable_loci, neut_loci, and nonneut_loci sets, and change one of this locus' alleles to 1 in the mutated individual
+    locus, individ = do_nonneutral_mutation(pop = pop, offspring = offspring, locus = locus, individ = individ)
+    #choose a selection coefficient for this locus, if not provided
+    if s is None:
+        s = pop.gen_arch.draw_delet_s()
+    #update the pop.gen_arch.delet_loci OrderedDict
+    pop.gen_arch.delet_loci.update({locus: s})
+    #return the locus and individual
+    return(locus, individ)
 
 
 def do_planned_mutation(planned_mut_params):

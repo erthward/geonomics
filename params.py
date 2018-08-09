@@ -345,9 +345,9 @@ params = {
                     'mut_log':              False,
                         #whether or not to store a mutation log; if true, will be saved as mut_log.txt
                         #within each iteration's subdirectory
-                    'mean_delet_alpha_dist':      -0.1,
-                    'std_delet_alpha_dist':   0,
-                        #mean and standard deviation of effect size of deleterious mutations (std = 0 will fix all
+                    'shape_delet_s_dist':      -0.1,
+                    'scale_delet_s_dist':   0,
+                        #mean and standard deviation of the per-allele effect size of deleterious mutations (std = 0 will fix all
                             #mutations for the mean value)
                     'alpha_r_dist':                  0.5,
                         #alpha for beta distribution of linkage values  
@@ -384,7 +384,7 @@ params = {
                                     #values (with dimensions equal to land.dims)
                             'n_loci':           10,
                                 #number of loci to be assigned to this trait
-                            'mu_nonneut':      1e-9,
+                            'mu':      1e-9,
                                 #mutation rate for this trait (if set to 0, or if genome['mutation'] == False, no mutation will occur)
                                     #(set to 0 to disable mutation for this trait)
                             'mean_alpha_dist' : 0,
@@ -416,7 +416,7 @@ params = {
                                     #values (with dimensions equal to land.dims)
                             'n_loci':           1,
                                 #number of loci to be assigned to this trait
-                            'mu_nonneut':      1e-9,
+                            'mu':      1e-9,
                                 #mutation rate for this trait (if set to 0, or if genome['mutation'] == False, no mutation will occur)
                             'mean_alpha_dist' : 0,
                             'std_alpha_dist' : 0.5,

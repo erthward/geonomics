@@ -51,12 +51,12 @@ def calc_phenotype(ind, trait):
     return(phenotype)
 
 
-def calc_fitness_individ(t, e, z, pop):
+def calc_fitness_one_trait(t, e, z, pop):
     fit = 1 - t.get_phi(pop)*(abs((e[:,t.scape_num]**(not t.univ_advant)) - z[:,t.idx])**t.gamma)
     return(fit)
 
 
-def calc_fitness(pop, trait_num = None, set_fit = False):
+def calc_fitness_traits(pop, trait_num = None, set_fit = False):
     traits = pop.gen_arch.traits.values()
     #subset for single trait, if indicated
     if trait_num is not None:
@@ -66,8 +66,9 @@ def calc_fitness(pop, trait_num = None, set_fit = False):
     #get all individuals' phenotypes
     z = pop.get_phenotype()
     #create lambda function with current e, z, and pop objects
-    calc_fitness_lambda = lambda t: calc_fitness_individ(t, e, z, pop)
-    #map the calc_sngl_trait_fitness function to all traits
+    calc_fitness_lambda = lambda t: calc_fitness_one_trait(t, e, z, pop)
+    #map the calc_sngl_trait_fitness function to all traits, then calculate overall fitness as product of
+    #fitness for each trait
     fit = np.stack(list(map(calc_fitness_lambda, traits))).prod(axis = 0)
     #for polygenic traits, loci with very large effect sizes can generate fitnesses less than 0; correct for this
     fit = np.clip(fit, a_min = 0.001, a_max = None)
@@ -76,7 +77,16 @@ def calc_fitness(pop, trait_num = None, set_fit = False):
     #if set_fit:
     #    indices = [*pop]
     #    [pop[indices[n]].set_fitness(f) for n,f in enumerate(fit)];
+    return(fit)
 
+
+def calc_fitness_deleterious_mutations(pop):
+    #create an np.array that has individuals in rows and their diploid genotypes for each of
+    #the deleterious loci in the cols (0, 1, or 2, to facilitate the fitness math, because s values
+    #(i.e. selection coefficients) are expressed per allele)
+    deletome = np.sum(np.stack([ind.genome[[*pop.gen_arch.delet_loci.keys()],:] for ind in pop.values()]), axis = 2)
+    fit = 1 - np.multiply(deletome, np.array([*pop.gen_arch.delet_loci.values()]))
+    fit = fit.prod(axis = 1)
     return(fit)
 
 
@@ -85,7 +95,16 @@ def calc_fitness(pop, trait_num = None, set_fit = False):
 #coefficient(s) on the trait(s)
 def calc_prob_death(pop, d):
 
-    w = calc_fitness(pop)
+    #set a default w array
+    w = np.array([1]*len(pop))
+
+    #get trait-related fitness, if traits
+    if len(pop.gen_arch.traits) > 0:
+        w = w * calc_fitness_traits(pop)
+
+    #if the population has deleterious mutations, get fitnesses related to them (i.e. operationalize background selection)
+    if len(pop.gen_arch.delet_loci) > 0:
+        w = w * calc_fitness_deleterious_mutations(pop) 
 
     #[death_probs.update({i: 1-(1-d[i])*w}) for i, w in W.items()];
     death_probs = 1-(1-d)*w

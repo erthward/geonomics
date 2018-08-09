@@ -345,8 +345,8 @@ params = {
                     'mut_log':              False,
                         #whether or not to store a mutation log; if true, will be saved as mut_log.txt
                         #within each iteration's subdirectory
-                    'shape_delet_s_dist':      -0.1,
-                    'scale_delet_s_dist':   0,
+                    'shape_delet_s_dist':      0.2,
+                    'scale_delet_s_dist':   0.2,
                         #mean and standard deviation of the per-allele effect size of deleterious mutations (std = 0 will fix all
                             #mutations for the mean value)
                     'alpha_r_dist':                  0.5,

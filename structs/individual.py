@@ -79,7 +79,7 @@ class Individual:
 
 
     #function to increment age by one
-    def reset_age_stage(self):
+    def set_age_stage(self):
         self.age += 1
 
     #sets the individual's position

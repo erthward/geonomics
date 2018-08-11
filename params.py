@@ -257,21 +257,23 @@ params = {
             ###################
 
                 'mortality'     : {
-                    'n_deaths_sigma':       0.2,
+                    'n_deaths_sigma':           0.2,
                         #std for the normal distribution used to choose the r.v. of deaths 
                             #per timestep (mean of this distribution is the overshoot, 
                             #as calculated from pop.size and pop.census())
-                    'dens_depedent_fitness': True,
+                    'selection':                True,
+                        #should the population undergo natural selection?
+                    'dens_dependent_fitness':   True,
                         #should fitness be density dependent? (note: helps to avoid subpopulation 'clumping')
-                    'dens_grid_window_width': None,
+                    'dens_grid_window_width':   None,
                         #with window-width used for the Density_Grid_Stack that calculates pop density 
                             #(if set to None, defaults to the closest factor of the larger landscape 
                             #dimension to 1/10th of that dimension)
                             #NOTE: will eventually default to an approximation of Wright's genetic neighborhood 
                             #distance, based on the population's movement/dispersal parameters
-                   'd_min':                0.01,
+                   'd_min':                     0.01,
                         #minimum neutral (i.e. non-selection driven) probability of death
-                    'd_max':                0.90,
+                    'd_max':                    0.90,
                         #maximum neutral probability of death
                     'islands':  {
                         'make':                 False,
@@ -519,23 +521,33 @@ params = {
 
     'model': {
         'seed': {
-            'set':     True,
+            #parameters to control whether and how to set the seed
+            'set':          True,
                 #set the seed? (for reproducibility)
-            'num':     23432
+            'num':          304
                 #value used to seed random number generators
             }, # <END> 'seed'
-
         'its': {
-            'burn': {
-                'T_min':   50
-                    #minimum burn-in runtime
-                }, # <END> 'burn'
-            'main': {
-                'T':            2500
-                    #total model runtime
-                } # <END> 'main'
-            }, # <END> 'its'
-
+            #parameters to control how many iterations of the model to run,
+            #and whether or not to randomize the land and/or community 
+            #objects in each model iteration
+            'n_its': 1000,
+                #how many iterations of the model should be run?
+            'rand_land':    True,
+                #randomize the land for each new iteration?
+            'rand_comm':    True,
+                #randomize the community for each new iteration?
+            }, # <END> 'iterations'
+        'time': {
+            #parameters to control the number of burn-in and main timesteps to
+            #run for each iterations
+            'T':            2500,
+                #total model runtime (in timesteps)
+            'burn_T':       50
+                #minimum burn-in runtime (in timesteps; this is a mininimum because 
+                    #burn-in will run for at least this long but until
+                    #stationarity detected, which will likely be longer)
+            }, # <END> 'timesteps'
         'data': {
             #dictionary defining the data to be collected, the sampling 
             #strategy to use, the timesteps for collection, and other parameters
@@ -591,11 +603,18 @@ class _Dyn_Attr_Dict_(dict):
         return self[item]
     def __dir__(self):
         return super().__dir__() + [str(k) for k in self.keys()]
+    def __deepcopy__(self, memo):
+        return _Dyn_Attr_Dict_(copy.deepcopy(dict(self)))
+
 
 class Params_Dict(_Dyn_Attr_Dict_):
     def __init__(self, params):
         params_dict = make_params_dict(params)
         self.update(params)
+    #re-enable deepcopy, because the class inherits from a dict
+    def __deepcopy__(self, memo):
+        return Params_Dict(copy.deepcopy(dict(self)))
+
 
 #function to recurse over the params dictionary 
 #and return it as a Params_Dict object (i.e. a

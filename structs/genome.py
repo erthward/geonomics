@@ -25,7 +25,7 @@ Documentation:            URL
 from ops import mutation
 
 #other imports
-import numpy as np    
+import numpy as np
 from numpy import random as r
 from collections import OrderedDict as OD
 import random
@@ -449,13 +449,13 @@ def draw_genome(genomic_architecture):
     return(new_genome)
 
 
-#function to reassign genomes after burn-in
-def reset_genomes(pop, params):
+#function to reset genomes after burn-in
+def set_genomes(pop, burn_T, T):
     from ops import mutation
 
     #use mean n_births at tail end of burn-in to estimate number of mutations, and randomly choose set of neutral loci 
     #of that length to go into the pop.gen_arch.mutable_loci attribute
-    n_muts = mutation.calc_estimated_total_mutations(params, pop)
+    n_muts = mutation.calc_estimated_total_mutations(pop, burn_T, T)
     #add 25, just a random small number, to be safe in case n_muts evals to 0
     n_muts += 25
     muts = set(r.choice([*pop.gen_arch.neut_loci], n_muts, replace = False))
@@ -466,6 +466,8 @@ def reset_genomes(pop, params):
     
     #now reassign genotypes to all individuals, using gen_arch.p
     [ind.set_genome(draw_genome(pop.gen_arch)) for ind in pop.values()]
+    #and then reset the individuals' phenotypes
+    [ind.set_phenotype(pop.gen_arch) for ind in pop.inds];
 
        
 #method for loading a pickled genomic architecture

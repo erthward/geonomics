@@ -36,10 +36,10 @@ import random
 # FUNCTIONS ---------------------------
 #--------------------------------------
 
-def calc_estimated_total_mutations(params, pop):
+def calc_estimated_total_mutations(pop, burn_T, T):
     #NOTE: this would actually be a pretty poor estimate, because mutations will occur in new individuals, not some static population
-    mean_births = np.mean(pop.n_births[-params.model.its.burn.T_min:])
-    est = mean_births * pop.gen_arch.L * params.model.its.main.T * pop.gen_arch.mu_tot
+    mean_births = np.mean(model.pop.n_births[-burn_T:])
+    est = mean_births * pop.gen_arch.L * T * pop.gen_arch.mu_tot
     #give a decent overestimate
     est = int(2.5 * est)
     return est 

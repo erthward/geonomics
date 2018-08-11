@@ -35,6 +35,21 @@ import datetime
 
 
 
+# TODO: Add fasta formatting, as follows:
+'''
+FASTA FORMAT:
+
+>idx|x_location|y_location|phenotype0;phenotype1;...;phenotypeN|env_var0;env_var1;...;env_varN
+001110101010101010010101011101010110.....01011110
+
+'''
+
+
+
+
+
+
+
 #------------------------------------
 # CLASSES ---------------------------
 #------------------------------------
@@ -215,16 +230,12 @@ def sample_data(pop, land, scheme, n = None, points = None, radius = None, trans
         transect_pts = [get_transect_points(eps, n_transect_points) for eps in transect_endpoints]
         [sample.update(point_sample(pop, n, points, radius)) for points in transect_pts]
 
-
-
     #now sample data from those individuals
 
     sampled_data = {'genomic_arch': pop.genomic_arch,
                     'individs': sample,
                     'land': land
                     }
-
-
     
     return(sampled_data)
 
@@ -329,7 +340,7 @@ def format_vcf(data):
     header = '''##fileformat=VCFv4.2
 ##fileDate=%s
 ##source=Geonomics
-##INFO=<ID=MID,Number=1,Type=Integer,Description="Mutation ID in SLiM">
+##INFO=<ID=MID,Number=1,Type=Integer,Description="Mutation ID in Geonomics">
 ##INFO=<ID=S,Number=1,Type=Float,Description="Selection Coefficient">
 ##INFO=<ID=DOM,Number=1,Type=Float,Description="Dominance">
 ##INFO=<ID=PO,Number=1,Type=Integer,Description="Population of Origin">

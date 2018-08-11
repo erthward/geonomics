@@ -13,7 +13,7 @@ def burn(stop_after = None):
     while break_burn_in == False:
         print('###############\n\n TIMESTEP %i' % t)
         print('     POP %i\n' % len(pop))
-        pop.reset_age_stage(burn=True)
+        pop.set_age_stage(burn=True)
         pop.set_Nt()
         pop.do_movement(land)
         extinct = demography.do_pop_dynamics(land, pop, with_selection=False, burn=True)
@@ -31,13 +31,13 @@ def burn(stop_after = None):
 def main(T, reassign_genomes=False):
     if reassign_genomes == True:
         print('\n\nReassigning genomes...\n\n')
-        genome.reset_genomes(pop, params)
+        genome.set_genomes(pop, params)
         [ind.set_phenotype(pop.gen_arch) for ind in pop.inds];
     for t in range(T):
         print('###############\n\n TIMESTEP %i' % t)
         print('     POP %i\n' % len(pop))
         #lc.make_change(t)
-        pop.reset_age_stage(burn=False)
+        pop.set_age_stage(burn=False)
         pop.set_Nt()
         pop.do_movement(land)
         extinct = demography.do_pop_dynamics(land, pop, with_selection=True)

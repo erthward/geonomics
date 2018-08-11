@@ -9,7 +9,7 @@ from importlib import reload
 from utils import viz, io, spatial as spt
 from structs import landscape, genome, individual, population, community
 from ops import movement, demography, mating, selection, mutation, change
-from sims import burn_in, stats, data
+from sim import burn_in, stats, data
 from support import param_exploration as pe
 
 import numpy as np

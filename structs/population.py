@@ -70,9 +70,11 @@ class Population(OD):
         self.land_dim = land.dim
         self.it = None  # attribute to keep track of iteration number this pop is being used for
             # (optional; will be set by the iteration.py module if called)
+        self.T = None #attribute to track total number of timesteps to be run (will be set by the Model object)
         self.t = 0  # attribute to keep of track of number of timesteps the population has evolved
             # NOTE: This way, if model is stopped, changes are made, then it is run further,
             # this makes it easy to continue tracking from the beginning
+
         self.start_N = len(self)
         self.N = None  # attribute to hold a landscape.Scape object of the current population density
         self.K = None  # attribute to hold an landscape.Scape object of the local carrying capacity (i.e. 'target' dynamic equilibrium population density)
@@ -175,10 +177,10 @@ class Population(OD):
         #self.Nt.append(self.get_size())
 
     # method to increment all population's age by one (also adds current pop size to tracking array)
-    def reset_age_stage(self, burn=False):
+    def set_age_stage(self, burn=False):
 
         # increment age of all individuals
-        [ind.reset_age_stage() for ind in self.inds];
+        [ind.set_age_stage() for ind in self.inds];
 
         # add 1 to pop.t
         if burn == False:  # as long as this is not during burn-in, pop.t will increment
@@ -264,19 +266,23 @@ class Population(OD):
 
         print('\n\t%i individuals born' % (total_births))
 
+    #method to do population dynamics
+    def do_pop_dynamics(self, land, with_selection=True):
+        extinct = demography.do_pop_dynamics(land, self, with_seleciton = with_selection)
+        if extinct:
+            print('\n\nPOPULATION %s EXTINCT AT TIMESTEP %i\n\n' % (self.name, self.t))
+            #set self.t equal to -1, so that the iteration will be ended
+            self.t = -1
+
     #method to make population changes
     def make_change(self):
         self.changer.make_change(self.t)
 
     #method to check if the population has gone extinct
     def check_extinct(self):
-        if len(self) == 0:
-            print('\n\nYOUR POPULATION WENT EXTINCT.\n\n')
-            return 1
-            # sys.exit()
-        else:
-            return 0
+        return len(self) == 0
 
+    #method to calculate population density
     def calc_density(self, normalize_by= None, min_0=True, max_1=False, max_val=None, as_landscape = False, set_N=False):
 
         '''

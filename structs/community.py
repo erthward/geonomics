@@ -38,6 +38,10 @@ class Community(dict):
     def __init__(self, pops):
         self.update(pops)
         self.n_pops = len(pops)
+        #set the burnt attribute (defaults to False, but will be set to True after burn-in 
+        #has successfully completed, and will be used by the Model object to determine whether 
+        #or not burn-in needs to happen each iteration)
+        self.burnt = False
         
         
 ######################################

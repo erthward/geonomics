@@ -58,11 +58,11 @@ class Density_Grid:
 
        #window width to be used for grid-cell windows within which population will be counted
         self.window_width = window_width
-       
+
         #self.x_edge/y_edge are True if this grid has cells centered on the edge (i.e. 0 and the dim val) for this dimension, else False
         self.x_edge = x_edge
         self.y_edge = y_edge
-       
+
 
         #meshgrid arrays of the i and j points associated with each window
         self.gi = gi
@@ -76,7 +76,7 @@ class Density_Grid:
         self.areas = areas
 
         #save itemgetter as an attribute (returns the counted number of instances of each cell from the collections.Counter() dict)
-        self.grid_counter = ig(*self.cells) 
+        self.grid_counter = ig(*self.cells)
 
 
     def calc_density(self, x, y):
@@ -86,7 +86,7 @@ class Density_Grid:
         #centered on the landscape edges , i.e. self.x_edge or y_edge = True, or not)
         x_cells = (x - self.x_edge*self.window_width/2.)//self.window_width + self.x_edge
         y_cells = (y - self.y_edge*self.window_width/2.)//self.window_width + self.y_edge
-        
+
         #get cell strings from indivudals' cells
         cells = make_cell_strings(y_cells, x_cells, self.dim_om)
         #and get Counter dict of the cell strings
@@ -99,12 +99,12 @@ class Density_Grid:
         #and divide the array values by the appropriate grid-cell areas to get the densities
         grid_dens = grid_counts/self.areas
 
-        return grid_dens 
+        return grid_dens
 
 
 class Density_Grid_Stack:
     def __init__(self, land, window_width = None):
-   
+
         #dimensions
         self.dim = land.dim
 
@@ -144,7 +144,7 @@ class Density_Grid_Stack:
         #then interpolate from those points and values to the centerpoints of all of the land centerpoints
         dens = interpolate.griddata(pts, vals, (self.land_gj, self.land_gi), method = 'cubic')
 
-        return dens 
+        return dens
 
 
 class Movement_Surface:
@@ -172,9 +172,9 @@ class Movement_Surface:
 
     def draw_directions(self, x, y):
         choices = r.randint(low = 0, high = self.approximation_len, size = len(x))
-        return self.surf[y, x, choices] 
+        return self.surf[y, x, choices]
 
-    
+
 class KD_Tree:
     def __init__(self, coords, leafsize = 100):
         self.tree = cKDTree(data = coords, leafsize = leafsize)
@@ -199,35 +199,35 @@ def make_cell_strings(gi, gj, dim_om):
     #join those strings to one single string, unique for each cell
     cells = [''.join(c) for c in list(zip(i_strs,j_strs))]
 
-    return cells 
+    return cells
 
 
 #make a density grid, based on the Land object, the chosen window-width, 
 #and the Boolean arguments dictating whether or not the grid's x- and y-
 #dimension cells should be centered on the land edges (i.e. 0 and dim[_])
 def make_density_grid(land, ww, x_edge, y_edge):
-    
+
     #half-window width
     hww = ww/2.
 
     #get land dimensions
     dim = land.dim
     dim_om = land.dim_om
-   
+
     #create a dictionary of cell ranges, one for when cells center on edge values 
     #(i.e. 0 and dim[n] for either dimension), 
     #the other for when they don't 
     #(i.e. run from hww to dim[n] - hww)
-    edge_range_dict = {True:  np.arange(0, dim[0]+ww, ww), 
+    edge_range_dict = {True:  np.arange(0, dim[0]+ww, ww),
                        False: np.arange(0+hww, dim[0]+hww, ww)}
-    
+
     #create the meshgrid of the centerpoints of neighborhoods (or cells) within which population will be counted
     #(x_edge and y_edge arguments determine whether this grid's 
     #x and y cells are centered on the lanscape edges or not)
     #NOTE: these are expressed as points in continuous space from 0 to each land dimension, NOT as cell
     #numbers (which will be calculated below)
     gj, gi = np.meshgrid(edge_range_dict[x_edge], edge_range_dict[y_edge])
-    
+
     #and get flattened lists of the grid's i and j coordinates 
     j = gj.flatten()
     i = gi.flatten()
@@ -236,8 +236,8 @@ def make_density_grid(land, ww, x_edge, y_edge):
     #create a single, large Polygon object of the landscape quadrilateral
     land_poly_coords = ((0,0), (dim[0], 0), (dim[0], dim[1]), (0, dim[1]))
     land_poly = g.Polygon(land_poly_coords)
-   
-    
+
+
     #create a list of quadrilaterals centered on each of the points in the grid
     polys = [g.Polygon(((j[n]-hww, i[n]-hww), (j[n]-hww, i[n]+hww), (j[n]+hww, i[n]+hww), (j[n]+hww, i[n]-hww))) for n in range(len(j))]
 
@@ -268,7 +268,7 @@ def make_density_grid(land, ww, x_edge, y_edge):
     #use the above-created data structures to create two Density_Grid objects (which will inhere to the
     #Land object as attributes)
     grid = Density_Grid(dim, dim_om, ww, gi, gj, cells, areas, x_edge= x_edge, y_edge = y_edge)
-    return grid 
+    return grid
 
 
 #create 4 density grids, one for each offset (i.e. each combination of offset by 0 and by 0.5*window_width)
@@ -307,7 +307,7 @@ def make_von_mises_mix_sampler(neigh, dirs, vm_kappa=12, approximation_len = 500
     loc_choices = r.choice(d, approximation_len, replace = True, p = n_probs)
     loc_choices = list(C(loc_choices).items())
     approx = np.hstack([s_vonmises.rvs(vm_kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])
-    return approx 
+    return approx
 
 
 # Runs the Von Mises mixture sampler function (make_von_mises_mix_sampler) across the entire landscape and returns an array-like (list of

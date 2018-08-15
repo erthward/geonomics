@@ -25,7 +25,7 @@ Documentation:            URL
 '''
 
 
-import numpy as np    
+import numpy as np
 from random import sample as rand_sample
 from numpy import random as r
 import os, sys

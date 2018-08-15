@@ -537,6 +537,10 @@ params = {
                 #randomize the land for each new iteration?
             'rand_comm':    True,
                 #randomize the community for each new iteration?
+            'rand_burnin':  True,
+                #randomize the burn-in for each new iteration? (i.e. burn in
+                #each time, or burn in once at creation and then use the same
+                #burnt-in population for each iteration?)
             }, # <END> 'iterations'
         'time': {
             #parameters to control the number of burn-in and main timesteps to

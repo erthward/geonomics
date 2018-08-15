@@ -27,6 +27,7 @@ Documentation:             URL
 from utils import viz, spatial as spt
 from structs import genome, landscape, individual
 from ops import movement, mating, selection, mutation, demography, change
+from sim import burnin
 
 #other imports
 import numpy as np
@@ -60,7 +61,7 @@ class Population(OD):
         #check the inds object is correct
         assert type(inds) in (OD, dict), "ERROR: inds must be of type dict or type collections.Ordered_Dict"
         assert list(set([i.__class__.__name__ for i in list(inds.values())])) == [ 'Individual'], "ERROR: inds must be a dictionary containing only instances of the individual.Individual class"
-        
+
         #then add the individuals
         self.update(inds) # update with the input dict of all individuals, as instances of individual.Individual class
         self.inds = self.values()
@@ -68,12 +69,15 @@ class Population(OD):
         #set other attributes
         self.name = name
         self.land_dim = land.dim
+        self.land = land
         self.it = None  # attribute to keep track of iteration number this pop is being used for
             # (optional; will be set by the iteration.py module if called)
         self.T = None #attribute to track total number of timesteps to be run (will be set by the Model object)
         self.t = 0  # attribute to keep of track of number of timesteps the population has evolved
             # NOTE: This way, if model is stopped, changes are made, then it is run further,
             # this makes it easy to continue tracking from the beginning
+        self.burned = False #will be switched to True when the population passes the burnin tests
+        self.extinct = False #will be switched to True if the population goes extinct
 
         self.start_N = len(self)
         self.N = None  # attribute to hold a landscape.Scape object of the current population density
@@ -87,7 +91,7 @@ class Population(OD):
         self.cells = None
 
         #create empty attributes to hold spatial objects that will be created after the population is instantiated
-        self.kd_tree = None  
+        self.kd_tree = None
         #create empty attribute to hold the Density_Grid_Stack
         self.dens_grids = None
 
@@ -150,8 +154,8 @@ class Population(OD):
         first_ind_str = OD(self.items()).__str__().split('), ')[0] + ')\n\t...\n\t'
         last_ind_str = ', '.join(self.items().__str__().split(', ')[-2:])
         inds_str = inds_str + first_ind_str + last_ind_str + '\n'
-        params = sorted([str(k) + ': ' +str(v) for k,v in vars(self).items() if type(v) in (str, int, bool, float)], key = lambda x: x.lower()) 
-        params_str = "Parameters:\n\t" + ',\n\t'.join(params) 
+        params = sorted([str(k) + ': ' +str(v) for k,v in vars(self).items() if type(v) in (str, int, bool, float)], key = lambda x: x.lower())
+        params_str = "Parameters:\n\t" + ',\n\t'.join(params)
         return '\n'.join([type_str, inds_str, params_str])
 
     def __repr__(self):
@@ -187,18 +191,18 @@ class Population(OD):
             self.t += 1
 
     # method to move all individuals simultaneously, and sample their new habitats
-    def do_movement(self, land):
+    def do_movement(self):
         movement.move(self)
-        self.set_habitat(land)
+        self.set_habitat(self.land)
         self.set_coords_and_cells()
 
     # function for finding all the mating pairs in a population
-    def find_mating_pairs(self, land):
-        mating_pairs = mating.find_mates(self, land)
+    def find_mating_pairs(self):
+        mating_pairs = mating.find_mates(self, self.land)
         return mating_pairs
 
     # function for executing mating for a population
-    def do_mating(self, land, mating_pairs, burn=False):
+    def do_mating(self, mating_pairs, burn=False):
 
         #draw the number of births for each pair, and append total births to self.n_births list
         n_births = mating.draw_n_births(len(mating_pairs), self.n_births_lambda)
@@ -214,7 +218,7 @@ class Population(OD):
         if not burn:
             recomb_paths = self.gen_arch.recomb_paths.get_paths(total_births*2)
             new_genomes = mating.do_mating(self, mating_pairs, n_births, recomb_paths)
-       
+
         for n_pair, pair in enumerate(mating_pairs):
 
             parent_centroid_x = (self[pair[0]].x + self[pair[1]].x)/2
@@ -228,9 +232,9 @@ class Population(OD):
                 #get the next offspring_key
                 offspring_key = offspring_keys.pop()
 
-                offspring_x, offspring_y = movement.disperse(land, parent_centroid_x, parent_centroid_y,
+                offspring_x, offspring_y = movement.disperse(self.land, parent_centroid_x, parent_centroid_y,
                         self.dispersal_mu, self.dispersal_sigma)
-                
+
                 #set the age to 0
                 age = 0
 
@@ -248,16 +252,16 @@ class Population(OD):
                         new_genome = new_genomes[n_pair][n]
                 else:
                     new_genome = None
-                       
+
                 #create the new individual
                 self[offspring_key] = individual.Individual(idx = offspring_key, age = age, new_genome = new_genome, x = offspring_x, y = offspring_y, sex = sex)
-              
+
                 #set new individual's phenotype (won't be set during burn-in, because no genomes assigned; won't be set if the population has not gen_arch)
                 if self.gen_arch is not None and not burn:
                     self[offspring_key].set_phenotype(self.gen_arch)
 
         # sample all individuals' habitat values, to initiate for offspring
-        self.set_habitat(land)
+        self.set_habitat(self.land)
         self.set_coords_and_cells()
 
         # do mutation if necessary
@@ -267,12 +271,17 @@ class Population(OD):
         print('\n\t%i individuals born' % (total_births))
 
     #method to do population dynamics
-    def do_pop_dynamics(self, land, with_selection=True):
-        extinct = demography.do_pop_dynamics(land, self, with_seleciton = with_selection)
+    def do_pop_dynamics(self):
+        #implement selection, iff self.selection is True and the pop has
+        #already been burned in
+        with_selection = self.selection and self.burned
+        #then carry out the pop_dynamics, with selection as set above, and save
+        #result, which will be True iff pop has gone extinct
+        extinct = demography.do_pop_dynamics(self.land, self, with_seleciton = with_selection)
         if extinct:
             print('\n\nPOPULATION %s EXTINCT AT TIMESTEP %i\n\n' % (self.name, self.t))
-            #set self.t equal to -1, so that the iteration will be ended
-            self.t = -1
+            #set self.extinct equal to True, so that the iteration will be ended
+            self.extinct = extinct
 
     #method to make population changes
     def make_change(self):
@@ -281,6 +290,16 @@ class Population(OD):
     #method to check if the population has gone extinct
     def check_extinct(self):
         return len(self) == 0
+
+    #method to check if the population is burned in (i.e. if it passes the burn-in checks)
+        #TODO: Add more and/or different tests? This is a pretty basic test so far,
+        #based only on gross population size (not spationarity of spatial distribution)
+    def check_burned(self, burn_T):
+        time_test = len(self.Nt) >= burn_T
+        adf_test = burnin.test_adf_threshold(pop, burn_T)
+        t_test = burnin.test_t_threshold(pop, burn_T)
+        burnin_status = time_test and adf_test and t_test
+        self.burned = burnin_status
 
     #method to calculate population density
     def calc_density(self, normalize_by= None, min_0=True, max_1=False, max_val=None, as_landscape = False, set_N=False):
@@ -320,7 +339,7 @@ class Population(OD):
             dens[dens > max_val] = max_val
 
         if as_landscape == True:
-            dens = landscape.Scape(land.dim, dens)
+            dens = landscape.Scape(self.land_dim, dens)
 
         if set_N:
             self.set_N(dens)
@@ -329,7 +348,7 @@ class Population(OD):
             return dens
 
 
-    def set_habitat(self, land, individs = None):
+    def set_habitat(self, individs = None):
         if individs is None:
             inds_to_set = self.inds
         else:
@@ -337,7 +356,7 @@ class Population(OD):
             inds_to_set = ig(self)
             if type(inds_to_set) is individual.Individual:
                 inds_to_set = (inds_to_set,)
-        hab = [ind.set_habitat([scape.rast[int(ind.y), int(ind.x)] for scape in land.scapes]) for ind in inds_to_set]
+        hab = [ind.set_habitat([scape.rast[int(ind.y), int(ind.x)] for scape in self.land.scapes]) for ind in inds_to_set]
 
     
     def set_phenotype(self):
@@ -362,8 +381,8 @@ class Population(OD):
 
 
     #method to set the population's spatial.Density_Grid_Stack attribute
-    def set_dens_grids(self, land, widow_width = None):
-        self.dens_grids = spt.Density_Grid_Stack(land = land, window_width = self.dens_grid_window_width)
+    def set_dens_grids(self, widow_width = None):
+        self.dens_grids = spt.Density_Grid_Stack(land = self.land, window_width = self.dens_grid_window_width)
 
 
     # method to get individs' habitat values
@@ -436,12 +455,12 @@ class Population(OD):
             coords = np.int32(np.floor(coords))
 
         return coords
-            
-            
+
+
     def get_cells(self, individs = None):
         cells = self.get_coords(individs = individs, as_float = False)
         return cells
-  
+
 
     def get_x_coords(self, individs=None):
         coords = self.get_coords(individs = individs)
@@ -480,7 +499,7 @@ class Population(OD):
         return(dists, pairs)
 
     #method for plotting the population (or a subset of its individuals, by ID) on top of a landscape (or landscape stack)
-    def show(self, land, scape_num=None, hide_land=False, individs=None, text=False, color='black',
+    def show(self, scape_num=None, hide_land=False, individs=None, text=False, color='black',
             edge_color='face', text_color='black', colorbar=True, size=25, text_size=9, im_interp_method='nearest', 
             land_cmap='terrain', pt_cmap=None, alpha=False, zoom_width=None, x=None, y=None, vmin = None, vmax = None):
         #convert individs to a list (in case comes in as a numpy array)
@@ -498,29 +517,29 @@ class Population(OD):
         if not text:
             text = None
         #set the plt_lims
-        plt_lims = viz.get_plt_lims(land, x, y, zoom_width)
+        plt_lims = viz.get_plt_lims(self.land, x, y, zoom_width)
         #plot the landscape(s)
         if hide_land:
             pass
         else:
-            viz.show_rasters(land, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = land_cmap, plt_lims = plt_lims)
+            viz.show_rasters(scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = land_cmap, plt_lims = plt_lims)
         #and plot the individuals
         viz.show_points(coords, scape_num = scape_num, color = color, edge_color = edge_color, text_color = text_color, size = size, text_size = text_size, alpha = alpha, text = text, plt_lims = plt_lims, pt_cmap = pt_cmap, vmin = vmin, vmax = vmax)
 
 
     #method for plotting the population on top of its estimated population-density raster
-    def show_density(self, land, normalize_by='pop_size', individs=None, text=False, max_1=False, color='black', edge_color='face', 
+    def show_density(self, normalize_by='pop_size', individs=None, text=False, max_1=False, color='black', edge_color='face', 
             text_color='black', size=25, text_size = 9, alpha=0.5, zoom_width=None, x=None, y=None):
         dens = self.calc_density(normalize_by=normalize_by, max_1=max_1)
-        plt_lims = viz.get_plt_lims(land, x, y, zoom_width)
+        plt_lims = viz.get_plt_lims(self.land, x, y, zoom_width)
         viz.show_rasters(dens, plt_lims = plt_lims)
-        self.show(land, hide_land=True, individs = individs, text = text, color=color, edge_color = edge_color, text_color = text_color, 
+        self.show(hide_land=True, individs = individs, text = text, color=color, edge_color = edge_color, text_color = text_color,
                size=size, text_size = text_size, alpha=alpha, zoom_width = zoom_width, x = x, y = y)
 
 
     # method for plotting individuals colored by their genotype at a given locus
-    def show_genotype(self, locus, land, scape_num=None, individs=None, text=False, size=25, text_size = 9, 
-            edge_color='black', text_color='black', colorbar=True, im_interp_method='nearest', 
+    def show_genotype(self, locus, scape_num=None, individs=None, text=False, size=25, text_size = 9,
+            edge_color='black', text_color='black', colorbar=True, im_interp_method='nearest',
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
         if by_dominance == True:
@@ -532,20 +551,20 @@ class Population(OD):
             genotypes = {i:v for i,v in genotypes.items() if i in individs}
 
         #colors to match mpl.cmap 'terrain' palette extremes, but with hybrid a mix of the extremes rather than the yellow at the middle of the palette, for nicer viewing: blue = [0,0], light blue = [0,1], white = [1,1]
-        colors = ['#3C22B4', '#80A6FF', '#FFFFFF']  
+        colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
 
         for n, genotype in enumerate([0.0, 0.5, 1.0]):
             genotype_individs = [i for i, g in genotypes.items() if np.atleast_1d(g)[0] == genotype]
             # plot if there are any individuals of this genotype
             if len(genotype_individs) >= 1:
-                self.show(land, scape_num = scape_num, individs = genotype_individs, text = text, color = colors[n], edge_color = edge_color, 
+                self.show(scape_num = scape_num, individs = genotype_individs, text = text, color = colors[n], edge_color = edge_color, 
                     text_color = text_color, colorbar = colorbar, size = size, text_size = text_size, 
                     im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y,
                     vmin = 0, vmax = 1)
 
 
     # method for plotting individuals colored by their phenotypes for a given trait
-    def show_phenotype(self, trait, land, scape_num=None, individs=None, text=False, size=25, text_size = 9, 
+    def show_phenotype(self, trait, scape_num=None, individs=None, text=False, size=25, text_size = 9, 
             edge_color='black', text_color='black', colorbar=True, im_interp_method='nearest', 
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
@@ -553,7 +572,7 @@ class Population(OD):
         if individs is not None:
             z = {i:v for i,v in z.items() if i in individs}
 
-        self.show(land, scape_num = scape_num, individs = individs, text = text, color = list(z.values()),
+        self.show(scape_num = scape_num, individs = individs, text = text, color = list(z.values()),
                 pt_cmap = 'terrain', edge_color = edge_color, text_color = text_color, colorbar = colorbar, 
                 size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, 
                 zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1)
@@ -561,7 +580,7 @@ class Population(OD):
 
     # method for plotting individuals colored by their overall fitnesses, or by their fitnesses for a single
     # trait (if trait is not None)
-    def show_fitness(self, land, scape_num=None, trait_num=None, individs=None, text=False, size=100, text_size = 9, 
+    def show_fitness(self, scape_num=None, trait_num=None, individs=None, text=False, size=100, text_size = 9, 
             edge_color='black', text_color='black', fit_cmap = 'RdYlGn', colorbar=True, im_interp_method='nearest', 
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
@@ -579,7 +598,7 @@ class Population(OD):
         # calc minimum possible fitness (for phenotypes within 0 <= z <= 1, which in reality isn't a
         # constraint, but values lower than this will also be constrained to the minimum-value color for plotting)
         #NOTE: the np.atleast_2d(...).min() construct makes this work both for fixed and spatially varying phi
-        if trait_num is None: 
+        if trait_num is None:
             min_fit = np.product([1 - np.atleast_2d(t.phi).min() for t in list(self.gen_arch.traits.values())])
         else:
             min_fit = 1 - np.atleast_2d(self.gen_arch.traits[trait_num].phi).min()
@@ -588,18 +607,18 @@ class Population(OD):
         #between 1 and the minimum-fitness value assuming all phenotypes are constrained 0<=z<=1, but then also
         #allow gradually deepening reds for fitness values lower than that minimum value), using the min_fit val
         cmap, make_cbar = viz.make_fitness_cmap_and_cbar_maker(min_val = min_fit, max_val = 1, cmap = fit_cmap, trait_num = trait_num)
-        
+
         #plot the trait phenotype in larger circles first, if trait is not None
         if trait_num is not None:
             #plot the outer (phenotype) circles
-            self.show_phenotype(trait=trait_num, land=land, scape_num=scape_num, individs=individs, text=False,
+            self.show_phenotype(trait=trait_num, scape_num=scape_num, individs=individs, text=False,
                     size=size, text_size = text_size, edge_color=edge_color, text_color=text_color,
                     colorbar=colorbar, im_interp_method=im_interp_method, 
                     alpha=alpha, by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y)
             #make size smaller for the next layer of inner (fitness) circles
             size = round(0.2*size)
 
-        self.show(land, scape_num = scape_num, individs = individs, text = text, color = list(w.values()),
+        self.show(scape_num = scape_num, individs = individs, text = text, color = list(w.values()),
                 pt_cmap = cmap, edge_color = edge_color, text_color = text_color, colorbar = colorbar, 
                 size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y)
 
@@ -609,7 +628,7 @@ class Population(OD):
 
     def show_hist_fitness(self):
         plt.hist(list(self.get_fitness()))
- 
+
 
     # method for plotting a population pyramid
     # NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS
@@ -627,7 +646,7 @@ class Population(OD):
             #grab the ages from it
             ages = [*counts]
             #and grab the counts from it (multiplying by -1 for females, to set one sex on either side of x=0, for the pyramid)
-            counts = [sex_val*count for count in counts.values()] 
+            counts = [sex_val*count for count in counts.values()]
             #update the max_count var
             max_count = max(max(counts), max_count)
             #then create the horizontal barplot

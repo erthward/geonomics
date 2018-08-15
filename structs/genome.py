@@ -77,7 +77,7 @@ class Recomb_Paths:
 
 
 class Genomic_Architecture:
-    def __init__(self, p, h, r, g_params): 
+    def __init__(self, p, h, r, g_params):
         self.x = 2              #ploidy (NOTE: for now will be 2 by default; later could consider enabling polyploidy)
         self.L = g_params.L              #total length (i.e. number of markers)
         self.l_c = g_params.l_c          #length of each chromosome
@@ -103,10 +103,10 @@ class Genomic_Architecture:
         self.delet_loci = OD()
         self.shape_delet_s_dist = g_params.shape_delet_s_dist
         self.scale_delet_s_dist = g_params.scale_delet_s_dist
-        
+
         #attribute for trait (i.e. adaptive) loci
         self.traits = make_traits(g_params.traits)
-      
+
         #other attributes associated with mutation
             #a set to contain all mutable loci (i.e. loci where mutations can land)
         self.mutable_loci = set()    #a set containing eligible loci for mutation; after burn-in, will be updated
@@ -115,7 +115,7 @@ class Genomic_Architecture:
         mus = mus + [trt.mu for trt in self.traits.values()]
         self.mu_tot = sum(mus)
         self.mut_fns = self.make_mut_fns_dict()
-        
+
     #method to make a mut_fns dict, containing a function for each type of mutation for this population
     def make_mut_fns_dict(self):
         mut_fns = {}
@@ -130,7 +130,7 @@ class Genomic_Architecture:
                 fn = lambda pop,offspring: mutation.do_trait_mutation(pop, offspring, trait_num)
                 mut_fns.update({'t%i' % trait_num: fn})
         return mut_fns
- 
+
     #method to draw mutation types for any number of mutations chosen to occur in a given timestep 
     def draw_mut_types(self, num):
         type_dict = {'neut': self.mu_neut,
@@ -168,16 +168,16 @@ class Genomic_Architecture:
         s = r.gamma(self.shape_delet_s_dist, self.scale_delet_s_dist)
         s = min(s, 1)
         return(s)
-    
+
     #a method to set the heterozygosity values at certain loci
     def set_heterozgosity(self, loci, het_value):
         pass
-  
+
     #method for assigning loci to traits 
     def set_trait_loci(self, trait_num, mutational=False, loci=None, alpha=None):
         #if this is not the result of a point mutation, but instead either an initial setup or manually
         #introduced, then grab the number of loci to be assigned
-        if mutational == False:  
+        if mutational == False:
             n = self.traits[trait_num].n_loci
         #otherwise, assign a single locus
         else:

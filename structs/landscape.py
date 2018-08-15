@@ -180,7 +180,7 @@ class Land(dict):
                 xs = np.array(xs) * v * scale_fact
                 ys = np.array(ys) * v * scale_fact
                 [plt.plot((x, (x + xs[n])), (y, (y + ys[n])), linewidth=2, color=color) for n in range(len(xs))]
-           
+
             elif style == 'circ_draws':
                 pts = [(np.cos(a), np.sin(a)) for a in r.choice(self.move_surf[y,x,:], size = 1000, replace = True)]
                 plt.scatter([pt[0] * 0.5 + x for pt in pts], [pt[1] * 0.5 + y for pt in pts], color='red', alpha=0.1, marker = '.')
@@ -201,7 +201,7 @@ class Land(dict):
 
                 # call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
                 [[plot_one_cell(i, j) for i in range(self.move_surf.shape[0])] for j in range(self.move_surf.shape[1])]
-           
+
 
     # method for pickling a landscape stack
     def write_pickle(self, filename):

@@ -118,7 +118,7 @@ def calc_ld(pop, plot = False):
         #floating-point numbers, but I should figure out exactly what's going on and be sure everything checks out:
                 # stats.py:117: RuntimeWarning: invalid value encountered in double_scalars
 
-    populome = np.array([ind.genome for ind in pop.inds])
+    populome = np.array([ind.genome for ind in pop.values()])
     n = np.shape(populome)[0] #num individs
     x = np.shape(populome)[2] #ploidy
     N = n*x

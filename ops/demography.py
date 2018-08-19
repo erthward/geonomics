@@ -200,7 +200,7 @@ def do_pop_dynamics(land, pop, with_selection = True, burn = False, births_befor
         dp = Debug_Plotter(land, pop, timestep)
 
     #find mating pairs
-    pairs = pop.find_mating_pairs(land = land)
+    pairs = pop.find_mating_pairs()
 
     #calc num_pairs raster (use the calc_pop_density function on the centroids of the mating pairs)
     n_pairs = calc_n_pairs(pairs = pairs, pop = pop)
@@ -216,7 +216,7 @@ def do_pop_dynamics(land, pop, with_selection = True, burn = False, births_befor
     #if births should happen before (and thus be included in the calculation of) deaths, then mate and disperse babies now
     if births_before_deaths:
         #Feed the land and mating pairs to pop.do_mating, to produce and disperse zygotes
-        pop.do_mating(land, pairs, burn)
+        pop.do_mating(pairs, burn)
 
     #calc N raster, set it as pop.N, then get it  
     pop.calc_density(set_N = True)
@@ -311,7 +311,7 @@ def do_pop_dynamics(land, pop, with_selection = True, burn = False, births_befor
             #and undesirable results/effects?... NEED TO PUT MORE THOUGHT INTO THIS LATER.
     if not births_before_deaths:
         #Feed the land and mating pairs to the mating functions, to produce and disperse zygotes
-        pop.do_mating(land, pairs, burn)
+        pop.do_mating(pairs, burn)
 
     #Get death probabilities
     death_probs = d[pop.cells[:,1], pop.cells[:,0]]
@@ -329,19 +329,19 @@ def do_pop_dynamics(land, pop, with_selection = True, burn = False, births_befor
     if pop.max_age is not None:
         death_probs[pop.get_age() > pop.max_age] = 1
         num_killed_age = np.sum(death_probs == 1)
-        print('\n\tINDIVIDUALS DEAD OF OLD AGE: %i  (%0.3f%% of pop)\n' % (num_killed_age, num_killed_age/pop.Nt[::-1][0]))
+        #print('\n\tINDIVIDUALS DEAD OF OLD AGE: %i  (%0.3f%% of pop)\n' % (num_killed_age, num_killed_age/pop.Nt[::-1][0]))
     
     #kill (and track kills) outside islands
     if pop.islands:
         death_probs[pop.get_habitat(scape_num = land.n_island_mask_scape)] = 1
         num_killed_isle = np.sum(death_probs == 1) - num_killed_age
-        print('\n\tINDIVIDUALS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))
+        #print('\n\tINDIVIDUALS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))
 
     #Use the per-individual death probabilities to carry out mortality 
     num_deaths = do_mortality(land, pop, death_probs)
     pop.set_coords_and_cells()
     pop.n_deaths.append(num_deaths)
-    print('\n\t%i individuals dead' % num_deaths)
+    #print('\n\t%i individuals dead' % num_deaths)
 
     #Check if extinct, and return result
     extinct = pop.check_extinct()

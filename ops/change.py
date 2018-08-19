@@ -26,8 +26,10 @@ from utils import spatial as spt
 #other imports
 import numpy as np
 import numpy.random as r
+import matplotlib.pyplot as plt
 from operator import attrgetter as ag
 from collections import OrderedDict as OD
+from copy import deepcopy
 import itertools as it
 from copy import deepcopy
 
@@ -59,9 +61,12 @@ from copy import deepcopy
 
 #base class for Land_, Pop_, and Gen_Changer classes
 class Changer:
-    def __init__(self):
+    def __init__(self, params):
         #set the type-label of the changer
         self.type = None
+
+        #grab a deep copy of the change params
+        self.change_params = deepcopy(params)
 
         #create self.changes, which defaults to None but will be set to an iterator over all changes
         #that are to happen to the changing object during the model (where changes in the iterator are tuples 
@@ -70,9 +75,6 @@ class Changer:
         #create self.next_change, which defaults to None but will be set by self.set_changes and upkept by self.make_change
         self.next_change = None
 
-        #set self.changes and self.next_change
-        #self.set_changes(land, params)
-       
     def set_next_change(self):
         try:
             self.next_change = next(self.changes)
@@ -83,7 +85,7 @@ class Changer:
         #if this is the right timestep for the next change
         if self.next_change is not None:
             if t == self.next_change[0]:
-                print("\n\nRUNNING THE NEXT CHANGE:\n\t%s" % str(self.next_change))
+                print("\t**** Running the next change\t%s\n\n" % str(self.next_change))
                 #call the next_change function to make the change
                 self.next_change[1](self) 
                     #NOTE: feeding self in so that some change functions that need to set Changer 
@@ -112,7 +114,7 @@ class Changer:
 
 class Land_Changer(Changer):
     def __init__(self, land, land_change_params):
-        super(Land_Changer, self).__init__()
+        super(Land_Changer, self).__init__(land_change_params)
         #set the type-label of the changer
         self.type = 'land'
 
@@ -122,23 +124,23 @@ class Land_Changer(Changer):
         self.change_info = {}
 
     #call self.set_changes() to set self.changes and self.next_change
-        self.set_changes(land, land_change_params)
+        self.set_changes(land)
 
     #method to set the changes stipulated in land_change_params dict for the land object
-    def set_changes(self, land, land_change_params):
+    def set_changes(self, land):
 
         #get the linearly spaced time-series of scapes for each scape_num
         scapes = {}
         surfs = {}
-        for scape_num in land_change_params.keys():
-            scape_series, dim, res, ulc = make_linear_scape_series(land[scape_num].rast, **land_change_params[scape_num])
+        for scape_num in self.change_params.keys():
+            scape_series, dim, res, ulc = make_linear_scape_series(land[scape_num].rast, **self.change_params[scape_num])
             assert dim == land.dim, 'ERROR: dimensionality of scape_series fed into Land_Changer does not match that of the land to be changed.'
             assert res == land.res or res is None, 'ERROR: resolution of scape_series fed into Land_Changer does not match that of the land to be changed.'
             assert ulc == land.ulc or ulc is None, 'ERROR: upper-left corner of scape_series fed into Land_Changer does not match that of the land to be changed.'
             scapes[scape_num] = scape_series
 
             #set the Land_Changer.change_info attribute, so that it can be grabbed later for building move_surf and other objects
-            self.change_info[scape_num] = {**land_change_params[scape_num]}
+            self.change_info[scape_num] = {**self.change_params[scape_num]}
             self.change_info[scape_num]['end_rast'] = scape_series[-1][1]
 
         #get everything in chronological order (with scape-change functions coming before surf-change
@@ -158,6 +160,7 @@ class Land_Changer(Changer):
 
 class Pop_Changer(Changer):
     def __init__(self, pop, pop_change_params, land=None):
+        super(Pop_Changer, self).__init__(pop_change_params)
         self.type = 'pop'
         
         #an attribute that is used by some dem-change fns, as a baseline population size at the start of the
@@ -165,17 +168,17 @@ class Pop_Changer(Changer):
         self.base_K = None
 
     #call self.set_changes() to set self.changes and self.next_change
-        self.set_changes(pop, pop_change_params, land)
+        self.set_changes(pop)
 
     #method to set the base_K attribute to pop.K
     def set_base_K(self, pop):
         self.base_K = pop.K
 
     #method to set the changes stipulated in params dict for the pop object
-    def set_changes(self, pop, pop_change_params, land=None):
+    def set_changes(self, pop, land=None):
         #pull out the parts of the params
-        dem_change_params = pop_change_params.dem
-        parameter_change_params = pop_change_params.parameters
+        dem_change_params = self.change_params.dem
+        parameter_change_params = self.change_params.parameters
 
         #check if this pop has a move_surf, and if there are land-changes that affect its scape
         move_surf_change_fns = []
@@ -213,8 +216,6 @@ class Pop_Changer(Changer):
 
     #a method to visualize the population changes that will occur
     def show_dem_changes(self, pop):
-        from copy import deepcopy
-        import matplotlib.pyplot as plt
         cop_pop = deepcopy(pop)
         cop_self = deepcopy(self)
         cop_changes = deepcopy(cop_self.changes)

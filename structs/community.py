@@ -26,6 +26,7 @@ Documentation:             URL
 #geonomics imports
 from structs import population
 
+
 ######################################
 # -----------------------------------#
 # CLASSES ---------------------------#
@@ -38,13 +39,22 @@ class Community(dict):
     def __init__(self, pops):
         self.update(pops)
         self.n_pops = len(pops)
-        self.pops = self.values()
+        self.t = -1 #counter for timesteps (starts at -1, to indicate that the
+                    #community is unrun, and so that the first timestep will be set to 0 at
+                    #beginning of the timestep)
         #set the burned attribute (defaults to False, but will be set to True after burn-in 
         #has successfully completed, and will be used by the Model object to determine whether 
         #or not burn-in needs to happen each iteration)
         self.burned = False
-        
-        
+
+    #method to increment the self.t attribute (the timestep counter)
+    def set_t(self):
+        self.t += 1
+
+    #method to reset the self.t attribute (the timestep counter)
+    def reset_t(self):
+        self.t = -1
+
 ######################################
 # -----------------------------------#
 # FUNCTIONS -------------------------#

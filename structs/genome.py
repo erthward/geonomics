@@ -467,7 +467,7 @@ def set_genomes(pop, burn_T, T):
     #now reassign genotypes to all individuals, using gen_arch.p
     [ind.set_genome(draw_genome(pop.gen_arch)) for ind in pop.values()]
     #and then reset the individuals' phenotypes
-    [ind.set_phenotype(pop.gen_arch) for ind in pop.inds];
+    [ind.set_phenotype(pop.gen_arch) for ind in pop.values()];
 
        
 #method for loading a pickled genomic architecture

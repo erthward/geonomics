@@ -63,7 +63,7 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
 
     if sex:
         # np.array of the sexes of all individuals
-        sexes = np.array([ind.sex for ind in pop.inds])
+        sexes = np.array([ind.sex for ind in pop.values()])
 
         # array of couplings for all females with nearest individual < mating_radius
         available_females = np.array(dists[:, 1] != np.inf) & np.array(sexes[pairs[:,
@@ -97,7 +97,7 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
 
     if repro_age is not None and repro_age > 0:
         # np.array of the ages of all individuals
-        ages = np.array([ind.age for ind in pop.inds])
+        ages = np.array([ind.age for ind in pop.values()])
 
         if sex:  # if sexual species, repro_age expected to be a tuple or list of numerics of length 2
 

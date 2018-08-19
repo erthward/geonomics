@@ -39,6 +39,7 @@ from scipy import interpolate
 from scipy.spatial import cKDTree
 from collections import Counter as C
 from collections import OrderedDict as OD
+from copy import deepcopy
 from operator import itemgetter
 from operator import attrgetter
 import sys
@@ -64,7 +65,6 @@ class Population(OD):
 
         #then add the individuals
         self.update(inds) # update with the input dict of all individuals, as instances of individual.Individual class
-        self.inds = self.values()
 
         #set other attributes
         self.name = name
@@ -73,7 +73,8 @@ class Population(OD):
         self.it = None  # attribute to keep track of iteration number this pop is being used for
             # (optional; will be set by the iteration.py module if called)
         self.T = None #attribute to track total number of timesteps to be run (will be set by the Model object)
-        self.t = 0  # attribute to keep of track of number of timesteps the population has evolved
+        self.t = -1  # attribute to keep of track of number of timesteps the population has evolved (starts at -1, 
+                     #to indicate unrun, and so that first timestep will be set to 0 at beginning of timestep)
             # NOTE: This way, if model is stopped, changes are made, then it is run further,
             # this makes it easy to continue tracking from the beginning
         self.burned = False #will be switched to True when the population passes the burnin tests
@@ -139,6 +140,20 @@ class Population(OD):
         self.__coord_attrgetter__ = attrgetter('x', 'y')
         self.__individ_coord_attrgetter__ = attrgetter('idx', 'x', 'y')
 
+
+    #override the __deepcopy__ method, so that the population can be copy.deepcopy'd
+    #(because otherwise this doesn't work for classes that inherit from #collections.OrderedDict)
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        for k, v in self.items():
+            result[deepcopy(k, memo)] = deepcopy(v, memo)
+        return result
+
+
     #define the __str__ and __repr__ special methods
     #NOTE: this is not really a great representation; the Python docs indicate that __repr__ should ideally
     #provide a representation could be used to recreate the object, but if that is not possible then it 
@@ -180,20 +195,23 @@ class Population(OD):
         self.Nt.append(len(self))
         #self.Nt.append(self.get_size())
 
+    #method to increment the self.t attribute (i.e. the timestep counter)
+    def set_t(self):
+        self.t += 1
+
+    #method to reset the self.t attribute (i.e. the timestep counter)
+    def reset_t(self):
+        self.t = -1
+
     # method to increment all population's age by one (also adds current pop size to tracking array)
-    def set_age_stage(self, burn=False):
-
+    def set_age_stage(self):
         # increment age of all individuals
-        [ind.set_age_stage() for ind in self.inds];
-
-        # add 1 to pop.t
-        if burn == False:  # as long as this is not during burn-in, pop.t will increment
-            self.t += 1
-
+        [ind.set_age_stage() for ind in self.values()];
     # method to move all individuals simultaneously, and sample their new habitats
+
     def do_movement(self):
         movement.move(self)
-        self.set_habitat(self.land)
+        self.set_habitat()
         self.set_coords_and_cells()
 
     # function for finding all the mating pairs in a population
@@ -261,25 +279,26 @@ class Population(OD):
                     self[offspring_key].set_phenotype(self.gen_arch)
 
         # sample all individuals' habitat values, to initiate for offspring
-        self.set_habitat(self.land)
+        self.set_habitat()
         self.set_coords_and_cells()
 
         # do mutation if necessary
         if self.mutate:
             mutation.do_mutation(keys_list, self, log = self.mut_log)
 
-        print('\n\t%i individuals born' % (total_births))
+        #print('\n\t%i individuals born' % (total_births))
 
     #method to do population dynamics
     def do_pop_dynamics(self):
         #implement selection, iff self.selection is True and the pop has
         #already been burned in
         with_selection = self.selection and self.burned
+        burn = not self.burned
         #then carry out the pop_dynamics, with selection as set above, and save
         #result, which will be True iff pop has gone extinct
-        extinct = demography.do_pop_dynamics(self.land, self, with_seleciton = with_selection)
+        extinct = demography.do_pop_dynamics(self.land, self, with_selection = with_selection, burn = burn)
         if extinct:
-            print('\n\nPOPULATION %s EXTINCT AT TIMESTEP %i\n\n' % (self.name, self.t))
+            #print('\n\nPOPULATION %s EXTINCT AT TIMESTEP %i\n\n' % (self.name, self.t))
             #set self.extinct equal to True, so that the iteration will be ended
             self.extinct = extinct
 
@@ -295,10 +314,11 @@ class Population(OD):
         #TODO: Add more and/or different tests? This is a pretty basic test so far,
         #based only on gross population size (not spationarity of spatial distribution)
     def check_burned(self, burn_T):
-        time_test = len(self.Nt) >= burn_T
-        adf_test = burnin.test_adf_threshold(pop, burn_T)
-        t_test = burnin.test_t_threshold(pop, burn_T)
-        burnin_status = time_test and adf_test and t_test
+        burnin_status = len(self.Nt) >= burn_T
+        if burnin_status:
+            adf_test = burnin.test_adf_threshold(self, burn_T)
+            t_test = burnin.test_t_threshold(self, burn_T)
+            burnin_status = adf_test and t_test
         self.burned = burnin_status
 
     #method to calculate population density
@@ -350,17 +370,17 @@ class Population(OD):
 
     def set_habitat(self, individs = None):
         if individs is None:
-            inds_to_set = self.inds
+            inds_to_set = self.values()
         else:
             ig = itemgetter(*individs)
             inds_to_set = ig(self)
             if type(inds_to_set) is individual.Individual:
                 inds_to_set = (inds_to_set,)
-        hab = [ind.set_habitat([scape.rast[int(ind.y), int(ind.x)] for scape in self.land.scapes]) for ind in inds_to_set]
+        hab = [ind.set_habitat([scape.rast[int(ind.y), int(ind.x)] for scape in self.land.values()]) for ind in inds_to_set]
 
     
     def set_phenotype(self):
-        [ind.set_phenotype(self.gen_arch) for ind in self.inds];
+        [ind.set_phenotype(self.gen_arch) for ind in self.values()];
 
 
     def set_fitness(self):
@@ -389,9 +409,9 @@ class Population(OD):
     def get_habitat(self, scape_num=None, individs=None):
         if individs is None:
             if scape_num is None:
-                habs = np.array([ind.habitat for ind in self.inds])
+                habs = np.array([ind.habitat for ind in self.values()])
             else:
-                habs = np.array([ind.habitat[scape_num] for ind in self.inds])
+                habs = np.array([ind.habitat[scape_num] for ind in self.values()])
         else:
             ig = itemgetter(*individs)
             if scape_num is None:
@@ -404,7 +424,7 @@ class Population(OD):
 
     def get_age(self, individs=None):
         if individs is None:
-            ages = np.array([ind.age for ind in self.inds])
+            ages = np.array([ind.age for ind in self.values()])
         else:
             ig = itemgetter(*individs)
             ages = {i: ind.age for i, ind in self.items()}
@@ -430,7 +450,7 @@ class Population(OD):
     # convenience method for getting whole population's phenotype
     def get_phenotype(self, individs=None):
         if individs is None:
-            zs = np.array([ind.phenotype for ind in self.inds])
+            zs = np.array([ind.phenotype for ind in self.values()])
         else: 
             ig = itemgetter(*individs)
             zs = {i:ind.phenotype for i, ind in self.items()}
@@ -444,7 +464,7 @@ class Population(OD):
         return {locus: self.gen_arch.h[locus]}
 
     def get_coords(self, individs = None, as_float = True):
-        coords = list(map(self.__coord_attrgetter__, self.inds))
+        coords = list(map(self.__coord_attrgetter__, self.values()))
         if individs is not None: 
             ig = itemgetter(*individs)
             coords = ig(dict(zip([*self], coords)))
@@ -522,7 +542,7 @@ class Population(OD):
         if hide_land:
             pass
         else:
-            viz.show_rasters(scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = land_cmap, plt_lims = plt_lims)
+            viz.show_rasters(self.land, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = land_cmap, plt_lims = plt_lims)
         #and plot the individuals
         viz.show_points(coords, scape_num = scape_num, color = color, edge_color = edge_color, text_color = text_color, size = size, text_size = text_size, alpha = alpha, text = text, plt_lims = plt_lims, pt_cmap = pt_cmap, vmin = vmin, vmax = vmax)
 
@@ -672,6 +692,11 @@ class Population(OD):
         plt.xlabel('t')
         plt.ylabel('N(t)')
 
+    def show_demographic_changes(self):
+        if self.changer is None:
+            print('This population has no changer object.')
+        else:
+            self.changer.show_dem_changes(self)
 
     def write_pickle(self, filename):
         import cPickle
@@ -688,12 +713,12 @@ class Population(OD):
 #to make the initial carrying-capacity raster
 def make_K(pop, land, K_scape_num, K_fact):
     K_rast = land[K_scape_num].rast * K_fact
-    return K_rast 
+    return K_rast
 
 
 def make_population(land, pop_params, burn=False):
     #get pop's intializing params
-    init_params = pop_params.init
+    init_params = deepcopy(pop_params.init)
 
     #if this population should have genomes, create the genomic architecture
     if 'genome' in pop_params.keys():
@@ -709,15 +734,15 @@ def make_population(land, pop_params, burn=False):
         # use individual.create_individual to simulate individuals and add them to the population
         ind = individual.make_individual(idx = idx, offspring = False, dim = land.dim, genomic_architecture = gen_arch, burn = burn)
         inds[idx] = ind
-    
+
     #create the population from those individuals
     name = init_params.pop('name')
     pop = Population(name = name, inds = inds, land = land, pop_params = pop_params, genomic_architecture=gen_arch)
-  
+
     #use the remaining init_params to set the carrying-capacity raster (K)
     pop.set_K(make_K(pop, land, **init_params))
     #set initial habitat values
-    pop.set_habitat(land)
+    pop.set_habitat()
     #set initial coords and cells
     pop.set_coords_and_cells()
     #set the kd_tree
@@ -725,15 +750,15 @@ def make_population(land, pop_params, burn=False):
 
     #set phenotypes, if the population has genomes
     if pop.gen_arch is not None and not burn:
-        [ind.set_phenotype(pop.gen_arch) for ind in pop.inds]
+        [ind.set_phenotype(pop.gen_arch) for ind in pop.values()]
 
     #make density_grid
-    pop.set_dens_grids(land = land)
+    pop.set_dens_grids()
 
     #if movement and movement_surf
     if pop_params.movement.move:
         if 'move_surf' in pop_params.movement.keys():
-            ms_params = pop_params.movement.move_surf
+            ms_params = deepcopy(pop_params.movement.move_surf)
             #TODO: Once I have a meta-function that takes arguments about whether or not a movement_surface is
             #desired for each pop, and the same for islands, and then generates a template params file, then I
             #will get rid of the 'make' keys here and in the islands section below
@@ -748,7 +773,7 @@ def make_population(land, pop_params, burn=False):
                 #TODO: EITHER GET RID OF, OR DEEPLY RETHINK, THE ISLANDS THING
                 #make the islands layer if required
                 if 'islands' in pop_params.mortality.keys():
-                    is_params = pop_params.mortality.islands
+                    is_params = deepcopy(pop_params.mortality.islands)
                     make_is = is_params.pop('make')
                     if make_is:
                         move_rast[move_rast < is_params.island_val] = 1e-8
@@ -788,7 +813,7 @@ def make_population(land, pop_params, burn=False):
         else:
             pop.changer = change.Pop_Changer(pop, ch_params, land = None)
 
-    return pop 
+    return pop
 
 
 # function for reading in a pickled pop

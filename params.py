@@ -4,7 +4,6 @@
 '''Geonomics parameters file.'''
 
 
-
 ######################################
 #TODO:
  # create a params.py MODULE instaed, with a function for generating a template params dictionary, taking
@@ -22,8 +21,9 @@
 #also, if I use the Params_Dict class then I could change all the params keys to use some standardization that
 #doesn't appear elsewhere in the package, e.g. ALL-CAPS-AND-HYPHENS?
 
-
 ######################################
+
+
 
 import numpy as np
 
@@ -40,7 +40,7 @@ params = {
     ##############
 
         'main': {
-            'dim':                      (50,50),
+            'dim':                      (20,20),
                 #x- and y-dimensionality of landscape  
             'res':                      (1,1),
                 #landscape resolution in x and y dimensions (for crosswalking with real-world 
@@ -180,13 +180,13 @@ params = {
 
                 'change': {
                     #land-change events for this scape
-                    'end_rast':         np.zeros((50,50)),
+                    'end_rast':         np.zeros((20,20)),
                         #scape to be set as the endpoint of the land-change event
-                    'start_t':          1500,
+                    'start_t':          3,
                         #timestep on which to start the land-change event
-                    'end_t':            2000,
+                    'end_t':            7,
                         #timestep on which to end the land-change event
-                    'n_steps':          10
+                    'n_steps':          2
                         #number of stepwise changes to make between t_start and t_end
                         }
                 }, # <END> scape 1
@@ -481,9 +481,9 @@ params = {
                                 #how many cycles of cyclical change should occur during the event?
                             'size_range':       (0.5, 1.5),     
                                 #an iterable of the min and max population sizes to be used in stochastic or cyclical changes
-                            'timesteps':        [10,100,1000,1100,1150,1200],
+                            'timesteps':        [6,8],
                                 #at which timesteps should custom changes take place?
-                            'sizes':            [3,2,1.5,2,0.5,1]
+                            'sizes':            [2,0.25],
                                 #what custom size-changes should occur at the above-stipulated timesteps?
                             } # <END> event 0
                             
@@ -520,6 +520,7 @@ params = {
 ###############
 
     'model': {
+        'name': 'sample_model',
         'seed': {
             #parameters to control whether and how to set the seed
             'set':          True,
@@ -531,13 +532,13 @@ params = {
             #parameters to control how many iterations of the model to run,
             #and whether or not to randomize the land and/or community 
             #objects in each model iteration
-            'n_its': 1000,
+            'n_its': 5,
                 #how many iterations of the model should be run?
-            'rand_land':    True,
+            'rand_land':    False,
                 #randomize the land for each new iteration?
-            'rand_comm':    True,
+            'rand_comm':    False,
                 #randomize the community for each new iteration?
-            'rand_burnin':  True,
+            'rand_burn':  False,
                 #randomize the burn-in for each new iteration? (i.e. burn in
                 #each time, or burn in once at creation and then use the same
                 #burnt-in population for each iteration?)
@@ -545,9 +546,9 @@ params = {
         'time': {
             #parameters to control the number of burn-in and main timesteps to
             #run for each iterations
-            'T':            2500,
+            'T':            10,
                 #total model runtime (in timesteps)
-            'burn_T':       50
+            'burn_T':       30
                 #minimum burn-in runtime (in timesteps; this is a mininimum because 
                     #burn-in will run for at least this long but until
                     #stationarity detected, which will likely be longer)

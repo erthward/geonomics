@@ -31,7 +31,6 @@ from operator import itemgetter as ig
 from shapely import geometry as g
 from operator import itemgetter
 from operator import attrgetter
-import copy
 import sys
 
 
@@ -56,7 +55,7 @@ def show_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest'
             rasters = [land[scape_num].rast]
         #else just create a list of all rasters
         else:
-            rasters = [scape.rast for scape in land.scapes]
+            rasters = [scape.rast for scape in land.values()]
 
     if type(cmap) == str:
         #get the requested cmap 

@@ -6,21 +6,21 @@
 
 #lc = Land_Changer(land, params)
 
-def burn(stop_after = None):
+def burn(stop_after = None, burn = True):
     break_burn_in = False
-    burn_in_test_t = params.model.its.burn.T_min
+    burn_in_test_t = params.model.time.burn_T
     t = 0
     while break_burn_in == False:
         print('###############\n\n TIMESTEP %i' % t)
         print('     POP %i\n' % len(pop))
         pop.set_age_stage(burn=True)
         pop.set_Nt()
-        pop.do_movement(land)
+        pop.do_movement()
         extinct = demography.do_pop_dynamics(land, pop, with_selection=False, burn=True)
         t += 1
         if extinct == 1:
             break
-        break_burn_in = (len(pop.Nt) > burn_in_test_t and burn_in.test_adf_threshold(pop, burn_in_test_t, 0.05) and burn_in.test_tt_threshold( pop, burn_in_test_t, 0.05))
+        break_burn_in = (len(pop.Nt) > burn_in_test_t and burnin.test_adf_threshold(pop, burn_in_test_t, 0.05) and burnin.test_t_threshold( pop, burn_in_test_t, 0.05))
         if stop_after is not None and t == stop_after:
             break
 
@@ -28,10 +28,10 @@ def burn(stop_after = None):
     print('~~~~~~~~~~~~~~~~\n\n\n\t\tBURN-IN COMPLETE\n\n\n~~~~~~~~~~~~~~~~~~')
 
 
-def main(T, reassign_genomes=False):
+def main(T, reassign_genomes=True):
     if reassign_genomes == True:
         print('\n\nReassigning genomes...\n\n')
-        genome.set_genomes(pop, params)
+        genome.set_genomes(pop, params.model.time.burn_T, 1000)
         [ind.set_phenotype(pop.gen_arch) for ind in pop.inds];
     for t in range(T):
         print('###############\n\n TIMESTEP %i' % t)
@@ -39,7 +39,7 @@ def main(T, reassign_genomes=False):
         #lc.make_change(t)
         pop.set_age_stage(burn=False)
         pop.set_Nt()
-        pop.do_movement(land)
+        pop.do_movement()
         extinct = demography.do_pop_dynamics(land, pop, with_selection=True)
         if extinct == 1:
             break

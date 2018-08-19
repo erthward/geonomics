@@ -33,6 +33,7 @@ import random
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from collections import Counter as C
+from copy import deepcopy
 from operator import itemgetter as ig
 from scipy import interpolate
 from shapely import geometry as g
@@ -88,7 +89,8 @@ class Land(dict):
         self.update(scapes)
         #set the scapes attribute to the dict values (it still changes dynamically as things update, it runs
         #3x faster than calling values() during the model, and it makes code nicer looking
-        self.scapes = self.values()
+        #FIXME: I had been using the following lines, but deepcopy breaks because it cannot pickle dict.values() objects
+        #self.scapes = self.values()
         #set the number of scapes in the stack
         self.n_scapes = len(self)
         #set the idx attributes on the scapes
@@ -304,7 +306,7 @@ def make_land(params, num_hab_types=2):
     for n, (k, scape_params) in enumerate(params.land.scapes.items()):
 
         #get the init parameters
-        init_params = scape_params.init
+        init_params = deepcopy(scape_params.init)
 
         #get the scape name
         name = init_params.pop('name')

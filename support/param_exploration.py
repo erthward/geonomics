@@ -26,6 +26,7 @@ import numpy as np
 from numpy.random import vonmises, lognormal
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from copy import deepcopy
 
 from ops import movement
 
@@ -48,16 +49,13 @@ def show_movement(pop, land, scape_num, num_timesteps, params = None, mu_directi
     '''Useful for visual exploration of the movement parameters. Either provide a params dictionary with the
     necessary information in it, or provide the necessary parameters piecemeal.'''
 
-    import copy
-
-
     if params == None and mu_distance == None:
         print('\n\n\tERROR: Must provide either a params dictionary or else stipulate parameter values.\n\tPlease try again.\n\n')
         return None
 
     #if a params dictionary was fed in, copy it as toy_params
     if params is not None:
-        toy_params = copy.deepcopy(params)
+        toy_params = deepcopy(params)
 
 
         toy_m_params = toy_params['pop']['movement']
@@ -94,7 +92,7 @@ def show_movement(pop, land, scape_num, num_timesteps, params = None, mu_directi
 
 
 
-    toy_pop = copy.deepcopy(pop)
+    toy_pop = deepcopy(pop)
 
 
     if subset_pop:

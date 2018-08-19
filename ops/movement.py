@@ -88,7 +88,7 @@ def move(pop):
     new_y = np.clip(new_y, a_min = 0, a_max = pop.land_dim[0]-0.00001)
 
     #then feed the new locations into each individual's set_pos method
-    [ind.set_pos(x, y) for ind, x, y in zip(pop.inds, new_x, new_y)];
+    [ind.set_pos(x, y) for ind, x, y in zip(pop.values(), new_x, new_y)];
 
 
 def disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dispersal, mu_dir = 0, kappa_dir = 0): 

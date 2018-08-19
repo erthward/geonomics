@@ -38,7 +38,7 @@ import random
 
 def calc_estimated_total_mutations(pop, burn_T, T):
     #NOTE: this would actually be a pretty poor estimate, because mutations will occur in new individuals, not some static population
-    mean_births = np.mean(model.pop.n_births[-burn_T:])
+    mean_births = np.mean(pop.n_births[-burn_T:])
     est = mean_births * pop.gen_arch.L * T * pop.gen_arch.mu_tot
     #give a decent overestimate
     est = int(2.5 * est)
@@ -119,7 +119,8 @@ def do_mutation(offspring, pop, log=None):
     #draw number of mutations from a binomial trial with number of trials equal to
     #len(offspring)*pop.gen_arch.L and prob = sum(all mutation rates)
     n_muts = r.binomial(n = len(offspring) * pop.gen_arch.L, p = pop.gen_arch.mu_tot)
-    print('# MUTS : %i' % n_muts)
+    if n_muts > 0:
+        print('\t**** %i mutations occurred\n\n' % n_muts)
 
     #if n_muts >0, draw which type of mutation each resulting mutation should be 
     #(weighted by relative mutation rates)

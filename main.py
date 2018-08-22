@@ -47,19 +47,18 @@ from sim import model
     #num of populations, whether they should have genomes, move, and change
     #whether data and stats should be generated
 #and they should have sane defaults
+#TODO
 def make_params_file(args):
     pass
 
-
 def read_params_file(params_file):
-    pass
+    name = os.path.splitext(os.path.split(params_file)[-1])[0]
+    params = sim.params.read(params_file)
+    params['name'] = name
+    return(params)
 
-
-def make_model(params, verbose=False):
-    mod = model.Model(params, verbose=verbose)
+def make_model(params_file, verbose=False):
+    mod = model.Model(name, params, verbose=verbose)
     return(mod)
-
-def run_model(model, verbose=False):
-    mod.run(verbose = verbose)
 
 

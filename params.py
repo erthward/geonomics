@@ -520,7 +520,6 @@ params = {
 ###############
 
     'model': {
-        'name': 'sample_model',
         'seed': {
             #parameters to control whether and how to set the seed
             'set':          True,
@@ -566,7 +565,9 @@ params = {
                 },
             'freq':                 15,
                 #can be an integer (in which case data will be collected every 
-                #that many timesteps, plus at the end) or a list of specific timesteps
+                #that many timesteps, plus at the end) or a list of specific
+                #timesteps; a value of 0 or None will default to a single
+                #data-collection step after the model has run
             'include_land':         False,
                 #if True, will save the Land object each time other data is saved 
                 #(probably only useful if land is changing in some way not manually coded by the user)
@@ -576,8 +577,6 @@ params = {
                 #format to use for saving geographic points; currently valid: 'csv', 'shapefile'
             'geo_rast_format':      'geotiff',
                 #format to use for saving geographic raster; currently valid: 'geotiff'
-            'run_name':             'test',
-                #a name for this parameterization and run (used to name the data_directory and files)
             'write_intermittent':   True,
             'drop_after_write':     True
             }, #<END> 'data'

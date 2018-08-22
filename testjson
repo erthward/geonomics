@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"features": [
+{ "type": "Feature", "properties": { "idx": "0", "phenotype": "None", "habitat": [ 0.633752, 0.000000 ], "age": "0", "sex": "1" }, "geometry": { "type": "Point", "coordinates": [ 5.210595493511986, 17.524064697839755 ] } },
+{ "type": "Feature", "properties": { "idx": "1", "phenotype": "None", "habitat": [ 0.572451, 1.000000 ], "age": "0", "sex": "1" }, "geometry": { "type": "Point", "coordinates": [ 9.95844439758603, 15.030448834844252 ] } },
+{ "type": "Feature", "properties": { "idx": "2", "phenotype": "None", "habitat": [ 0.561607, 0.000000 ], "age": "0", "sex": "1" }, "geometry": { "type": "Point", "coordinates": [ 17.371934803906427, 16.046901945132351 ] } },
+{ "type": "Feature", "properties": { "idx": "3", "phenotype": "None", "habitat": [ 0.525072, 0.000000 ], "age": "0", "sex": "1" }, "geometry": { "type": "Point", "coordinates": [ 19.026635846497928, 15.327749832767122 ] } },
+{ "type": "Feature", "properties": { "idx": "4", "phenotype": "None", "habitat": [ 0.615345, 0.000000 ], "age": "0", "sex": "1" }, "geometry": { "type": "Point", "coordinates": [ 5.410256843641877, 14.133092348885679 ] } }
+]
+}

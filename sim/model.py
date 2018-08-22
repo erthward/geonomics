@@ -52,15 +52,15 @@ import sys, os, traceback
 #burn-in and main functions, allow customization of the objects, manage and run
 #iterations, and produce and save required stats and data
 class Model:
-    def __init__(self, params, verbose=False):
+    def __init__(self, name, params, verbose=False):
 
         #get the full input params dict
         self.params = deepcopy(params)
         #get the model params (to make the following code shorter)
         m_params = self.params.model
 
-        #set the model name
-        self.name = m_params.name
+        #set the model name (which will come from the params filename)
+        self.name = name
 
         #set the verbose flag
         self.verbose = verbose
@@ -182,7 +182,7 @@ class Model:
     #method to create the simulation functionality, as a function queue 
     #NOTE: (creates the list of functions that will be run by
     #self.run_burn_timestep or self.run_main_timestep, depending on burn argument)
-    #NOTE: because the queue is a list of functions, the user can add, remove, 
+    #NOTE: because the queue is a list of functions, the user could add, remove, 
     #change the order, or repeat functions within the list as desired
     def make_fn_queue(self, burn=False):
         queue = []
@@ -222,7 +222,10 @@ class Model:
                     queue.append(pop.make_change)
 
 
-        #TODO add the data.save and stats.save methods, if not burn-in and if needed
+        #TODO add the data.save and stats.save methods, if not burn-in, if
+        #needed, and if the data.params.freq and similar stats parameters are
+        #not just a list of length 1 containing the last time step (otherwise
+        #will need to just call their functions after the model is complete
 
 
         #add the burn-in function if need be

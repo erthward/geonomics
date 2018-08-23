@@ -44,7 +44,7 @@ from shapely import geometry as g
 # -----------------------------------#
 ######################################
 
-class Density_Grid:
+class DensityGrid:
     def __init__(self, dim, dim_om, window_width, gi, gj, cells, areas, x_edge, y_edge):
 
         #same as land.dim
@@ -102,7 +102,7 @@ class Density_Grid:
         return grid_dens
 
 
-class Density_Grid_Stack:
+class DensityGridStack:
     def __init__(self, land, window_width = None):
 
         #dimensions
@@ -147,7 +147,7 @@ class Density_Grid_Stack:
         return dens
 
 
-class Movement_Surface:
+class MovementSurface:
     def __init__(self, move_scape, approximation_len = 5000, vm_kappa = 12, gauss_KDE_bw = 0.2):
         #dimensions
         self.dim = move_scape.dim
@@ -168,14 +168,14 @@ class Movement_Surface:
         self.approximation_len = approximation_len
         self.surf = make_movement_surface(move_scape.rast, approximation_len = self.approximation_len, vm_kappa = vm_kappa, gauss_KDE_bw = gauss_KDE_bw)
 
-        assert self.approximation_len == self.surf.shape[2], "ERROR: Movement_Surface.approximation_len not equal to Movement_Surface.surf.shape[2]"
+        assert self.approximation_len == self.surf.shape[2], "ERROR: MovementSurface.approximation_len not equal to MovementSurface.surf.shape[2]"
 
     def draw_directions(self, x, y):
         choices = r.randint(low = 0, high = self.approximation_len, size = len(x))
         return self.surf[y, x, choices]
 
 
-class KD_Tree:
+class KDTree:
     def __init__(self, coords, leafsize = 100):
         self.tree = cKDTree(data = coords, leafsize = leafsize)
 
@@ -265,9 +265,9 @@ def make_density_grid(land, ww, x_edge, y_edge):
     #cell, obviating the need to loop across grid dimensions. This performs better and scales much better.
     cells = make_cell_strings(i_cells, j_cells, dim_om)
 
-    #use the above-created data structures to create two Density_Grid objects (which will inhere to the
+    #use the above-created data structures to create two DensityGrid objects (which will inhere to the
     #Land object as attributes)
-    grid = Density_Grid(dim, dim_om, ww, gi, gj, cells, areas, x_edge= x_edge, y_edge = y_edge)
+    grid = DensityGrid(dim, dim_om, ww, gi, gj, cells, areas, x_edge= x_edge, y_edge = y_edge)
     return grid
 
 

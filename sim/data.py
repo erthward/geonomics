@@ -37,6 +37,33 @@ import geopandas as gpd
 from osgeo import gdal
 
 
+#TODO: 
+    # - map this all out, and decide if it makes more sense to change Data to
+    # Sampler class, and just have it sample the pops and land directly, rather
+    # than copying all their objects to Data.data first; seems unnecessarily
+    # complicated now
+
+    # - consider if/how the emerging Changer/Sampler/___? standardization would
+    # fit with the stats module. Is it reasonable to just keep the stats small
+    # and simple, and to include their collection within the Sampler class?
+    # Or should it should be a Collector or DataCollector class instead?
+
+    # - then rewrite however makes the most sense (and that may actually be
+    # simplest and easiest if I truly just rewrite the whole class, keeping and
+    # implementing the data-formatting and -writing functions below it
+
+    # - toy with and figure out the raster-writing functionality (i.e. need to
+    # also collect/keep the PROJ and CRS of a raster I've read in, and also set
+    # default EPSG codes of some sort???)
+
+    # - decide if (and if so, how) any of this should go into the utils.io
+    # module (at the least I think I could write a writer_raster() function
+    # there and then just call that from here)
+
+    # - finalize the initial go at the code (and the stats, while I'm at it),
+    # then test and debug!
+
+
 #------------------------------------
 # CLASSES ---------------------------
 #------------------------------------
@@ -61,7 +88,9 @@ class Data:
 
         #pull necessary stuff from params
         T = params.model.time.T
-        data_params = deepcopy(params.model.data)
+        
+        #grab the params['data'] content into a self.params attribute
+        self.params = deepcopy(params.model.data)
 
         #create a Data.data object, where all of the collected data will be stored
         #NOTE: all data will be structured like this, to be easily parseable into various formats 
@@ -72,9 +101,6 @@ class Data:
                          'params':None
                          }
                     }
-
-        #grab the params['data'] content into a self.params attribute
-        self.params = data_params
 
         #check that frequency values are less than T
         assert type(self.params.freq in (list, float, int, type(None)))
@@ -259,15 +285,12 @@ def format_gen_data(data, data_format):
                     'VCF'
                     'ms'
 '''
-
-
     format_fns = {'FASTA': format_fasta,
                   'VCF': format_vcf,
                   'ms': format_ms
                   }
 
     formatted_data = format_fns[data_format](data)
-
 
     return(formatted_data)
 
@@ -283,7 +306,7 @@ def format_geo_data(data, format):
 pass
 
 
-def format_fasta(gen_data):
+def format_fasta(data):
 
     '''
     FASTA FORMAT:
@@ -295,7 +318,7 @@ def format_fasta(gen_data):
     row1 = '>%s:HAP;%s;%s;%s;%s;%s;%s\n'
     file_text = ''
 
-    for ind in gen_data:
+    for ind in data['inds']:
         for hap in range(2):
             ind_row1 = re.sub('HAP', str(hap), row1)
             replace = tuple(map(lambda att: re.sub(',', '|', re.sub('[\[\] ]', '', str(getattr(ind, att)))),
@@ -310,14 +333,12 @@ def format_fasta(gen_data):
     return(file_text)
 
 
-def format_vcf(data):
+def format_vcf(data, include_fixed_sites=False):
 
+    #create a template header
+        #NOTE: has 1 string slot for a date
 
-    #template header
-        #NOTE: HAS 1 STRING SLOT FOR:
-            #date
-
-        #TODO: TOOK THIS HEADER FROM A RANDOM SLiM FILE I HAD ON HAND; ADJUST AND/OR REMOVE/ADD STUFF FROM IT AS NEEDED
+        #TODO: DECIDE ON NECESSARY INFO AND FORMAT CONTENTS AND ADD METADATA ROWS HERE
     header = '''##fileformat=VCFv4.2
 ##fileDate=%s
 ##source=Geonomics
@@ -325,56 +346,59 @@ def format_vcf(data):
 
     #template column-header row
     col_header_row = '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t%s\n'
-        #NOTE: HAS 1 STRING SLOT FOR:
-                #tab-separated list of all individ ids
+        #NOTE: this has 1 string slot for a tab-separated list of all individ ids
 
-    #and template data row
+    #template data row
+    #TODO: UPDATE/CHANGE THE INFO AND FORMAT PORTIONS OF THIS TEMPLATE, AFTER I DECIDE ON THEIR CONTENTS (above)
     data_row = '%i\t%i\t.\tA\tT\t1000\tPASS\tMID=216754706;S=0;DOM=0.5;PO=1;GO=118200;MT=1;DP=1000\tGT\t%s\n'
-        #NOTE: HAS 2 INTEGER SLOTS, THEN 1 STRING SLOT FOR:
-            #chrom number (NOTE: unpythonically, starts from 1)
-            #locus number (NOTE: reported cumulative from locus 0, not from start of each chrom)
-            #tab-separated list of individs' genotypes at this locus
+        #NOTE: this has 2 integer slots, then 1 string slot for:
+            #- chrom number (NOTE: unpythonically, starts from 1)
+            #- locus number (NOTE: reported cumulative from locus 0, not from start of each chrom)
+            #- a tab-separated list of individs' genotypes at this locus
 
-            #TODO: UPDATE/CHANGE INFO PORTION OF THIS TEMPLATE
-
-
-    #create col_header_row for this data
+    #create a col_header_row for this data
     inds = sorted(data['inds'].keys())
     ind_cols = '\t'.join([str(i) for i in inds])
     cols = col_header_row % (ind_cols)
 
-
-    #get chroms and loci of all segregating sites
-    samplome = np.array([data['inds'][i].genome for i in inds])
-    #get segregating sites
-    max_val = 2 * len(data['inds'])
-    segs = np.where(samplome.sum(axis = 2).sum(axis = 0) > 0)[0]
-    segs2 = np.where(samplome.sum(axis = 2).sum(axis = 0) < max_val)[0]
-    segs = sorted(list(set(segs).intersection(set(segs2))))
-    #and get their chrom nums
+    #get a list of the chromosome numbers
     chroms = np.cumsum(data['gen_arch'].l_c)
-    chroms = [list((site - chroms) < 0).index(True) for site in segs]
 
+    #and get all individuals' genomic data in a 'samplome' object (a 3-d array)
+    samplome = np.array([data['inds'][i].genome for i in inds])
+    
+    #get loci of all segregating sites, if not_include_fixed_sites
+    if not include_fixed_sites:
+        #get segregating sites
+        max_val = 2 * len(data['inds'])
+        segs = np.where(samplome.sum(axis = 2).sum(axis = 0) > 0)[0]
+        segs2 = np.where(samplome.sum(axis = 2).sum(axis = 0) < max_val)[0]
+        loci = sorted(list(set(segs).intersection(set(segs2))))
+    #or else get all loci
+    else:
+        loci = range(data['gen_arch'].L)
+
+    #and get the sites' chrom nums
+    chroms = [list((locus - chroms) < 0).index(True) for locus in loci]
+
+    #build all the VCF data rows
     rows = ''
-    for n, site in enumerate(segs):
-        genotypes = samplome[:,site,:]
+    for n, locus in enumerate(loci):
+        genotypes = samplome[:,locus,:]
         genotypes = '\t'.join(['%i|%i' % (genotypes[i,0], genotypes[i,1]) for i in range(np.shape(genotypes)[0])])
 
-        rows = rows + data_row % (chroms[n], site, genotypes)
+        rows = rows + data_row % (chroms[n], locus, genotypes)
 
-
-
-    #and get the date
+    #get the date
     now = datetime.datetime.now()
     month = str(now.month).zfill(2)
     day = str(now.day).zfill(2)
     date = '%d%s%s' % (now.year, month, day)
 
-
     #paste all the VCF content together
     out_vcf = ''.join([header % date, cols, rows])
 
-    #and return it
+    #return it
     return(out_vcf)
 
 
@@ -390,8 +414,8 @@ def write_geopandas(filename, data, driver):
     #FIXME: replace the call to str() below with something more sophisticated
     #that will actually separate distinct phenotype and habitat values into
     #separate, labeled columns
-    df_dict = {att: [str(getattr(ind, att)) for ind in data] for att in attributes}
-    pts = [Point(ind.x, ind.y) for ind in data]
+    df_dict = {att: [str(getattr(ind, att)) for ind in data['inds']] for att in attributes}
+    pts = [Point(ind.x, ind.y) for ind in data['inds']]
     df_dict['pt'] = pts
     df = pd.DataFrame.from_dict(df_dict)
     gdf = gpd.GeoDataFrame(df, geometry = 'pt')
@@ -413,7 +437,7 @@ def write_csv(filename, data):
     write_geopandas(filename, data, driver = 'CSV')
 
 
-#TODO: NEED TO READ IN ALL GEODATA FROM THE RASTER THAT WAS READ, IF
+#TODO: NEED TO READ IN ALL THE GEODATA FROM THE RASTER THAT WAS READ, IF
 #APPLICABLE, OR ELSE SET DEFAULT PROJ AND CRS, AND THEN USE THOSE TO WRITE THIS OUT
 def write_geotiff(filename, data):
 

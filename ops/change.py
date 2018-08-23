@@ -40,16 +40,8 @@ from copy import deepcopy
         #to just further generalize the dem-change functions to allow for linear, stochastic, cyclic, or custom
         #changes of other param values?
 
-    #2 do I need to create a Gen_Changer?
-
-    #3 then write the overall Sim_Changer class to unite everything? or should the Changers actually be
-        #created and made to inhere as attributes of the Landscape_Stack and Population classes instead?
-
-        #4 as soon as I revamp the movement_surf so that it's a pop attribute rather than a land attribute then
-        #this will likewise need to be revamped! (because right now movement_surf changes are lumped with landscape changes)
-
-    #5 I think this can be standardized (e.g. Land_Changer get_<   >_change_fns functions I believe return just the
-    #functions, whereas Pop_Changer ones return list(zip(t, change_fn)) objects) and generalized still
+    #5 I think this can be standardized (e.g. LandChanger get_<   >_change_fns functions I believe return just the
+    #functions, whereas PopChanger ones return list(zip(t, change_fn)) objects) and generalized still
     #further. Worth doing now, while the code is fresh in my head...
 
 
@@ -112,9 +104,9 @@ class Changer:
         self.changes = iter(changes)
 
 
-class Land_Changer(Changer):
+class LandChanger(Changer):
     def __init__(self, land, land_change_params):
-        super(Land_Changer, self).__init__(land_change_params)
+        super(LandChanger, self).__init__(land_change_params)
         #set the type-label of the changer
         self.type = 'land'
 
@@ -134,12 +126,12 @@ class Land_Changer(Changer):
         surfs = {}
         for scape_num in self.change_params.keys():
             scape_series, dim, res, ulc = make_linear_scape_series(land[scape_num].rast, **self.change_params[scape_num])
-            assert dim == land.dim, 'ERROR: dimensionality of scape_series fed into Land_Changer does not match that of the land to be changed.'
-            assert res == land.res or res is None, 'ERROR: resolution of scape_series fed into Land_Changer does not match that of the land to be changed.'
-            assert ulc == land.ulc or ulc is None, 'ERROR: upper-left corner of scape_series fed into Land_Changer does not match that of the land to be changed.'
+            assert dim == land.dim, 'ERROR: dimensionality of scape_series fed into LandChanger does not match that of the land to be changed.'
+            assert res == land.res or res is None, 'ERROR: resolution of scape_series fed into LandChanger does not match that of the land to be changed.'
+            assert ulc == land.ulc or ulc is None, 'ERROR: upper-left corner of scape_series fed into LandChanger does not match that of the land to be changed.'
             scapes[scape_num] = scape_series
 
-            #set the Land_Changer.change_info attribute, so that it can be grabbed later for building move_surf and other objects
+            #set the LandChanger.change_info attribute, so that it can be grabbed later for building move_surf and other objects
             self.change_info[scape_num] = {**self.change_params[scape_num]}
             self.change_info[scape_num]['end_rast'] = scape_series[-1][1]
 
@@ -158,9 +150,9 @@ class Land_Changer(Changer):
         self.set_next_change()
 
 
-class Pop_Changer(Changer):
+class PopChanger(Changer):
     def __init__(self, pop, pop_change_params, land=None):
-        super(Pop_Changer, self).__init__(pop_change_params)
+        super(PopChanger, self).__init__(pop_change_params)
         self.type = 'pop'
         
         #an attribute that is used by some dem-change fns, as a baseline population size at the start of the
@@ -240,25 +232,6 @@ class Pop_Changer(Changer):
         #set pop back to its original value
         pop = cop_pop
             
-
-class Gen_Changer:
-    def __init__(self, change_vals, params):
-        self.type = 'gen'
-
-
-#an overall Sim_Changer class, which will contain and operate the Land_, Pop_, and Gen_Changer objects
-#and will make each timestep's necessary changes in that order (land-level changes, then population, then genome)
-class Sim_Changer:
-    def __init__(self, changers, params):
-        type_getter = ag('type')
-        valid_changer_types = ['land', 'pop', 'gen']
-        types = list(map(type_getter, changers))
-        for t in types:
-            setattr(self, t, [changer for changer in changers if changer.type == t])
-        for t in set(valid_changer_types) - set(types):
-            setattr(self, t, None)
-
-
 ######################################
 # -----------------------------------#
 # FUNCTIONS -------------------------#
@@ -266,7 +239,7 @@ class Sim_Changer:
 ######################################
 
     ####################
-    # for Land_Changer #
+    # for LandChanger #
     ####################
     
 #function that takes a starting scape, an ending scape, a number of timesteps, and a Model object,
@@ -315,7 +288,7 @@ def get_scape_change_fn(land, scape_num, new_scape):
 
 
     ###################
-    # for Pop_Changer #
+    # for PopChanger #
     ###################
 
 def make_movement_surface_series(start_scape, end_rast, start_t, end_t, n_steps, t_res_reduct_factor=1):

@@ -7,7 +7,7 @@
 
 Module name:              genome
 
-Module contents:          - definition of the Genome and Genomic_Architecture classes
+Module contents:          - definition of the Trait, RecombinationPaths, and  GenomicArchitecture classes
                           - function for simulation of genomic architecture, simulation of a new genome, and associated functions
 
 
@@ -68,7 +68,7 @@ class Trait:
         self.loci = np.hstack((self.loci, np.array([*loci])))
         self.n_loci = self.loci.size
 
-class Recomb_Paths:
+class RecombinationPaths:
     def __init__(self, recomb_paths):
         self.recomb_paths = recomb_paths
 
@@ -76,7 +76,7 @@ class Recomb_Paths:
         return(random.sample(self.recomb_paths, n))
 
 
-class Genomic_Architecture:
+class GenomicArchitecture:
     def __init__(self, p, h, r, g_params):
         self.x = 2              #ploidy (NOTE: for now will be 2 by default; later could consider enabling polyploidy)
         self.L = g_params.L              #total length (i.e. number of markers)
@@ -213,7 +213,7 @@ class Genomic_Architecture:
     
     #method for creating and assigning the r_lookup attribute
     def make_recomb_paths(self):
-        self.recomb_paths = Recomb_Paths(make_recomb_paths_bitarrays(self))
+        self.recomb_paths = RecombinationPaths(make_recomb_paths_bitarrays(self))
 
 
     #method for showing all allele frequencies for the population
@@ -302,7 +302,7 @@ def get_chrom_breakpoints(l_c, L):
     return(breakpoints)
 
 
-#carry out recombination, using the lookup array in a Genomic_Architecture object
+#carry out recombination, using the lookup array in a GenomicArchitecture object
 def make_recombinants(r_lookup, n_recombinants):
     recombinants = np.array([r.choice(r_lookup[i,], size = n_recombinants, replace = True) for i in range(len(r_lookup))])
     recombinants = np.cumsum(recombinants, axis = 0)%2
@@ -423,7 +423,7 @@ def make_genomic_architecture(pop_params):
     g_params.l_c = l_c
 
     #now make the gen_arch object
-    gen_arch = Genomic_Architecture(p,h, r, g_params)
+    gen_arch = GenomicArchitecture(p,h, r, g_params)
 
     #add the loci and effect sizes for each of the traits
     for trait_num in gen_arch.traits.keys():

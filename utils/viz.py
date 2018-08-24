@@ -88,7 +88,7 @@ def show_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest'
             cbar.ax.set_title('scape: %i' % n)
             ax = cbar.ax
             title = ax.title
-            font = mpl.font_manager.FontProperties(family='arial', style='normal', size=10)
+            font = mpl.font_manager.FontProperties(family='sans-serif', style='normal', size=10)
             title.set_font_properties(font)
 
 
@@ -215,7 +215,7 @@ def make_fitness_cbar(make_cbar, min_fit):
     ax2.plot([0,1],[round(min_fit,2)]*2, c = 'black', lw = 1)
     ax2.set_title('fitness')
     title = ax2.title
-    font = mpl.font_manager.FontProperties(family='arial', style='normal', size=10)                                                   
+    font = mpl.font_manager.FontProperties(family='sans-serif', style='normal', size=10)                                                   
     title.set_font_properties(font)
     
 

@@ -97,8 +97,8 @@ class Model:
         self.n_its = m_params.its.n_its
         #set the its list
         self.its = [*range(self.n_its)][::-1]
-        #start the it counter
-        self.it = self.its.pop()
+        #and set self.it to default to -1
+        self.it = -1
 
         #make the land and community objects
         self.land = self.make_land()
@@ -221,6 +221,59 @@ class Model:
             self.comm = self.make_community()
 
 
+    #method to reset all the model's objects (land, community, and associated) and attributes
+    def reset(self, rand_land=None, rand_comm=None, rand_burn=None):
+        #default to the self.rand_<_> attributes, if not otherwise provided
+        if rand_land is None:
+            rand_land = self.rand_land
+        if rand_comm is None:
+            rand_comm = self.rand_comm
+        if rand_burn is None:
+            rand_burn = self.rand_burn
+
+        #deepcopy the original land and comm if necessary (if told not to randomize
+        #land and not at the beginning of the initial iteration), else randomly generate new
+        #FIXME: The way I have this written right now, the land and community
+            #are made when the Model object is made, and then they are needlessly
+            #reset before the first iteration is run (because self.reset() is called
+            #at the beginning of each iteration), which is a waste of computation;
+            #but if I run the following line then they never get reset; I NEED TO
+            #READ THROUGH THIS WHOLE MODULE AND SIMPLIFY/STREAMLINE! THIS PROBLEM
+            #ALL STARTED WHEN I WROTE THE self.run_interactive FUNCTION YESTERDAY!
+        #if not self.it == 0 and self.burn_t == 0:
+        self.reset_land(rand_land)
+        self.reset_community(rand_comm)
+       
+        #reset the self.burn_t and self.t attributes to -1
+        self.reset_t()
+        if rand_burn:
+            self.reset_burn_t()
+
+        #reset the community and population t attributes
+        self.comm.reset_t()
+        for pop in self.comm.values():
+            pop.reset_t()
+
+        #set the self.reassign_genomes attribute
+        self.set_reassign_genomes()
+
+        #create new main fn queue (and burn fn queue, if needed)
+        if rand_burn or self.it <= 0:
+            #verbose output
+            if self.verbose:
+                print('Creating the burn-in function queue...\n\n')
+            self.burn_fn_queue = self.make_fn_queue(burn = True)
+        #verbose output
+        if self.verbose:
+            print('Creating the main function queue...\n\n')
+        self.main_fn_queue = self.make_fn_queue(burn = False)
+
+        #TODO create Data and Stats objects, if required, using self.data_params and
+        #self.stats_params
+            #and call their methods to create new data and stats subdirectories for
+            #this iteration
+
+
     #method to create the simulation functionality, as a function queue 
     #NOTE: (creates the list of functions that will be run by
     #self.run_burn_timestep or self.run_main_timestep, depending on burn argument)
@@ -328,66 +381,17 @@ class Model:
         return(extinct)
 
 
-    #method to reset all the model's objects (land, community, and associated) and attributes
-    def reset(self, rand_land=None, rand_comm=None, rand_burn=None):
-        #default to the self.rand_<_> attributes, if not otherwise provided
-        if rand_land is None:
-            rand_land = self.rand_land
-        if rand_comm is None:
-            rand_comm = self.rand_comm
-        if rand_burn is None:
-            rand_burn = self.rand_burn
-        #deepcopy the original land if necessary (if told not to randomize
-        #land and not on the initial iteration), else randomly generate new land
-        if self.it > 0:
-            self.reset_land(rand_land)
-        #deepcopy the original comm if necessary (if told not to randomize
-        #comm and not on the initial iteration), else randomly generate new comm
-        if self.it > 0:
-            self.reset_community(rand_comm)
-       
-        #reset the self.burn_t and self.t attributes to -1
-        self.reset_t()
-        if rand_burn:
-            self.reset_burn_t()
-
-        #reset the community and population t attributes
-        self.comm.reset_t()
-        for pop in self.comm.values():
-            pop.reset_t()
-
-        #set the self.reassign_genomes attribute
-        self.set_reassign_genomes()
-
-        #create new main fn queue (and burn fn queue, if needed)
-        if rand_burn or self.it == 0:
-            #verbose output
-            if self.verbose:
-                print('Creating the burn-in function queue...\n\n')
-            self.burn_fn_queue = self.make_fn_queue(burn = True)
-        #verbose output
-        if self.verbose:
-            print('Creating the main function queue...\n\n')
-        self.main_fn_queue = self.make_fn_queue(burn = False)
-
-        #TODO create Data and Stats objects, if required, using self.data_params and
-        #self.stats_params
-            #and call their methods to create new data and stats subdirectories for
-            #this iteration
-
-
     #method to set the model's next iteration
     def set_next_iteration(self, core=None):
         #update the iteration numbers
-        if self.it > 0:
-            self.set_it()
+        self.set_it()
         #verbose output
         if self.verbose:
             print('~' * self.__term_width__ + '\n\n')
             print('Setting up iteration %i...\n\n' % self.it)
 
         #reset the model (including the burn-in, if self.rand_burn or if this is the first iteration) 
-        self.reset_model(rand_land = self.rand_land,
+        self.reset(rand_land = self.rand_land,
                          rand_comm = self.rand_comm, 
                          rand_burn = self.rand_burn)
 

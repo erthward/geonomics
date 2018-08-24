@@ -545,7 +545,7 @@ params = {
         'time': {
             #parameters to control the number of burn-in and main timesteps to
             #run for each iterations
-            'T':            10,
+            'T':            40,
                 #total model runtime (in timesteps)
             'burn_T':       30
                 #minimum burn-in runtime (in timesteps; this is a mininimum because 

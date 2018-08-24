@@ -457,7 +457,7 @@ class Population(OD):
         return zs
 
     def get_fitness(self, trait_num = None, set_fit = False):
-        return selection.calc_fitness(self, trait_num = trait_num, set_fit = set_fit)
+        return selection.calc_fitness_traits(self, trait_num = trait_num, set_fit = set_fit)
 
     def get_dom(self, locus):
         return {locus: self.gen_arch.h[locus]}

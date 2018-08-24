@@ -48,7 +48,8 @@ class Stats:
         self.function_dict = {  'Nt': calc_Nt,
                                 'ld':  calc_LD,
                                 'het': calc_het,
-                                'maf': calc_MAF
+                                'maf': calc_MAF,
+                                'mean_fit': calc_mean_fit,
                               }
 
 

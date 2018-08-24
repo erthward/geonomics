@@ -68,6 +68,32 @@ from osgeo import gdal
 # CLASSES ---------------------------
 #------------------------------------
 
+class DataCollector:
+    def __init__(self, params):
+
+    #some lookup dicts for writing data 
+        self.file_extension_dict =   {'VCF': 'vcf',
+                            'FASTA': 'fasta',
+                            'ms': 'ms',
+                            'CSV': 'csv',
+                            'Shapefile': 'shp',
+                            'Geotiff': 'tif'
+                            }
+
+        self.write_geodata_fn_dict = {'CSV': write_csv,
+                             'Shapefile': write_shapefile,
+                             'GeoJSON': write_geojson,
+                             'Geotiff': write_geotiff
+                             }
+ 
+        #grab the params['data'] content into a self.data_params attribute
+        self.data_params = deepcopy(params.model.data)
+        #grab the params['data'] content into a self.data_params attribute
+        self.stats_params = deepcopy(params.model.data)
+
+
+
+
 class Data:
     def __init__(self, params):
 

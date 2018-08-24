@@ -36,7 +36,6 @@ import random
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy import interpolate
-from scipy.spatial import cKDTree
 from collections import Counter as C
 from collections import OrderedDict as OD
 from copy import deepcopy
@@ -93,10 +92,10 @@ class Population(OD):
 
         #create empty attributes to hold spatial objects that will be created after the population is instantiated
         self.kd_tree = None
-        #create empty attribute to hold the Density_Grid_Stack
+        #create empty attribute to hold the DensityGridStack
         self.dens_grids = None
 
-        #create empty attribute for a spatial.Movement_Surface
+        #create empty attribute for a spatial.MovementSurface
         #which may be created, depending on paramters
         self.move_surf = None
 
@@ -126,9 +125,9 @@ class Population(OD):
             # relative fitness of homozygous 0 = relative fitness of heterozygote, i.e. 1-hs = 1-s
         }
 
-        #set the Genomic_Architecture object
+        #set the GenomicArchitecture object
         self.gen_arch = genomic_architecture
-        assert self.gen_arch.__class__.__name__ == 'Genomic_Architecture', "self.gen_arch must be an instance of the genome.Genomic_Architecture class"
+        assert self.gen_arch.__class__.__name__ == 'GenomicArchitecture', "self.gen_arch must be an instance of the genome.GenomicArchitecture class"
 
         #set the self.mutate attribute (a boolean indicating whether or not to enact mutation, which is True if gen_arch.mu_tot > 0
         self.mutate = self.gen_arch.mu_tot > 0
@@ -325,7 +324,7 @@ class Population(OD):
     def calc_density(self, normalize_by= None, min_0=True, max_1=False, max_val=None, as_landscape = False, set_N=False):
 
         '''
-        Calculate an interpolated raster of local population density, using spatial.Density_Grid_Stack object
+        Calculate an interpolated raster of local population density, using spatial.DensityGridStack object
         in self.dens_grids.
 
         Valid values for normalize_by currently include 'pop_size' and 'none'. If normalize_by = 'pop_size', max_1 =
@@ -395,14 +394,14 @@ class Population(OD):
         self.cells = np.int32(np.floor(self.coords))
 
 
-    #method to set the population's spatial.KD_Tree attribute
+    #method to set the population's kd_tree attribute (a spatial.KDTree)
     def set_kd_tree(self, leafsize = 100):
-        self.kd_tree = spt.KD_Tree(coords = self.coords, leafsize = leafsize)
+        self.kd_tree = spt.KDTree(coords = self.coords, leafsize = leafsize)
 
 
-    #method to set the population's spatial.Density_Grid_Stack attribute
+    #method to set the population's spatial.DensityGridStack attribute
     def set_dens_grids(self, widow_width = None):
-        self.dens_grids = spt.Density_Grid_Stack(land = self.land, window_width = self.dens_grid_window_width)
+        self.dens_grids = spt.DensityGridStack(land = self.land, window_width = self.dens_grid_window_width)
 
 
     # method to get individs' habitat values
@@ -801,17 +800,17 @@ def make_population(land, pop_params, burn=False):
 ######################################################################################################################
 
                 #make the movement surface and set it as the pop's move_surf attribute
-                pop.move_surf = spt.Movement_Surface(land[move_surf_scape_num], **ms_params)
+                pop.move_surf = spt.MovementSurface(land[move_surf_scape_num], **ms_params)
 
-    #if this population has changes parameterized, create a Pop_Changer object for it
+    #if this population has changes parameterized, create a PopChanger object for it
     if 'change' in pop_params.keys():
         #grab the change params
         ch_params = pop_params.change
-        #make Pop_Changer and set it to the pop's changer attribute
+        #make PopChanger and set it to the pop's changer attribute
         if land.changer is not None:
-            pop.changer = change.Pop_Changer(pop, ch_params, land = land)
+            pop.changer = change.PopChanger(pop, ch_params, land = land)
         else:
-            pop.changer = change.Pop_Changer(pop, ch_params, land = None)
+            pop.changer = change.PopChanger(pop, ch_params, land = None)
 
     return pop
 

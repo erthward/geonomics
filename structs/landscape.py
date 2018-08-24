@@ -108,7 +108,7 @@ class Land(dict):
         self.ulc = [*self.values()][0].ulc
         self.set_scapes_res_ulc()
 
-        #create a changer attribute that defaults to None but will be set to an ops.change.Land_Changer object
+        #create a changer attribute that defaults to None but will be set to an ops.change.LandChanger object
         #if params call for it
         self.changer = None
 
@@ -350,9 +350,9 @@ def make_land(params, num_hab_types=2):
 
     #grab the change parameters into a dictionary of scape_num:events:events_params hierarchical
     change_params = {k:v.change for k,v in params.land.scapes.items() if 'change' in v.keys()} 
-    #and then replace the land.changer attribute with an ops.change.Land_Changer object, if params call for it
+    #and then replace the land.changer attribute with an ops.change.LandChanger object, if params call for it
     if len(change_params) > 0:
-        land.changer = change.Land_Changer(land, change_params) 
+        land.changer = change.LandChanger(land, change_params) 
 
     return land
 

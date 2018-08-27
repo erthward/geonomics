@@ -442,7 +442,7 @@ class Model:
         #verbose output
         if self.verbose:
             print('\n\n' + '#' * self.__term_width__ + '\n\n')
-            print('RUNNING MODEL "%s"...\n\n' % self.name)
+            print('Running model "%s"...\n\n' % self.name)
 
         #loop over all the iterations
         while len(self.its) > 0:
@@ -459,7 +459,7 @@ class Model:
 
         #verbose output
         if self.verbose:
-            print('\n\nMODEL "%s" IS COMPLETE.\n' % self.name)
+            print('\n\nModel "%s" is complete.\n' % self.name)
             print('#' * self.__term_width__)
 
 

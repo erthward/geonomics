@@ -74,7 +74,6 @@ class DataCollector:
     #some lookup dicts for writing data 
         self.file_extension_dict =   {'VCF': 'vcf',
                             'FASTA': 'fasta',
-                            'ms': 'ms',
                             'CSV': 'csv',
                             'Shapefile': 'shp',
                             'Geotiff': 'tif'
@@ -100,7 +99,6 @@ class Data:
         #some lookup dicts for writing data 
         self.extension_dict =   {'VCF': 'vcf',
                             'FASTA': 'fasta',
-                            'ms': 'ms',
                             'CSV': 'csv',
                             'Shapefile': 'shp',
                             'Geotiff': 'tif'
@@ -426,11 +424,6 @@ def format_vcf(data, include_fixed_sites=False):
 
     #return it
     return(out_vcf)
-
-
-#TODO: WRITE THIS
-def format_ms(gen_data):
-    pass
 
 
 #TODO: NEED TO READ IN ALL GEODATA FROM THE RASTER THAT WAS READ, IF

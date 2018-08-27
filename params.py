@@ -331,10 +331,15 @@ params = {
                 'genome': {
                     'L':                        1000,
                         #total number of loci
-                    'l_c':                      [500, 500],
+                    'l_c':                      [500,300,200],
                         #chromosome lengths [sum(l_c) == L enforced]
-                    'recomb_array':             None,
-                        #predetermined linkage map to use for the simulated loci (optional)
+                    'gen_arch_file':            None,
+                        #if not None, should point to a file stipulating a
+                            #custom genomic architecture (i.e. a CSV with loci 
+                            #as rows and 'locus_num', 'p', 'r', 'trait', and 
+                            #'alpha' as columns, such as is created by
+                            #main.make_params_file, when the custom_gen_arch
+                            #arugment is True)
                     'mu_neut':          1e-9,
                         #genome-wide neutral mutation rate, per base per generation
                             #(set to 0 to disable neutral mutation)
@@ -384,7 +389,7 @@ params = {
                                 #phenotypic selection coefficient for this trait; can either be a 
                                     #numeric value, or can be an array of spatialized selection 
                                     #values (with dimensions equal to land.dims)
-                            'n_loci':           10,
+                            'n_loci':           1,
                                 #number of loci to be assigned to this trait
                             'mu':      1e-9,
                                 #mutation rate for this trait (if set to 0, or if genome['mutation'] == False, no mutation will occur)
@@ -416,7 +421,7 @@ params = {
                                 #phenotypic selection coefficient for this trait; can either be a 
                                     #numeric value, or can be an array of spatialized selection 
                                     #values (with dimensions equal to land.dims)
-                            'n_loci':           1,
+                            'n_loci':           10,
                                 #number of loci to be assigned to this trait
                             'mu':      1e-9,
                                 #mutation rate for this trait (if set to 0, or if genome['mutation'] == False, no mutation will occur)

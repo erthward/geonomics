@@ -560,30 +560,51 @@ params = {
         'data': {
             #dictionary defining the data to be collected, the sampling 
             #strategy to use, the timesteps for collection, and other parameters
-            'sampling_args': {
+            'sampling': {
                 #args to be unpacked into sampling function (see docstring 
                     #of sample_data function in data module for details)
-                'scheme':           'random',
+                'scheme':               'random',
                     #valid: 'all', 'random', 'point', or 'transect'
-                'n':            50        
+                'n':                    50,
                     #size of samples to be collected (in number of individuals)
+                'points':               None,
+                    #the x,y points at which data should be sampled (expressed
+                        #as a list or tuple of length-2 lists or 2-tuples)
+                'transect_endpoints':   None,
+                    #endpoints of the transect to be sampled (only needed if
+                        #scheme is 'transect), expressed as a pair of 
+                        #ordered x,y pairs (in tuples or lists)
+                'n_transect_points':    None,
+                    #the number of evenly spaced points along the transect
+                    #at which to sample (only needed if scheme is 'transect')
+                'when':                 15,
+                    #can be an integer (in which case data will be collected every 
+                    #that many timesteps, plus at the end) or a list of specific
+                    #timesteps; a value of 0 or None will default to a single
+                    #data-collection step after the model has run
+                'include_land':         False,
+                    #if True, will save the Land object each time other data is saved 
+                    #(probably only useful if land is changing in some way not manually coded by the user)
+                'include_fixed_sites':  False,
+                    #if True, and if genetic data is to be formatted as VCFs,
+                        #the VCFs will contain fixed sites, not just variants
+                        #(defaults to False)
                 },
-            'freq':                 15,
-                #can be an integer (in which case data will be collected every 
-                #that many timesteps, plus at the end) or a list of specific
-                #timesteps; a value of 0 or None will default to a single
-                #data-collection step after the model has run
-            'include_land':         False,
-                #if True, will save the Land object each time other data is saved 
-                #(probably only useful if land is changing in some way not manually coded by the user)
-            'gen_data_format':      'vcf',
-                #can be 'vcf', 'fasta', or 'ms'
-            'geo_point_format':     'csv', 
-                #format to use for saving geographic points; currently valid: 'csv', 'shapefile'
-            'geo_rast_format':      'geotiff',
-                #format to use for saving geographic raster; currently valid: 'geotiff'
-            'write_intermittent':   True,
-            'drop_after_write':     True
+            'format': {
+                'gen_format':           'vcf',
+                    #format to use for saving genetic data; 
+                        #currently valid values: 'vcf', 'fasta', 
+                        #or a list containing both, if both 
+                        #should be written
+                'geo_vect_format':      'csv',
+                    #format to use for saving geographic points; 
+                        #currently valid values: 'csv', 'shapefile', 'geojson'
+                'geo_rast_format':      'geotiff',
+                    #format to use for saving geographic raster (which will
+                        #only happen if the 'include_land' parameter in the
+                        #data.sampling subdict is True);
+                        #currently valid values: 'geotiff'
+                },
             }, #<END> 'data'
 
         'stats': {

@@ -24,33 +24,35 @@ Documentation:            URL
 ##########################################
 '''
 
+#geonmics imports
 
+#other imports
 import numpy as np
 from random import sample as rand_sample
 from numpy import random as r
 import os, sys
 import datetime
 import re
-from shapely.geometry import Point
+from shapely.geometry import Point, MultiPolygon
 import pandas as pd
 import geopandas as gpd
 from osgeo import gdal
+from itertools import chain
 
 
-#TODO: 
-    # - map this all out, and decide if it makes more sense to change Data to
-    # Sampler class, and just have it sample the pops and land directly, rather
-    # than copying all their objects to Data.data first; seems unnecessarily
-    # complicated now
+#TODO
+    #- decide where to collect, format, and write data, then connect the loose
+    #pieces in the respective functions
 
-    # - consider if/how the emerging Changer/Sampler/___? standardization would
+    #- change self.write_geodata_fn_dict to just write_data_fn_dict?? then I
+    #can write a single overarching fn for writing all data files and call it
+    #iteratively in write fn (or perhaps cleaner to keep gen and geo functions
+    #separate and loop for each type?)
+
+    # - consider if/how the emerging Changer/Sampler/Collector/___er standardization would
     # fit with the stats module. Is it reasonable to just keep the stats small
     # and simple, and to include their collection within the Sampler class?
     # Or should it should be a Collector or DataCollector class instead?
-
-    # - then rewrite however makes the most sense (and that may actually be
-    # simplest and easiest if I truly just rewrite the whole class, keeping and
-    # implementing the data-formatting and -writing functions below it
 
     # - toy with and figure out the raster-writing functionality (i.e. need to
     # also collect/keep the PROJ and CRS of a raster I've read in, and also set
@@ -69,7 +71,7 @@ from osgeo import gdal
 #------------------------------------
 
 class DataCollector:
-    def __init__(self, params):
+    def __init__(self, model_name, T, params):
 
     #some lookup dicts for writing data 
         self.file_extension_dict =   {'VCF': 'vcf',
@@ -83,240 +85,279 @@ class DataCollector:
                              'Shapefile': write_shapefile,
                              'GeoJSON': write_geojson,
                              'Geotiff': write_geotiff
-                             }
- 
-        #grab the params['data'] content into a self.data_params attribute
-        self.data_params = deepcopy(params.model.data)
+                            }
+
+        #set other attributes
+        self.model_name = model_name
+        self.T = T
+
+        #grab the params['data'] contents into objects
+        sampling_params = params.model.data.sampling
+        format_params = params.model.data.format
+
+        #TODO: decide what to do about the stats stuff!
         #grab the params['data'] content into a self.data_params attribute
         self.stats_params = deepcopy(params.model.data)
 
+        #get the sampling scheme
+        self.scheme = sampling_params.scheme
 
+        #and run some asserts
+        assert self.scheme in ['all', 'random',
+            'points', 'transect'], ("The sampling scheme provided in the "
+            "parameters must be one of the following values: 'all', 'random', "
+            "'points', or 'transect'.")
 
+        if sampling_params.scheme != 'all':
+            assert 'n' in sampling_params.keys(), ("If the "
+            "sampling scheme is not 'all' then the 'n' parameter must be "
+            "defined, indicating the number of individuals to be sampled "
+            "each time data is collected.")
+            assert type(sampling_params.n) is int, ("The "
+            "'n' data-sampling parameter must be an integer.")
+        #TODO: Add more assert statements here to check that only the right
+        #combinations of parameters can be provided
 
-class Data:
-    def __init__(self, params):
+        #get the number of individuals to sample, if applicable
+        self.n = None
+        if sampling_params.scheme != 'all':
+            self.n = sampling_params.n
 
-        #some lookup dicts for writing data 
-        self.extension_dict =   {'VCF': 'vcf',
-                            'FASTA': 'fasta',
-                            'CSV': 'csv',
-                            'Shapefile': 'shp',
-                            'Geotiff': 'tif'
-                            }
+        #calculate the transect points, if 'transect' is the chosen sampling
+        #scheme, or just get the points if 'points' is the scheme
+        self.pts = None
+        if sampling_params.scheme == 'points':
+            self.pts = sampling_params.points
+        if sampling_params.scheme == 'transect':
+            endpts = sampling_params.transect_endpoints
+            n_transect_pts = sampling_params.n_transect_points
+            pts = get_transect_points(endpoints = endpts, n = n_transect_pts)
+            self.pts = chain.from_iterable(pts)
 
-        self.geo_data_write_fn_dict = {'CSV': write_csv,
-                             'Shapefile': write_shapefile,
-                             'GeoJSON': write_geojson,
-                             'Geotiff': write_geotiff
-                             }
+        #create the point buffers, if either 'transect' or 'points' is the 
+        #chosen sampling scheme
+        self.pts_buff = None
+        if sampling_params.scheme in ['transect', 'points']:
+            self.pts_buff = make_point_buffers(self.pts,
+                                        sampling_params.radius)
 
-        #pull necessary stuff from params
-        T = params.model.time.T
-        
-        #grab the params['data'] content into a self.params attribute
-        self.params = deepcopy(params.model.data)
+        #get the 'include_land' param (defaults False)
+        self.include_land = False
+        if ('include_land' in sampling_params.keys() and
+            type(sampling_params.include_land) is bool):
+            self.include_land = sampling_params.include_land
 
-        #create a Data.data object, where all of the collected data will be stored
-        #NOTE: all data will be structured like this, to be easily parseable into various formats 
-        self.data = {'0':{
-                        'gen_arch':None,
-                         'inds':None,
-                         'land':None,
-                         'params':None
-                         }
-                    }
+        #get the 'include_fixed_sites' param (defaults False)
+        self.include_fixed_sites = False
+        if ('include_fixed_sites' in sampling_params.keys() and
+            type(sampling_params.include_land) is bool):
+            self.include_fixed_sites = sampling_params.include_fixed_sites
 
-        #check that frequency values are less than T
-        assert type(self.params.freq in (list, float, int, type(None)))
-        if type(self.params.freq) is list:
-            assert ([n < T for n in self.params.freq]).all(), ('ERROR: Values '
-            'provided for data-sampling frequency must be less than total model run-time.')
-        elif type(self.params.freq) in (float, int):
-            assert n < T, ('ERROR: Values provided for data-sampling frequency '
-                           'must be less than total model run-time.')
+        #get the 'when' parameter
+        self.when = sampling_params.when
 
-        #and set the sampling times in it accordingly
-        if type(self.params.freq) == list:
-            if T-1 not in self.params.freq:
-                self.params.freq = self.params.freq + [T-1]
-
-        elif type(self.params.freq) in (float, int, type(None)):
-            if self.params.freq in (0, None):
-                self.params.freq = [T-1]
+        #check type- and value-validity of self.when, and update its value
+        #as necessary
+        assert type(self.when in (list, float, int, type(None)))
+        #if it's a list, make sure no values are greater than final timestep
+        if type(self.when) is list:
+            assert ([n < self.T for n in self.when]).all(), ('ERROR:'
+            ' Values provided for sampling times must be less '
+            'than total model run-time.')
+            #add the last timestep, if not already included
+            if self.T-1 not in self.when:
+                self.when = self.when + [self.T-1]
+        #if it's a float, int, or None
+        elif type(self.when) in (float, int, type(None)):
+            #check value is less than or equal to last timestep (or None)
+            assert self.when is None or self.when < self.T, ('ERROR: Values '
+            'provided for sampling times must be less than total '
+            'model run-time.')
+            #make it a list containing just last timestep, if 0 or None
+            if self.when in (0, None):
+                self.when = [T-1]
+            #make it a stepwise timestep list, if integer other than 0
             else:
-                self.params.freq = range(0, T, int(self.params.freq)) + [T-1]
-                if T-1 not in self.params.freq:
-                    self.params.freq = self.params.freq + [T-1]
+                self.when = [*range(0, T, int(self.when))]
+                if self.T-1 not in self.when:
+                    self.when.append(self.T -1)
 
+        #now turn the when attribute into an iterator
+        self.when = iter(self.when)
+        #and grab the next timestep into next_t
+        self.next_t = None
+        self.set_next_t()
+
+        #grab the genetic data formats as a separate attribute
+        self.gen_formats = format_params.gen_format
+        #change the gen_formats attribute to a list if it came in as a string
+        if type(self.gen_formats) == str:
+            self.gen_formats = [self.gen_formats]
+        #also grab the geographic data formats as a separate attribute
+        self.geo_formats = [format_params.geo_vect_format]
+        #add the raster format to the list, if required
+        if sampling_params.include_land and 'geo_rast_format' in format_params.keys():
+            self.geo_formats.append(format_params.geo_rast_format)
+
+    #method to set self.next_t
+    def set_next_t(self):
+        self.next_t = next(self.when)
 
     #a do_collection method, to be called each timestep, which will collect needed
     #data and then write the data (if write_intermittent == True)
-    def do_collection(self, pop, land, params, drop_after_write = True):
+    def do_collection(self, community, land):
+        #tracker to determine whether or not to update self.next_t
+        update_next_t = False
+        #for each population
+        for pop in community.values():
+            #if it's a scheduled timestep
+            if pop.t == self.next_t:
+                #sample data according to the scheme defined 
+                data = self.sample(pop)
+##############################################################################
+                #TODO: format the data
+                data = format_data(data)
 
-        #if it's the appropriate time
-        if pop.t in self.params.freq:
 
-            #sample data according to the scheme defined 
-            self.data[pop.t] = sample_data(pop, land, **self.params.sampling_args)
-
-            if self.params.write_intermittent:
-                self.write(pop, drop_after_write = drop_after_write)
+                #format the data as stipulated in params.model.data
+                gen_data = format_gen_data(self.data[t], self.params.gen_data_format)
+                geo_data = format_geo_data(self.data, self.params.geo_data_format)
 
 
-    #a method to write data to the data_directory, then drop it from the Data object
-    def write(self, model_name, pop, drop_after_write = True):
+##############################################################################
+                #write the data to disk
+                self.write(data = data, population = pop, it = it)
+                #set the update_next_t tracker to True
+                update_next_t = True
+        #update self.next_t, if required
+        if update_next_t:
+            self.set_next_t()
 
-        #get data_directory_name
-        data_dir = os.path.join(os.getcwd(), 'GEONOMICS_%s' % 'test')
 
-        #create the data directory if it doesn't exist yet
+    def do_random_sample(self, individs):
+        inds = r.choice(individs, size = self.n, replace = False)
+        return(inds)
+
+
+    def do_point_sample(self, pop):
+        #TODO: I'm sure there's a faster way than what I do below, but for now not worrying 
+        #about writing better code, because this is not mission-critical;
+        #I should definitely speed this up soon though!
+        inds = [i for i,v in pop.items() if self.pts_buff.contains(Point(v.x, v.y))]
+        if len(inds) > self.n:
+            inds = do_random_sample(individs = inds)
+        return(inds)
+
+
+    def sample(self, pop, land):#, scheme, n = None, points = None, radius = None):
+
+        '''<scheme> can be:
+                        'all'       --> takes whole population
+                        'random'    --> takes random sample of size <n>
+                                        from anywhere on landscape
+                        'points'    --> takes random sample of size <n>
+                                        within <radius> (in units of
+                                        cells) of each point
+                        'transect'  --> takes random sample of size <n>
+                                        within <radius> at
+                                        <n_transect_points> evenly spaced
+                                        points along a transect
+                                        between each tuple of endpoints
+                                        listed in <transect_endpoints>
+
+        '''
+
+        #get a set of indices for the individuals in the sample
+        sample = set()
+        #take the whole population, if scheme is 'all'
+        if self.scheme == 'all':
+            sample.update([*pop])
+        #or take a random sample, if scheme is 'random'
+        elif self.scheme == 'random':
+            inds = do_random_sample([*pop])
+            sample.update(inds)
+        #or take individuals within a given radius of self.buffs (which could
+        #have come from a set of input points or from a calculated set of
+        #transect points), if scheme is 'points' or 'transect'
+        elif scheme in ['points', 'transect']:
+            inds = do_point_sample(pop)
+            sample.update(inds)
+        #convert sample to a dict of individuals
+        sample = {i:pop[i] for i in sample}
+        return(sample)
+
+
+    def format_gen_data(self, individs, data_format, gen_arch=None, include_fixed_sites=False):
+        '''<data_format> can be:
+                            'FASTA'
+                            'VCF'
+        '''
+        inds = {i:pop[i] for i in individs}
+        if data_format == 'FASTA':
+            formatted_data = format_fasta(inds)
+        elif data_format == 'VCF':
+            formatted_data = format_vcf(inds, pop.gen_arch,
+                            include_fixed_sites = include_fixed_sites)
+        return(formatted_data)
+
+
+    #a method to write data to the data_directory
+    def write(self, data, population, iteration):
+        #get the timestep
+        t = self.next_t
+        #get data directory name
+        data_dir = os.path.join(os.getcwd(),
+                   'GEONOMICS_%s_%i_%i' % (self.model_name, it, t))
+        #create the data directory, if necessary
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
+        #get the subdirectory for this population
+        subdir = os.path.join(data_dir, pop.name)
+        #create the subdirectory, if necessary
+        if not os.path.exists(subdir):
+            os.makedir(subdir)
 
-        it = pop.it                         #iteration number
-        t = pop.t                           #timestep
-        #t = max(self.data.keys())           #timestep
-        gen_df = self.params.gen_data_format    #gen data format
-        geo_df = self.params.geo_data_format    #geo data formats
+        #TODO: get the formatted gen_data, as stipulated in params.model.data
+        gen_data = [format_gen_data(data, fmt) for fmt in gen_formats]
+        geo_data = [format_geo_data(data, fmt) for fmt in geo_formats]
 
         #get filenames
-        gen_data_file = '%s_it%i_t%i_.%s' % (model_name, it, t, self.extension_dict[gen_df])
-        geo_vect_data_file = '%s_it%i_t%i_.%s' % (model_name, it, t, self.extension_dict[geo_df[0]])
-        if self.params.include_land:
-            geo_rast_data_file = '%s_it%i_t%i_.%s' % (model_name, it, t, self.extension_dict[gen_df[1]])
+        gen_files = ['%s_%i_%i_%s.%s' % (model_name, it, t, pop.name,
+                    self.extension_dict[gf]) for gf in gen_formats]
+        geo_files = ['%s_%i_%i_%s.%s' % (model_name, it, t, pop.name,
+                    self.extension_dict[gf]) for gf in geo_formats]
+
+        #write the genetic data files
+        for filename, data in zip(gen_files, gen_data):
+            write_gendata(filename, data)
+
+        #write the geodata files
+        for filename, data in zip(geo_files, geo_data):
+            write_geodata(filename, data)
 
 
-        #TODO: get data
-
-
-        #format the data as stipulated in params.model.data
-        gen_data = format_gen_data(self.data[t], self.params.gen_data_format)
-
-        geo_data = format_geo_data(self.data, self.params.geo_data_format)
-
-
-
-        #write gen_data file:
-        with open(os.path.join(data_dir, gen_data_file), 'w') as f:
-            f.write(gen_data)
-
-
-        #TODO: GET RID OF THIS if STATEMENT AND MOVE BACK OUT ONE INDENT ONCE GEO-DATA WRITING WORKING
-        if True == False:
-            #write geo_data
-            self.geo_data_write_fn_dict[geo_data[0]](geo_vect_data_file)
-
-            if self.params.include_land == True:
-                self.geo_data_write_fn_dict[geo_data[1]](geo_rast_data_file)
-
-            if  drop_after_write == True:
-                self.data[t] = None
-
-
-        return()
-
+    def write_geodata(self, filename, data):
+        ext = os.splitext(filename)[1]
+        write_fn = self.write_geodata_fn_dict[ext]
+        write_fn(filename, data)
 
 #----------------------------------
 # FUNCTIONS -----------------------
 #----------------------------------
 
-def sample_data(pop, land, scheme, n = None, points = None, radius = None, transect_endpoints = None, n_transect_points = None):
-
-    '''<scheme> can be:
-                    'all'       --> takes whole population
-                    'random'    --> takes random sample of size <n>
-                                    from anywhere on landscape
-                    'points'    --> takes random sample of size <n>
-                                    within <radius> (in units of
-                                    cells) of each point
-                    'transect'  --> takes random sample of size <n>
-                                    within <radius> at
-                                    <n_transect_points> evenly spaced
-                                    points along a transect
-                                    between each tuple of endpoints
-                                    listed in <transect_endpoints>
-
-    '''
-
-    #get a dict of the individuals to be sampled
-    sample = {}
-
-    if scheme == 'all':
-        sample.update(pop.items())
-
-    elif scheme == 'random':
-        ids = r.choice([*pop], size = n, replace = False)
-        sample.update({i:v for i,v in pop.items() if i in ids})
-
-    elif scheme == 'points':
-        sample.update(point_sample(pop, n, points, radius))
-
-    elif scheme == 'transect':
-        transect_pts = [get_transect_points(eps, n_transect_points) for eps in transect_endpoints]
-        [sample.update(point_sample(pop, n, points, radius)) for points in transect_pts]
-
-    #now sample data from those individuals
-
-    sampled_data = {'gen_arch': pop.gen_arch,
-                    'inds': sample,
-                    'land': land
-                    }
-
-    return(sampled_data)
-
-
-
-
-
-def get_transect_points(eps, n_pts):
-    x_pts = np.linspace(eps[0][0] , eps[1][0], n_pts)
-    y_pts = np.linspace(eps[0][1] , eps[1][1], n_pts)
+#a function to get a set of n evenly spaced points between endpoints
+def get_transect_points(endpoints, n):
+    x_pts = np.linspace(endpoints[0][0] , endpoints[1][0], n)
+    y_pts = np.linspace(endpoints[0][1] , endpoints[1][1], n)
     return(list(zip(x_pts, y_pts)))
 
 
-
-
-
-def point_sample(pop, n, points, radius):
-    from shapely import geometry
-
-    sample = {}
-
-    #create lists of points and then buffers
-    pts = [geometry.Point(p[0], p[1]) for p in points]
+#a function to make shapely geometry buffers around a set of points
+def make_point_buffers(points, radius):
+    pts = [Point(p[0], p[1]) for p in points]
     buffs = [p.buffer(radius) for p in pts]
-
-    #NOTE: I'm sure there's a faster way than the below (and one that would also assure that 
-    #the same individual isn't sampled at 2 points that overlap), but for now not worrying 
-    #about better code, not mission-critical
-
-    for b in buffs:
-        inds = {i:v for i,v in pop.items() if b.contains(geometry.Point(v.x, v.y))}
-        if len(inds) > n:
-            point_sample = rand_sample(list(inds.keys()), n)
-            sample.update({i:v for i,v in inds.items() if i in point_sample})
-        else:
-            sample.update(inds)
-
-
-    return(sample)
-
-
-def format_gen_data(data, data_format):
-
-    '''<data_format> can be:
-                    'FASTA'
-                    'VCF'
-                    'ms'
-'''
-    format_fns = {'FASTA': format_fasta,
-                  'VCF': format_vcf,
-                  'ms': format_ms
-                  }
-
-    formatted_data = format_fns[data_format](data)
-
-    return(formatted_data)
+    buff_poly = MultiPolygon(buffs)
+    return(buff_poly)
 
 
 def format_geo_data(data, format):
@@ -330,7 +371,7 @@ def format_geo_data(data, format):
 pass
 
 
-def format_fasta(data):
+def format_fasta(individs):
 
     '''
     FASTA FORMAT:
@@ -342,7 +383,7 @@ def format_fasta(data):
     row1 = '>%s:HAP;%s;%s;%s;%s;%s;%s\n'
     file_text = ''
 
-    for ind in data['inds']:
+    for ind in individs:
         for hap in range(2):
             ind_row1 = re.sub('HAP', str(hap), row1)
             replace = tuple(map(lambda att: re.sub(',', '|', re.sub('[\[\] ]', '', str(getattr(ind, att)))),
@@ -357,12 +398,12 @@ def format_fasta(data):
     return(file_text)
 
 
-def format_vcf(data, include_fixed_sites=False):
+def format_vcf(individs, gen_arch, include_fixed_sites=False):
 
     #create a template header
         #NOTE: has 1 string slot for a date
 
-        #TODO: DECIDE ON NECESSARY INFO AND FORMAT CONTENTS AND ADD METADATA ROWS HERE
+        #TODO: DECIDE ON NECESSARY INFO AND FORMAT CONTENTS, THEN ADD METADATA ROWS HERE
     header = '''##fileformat=VCFv4.2
 ##fileDate=%s
 ##source=Geonomics
@@ -381,26 +422,26 @@ def format_vcf(data, include_fixed_sites=False):
             #- a tab-separated list of individs' genotypes at this locus
 
     #create a col_header_row for this data
-    inds = sorted(data['inds'].keys())
+    inds = sorted(individs.keys())
     ind_cols = '\t'.join([str(i) for i in inds])
     cols = col_header_row % (ind_cols)
 
     #get a list of the chromosome numbers
-    chroms = np.cumsum(data['gen_arch'].l_c)
+    chroms = np.cumsum(gen_arch.l_c)
 
     #and get all individuals' genomic data in a 'samplome' object (a 3-d array)
-    samplome = np.array([data['inds'][i].genome for i in inds])
-    
+    samplome = np.array([individs[i].genome for i in inds])
+
     #get loci of all segregating sites, if not_include_fixed_sites
     if not include_fixed_sites:
         #get segregating sites
-        max_val = 2 * len(data['inds'])
+        max_val = 2 * len(individs)
         segs = np.where(samplome.sum(axis = 2).sum(axis = 0) > 0)[0]
         segs2 = np.where(samplome.sum(axis = 2).sum(axis = 0) < max_val)[0]
         loci = sorted(list(set(segs).intersection(set(segs2))))
     #or else get all loci
     else:
-        loci = range(data['gen_arch'].L)
+        loci = range(gen_arch.L)
 
     #and get the sites' chrom nums
     chroms = [list((locus - chroms) < 0).index(True) for locus in loci]
@@ -426,10 +467,15 @@ def format_vcf(data, include_fixed_sites=False):
     return(out_vcf)
 
 
+def write_gendata(directory, filename):
+    with open(os.path.join(directory, filename), 'w') as f:
+        f.write(gen_data)
+
+
 #TODO: NEED TO READ IN ALL GEODATA FROM THE RASTER THAT WAS READ, IF
 #APPLICABLE, OR ELSE SET DEFAULT PROJ AND CRS, AND THEN USE THOSE TO WRITE THIS OUT
 def write_geopandas(filename, data, driver):
-    attributes = ['idx', 'phenotype', 'habitat', 'age', 'sex'] 
+    attributes = ['idx', 'phenotype', 'habitat', 'age', 'sex']
     #FIXME: replace the call to str() below with something more sophisticated
     #that will actually separate distinct phenotype and habitat values into
     #separate, labeled columns

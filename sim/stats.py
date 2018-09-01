@@ -24,15 +24,15 @@ Documentation:            URL
 ##########################################
 '''
 
+#geonomics imports
 
 
-from __future__ import division
+#other imports
 import numpy as np
 from scipy.stats.stats import pearsonr
 from collections import Counter as C
 import matplotlib.pyplot as plt
 import time
-
 
 
 #------------------------------------
@@ -42,7 +42,6 @@ import time
 class Stats:
     def __init__(self, params):
 
-
         #create a dictionary to link the stats' names in the params dicts to the functions to be called by
         #them (defined in the FUNCTIONS section of this script)
         self.function_dict = {  'Nt': calc_Nt,
@@ -51,7 +50,6 @@ class Stats:
                                 'maf': calc_MAF,
                                 'mean_fit': calc_mean_fit,
                               }
-
 
         #create a Stats.stats object, where all of the stats calculated will be stored
         self.stats = {}
@@ -65,8 +63,6 @@ class Stats:
                                     #to later be unpacked as arguments to the appropriate stat function
                                     'other_params': dict([(k,v) for k,v in stat_params.items() if k not in ['calc', 'freq']])
                                     }
-
-
 
     #create a master method, to be called each timestep, which will make a list of all stats that need to be
     #calculated that timestep (based on the calculation-frequencies provided in the params dicts),
@@ -86,23 +82,9 @@ class Stats:
                 #self.stats[stat]['data'][t] = self.function_dict[stat](pop)
 
 
-
-
-
-
-
-
-
-
 #--------------------------------------
 # FUNCTIONS ---------------------------
 #--------------------------------------
-
-
-#create the Stats object
-def make_stats_object(params):
-    return(Stats(params))
-
 
 #TODO: either get rid of this, or just make it check the pop.Nt list instead
 def calc_Nt(pop):
@@ -113,7 +95,6 @@ def calc_Nt(pop):
 def calc_ld(pop, plot = False):
     
     #TODO: I should also include (either as an alternative within this fn, or as separate fn) the option to calculate D'
-
 
     #TODO: I keep getting errors like the following, which could just be due to divison of small
         #floating-point numbers, but I should figure out exactly what's going on and be sure everything checks out:
@@ -137,7 +118,6 @@ def calc_ld(pop, plot = False):
             r2 = (D_1_1**2)/(f1_i*(1-f1_i)*f1_j*(1-f1_j))
             r2_mat[i,j] = r2
 
-
     if plot == True:
         fig = plt.figure()
 
@@ -158,9 +138,6 @@ def calc_ld(pop, plot = False):
 
     return(r2_mat)
         
-
-
-
 
 def calc_het(pop):
     N = float(pop.census())

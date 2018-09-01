@@ -600,10 +600,10 @@ params = {
                     #format to use for saving geographic points; 
                         #currently valid values: 'csv', 'shapefile', 'geojson'
                 'geo_rast_format':      'geotiff',
-                    #format to use for saving geographic raster (which will
-                        #only happen if the 'include_land' parameter in the
-                        #data.sampling subdict is True);
-                        #currently valid values: 'geotiff'
+                    #format to use for saving landscape rasters (which will
+                        #only be saved if the 'include_land' parameter in the
+                        #sampling subdict is True);
+                        #currently valid values: 'geotiff', 'txt'
                 },
             }, #<END> 'data'
 

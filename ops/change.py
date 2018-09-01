@@ -125,10 +125,18 @@ class LandChanger(Changer):
         scapes = {}
         surfs = {}
         for scape_num in self.change_params.keys():
-            scape_series, dim, res, ulc = make_linear_scape_series(land[scape_num].rast, **self.change_params[scape_num])
-            assert dim == land.dim, 'ERROR: dimensionality of scape_series fed into LandChanger does not match that of the land to be changed.'
-            assert res == land.res or res is None, 'ERROR: resolution of scape_series fed into LandChanger does not match that of the land to be changed.'
-            assert ulc == land.ulc or ulc is None, 'ERROR: upper-left corner of scape_series fed into LandChanger does not match that of the land to be changed.'
+            scape_series, dim, res, ulc, prj = make_linear_scape_series(land[scape_num].rast, **self.change_params[scape_num])
+            assert dim == land.dim, ('Dimensionality of scape_series fed into '
+                'LandChanger does not match that of the land to be changed.')
+            assert res == land.res or res is None, ('Resolution of scape_series'
+                'fed into LandChanger does not match that of the land to be '
+                'changed.')
+            assert ulc == land.ulc or ulc is None, ('Upper-left corner of '
+                'scape_series fed into LandChanger does not match that of '
+                'the land to be changed.')
+            assert prj == land.prj or prj is None, ('Projection of '
+            'scape_series fed into LandChanger does not match that of the '
+            'land to be changed.')
             scapes[scape_num] = scape_series
 
             #set the LandChanger.change_info attribute, so that it can be grabbed later for building move_surf and other objects
@@ -248,12 +256,13 @@ def make_linear_scape_series(start_rast, end_rast, start_t, end_t, n_steps):
     assert start_rast.shape == end_rast.shape, 'ERROR: The starting raster and ending raster for the land-change event are not of the same dimensions: START: %s,  END %s' % (str(start_rast.shape), str(end_rast.shape))
 
     if type(end_rast) is str:
-        end_rast, dim, ulc, res = io.read_raster(end_rast)
+        end_rast, dim, res, ulc, prj = io.read_raster(end_rast)
 
     elif type(end_rast) is np.ndarray:
         dim = end_rast.shape
         ulc = None
         res = None
+        prj = None
         
     #get (rounded) evenly spaced timesteps at which to implement the changes
     timesteps = np.int64(np.round(np.linspace(start_t, end_t, n_steps)))
@@ -271,7 +280,7 @@ def make_linear_scape_series(start_rast, end_rast, start_t, end_t, n_steps):
     assert len(rast_series) == len(timesteps), "ERROR: the number of changing rasters created is not the same as the number of timesteps to be assigned to them"
     #zip the timesteps and the rasters together and return them as a list
     rast_series = list(zip(timesteps, rast_series))
-    return(rast_series, dim, res, ulc)
+    return(rast_series, dim, res, ulc, prj)
 
 
 #function that takes a Landscape_Stack, a scape_num and a dictionary of {t_change:new_scape} 
@@ -295,7 +304,7 @@ def make_movement_surface_series(start_scape, end_rast, start_t, end_t, n_steps,
     #get the time-series of scapes across the land-change event (can be at a reduced temporal resolution determined
     #by t_res_reduct_factor, because probably unnecessary to change the move_surf every time the land changes,
     #and the move_surf can be a fairly large object to hold in memory; but t_res_reduct_factor defaults to 1)
-    scape_series, dim, res, ulc = make_linear_scape_series(start_scape.rast, end_rast, start_t, end_t, int(n_steps*t_res_reduct_factor))
+    scape_series, dim, res, ulc, prj = make_linear_scape_series(start_scape.rast, end_rast, start_t, end_t, int(n_steps*t_res_reduct_factor))
     #then get the series of move_surf objects
     surf_series = []
     dummy_scape = deepcopy(start_scape)
@@ -449,20 +458,4 @@ def get_parameter_change_fns(pop, parameter, timesteps, vals):
     assert len(timesteps) == len(vals), "ERROR: For custom changes of the '%s' paramter, timesteps and vals must be iterables of equal length." % param
     change_fns = make_parameter_change_fns(pop, param, timesteps, vals)
     return(change_fns)
-
-
-    ###################
-    # for Gen_Changer #
-    ###################
-
-
-    ###################
-    # for Sim_Changer #
-    ###################
-
-
-    ###################
-    #     Others      #
-    ###################
-    
 

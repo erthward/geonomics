@@ -25,6 +25,7 @@ Documentation:            URL
 '''
 
 #geonmics imports
+from utils import io
 
 #other imports
 import numpy as np
@@ -40,37 +41,11 @@ from osgeo import gdal
 from itertools import chain
 
 
-#TODO
-    #- decide where to collect, format, and write data, then connect the loose
-    #pieces in the respective functions
-
-    #- change self.write_geodata_fn_dict to just write_data_fn_dict?? then I
-    #can write a single overarching fn for writing all data files and call it
-    #iteratively in write fn (or perhaps cleaner to keep gen and geo functions
-    #separate and loop for each type?)
-
-    # - consider if/how the emerging Changer/Sampler/Collector/___er standardization would
-    # fit with the stats module. Is it reasonable to just keep the stats small
-    # and simple, and to include their collection within the Sampler class?
-    # Or should it should be a Collector or DataCollector class instead?
-
-    # - toy with and figure out the raster-writing functionality (i.e. need to
-    # also collect/keep the PROJ and CRS of a raster I've read in, and also set
-    # default EPSG codes of some sort???)
-
-    # - decide if (and if so, how) any of this should go into the utils.io
-    # module (at the least I think I could write a writer_raster() function
-    # there and then just call that from here)
-
-    # - finalize the initial go at the code (and the stats, while I'm at it),
-    # then test and debug!
-
-
 #------------------------------------
 # CLASSES ---------------------------
 #------------------------------------
 
-class DataCollector:
+class DataSampler:
     def __init__(self, model_name, T, params):
 
     #some lookup dicts for writing data 
@@ -78,13 +53,15 @@ class DataCollector:
                             'FASTA': 'fasta',
                             'CSV': 'csv',
                             'Shapefile': 'shp',
+                            'GeoJSON': 'json',
                             'Geotiff': 'tif'
                             }
 
-        self.write_geodata_fn_dict = {'CSV': write_csv,
-                             'Shapefile': write_shapefile,
-                             'GeoJSON': write_geojson,
-                             'Geotiff': write_geotiff
+        self.write_geodata_fn_dict = {'CSV': io.write_csv,
+                             'Shapefile': io.write_shapefile,
+                             'GeoJSON': io.write_geojson,
+                             'Geotiff': io.write_geotiff,
+                             'txt': io.write_array
                             }
 
         #set other attributes
@@ -195,40 +172,89 @@ class DataCollector:
             self.gen_formats = [self.gen_formats]
         #also grab the geographic data formats as a separate attribute
         self.geo_formats = [format_params.geo_vect_format]
-        #add the raster format to the list, if required
+        #and grab the raster format, if a raster is required
+        #NOTE: added to a separate attribute because this is written per
+        #timestep, not per population within timestep
+        self.rast_format = None
         if sampling_params.include_land and 'geo_rast_format' in format_params.keys():
-            self.geo_formats.append(format_params.geo_rast_format)
+            self.rast_format = format_params.geo_rast_format
+
 
     #method to set self.next_t
     def set_next_t(self):
         self.next_t = next(self.when)
 
-    #a do_collection method, to be called each timestep, which will collect needed
-    #data and then write the data (if write_intermittent == True)
-    def do_collection(self, community, land):
+
+    #method to create filenames for genetic and geographic datafiles
+    def make_filenames(self, iteration, pop_name):
+        filenames = []
+        for att_name in ['gen_formats', 'geo_formats']:
+            filenames.append(['m%s_i%i_t%i_p%s.%s' % (self.model_name, iteration,
+                        self.next_t, pop_name, self.extension_dict[fmt])
+                        for fmt in getattr(self, att_name)])
+        return(filenames)
+
+
+    #a method to be called each timestep, which will collect needed
+    #data and then write the data (if write_intermittent == True) if it's
+    #the right timestep
+    def do_collection(self, community, iteration):
         #tracker to determine whether or not to update self.next_t
         update_next_t = False
+
         #for each population
         for pop in community.values():
-            #if it's a scheduled timestep
+
+            #if this timestep is scheduled for sampling
             if pop.t == self.next_t:
+
+                #get the data directory name for this timestep
+                dirname = os.path.join(os.getcwd(),
+                   'gnx_m%s_i%i_t%i' % (self.model_name,
+                    iteration, self.next_t))
+
+                #get the subdirectory for this population
+                subdirname = os.path.join(dirname, 'p', pop.name)
+
+                #and create (and its parent data directory, if needed)
+                os.makedirs(subdirname)
+
+                #get filenames
+                gen_files, geo_files = make_filenames(iteration = iteration,
+                                                        pop_name = pop.name)
+
                 #sample data according to the scheme defined 
-                data = self.sample(pop)
-##############################################################################
-                #TODO: format the data
-                data = format_data(data)
+                individs = self.get_individuals(pop)
+                #for each genetic data format to be written
+                for n, data_format in enumerate(self.gen_formats):
 
+                    #format the data accordingly
+                    data = format_gen_data(data_format = data_format,
+                                        individs = individs, pop = pop)
 
-                #format the data as stipulated in params.model.data
-                gen_data = format_gen_data(self.data[t], self.params.gen_data_format)
-                geo_data = format_geo_data(self.data, self.params.geo_data_format)
+                    #then write it to disk
+                    self.write_gendata(subdirname, gen_files[n])
 
+                #also write the geodata for this pop
+                for n, data_format in enumerate(self.geo_formats):
+                    #write the geodata to disk
+                    self.write_geodata_fn_dict[data_format](dirname =subdirname,
+                                    filename = geo_files[n], individuals = individs)
 
-##############################################################################
-                #write the data to disk
-                self.write(data = data, population = pop, it = it)
                 #set the update_next_t tracker to True
                 update_next_t = True
+
+        #write the raster, if necessary
+        if self.rast_format is not None:
+            #for each Scape
+            for scape in community.land.values():
+                #get the raster filename
+                filename = 'm%s_i%i_t%i_s%s.%s' % (self.model_name, iteration,
+                                    self.next_t, scape.name, 
+                                    self.file_extension_dict[self.rast_format])
+                #and write it to disk
+                self.write_geodata_fn_dict[self.rast_format](dirname, filename, scape)
+
         #update self.next_t, if required
         if update_next_t:
             self.set_next_t()
@@ -240,16 +266,14 @@ class DataCollector:
 
 
     def do_point_sample(self, pop):
-        #TODO: I'm sure there's a faster way than what I do below, but for now not worrying 
-        #about writing better code, because this is not mission-critical;
-        #I should definitely speed this up soon though!
+        #TODO: see if this needs to be sped up any more
         inds = [i for i,v in pop.items() if self.pts_buff.contains(Point(v.x, v.y))]
         if len(inds) > self.n:
             inds = do_random_sample(individs = inds)
         return(inds)
 
 
-    def sample(self, pop, land):#, scheme, n = None, points = None, radius = None):
+    def get_individuals(self, pop):
 
         '''<scheme> can be:
                         'all'       --> takes whole population
@@ -287,56 +311,24 @@ class DataCollector:
         return(sample)
 
 
-    def format_gen_data(self, individs, data_format, gen_arch=None, include_fixed_sites=False):
+    def format_gen_data(self, data_format, individs, pop):
         '''<data_format> can be:
                             'FASTA'
                             'VCF'
         '''
-        inds = {i:pop[i] for i in individs}
-        if data_format == 'FASTA':
-            formatted_data = format_fasta(inds)
-        elif data_format == 'VCF':
-            formatted_data = format_vcf(inds, pop.gen_arch,
-                            include_fixed_sites = include_fixed_sites)
+        if data_format == 'fasta':
+            formatted_data = format_fasta(individs)
+        elif data_format == 'vcf':
+            formatted_data = format_vcf(individs, pop.gen_arch,
+                            include_fixed_sites = self.include_fixed_sites)
         return(formatted_data)
 
 
-    #a method to write data to the data_directory
-    def write(self, data, population, iteration):
-        #get the timestep
-        t = self.next_t
-        #get data directory name
-        data_dir = os.path.join(os.getcwd(),
-                   'GEONOMICS_%s_%i_%i' % (self.model_name, it, t))
-        #create the data directory, if necessary
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
-        #get the subdirectory for this population
-        subdir = os.path.join(data_dir, pop.name)
-        #create the subdirectory, if necessary
-        if not os.path.exists(subdir):
-            os.makedir(subdir)
-
-        #TODO: get the formatted gen_data, as stipulated in params.model.data
-        gen_data = [format_gen_data(data, fmt) for fmt in gen_formats]
-        geo_data = [format_geo_data(data, fmt) for fmt in geo_formats]
-
-        #get filenames
-        gen_files = ['%s_%i_%i_%s.%s' % (model_name, it, t, pop.name,
-                    self.extension_dict[gf]) for gf in gen_formats]
-        geo_files = ['%s_%i_%i_%s.%s' % (model_name, it, t, pop.name,
-                    self.extension_dict[gf]) for gf in geo_formats]
-
-        #write the genetic data files
-        for filename, data in zip(gen_files, gen_data):
-            write_gendata(filename, data)
-
-        #write the geodata files
-        for filename, data in zip(geo_files, geo_data):
-            write_geodata(filename, data)
+    def write_gendata(self, dirname, filename, gen_data):
+        io.write_file(dirname, filename, gen_data)
 
 
-    def write_geodata(self, filename, data):
+    def write_geodata(self, dirname, filename, data):
         ext = os.splitext(filename)[1]
         write_fn = self.write_geodata_fn_dict[ext]
         write_fn(filename, data)
@@ -358,17 +350,6 @@ def make_point_buffers(points, radius):
     buffs = [p.buffer(radius) for p in pts]
     buff_poly = MultiPolygon(buffs)
     return(buff_poly)
-
-
-def format_geo_data(data, format):
-
-    '''
-        <geo_data_format> can be:
-                1.) 'CSV'
-                    'Shapefile'
-                2.) 'Geotiff'
-    '''
-pass
 
 
 def format_fasta(individs):
@@ -393,8 +374,6 @@ def format_fasta(individs):
 
             file_text = file_text + ind_row1 + ind_row2
 
-    #with open(filename, 'w') as f:
-    #    f.write(file_text)
     return(file_text)
 
 
@@ -465,76 +444,4 @@ def format_vcf(individs, gen_arch, include_fixed_sites=False):
 
     #return it
     return(out_vcf)
-
-
-def write_gendata(directory, filename):
-    with open(os.path.join(directory, filename), 'w') as f:
-        f.write(gen_data)
-
-
-#TODO: NEED TO READ IN ALL GEODATA FROM THE RASTER THAT WAS READ, IF
-#APPLICABLE, OR ELSE SET DEFAULT PROJ AND CRS, AND THEN USE THOSE TO WRITE THIS OUT
-def write_geopandas(filename, data, driver):
-    attributes = ['idx', 'phenotype', 'habitat', 'age', 'sex']
-    #FIXME: replace the call to str() below with something more sophisticated
-    #that will actually separate distinct phenotype and habitat values into
-    #separate, labeled columns
-    df_dict = {att: [str(getattr(ind, att)) for ind in data['inds']] for att in attributes}
-    pts = [Point(ind.x, ind.y) for ind in data['inds']]
-    df_dict['pt'] = pts
-    df = pd.DataFrame.from_dict(df_dict)
-    gdf = gpd.GeoDataFrame(df, geometry = 'pt')
-    if driver == 'CSV':
-        gdf['x'] = gdf.pt.x
-        gdf['y'] = gdf.pt.y
-        gdf = gdf.drop(labels = ('pt'), axis = 1)
-        gdf.to_csv(filename, index = False)
-    else:
-        gdf.to_file(filename, driver = driver)
-
-def write_shapefile(filename, data):
-    write_geopandas(filename, data, driver='ESRI Shapefile')
-
-def write_geojson(filename, data):
-    write_geopandas(filename, data, driver='GeoJSON')
-
-def write_csv(filename, data):
-    write_geopandas(filename, data, driver = 'CSV')
-
-
-#TODO: NEED TO READ IN ALL THE GEODATA FROM THE RASTER THAT WAS READ, IF
-#APPLICABLE, OR ELSE SET DEFAULT PROJ AND CRS, AND THEN USE THOSE TO WRITE THIS OUT
-def write_geotiff(filename, data):
-
-    #TODO: tweak code taken from https://gis.stackexchange.com/questions/58517/python-gdal-save-array-as-raster-with-projection-from-other-file
-
-    #get the driver
-    driver = gdal.GetDriverByName('GTiff')
-
-    #get values
-    x_pixels = data.dim[0]  # number of pixels in x
-    y_pixels = data.dim[1]  # number of pixels in y
-    PIXEL_SIZE = data.res[0]  # size of the pixel...        
-    x_min = data.ulc[0]
-    y_max = data.ulc[1] + (data.dim[1]*data.res[1]) # x_min & y_max are like the "top left" corner.
-    wkt_projection = 'a projection in wkt that you got from other file'
-
-    dataset = driver.Create(
-       filename+'.tif',
-       x_pixels,
-       y_pixels,
-       1,
-       gdal.GDT_Float32, )
-
-    dataset.SetGeoTransform((
-       x_min,      # 0
-       PIXEL_SIZE, # 1
-       0,          # 2
-       y_max,      # 3
-       0,          # 4
-       -PIXEL_SIZE))
-
-    dataset.SetProjection(wkt_projection)
-    dataset.GetRasterBand(1).WriteArray(array)
-    dataset.FlushCache()  # Write to disk.
 

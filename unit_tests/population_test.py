@@ -10,11 +10,8 @@ class populationTestCases(unittest.TestCase):
         params = exec(open('./params.py', 'r').read())
         land = landscape.make_land(params)
         pop = population.make_population(land, params)
-        self.assertEqual(pop.get_age(), 0)
-        self.assertEqual(pop.get_cells, None)
-        self.assertEqual(pop.get_coords, None)
-        self.assertEqual(pop.get_dom, None)
-        self.assertEqual(pop.get_fitness, None)
+        self.assertIsInstance(pop, population.Population)
+
 
 if __name__ == '__main__':
     unittest.main()

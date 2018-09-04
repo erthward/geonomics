@@ -10,6 +10,7 @@ class communityTestCases(unittest.TestCase):
         com = community.make_community(land, params)
         self.assertEqual(com.n_pops, len(params.comm.pops))
         self.assertEqual(com.t, -1)
+        self.assertIsInstance(com, community.Community)
 
 if __name__ == '__main__':
     unittest.main()

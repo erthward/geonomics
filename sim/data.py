@@ -7,11 +7,12 @@
 
 Module name:              sim/data
 
-Module contents:          - definition of data class (i.e. a structured container for returning data)
-                          - definition of data formatting functions
-                          - definition of functions for sampling data,
-                            at specified frequencies and with specified arguments,
+Module contents:          - definition of the DataSampler class (which gathers
+                            and organizes the parameters for how and when to sample data,
+                            and does the sampling)
+                          - definition of functions for sampling individuals
                             according to the contents of the params['model']['data'] section
+                          - definition of data formatting functions
 
 
 Author:                   Drew Ellison Hart
@@ -46,27 +47,25 @@ from itertools import chain
 #------------------------------------
 
 class DataSampler:
-    def __init__(self, model_name, T, params):
+    def __init__(self, model_name, params):
 
     #some lookup dicts for writing data 
-        self.file_extension_dict =   {'VCF': 'vcf',
-                            'FASTA': 'fasta',
-                            'CSV': 'csv',
-                            'Shapefile': 'shp',
-                            'GeoJSON': 'json',
-                            'Geotiff': 'tif'
+        self.file_extension_dict =   {'vcf': 'vcf',
+                            'fasta': 'fasta',
+                            'csv': 'csv',
+                            'shapefile': 'shp',
+                            'geojson': 'json',
+                            'geotiff': 'tif'
                             }
 
-        self.write_geodata_fn_dict = {'CSV': io.write_csv,
-                             'Shapefile': io.write_shapefile,
-                             'GeoJSON': io.write_geojson,
-                             'Geotiff': io.write_geotiff,
-                             'txt': io.write_array
+        self.write_geodata_fn_dict = {'csv': io.write_csv,
+                            'shapefile': io.write_shapefile,
+                            'geojson': io.write_geojson,
                             }
 
         #set other attributes
         self.model_name = model_name
-        self.T = T
+        self.T = params.model.time.T
 
         #grab the params['data'] contents into objects
         sampling_params = params.model.data.sampling
@@ -74,16 +73,16 @@ class DataSampler:
 
         #TODO: decide what to do about the stats stuff!
         #grab the params['data'] content into a self.data_params attribute
-        self.stats_params = deepcopy(params.model.data)
+        self.stats_params = params.model.stats
 
         #get the sampling scheme
         self.scheme = sampling_params.scheme
 
         #and run some asserts
         assert self.scheme in ['all', 'random',
-            'points', 'transect'], ("The sampling scheme provided in the "
+            'point', 'transect'], ("The sampling scheme provided in the "
             "parameters must be one of the following values: 'all', 'random', "
-            "'points', or 'transect'.")
+            "'point', or 'transect'.")
 
         if sampling_params.scheme != 'all':
             assert 'n' in sampling_params.keys(), ("If the "
@@ -101,20 +100,21 @@ class DataSampler:
             self.n = sampling_params.n
 
         #calculate the transect points, if 'transect' is the chosen sampling
-        #scheme, or just get the points if 'points' is the scheme
+        #scheme, or just get the points if 'point' is the scheme
         self.pts = None
-        if sampling_params.scheme == 'points':
+        if sampling_params.scheme == 'point':
             self.pts = sampling_params.points
         if sampling_params.scheme == 'transect':
             endpts = sampling_params.transect_endpoints
             n_transect_pts = sampling_params.n_transect_points
             pts = get_transect_points(endpoints = endpts, n = n_transect_pts)
-            self.pts = chain.from_iterable(pts)
+            self.pts = pts
+            #self.pts = chain.from_iterable(pts)
 
-        #create the point buffers, if either 'transect' or 'points' is the 
+        #create the point buffers, if either 'transect' or 'point' is the 
         #chosen sampling scheme
         self.pts_buff = None
-        if sampling_params.scheme in ['transect', 'points']:
+        if sampling_params.scheme in ['transect', 'point']:
             self.pts_buff = make_point_buffers(self.pts,
                                         sampling_params.radius)
 
@@ -132,7 +132,6 @@ class DataSampler:
 
         #get the 'when' parameter
         self.when = sampling_params.when
-
         #check type- and value-validity of self.when, and update its value
         #as necessary
         assert type(self.when in (list, float, int, type(None)))
@@ -155,10 +154,9 @@ class DataSampler:
                 self.when = [T-1]
             #make it a stepwise timestep list, if integer other than 0
             else:
-                self.when = [*range(0, T, int(self.when))]
+                self.when = [*range(0, self.T, int(self.when))]
                 if self.T-1 not in self.when:
                     self.when.append(self.T -1)
-
         #now turn the when attribute into an iterator
         self.when = iter(self.when)
         #and grab the next timestep into next_t
@@ -189,8 +187,8 @@ class DataSampler:
     def make_filenames(self, iteration, pop_name):
         filenames = []
         for att_name in ['gen_formats', 'geo_formats']:
-            filenames.append(['m%s_i%i_t%i_p%s.%s' % (self.model_name, iteration,
-                        self.next_t, pop_name, self.extension_dict[fmt])
+            filenames.append(['mod-%s_it-%i_t-%i_pop-%s.%s' % (self.model_name, iteration,
+                        self.next_t, pop_name, self.file_extension_dict[fmt])
                         for fmt in getattr(self, att_name)])
         return(filenames)
 
@@ -198,99 +196,110 @@ class DataSampler:
     #a method to be called each timestep, which will collect needed
     #data and then write the data (if write_intermittent == True) if it's
     #the right timestep
-    def do_collection(self, community, iteration):
-        #tracker to determine whether or not to update self.next_t
-        update_next_t = False
+    #TODO: CONSIDER NOMENCLATURE CHANGE HERE AND IN CLASS NAME!
+    def write_data(self, community, iteration):
 
-        #for each population
-        for pop in community.values():
+        #if this timestep is scheduled for sampling
+        if community.t == self.next_t:
 
-            #if this timestep is scheduled for sampling
-            if pop.t == self.next_t:
+            #for each population
+            for pop in community.values():
 
-                #get the data directory name for this timestep
-                dirname = os.path.join(os.getcwd(),
-                   'gnx_m%s_i%i_t%i' % (self.model_name,
-                    iteration, self.next_t))
+                #TODO: Probably get rid of this conditional; should be
+                #unnecessary, and is not a direct check of the in-sync
+                #assumption at any rate
+                #double-check that each population's timestep is in sync with
+                #comm.t and is scheduled for sampling 
+                if pop.t == self.next_t:
 
-                #get the subdirectory for this population
-                subdirname = os.path.join(dirname, 'p', pop.name)
+                    #get the data directory name for this timestep
+                    dirname = os.path.join(os.getcwd(),
+                          'GEONOMICS_mod-%s' % self.model_name,
+                                    'it-%i' % iteration)
 
-                #and create (and its parent data directory, if needed)
-                os.makedirs(subdirname)
+                    #get the subdirectory for this population
+                    subdirname = os.path.join(dirname, 'pop-' + pop.name)
 
-                #get filenames
-                gen_files, geo_files = make_filenames(iteration = iteration,
-                                                        pop_name = pop.name)
+                    #and create (and its parent data directory, if needed)
+                    os.makedirs(subdirname, exist_ok = True)
 
-                #sample data according to the scheme defined 
-                individs = self.get_individuals(pop)
-                #for each genetic data format to be written
-                for n, data_format in enumerate(self.gen_formats):
+                    #get filenames
+                    gen_files, geo_files = self.make_filenames(iteration = iteration,
+                                                            pop_name = pop.name)
 
-                    #format the data accordingly
-                    data = format_gen_data(data_format = data_format,
-                                        individs = individs, pop = pop)
+                    #sample individuals according to the scheme defined 
+                    sample = self.get_sample(pop)
 
-                    #then write it to disk
-                    self.write_gendata(subdirname, gen_files[n])
+                    #write files, if sample length > 0 
+                    #(NOTE: otherwise, an empty file with "ZERO_SAMPLE" in the 
+                    #name will be written, below)
+                    if len(sample) > 0:
 
-                #also write the geodata for this pop
-                for n, data_format in enumerate(self.geo_formats):
-                    #write the geodata to disk
-                    self.write_geodata_fn_dict[data_format](dirname =subdirname,
-                                    filename = geo_files[n], individuals = individs)
+                        #save genetic data, if the pop has a genomic architeecture
+                        if pop.gen_arch is not None:
+                            #for each genetic data format to be written
+                            for n, data_format in enumerate(self.gen_formats):
 
-                #set the update_next_t tracker to True
-                update_next_t = True
+                                #format the data accordingly
+                                data = self.format_gen_data(data_format = data_format,
+                                                sample = sample, pop = pop)
 
-        #write the raster, if necessary
-        if self.rast_format is not None:
-            #for each Scape
-            for scape in community.land.values():
-                #get the raster filename
-                filename = 'm%s_i%i_t%i_s%s.%s' % (self.model_name, iteration,
-                                    self.next_t, scape.name, 
-                                    self.file_extension_dict[self.rast_format])
-                #and write it to disk
-                self.write_geodata_fn_dict[self.rast_format](dirname, filename, scape)
+                                #then write it to disk
+                                gen_filepath = os.path.join(subdirname, gen_files[n])
+                                self.write_gendata(filepath = gen_filepath,
+                                                            gen_data = data)
 
-        #update self.next_t, if required
-        if update_next_t:
+                        #also write the geodata for this pop
+                        for n, data_format in enumerate(self.geo_formats):
+                            #write the geodata to disk
+                            geo_filepath = os.path.join(subdirname, geo_files[n])
+                            self.write_geodata(filepath = geo_filepath,
+                                               data_format = data_format,
+                                               sample = sample)
+
+                    #if sample was empty, write a placeholder file with name
+                    #"<base_filename>_ZERO_SAMPLE"
+                    else:
+                        filenames = [gen_files, geo_files]
+                        filenames = [*chain.from_iterable(filenames)]
+                        filename = os.path.splitext(filenames[0])[0] 
+                        filename = filename + '_ZERO_SAMPLE'
+                        filepath = os.path.join(subdirname, filename)
+                        self.write_gendata(filepath, '')
+
+            #write the raster, if necessary
+            if self.rast_format is not None:
+                #for each Scape
+                for scape in community.land.values():
+                    #get the raster filename
+                    filename = 'mod-%s_it-%i_t-%i_scape-%s.%s' % (self.model_name, iteration,
+                                        self.next_t, scape.name,
+                                        self.file_extension_dict[self.rast_format])
+                    filepath = os.path.join(dirname, filename)
+                    #and write it to disk
+                    scape.write_raster(filepath, self.rast_format)
+
+            #update self.next_t to the next timestep to be sampled
             self.set_next_t()
 
 
-    def do_random_sample(self, individs):
-        inds = r.choice(individs, size = self.n, replace = False)
-        return(inds)
+    def get_random_sample(self, individuals):
+        if len(individuals) > self.n:
+            sample = r.choice(individuals, size = self.n, replace = False)
+        else:
+            sample = individuals
+        return(sample)
 
 
-    def do_point_sample(self, pop):
-        #TODO: see if this needs to be sped up any more
-        inds = [i for i,v in pop.items() if self.pts_buff.contains(Point(v.x, v.y))]
-        if len(inds) > self.n:
-            inds = do_random_sample(individs = inds)
-        return(inds)
+    def get_point_sample(self, pop):
+        #TODO: check if this should to be sped up any more
+        sample = [i for i,v in pop.items() if self.pts_buff.contains(Point(v.x, v.y))]
+        if len(sample) > self.n:
+            sample = get_random_sample(individuals = sample)
+        return(sample)
 
 
-    def get_individuals(self, pop):
-
-        '''<scheme> can be:
-                        'all'       --> takes whole population
-                        'random'    --> takes random sample of size <n>
-                                        from anywhere on landscape
-                        'points'    --> takes random sample of size <n>
-                                        within <radius> (in units of
-                                        cells) of each point
-                        'transect'  --> takes random sample of size <n>
-                                        within <radius> at
-                                        <n_transect_points> evenly spaced
-                                        points along a transect
-                                        between each tuple of endpoints
-                                        listed in <transect_endpoints>
-
-        '''
-
+    def get_sample(self, pop):
         #get a set of indices for the individuals in the sample
         sample = set()
         #take the whole population, if scheme is 'all'
@@ -298,40 +307,39 @@ class DataSampler:
             sample.update([*pop])
         #or take a random sample, if scheme is 'random'
         elif self.scheme == 'random':
-            inds = do_random_sample([*pop])
+            inds = self.get_random_sample([*pop])
             sample.update(inds)
         #or take individuals within a given radius of self.buffs (which could
         #have come from a set of input points or from a calculated set of
-        #transect points), if scheme is 'points' or 'transect'
-        elif scheme in ['points', 'transect']:
-            inds = do_point_sample(pop)
+        #transect points), if scheme is 'point' or 'transect'
+        elif self.scheme in ['point', 'transect']:
+            inds = self.get_point_sample(pop)
             sample.update(inds)
         #convert sample to a dict of individuals
         sample = {i:pop[i] for i in sample}
         return(sample)
 
 
-    def format_gen_data(self, data_format, individs, pop):
+    def format_gen_data(self, data_format, sample, pop):
         '''<data_format> can be:
-                            'FASTA'
-                            'VCF'
+                            'fasta'
+                            'vcf'
         '''
         if data_format == 'fasta':
-            formatted_data = format_fasta(individs)
+            formatted_data = format_fasta(sample)
         elif data_format == 'vcf':
-            formatted_data = format_vcf(individs, pop.gen_arch,
+            formatted_data = format_vcf(sample, pop.gen_arch,
                             include_fixed_sites = self.include_fixed_sites)
         return(formatted_data)
 
 
-    def write_gendata(self, dirname, filename, gen_data):
-        io.write_file(dirname, filename, gen_data)
+    def write_gendata(self, filepath, gen_data):
+        io.write_file(filepath, gen_data)
 
 
-    def write_geodata(self, dirname, filename, data):
-        ext = os.splitext(filename)[1]
-        write_fn = self.write_geodata_fn_dict[ext]
-        write_fn(filename, data)
+    def write_geodata(self, filepath, data_format, sample):
+        write_fn = self.write_geodata_fn_dict[data_format]
+        write_fn(filepath = filepath, individuals = sample)
 
 #----------------------------------
 # FUNCTIONS -----------------------
@@ -352,8 +360,7 @@ def make_point_buffers(points, radius):
     return(buff_poly)
 
 
-def format_fasta(individs):
-
+def format_fasta(sample):
     '''
     FASTA FORMAT:
 
@@ -364,20 +371,19 @@ def format_fasta(individs):
     row1 = '>%s:HAP;%s;%s;%s;%s;%s;%s\n'
     file_text = ''
 
-    for ind in individs:
+    for individ in sample.values():
         for hap in range(2):
-            ind_row1 = re.sub('HAP', str(hap), row1)
-            replace = tuple(map(lambda att: re.sub(',', '|', re.sub('[\[\] ]', '', str(getattr(ind, att)))),
-                                ['idx', 'x', 'y', 'age', 'sex', 'phenotype', 'habitat']))
-            ind_row1 = ind_row1 % replace
-            ind_row2 = ''.join([str(base) for base in ind.genome[:,hap]]) + '\n'
+            individ_row1 = re.sub('HAP', str(hap), row1)
+            replace = tuple(map(lambda att: re.sub(',', '|', re.sub('[\[\] ]', '', str(getattr(individ, att)))), ['idx', 'x', 'y', 'age', 'sex', 'phenotype', 'habitat']))
+            individ_row1 = individ_row1 % replace
+            individ_row2 = ''.join([str(base) for base in individ.genome[:,hap]]) + '\n'
 
-            file_text = file_text + ind_row1 + ind_row2
+            file_text = file_text + individ_row1 + individ_row2
 
     return(file_text)
 
 
-def format_vcf(individs, gen_arch, include_fixed_sites=False):
+def format_vcf(sample, gen_arch, include_fixed_sites=False):
 
     #create a template header
         #NOTE: has 1 string slot for a date
@@ -401,7 +407,7 @@ def format_vcf(individs, gen_arch, include_fixed_sites=False):
             #- a tab-separated list of individs' genotypes at this locus
 
     #create a col_header_row for this data
-    inds = sorted(individs.keys())
+    inds = sorted(sample.keys())
     ind_cols = '\t'.join([str(i) for i in inds])
     cols = col_header_row % (ind_cols)
 
@@ -409,12 +415,12 @@ def format_vcf(individs, gen_arch, include_fixed_sites=False):
     chroms = np.cumsum(gen_arch.l_c)
 
     #and get all individuals' genomic data in a 'samplome' object (a 3-d array)
-    samplome = np.array([individs[i].genome for i in inds])
+    samplome = np.array([sample[i].genome for i in inds])
 
     #get loci of all segregating sites, if not_include_fixed_sites
     if not include_fixed_sites:
         #get segregating sites
-        max_val = 2 * len(individs)
+        max_val = 2 * len(sample)
         segs = np.where(samplome.sum(axis = 2).sum(axis = 0) > 0)[0]
         segs2 = np.where(samplome.sum(axis = 2).sum(axis = 0) < max_val)[0]
         loci = sorted(list(set(segs).intersection(set(segs2))))

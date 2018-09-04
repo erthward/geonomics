@@ -45,10 +45,13 @@ params = {
             'res':                      (1,1),
                 #landscape resolution in x and y dimensions (for crosswalking with real-world 
                 #distances; defaults to meaningless (1,1), will be reset if GIS rasters are read in 
-            'ulc':                      (0,0)
+            'ulc':                      (0,0),
                 #upper-left corner of the landscape; defaults to meaningless (0,0), can be set 
                 #to alternative values for crosswalking with real-world data, and will be 
                 #reset if GIS rasters are read in 
+            'prj':                      None,
+                #projection of the landscape; only applicable if layers are to
+                #be read in from a raster file; defaults to None
             }, # <END> 'main'
 
     ################
@@ -570,19 +573,23 @@ params = {
                 'points':               None,
                     #the x,y points at which data should be sampled (expressed
                         #as a list or tuple of length-2 lists or 2-tuples)
-                'transect_endpoints':   None,
+                'transect_endpoints':   [(0,0), (20,20)],
                     #endpoints of the transect to be sampled (only needed if
                         #scheme is 'transect), expressed as a pair of 
                         #ordered x,y pairs (in tuples or lists)
-                'n_transect_points':    None,
+                'n_transect_points':    4,
                     #the number of evenly spaced points along the transect
                     #at which to sample (only needed if scheme is 'transect')
+                'radius':               2,
+                    #radius around sampling points within which to sample
+                    #individuals (only needed is scheme is 'point' or
+                    #'transect')
                 'when':                 15,
                     #can be an integer (in which case data will be collected every 
                     #that many timesteps, plus at the end) or a list of specific
                     #timesteps; a value of 0 or None will default to a single
                     #data-collection step after the model has run
-                'include_land':         False,
+                'include_land':         True,
                     #if True, will save the Land object each time other data is saved 
                     #(probably only useful if land is changing in some way not manually coded by the user)
                 'include_fixed_sites':  False,
@@ -591,7 +598,7 @@ params = {
                         #(defaults to False)
                 },
             'format': {
-                'gen_format':           'vcf',
+                'gen_format':           ['vcf', 'fasta'],
                     #format to use for saving genetic data; 
                         #currently valid values: 'vcf', 'fasta', 
                         #or a list containing both, if both 

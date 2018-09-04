@@ -24,7 +24,7 @@ Documentation:        URL
 
 #geonomics imports
 from structs import landscape, community, genome
-from sim import burnin
+from sim import burnin, data
 
 #other imports
 import numpy as np
@@ -39,14 +39,6 @@ import sys, os, traceback
 # CLASSES ---------------------------#
 # -----------------------------------#
 ######################################
-
-
-#TODO:
-    # finish and debug functions I've written
-    # add verbose statements
-    # finish the data and stats modules and tie them in correctly
-
-
 
 #the Model class, which will contain the main model objects, build the
 #burn-in and main functions, allow customization of the objects, manage and run
@@ -67,12 +59,6 @@ class Model:
         #and set the private __term_width__  and __tab_len__ attributes
         self.__set_term_width__()
         self.__set_tab_len__()
-
-        #TODO: use the params to create data and stats objects 
-        data_params = m_params.data
-        stats_params = m_params.stats
-        self.data = None
-        self.stats = None
 
         #set the seed, if required
         self.seed = None
@@ -104,6 +90,15 @@ class Model:
         self.land = self.make_land()
         self.comm = self.make_community()
 
+        #make a data.DataSampler object for the self.sampler attribute
+        #if necessary
+        self.sampler = None
+        if 'data' in [*m_params]:
+            self.sampler = self.make_data_sampler()
+
+        #TODO: DECIDE HOW TO INTEGRATE STATS STUFF
+        self.stats = None
+
         #create a self.reassign_genomes attribute, which defaults to False,
         #unless any population has a genomic architecture, indicating that its
         #genomes should be reassigned after burn-in; in that case it will be 
@@ -124,7 +119,13 @@ class Model:
         #first iteration's community as soon as it has exited burn-in and had
         #its genomes reassigned)
         self.rand_burn = m_params.its.rand_burn
-    
+
+        #set the function queues to None (they will be reset later if self.run 
+        #is called, but if self.walk is called then the burn_fn_queue's None
+        #status will be checked to determine whether or not to run self.reset()
+        self.burn_fn_queue = None
+        self.main_fn_queue = None
+
     #private method for determining the width of the terminal on the current system
     def __set_term_width__(self):
         self.__term_width__ = int(os.popen('stty size', 'r').read().split()[1])
@@ -197,7 +198,7 @@ class Model:
         comm = community.make_community(self.land, self.params, burn = True)
         return(comm)
 
-    
+
     #a method to reset the community (recopying or regenerating as necessary)
     def reset_community(self, rand_comm=True):
         if not rand_comm:
@@ -219,6 +220,22 @@ class Model:
             if self.verbose:
                 print('Creating new community for iteration %i...\n\n' % self.it)
             self.comm = self.make_community()
+
+
+    #method to make a data.DataSampler object for this model
+    def make_data_sampler(self):
+        sampler = data.DataSampler(self.name, self.params)
+        return sampler
+
+
+    #method to reset the self.sampler attribute (a data.DataSampler object)
+    def reset_data_sampler(self):
+        self.sampler = self.make_data_sampler()
+
+
+    #method to use the self.sampler object to sample and write data
+    def write_data(self):
+        self.sampler.write_data(self.comm, self.it)
 
 
     #method to reset all the model's objects (land, community, and associated) and attributes
@@ -243,7 +260,7 @@ class Model:
         #if not self.it == 0 and self.burn_t == 0:
         self.reset_land(rand_land)
         self.reset_community(rand_comm)
-       
+
         #reset the self.burn_t and self.t attributes to -1
         self.reset_t()
         if rand_burn:
@@ -257,6 +274,11 @@ class Model:
         #set the self.reassign_genomes attribute
         self.set_reassign_genomes()
 
+        #reset the self.sampler attribute (the data.DataSampler object),
+        #if necessary
+        if self.sampler is not None:
+            self.reset_data_sampler()
+
         #create new main fn queue (and burn fn queue, if needed)
         if rand_burn or self.it <= 0:
             #verbose output
@@ -267,11 +289,6 @@ class Model:
         if self.verbose:
             print('Creating the main function queue...\n\n')
         self.main_fn_queue = self.make_fn_queue(burn = False)
-
-        #TODO create Data and Stats objects, if required, using self.data_params and
-        #self.stats_params
-            #and call their methods to create new data and stats subdirectories for
-            #this iteration
 
 
     #method to create the simulation functionality, as a function queue 
@@ -307,20 +324,23 @@ class Model:
         for pop in self.comm.values():
             queue.append(pop.do_pop_dynamics)
 
-        #add the make_change methods, if not burn-in and if pop and/or land have Changer objects
+        #add the Changer.make_change and DataSampler.write_data methods,
+        #if not burn-in and if pop and/or land have Changer objects
         if not burn:
-            #add land.changer method
+            #add land.make_change method
             if self.land.changer is not None:
                 queue.append(lambda: self.land.make_change(self.t))
+            #add pop.make_change methods
             for pop in self.comm.values():
                 if pop.changer is not None:
                     queue.append(pop.make_change)
+            #add self.write_data method
+            if self.sampler is not None:
+                queue.append(self.write_data)
 
+            #TODO depending how I integrate the Stats module, 
+            #add stats functions to this queue too
 
-        #TODO add the data.save and stats.save methods, if not burn-in, if
-        #needed, and if the data.params.freq and similar stats parameters are
-        #not just a list of length 1 containing the last time step (otherwise
-        #will need to just call their functions after the model is complete
 
 
         #add the burn-in function if need be
@@ -392,7 +412,7 @@ class Model:
 
         #reset the model (including the burn-in, if self.rand_burn or if this is the first iteration) 
         self.reset(rand_land = self.rand_land,
-                         rand_comm = self.rand_comm, 
+                         rand_comm = self.rand_comm,
                          rand_burn = self.rand_burn)
 
 
@@ -463,8 +483,9 @@ class Model:
             print('#' * self.__term_width__)
 
 
-    #method to run the model interactively from the command line
-    def run_interactive(self, T=1, mode='main', verbose=None):
+    #method to run the model interactively from the command line; named 'walk'
+    #to succinctly differentiate it from 'run'
+    def walk(self, T=1, mode='main', verbose=None):
         '''Run the model, with its current parameterization, interactively from
         the command line. The number of timesteps provided (T) will be treated
         as burn_T (i.e. the minimum number of burn-in timesteps) if
@@ -476,13 +497,25 @@ class Model:
             old_verbose = self.verbose
             self.verbose = verbose
 
+        #if verbose, add a space below the command line prompt, for readability
+        if self.verbose:
+            print('\n')
+
         #run the model for the stipulated number of timesteps
         for t in range(T):
             #exit if burn-in is complete
             if mode == 'burn' and self.comm.burned:
+                #verbose output
                 if self.verbose:
                     print('Burn-in complete.\n\n')
                 break
+            #reset the mode, if mode is 'burn' and there is no mod.burn_fn_queue
+            if mode == 'burn' and self.burn_fn_queue is None:
+                #verbose output
+                if self.verbose:
+                    print(('No mod.burn_fn_queue was found. '
+                          'Running mod.reset()...\n\n'))
+                self.reset()
             extinct = self.do_timestep(mode = mode)
             #end the iteration early if any population is extinct
             if extinct:

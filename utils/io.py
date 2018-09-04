@@ -32,6 +32,41 @@ import os
 from shapely.geometry import Point
 
 
+######################################
+# -----------------------------------#
+# VARIABLES -------------------------#
+# -----------------------------------#
+######################################
+
+
+#TODO: For now, defining a default projection to use for saving geotiff rasters
+#if no projection is set, but I need to decide if it even makes sense to do
+#this, rather than just disallowing geotiff as a raster-saving format if no
+#projection is set (because of course this makes random landscapes project as
+#rasters at lat:0, lon:0 in Web Mercator, which is at the Equator and on the
+#prime meridian (basically due west of São Tomé and due south of Accra)
+__DEFAULT_WEB_MERCATOR__ = '''PROJCS["WGS 84 / Pseudo-Mercator",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["X",EAST],
+    AXIS["Y",NORTH],
+    EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],
+    AUTHORITY["EPSG","3857"]]'''
 
 ######################################
 # -----------------------------------#
@@ -44,14 +79,14 @@ from shapely.geometry import Point
     # Read #
     ########
 
-def read_raster(filepath):
-    if os.path.splitext(filepath)[1].lower() == 'txt':
+def read_raster(filepath, dim=None):
+    if os.path.splitext(filepath)[1].lower() == '.txt':
         rast = np.fromfile(filepath, sep = ' ')
-        assert len(rast) == prod(dim), ('The raster read in from the .txt '
+        assert len(rast) == np.prod(dim), ('The raster read in from the .txt '
         'file provided does not have a size equal to the product of the '
         'dimensions provided, and thus cannot be coerced to an array of '
         'those dimensions.')
-        rast = rast.reshape(dim)
+        rast = np.float32(rast.reshape(dim))
         dim = dim
         res = (1,1)
         ulc = (0,0)
@@ -66,25 +101,27 @@ def read_raster(filepath):
         prj = rast_file.GetProjection()
     return(rast, dim, res, ulc, prj)
 
-    
+
     #########
     # Write #
     #########
 
-def write_file(dirname, filename, data):
-    filepath = os.path.join(dirname, filename)
+#write a data (a block of text, as a string) to a file
+def write_file(filepath, data):
     with open(filepath, 'w') as f:
         f.write(data)
 
-def write_geopandas(dirname, filename, individuals, driver):
+#write a data file from a geopandas object created from an index-keyed dict 
+#of individual.Individual objects
+def write_geopandas(filepath, individuals, driver):
     #get full path and filename
-    filepath = os.path.join(dirname, filename)
     attributes = ['idx', 'phenotype', 'habitat', 'age', 'sex']
-    #FIXME: replace the call to str() below with something more sophisticated
+    #TODO: FIXME: replace the call to str() below with something more sophisticated
     #that will actually separate distinct phenotype and habitat values into
     #separate, labeled columns
-    df_dict = {att: [str(getattr(ind, att)) for ind in individuals] for att in attributes}
-    pts = [Point(ind.x, ind.y) for ind in individuals]
+    #TODO: also round numbers to 5 decimals or so?
+    df_dict = {att: [str(getattr(ind, att)) for ind in individuals.values()] for att in attributes}
+    pts = [Point(ind.x, ind.y) for ind in individuals.values()]
     df_dict['pt'] = pts
     df = pd.DataFrame.from_dict(df_dict)
     gdf = gpd.GeoDataFrame(df, geometry = 'pt')
@@ -97,24 +134,33 @@ def write_geopandas(dirname, filename, individuals, driver):
         gdf.to_file(filepath, driver = driver)
 
 
-def write_shapefile(dirname, filename, individuals):
-    write_geopandas(dirname, filename, individuals, driver='ESRI Shapefile')
+#write a shapefile from an index-keyed dict of individual.Individual objects
+def write_shapefile(filepath, individuals):
+    filepath = set_extension(filepath, 'shp')
+    write_geopandas(filepath, individuals, driver='ESRI Shapefile')
 
 
-def write_geojson(dirname, filename, individuals):
-    write_geopandas(dirname, filename, individuals, driver='GeoJSON')
+#write a geojson from an index-keyed dict of individual.Individual objects
+def write_geojson(filepath, individuals):
+    filepath = set_extension(filepath, ['json', 'geojson'])
+    write_geopandas(filepath, individuals, driver='GeoJSON')
 
 
-def write_csv(dirname, filename, individuals):
-    write_geopandas(dirname, filename, individuals, driver = 'CSV')
+#write a csv from an index-keyed dict of individual.Individual objects
+def write_csv(filepath, individuals):
+    filepath = set_extension(filepath, 'csv')
+    write_geopandas(filepath, individuals, driver = 'CSV')
 
 
-def write_array(dirname, filename, scape):
-    filepath = os.path.join(dirname, filename)
+#write a txt array from a landscape.Scape object's numpy-array raster
+def write_txt_array(filepath, scape):
+    filepath = set_extension(filepath, 'txt')
     np.savetxt(filepath, scape.rast, fmt = '%0.5f')
 
 
-def write_geotiff(dirname, filename, scape):
+#write a geotiff from a landscape.Scape object's numpy-array raster
+def write_geotiff(filepath, scape):
+    filepath = set_extension(filepath, ['tif', 'tiff'])
     #TODO: this is a tweak on code taken from https://gis.stackexchange.com/
     #questions/58517/python-gdal-save-array-as-raster-with-projection-from-
     #other-file
@@ -128,12 +174,15 @@ def write_geotiff(dirname, filename, scape):
     PIXEL_SIZE = scape.res[0]
     #x_min & y_max are the "top-left corner"
     x_min = scape.ulc[0]
-    y_max = scape.ulc[1] + (scape.dim[1]*scape.res[1]) 
+    y_max = scape.ulc[1] + (scape.dim[1]*scape.res[1])
     #get the WKT projection
     wkt_projection = scape.prj
     if wkt_projection is None:
-        #TODO: SET SOME DEFAULT, MEANINGLESS PROJECTION??
-        pass
+        #TODO: FOR NOW THIS DEFAULTS TO THE __DEFAULT_WEB_MERCATOR__
+        #VARIABLE, BUT THINK ABOUT WHETHER IT MAKES ANY SENSE TO HAVE
+        #SUCH A DEFAULT, AND IF SO, WHETHER OR NOT THERE'S A BETTER
+        #OPTION
+        wkt_projection = __DEFAULT_WEB_MERCATOR__
     dataset = driver.Create(
        filepath,
        x_pixels,
@@ -154,3 +203,35 @@ def write_geotiff(dirname, filename, scape):
     dataset.FlushCache()
 
 
+    #########
+    # Other #
+    #########
+
+#add the correct extension to a filepath, if necessary
+def set_extension(filepath, ft_ext):
+    #make ft_ext iterable, if just a string is provided
+    if type(ft_ext) is str:
+        ft_ext = [ft_ext]
+
+    #check if filepath has any extension
+    any_ext =  len([i for i in os.path.splitext(filepath) if len(i) >0]) > 1
+    #and check for an existing valid extension
+    valid_ext = os.path.splitext(filepath.lower())[1].lstrip('.') in ft_ext
+
+    #if the file has an extension not concordant with the filetype extension
+    #(ft_ext), throw an error
+    if any_ext and not valid_ext:
+        raise ValueError(("File name already contains an extension "
+            "('%s'), but it is incompatible with the filetype "
+            "to be written (which requires one of the following "
+            " extensions: %s).") % (os.path.splitext(filepath)[1],
+            ','.join(["'.%s'" % ext for ext in ft_ext])))
+
+    #else if it has no extension, append the extension
+    elif not any_ext and not valid_ext:
+        filepath = '.'.join([filepath, ft_ext[0]])
+    #else, leave it be
+    else:
+        pass
+    #return the resulting filepath
+    return filepath

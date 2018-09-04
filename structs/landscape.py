@@ -78,6 +78,23 @@ class Scape:
         plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
         viz.show_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, mask_val = mask_val, vmin = vmin, vmax = vmax)
 
+    #method for writing the scape's raster to a file of the specified format
+    def write_raster(self, filepath, raster_format):
+        assert raster_format in ['geotiff', 'txt'], ("The raster_format "
+            "must be one of the following: 'geotiff', 'txt'.")
+        if raster_format == 'geotiff':
+            self.write_geotiff(filepath)
+        elif raster_format == 'txt':
+            self.write_txt_array(filepath)
+
+    #method for writing the scape's raster to a geotiff raster file
+    def write_geotiff(self, filepath):
+        io.write_geotiff(filepath, self)
+
+    #method for writing the scape's raster to a numpy txt array
+    def write_txt_array(self, filepath):
+        io.write_txt_array(filepath, self)
+
 
 class Land(dict):
 
@@ -126,14 +143,15 @@ class Land(dict):
             "as the 'prj' value being used to create the Land object that "
             "should contain them.")
 
-        #create a changer attribute that defaults to None but will later be set
-        #to an ops.change.LandChanger object if params call for it
+        #create a changer attribute (defaults to None, but will later be set
+        #to an ops.change.LandChanger object if params call for it)
         self.changer = None
 
         self.island_mask_scape_num = None
 
     #define the __str__ and __repr__ special methods
-    #NOTE: this doesn't excellently fit the Python docs' specification for __repr__; I should massage this #some more once I'm done writing the codebase
+    #NOTE: this doesn't excellently fit the Python docs' specification for 
+    #__repr__; I should massage this some more when done writing the codebase
     def __str__(self):
         type_str = str(type(self))
         scapes_str = '\n%i Scapes:\n' % self.n_scapes
@@ -229,7 +247,6 @@ class Land(dict):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)
-
 
 ######################################
 # -----------------------------------#
@@ -369,7 +386,7 @@ def make_land(params, num_hab_types=2):
             scapes[n] = gis_scapes[n]
 
     #create the land object
-    land = Land(scapes, params=params, res=res, ulc=ulc, prj=prj)
+    land = Land(scapes, res=res, ulc=ulc, prj=prj)
 
     #grab the change parameters into a dictionary of scape_num:events:events_params hierarchical
     change_params = {k:v.change for k,v in params.land.scapes.items() if 'change' in v.keys()} 

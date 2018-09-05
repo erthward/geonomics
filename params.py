@@ -215,7 +215,7 @@ params = {
             ##############
 
                 'init': {
-                    'name': 'pop0',         
+                    'name': 'pop0',
                         #each pop can take a unique string name (e.g. 'pop0', 'south', 'C_fasciata')
                     'N':                200,
                         #starting population size
@@ -622,10 +622,19 @@ params = {
                     # 'het' : heterozygosity
                     # 'maf' : minor allele frequency
                     # 'ld'  : linkage disequilibrium
-            'Nt':       {'calc' : True, 'freq': 1},
-            'het':      {'calc' : True, 'freq': 1},
-            'maf':      {'calc' : True, 'freq': 1},
-            'ld':       {'calc' : True, 'freq': 1}
+            'Nt':       {'calc' : True, 
+                         'freq': 1,
+                        },
+            'het':      {'calc' : True, 
+                         'freq': 1,
+                         'mean': False,
+                        },
+            'maf':      {'calc' : True, 
+                         'freq': 1,
+                        },
+            'ld':       {'calc' : True, 
+                         'freq': 1,
+                        }
             }, # <END> 'stats'
 
         } # <END> 'model'

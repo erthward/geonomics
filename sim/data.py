@@ -7,7 +7,7 @@
 
 Module name:              sim/data
 
-Module contents:          - definition of the DataSampler class (which gathers
+Module contents:          - definition of the DataCollector class (which gathers
                             and organizes the parameters for how and when to sample data,
                             and does the sampling)
                           - definition of functions for sampling individuals
@@ -42,11 +42,15 @@ from osgeo import gdal
 from itertools import chain
 
 
-#------------------------------------
-# CLASSES ---------------------------
-#------------------------------------
+######################################
+# -----------------------------------#
+# CLASSES ---------------------------#
+# -----------------------------------#
+######################################
 
-class DataSampler:
+#a DataCollector class, to paramtereize and manage data 
+#collection, and write data to disk
+class DataCollector:
     def __init__(self, model_name, params):
 
     #some lookup dicts for writing data 
@@ -62,18 +66,14 @@ class DataSampler:
                             'shapefile': io.write_shapefile,
                             'geojson': io.write_geojson,
                             }
-
-        #set other attributes
+        
+        #set model name and T
         self.model_name = model_name
         self.T = params.model.time.T
-
+        
         #grab the params['data'] contents into objects
         sampling_params = params.model.data.sampling
         format_params = params.model.data.format
-
-        #TODO: decide what to do about the stats stuff!
-        #grab the params['data'] content into a self.data_params attribute
-        self.stats_params = params.model.stats
 
         #get the sampling scheme
         self.scheme = sampling_params.scheme
@@ -130,7 +130,7 @@ class DataSampler:
             type(sampling_params.include_land) is bool):
             self.include_fixed_sites = sampling_params.include_fixed_sites
 
-        #get the 'when' parameter
+        #set the when attribute to the 'when' parameter
         self.when = sampling_params.when
         #check type- and value-validity of self.when, and update its value
         #as necessary
@@ -159,8 +159,7 @@ class DataSampler:
                     self.when.append(self.T -1)
         #now turn the when attribute into an iterator
         self.when = iter(self.when)
-        #and grab the next timestep into next_t
-        self.next_t = None
+        #and set next_t
         self.set_next_t()
 
         #grab the genetic data formats as a separate attribute
@@ -218,7 +217,7 @@ class DataSampler:
                                     'it-%i' % iteration)
 
                     #get the subdirectory for this population
-                    subdirname = os.path.join(dirname, 'pop-' + pop.name)
+                    subdirname = os.path.join(dirname, 'pop-%s' % pop.name)
 
                     #and create (and its parent data directory, if needed)
                     os.makedirs(subdirname, exist_ok = True)
@@ -341,9 +340,12 @@ class DataSampler:
         write_fn = self.write_geodata_fn_dict[data_format]
         write_fn(filepath = filepath, individuals = sample)
 
-#----------------------------------
-# FUNCTIONS -----------------------
-#----------------------------------
+
+######################################
+# -----------------------------------#
+# FUNCTIONS -------------------------#
+# -----------------------------------#
+######################################
 
 #a function to get a set of n evenly spaced points between endpoints
 def get_transect_points(endpoints, n):

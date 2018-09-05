@@ -90,14 +90,17 @@ class Model:
         self.land = self.make_land()
         self.comm = self.make_community()
 
-        #make a data.DataSampler object for the self.sampler attribute
+        #make a data.DataCollector object for the self.collecter attribute
         #if necessary
-        self.sampler = None
+        self.data_collector = None
         if 'data' in [*m_params]:
-            self.sampler = self.make_data_sampler()
+            self.data_collector = self.make_data_collector()
 
-        #TODO: DECIDE HOW TO INTEGRATE STATS STUFF
-        self.stats = None
+        #make a stats.StatsCollector object for the self.collecter attribute
+        #if necessary
+        self.stats_collector = None
+        if 'stats' in [*m_params]:
+            self.stats_collector = self.make_stats_collector()
 
         #create a self.reassign_genomes attribute, which defaults to False,
         #unless any population has a genomic architecture, indicating that its
@@ -222,20 +225,38 @@ class Model:
             self.comm = self.make_community()
 
 
-    #method to make a data.DataSampler object for this model
-    def make_data_sampler(self):
-        sampler = data.DataSampler(self.name, self.params)
-        return sampler
+    #method to make a data.DataCollector object for this model
+    def make_data_collector(self):
+        data_collector = data.DataCollector(self.name, self.params)
+        return data_collector
 
 
-    #method to reset the self.sampler attribute (a data.DataSampler object)
-    def reset_data_sampler(self):
-        self.sampler = self.make_data_sampler()
+    #method to reset the self.data_collector attribute 
+    #(a data.DataCollector object)
+    def reset_data_collector(self):
+        self.data_collector = self.make_data_collector()
 
 
-    #method to use the self.sampler object to sample and write data
+    #method to use the self.data_collector object to sample and write data
     def write_data(self):
-        self.sampler.write_data(self.comm, self.it)
+        self.data_collector.write_data(self.comm, self.it)
+
+
+    #method to make a stats.StatsCollector object for this model
+    def make_stats_collector(self):
+        stats_collector = stats.StatsCollector(self.name, self.params)
+        return stats_collector
+
+
+    #method to reset the self.stats_collector attribute 
+    #(a stats.StatsCollector object)
+    def reset_stats_collector(self):
+        self.stats_collector = self.make_stats_collector()
+
+
+    #method to use the self.stats_collector object to sample and write data
+    def calc_stats(self):
+        self.stats_collector.write_stats(self.community, self.t, self.it)
 
 
     #method to reset all the model's objects (land, community, and associated) and attributes
@@ -274,10 +295,15 @@ class Model:
         #set the self.reassign_genomes attribute
         self.set_reassign_genomes()
 
-        #reset the self.sampler attribute (the data.DataSampler object),
-        #if necessary
-        if self.sampler is not None:
-            self.reset_data_sampler()
+        #reset the self.data_collector attribute (the data.DataCollector
+        #object) if necessary
+        if self.data_collector is not None:
+            self.reset_data_collector()
+
+        #reset the self.stats_collector attribute (the stats.StatsCollector
+        #object) if necessary
+        if self.stats_collector is not None:
+            self.reset_stats_collector()
 
         #create new main fn queue (and burn fn queue, if needed)
         if rand_burn or self.it <= 0:
@@ -324,8 +350,11 @@ class Model:
         for pop in self.comm.values():
             queue.append(pop.do_pop_dynamics)
 
-        #add the Changer.make_change and DataSampler.write_data methods,
-        #if not burn-in and if pop and/or land have Changer objects
+        #add the Changer.make_change, data.DataCollector.write_data, and 
+        #stats.StatsCollector.write_stats methods, if this is not the burn-in
+        #and if pop and/or land have Changer objects, or if the model has 
+        #DataCollector or StatsCollector objects (in the self.data_collector 
+        #and self.stats_collector attributes)
         if not burn:
             #add land.make_change method
             if self.land.changer is not None:
@@ -335,8 +364,11 @@ class Model:
                 if pop.changer is not None:
                     queue.append(pop.make_change)
             #add self.write_data method
-            if self.sampler is not None:
+            if self.data_collector is not None:
                 queue.append(self.write_data)
+            #add self.calc_stats method
+            if self.stats_collector is not None:
+                queue.append(self.calc_stats)
 
             #TODO depending how I integrate the Stats module, 
             #add stats functions to this queue too
@@ -524,12 +556,5 @@ class Model:
         #reset the old verbose flag, if necessary
         if verbose is not None:
             self.verbose = old_verbose
-
-
-######################################
-# -----------------------------------#
-# FUNCTIONS -------------------------#
-# -----------------------------------#
-######################################
 
 

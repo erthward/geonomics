@@ -192,7 +192,6 @@ class Population(OD):
     # method to append current pop size to the pop.Nt list
     def set_Nt(self):
         self.Nt.append(len(self))
-        #self.Nt.append(self.get_size())
 
     #method to increment the self.t attribute (i.e. the timestep counter)
     def set_t(self):

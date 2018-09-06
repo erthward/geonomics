@@ -24,7 +24,7 @@ Documentation:        URL
 
 #geonomics imports
 from structs import landscape, community, genome
-from sim import burnin, data
+from sim import burnin, data, stats
 
 #other imports
 import numpy as np
@@ -256,7 +256,7 @@ class Model:
 
     #method to use the self.stats_collector object to sample and write data
     def calc_stats(self):
-        self.stats_collector.write_stats(self.community, self.t, self.it)
+        self.stats_collector.calc_stats(self.comm, self.t, self.it)
 
 
     #method to reset all the model's objects (land, community, and associated) and attributes

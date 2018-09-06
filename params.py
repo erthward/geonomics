@@ -87,14 +87,14 @@ params = {
 #                                #the scape_pt_vals array, to be used as the points
 #                                #to be interpolated; only needed if rand == False)
 #                        'vals':                      None,
-#                            #point values to use to interpolate defined landscape layers (a  1xn Numpy array, 
+#                            #point values to use to interpolate defined landscape layers (a 1xn Numpy array, 
 #                                #where n matches the number of points in scape_pt_coords arrays;
 #                                #only needed if rand == False)
 #                        'interp_method':                None
 #                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
 #                        },
-#                    'gis': {
-#                        #parameters for making a scape using a GIS raster file
+#                    'file': {
+#                        #parameters for making a scape using a GIS raster file or a numpy txt array
 #                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
 #                            #filepath to read into this scape
 #                        'scale_min_val':                -1.37,
@@ -163,8 +163,8 @@ params = {
 #                        'interp_method':                None
 #                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
 #                        },
-#                    'gis': {
-#                        #parameters for making a scape using a GIS raster file
+#                    'file': {
+#                        #parameters for making a scape using a GIS raster file or a numpy txt array
 #                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
 #                            #filepath to read into this scape
 #                        'scale_min_val':                -1.37,
@@ -622,19 +622,19 @@ params = {
                     # 'het' : heterozygosity
                     # 'maf' : minor allele frequency
                     # 'ld'  : linkage disequilibrium
-            'Nt':       {'calc' : True, 
+            'Nt':       {'calc' : True,
                          'freq': 1,
                         },
-            'het':      {'calc' : True, 
+            'het':      {'calc' : True,
                          'freq': 1,
                          'mean': False,
                         },
-            'maf':      {'calc' : True, 
+            'maf':      {'calc' : True,
                          'freq': 1,
                         },
-            'ld':       {'calc' : True, 
-                         'freq': 1,
-                        }
+            #'ld':       {'calc' : True,
+            #             'freq': 1,
+            #            }
             }, # <END> 'stats'
 
         } # <END> 'model'

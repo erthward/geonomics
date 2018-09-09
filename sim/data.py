@@ -140,23 +140,22 @@ class DataCollector:
             assert ([n < self.T for n in self.when]).all(), ('ERROR:'
             ' Values provided for sampling times must be less '
             'than total model run-time.')
-            #add the last timestep, if not already included
-            if self.T-1 not in self.when:
-                self.when = self.when + [self.T-1]
         #if it's a float, int, or None
         elif type(self.when) in (float, int, type(None)):
             #check value is less than or equal to last timestep (or None)
             assert self.when is None or self.when < self.T, ('ERROR: Values '
             'provided for sampling times must be less than total '
             'model run-time.')
-            #make it a list containing just last timestep, if 0 or None
+            #make it a list containing nothing (last timestep will be added),
+            #if 0 or None
             if self.when in (0, None):
-                self.when = [T-1]
+                self.when = []
             #make it a stepwise timestep list, if integer other than 0
             else:
                 self.when = [*range(0, self.T, int(self.when))]
-                if self.T-1 not in self.when:
-                    self.when.append(self.T -1)
+        #add the final timestep, if not already in self.when
+        if self.when[-1] != self.T-1:
+            self.when.append(self.T-1)
         #now turn the when attribute into an iterator
         self.when = iter(self.when)
         #and set next_t
@@ -179,7 +178,15 @@ class DataCollector:
 
     #method to set self.next_t
     def set_next_t(self):
-        self.next_t = next(self.when)
+        try:
+            self.next_t = next(self.when)
+        #if there are no further timestep values left then this is the last
+        #timestep, so set self.next_t to None
+        except StopIteration:
+            assert self.next_t == self.T -1, ("Model.set_next_t() threw a "
+            "StopIteration error, but the current value of Model.next_t is not "
+            "the final timestep (instead, it is %i).\n\n") % self.next_t
+            self.next_t = None
 
 
     #method to create filenames for genetic and geographic datafiles

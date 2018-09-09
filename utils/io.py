@@ -24,11 +24,12 @@ Documentation:        URL
 #genomics imports
 
 #other imports
+import os
+import csv
 import numpy as np
 import pandas as pd
 import geopandas as gpd
 from osgeo import gdal
-import os
 from shapely.geometry import Point
 
 
@@ -45,7 +46,7 @@ from shapely.geometry import Point
 #projection is set (because of course this makes random landscapes project as
 #rasters at lat:0, lon:0 in Web Mercator, which is at the Equator and on the
 #prime meridian (basically due west of São Tomé and due south of Accra)
-__DEFAULT_WEB_MERCATOR__ = '''PROJCS["WGS 84 / Pseudo-Mercator",
+__DEFAULT_PROJ__ = '''PROJCS["WGS 84 / Pseudo-Mercator",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -101,15 +102,55 @@ def read_raster(filepath, dim=None):
         prj = rast_file.GetProjection()
     return(rast, dim, res, ulc, prj)
 
+#read a txt file containing a stack of 2d arrays (such as is created to save 
+#LD data)
+def read_array_stack(filepath):
+    array = np.loadtxt(filepath)
+    return(array)
 
     #########
     # Write #
     #########
 
-#write a data (a block of text, as a string) to a file
+#write data (a block of text, as a string) to a file
 def write_file(filepath, data):
     with open(filepath, 'w') as f:
         f.write(data)
+
+#write a CSV of data from a dictionary of columns
+def write_dict_to_csv(filepath, array_1d_dict):
+    #make a pandas DataFrame from the population's stats
+    df = pd.DataFrame.from_dict(array_1d_dict)
+    #add a timestep column
+    df['t'] = [*df.index]
+    #reorder the columns so that timestep is the first
+    ordered_cols = ['t'] + [col for col in df.columns if col != 't']
+    df = df[ordered_cols]
+    #write to disk
+    df.to_csv(path_or_buf= filepath, float_format= '%0.5f', index= False)
+
+#append a 2d array layer to an array stack (i.e. an np.txt file
+#intended to eventually be read in as a 3D array)
+def append_array2d_to_array_stack(filepath, locuswise_array2d):
+    tmp_file_dir = os.path.split(filepath)[0]
+    tmp_filename = 'tmp_%s.txt' % str(np.random.randint(0,1000)).zfill(4)
+    tmp_filename = os.path.join(tmp_file_dir, tmp_filename)
+    np.savetxt(tmp_filename, locuswise_array2d, fmt = '%0.5f')
+    with open(tmp_filename, 'r') as f:
+        tmp_txt = f.read()
+    with open(filepath, 'a') as f:
+        f.write(tmp_txt)
+    os.remove(tmp_filename)
+
+#append a row of data to a CSV file
+def append_row_to_csv(filepath, locuswise_array1d, t):
+    data_dict = dict(zip(range(locuswise_array1d.size), locuswise_array1d))
+    write_header = not os.path.exists(filepath)
+    with open(filepath, 'a') as f:
+        dict_writer = csv.DictWriter(f, ['t'] + [*data_dict.keys()])
+        if write_header: 
+            dict_writer.writeheader()
+        dict_writer.writerow({'t':t, **data_dict})
 
 #write a data file from a geopandas object created from an index-keyed dict 
 #of individual.Individual objects
@@ -178,11 +219,11 @@ def write_geotiff(filepath, scape):
     #get the WKT projection
     wkt_projection = scape.prj
     if wkt_projection is None:
-        #TODO: FOR NOW THIS DEFAULTS TO THE __DEFAULT_WEB_MERCATOR__
+        #TODO: FOR NOW THIS DEFAULTS TO THE __DEFAULT_PROJ__
         #VARIABLE, BUT THINK ABOUT WHETHER IT MAKES ANY SENSE TO HAVE
         #SUCH A DEFAULT, AND IF SO, WHETHER OR NOT THERE'S A BETTER
         #OPTION
-        wkt_projection = __DEFAULT_WEB_MERCATOR__
+        wkt_projection = __DEFAULT_PROJ__
     dataset = driver.Create(
        filepath,
        x_pixels,
@@ -235,3 +276,5 @@ def set_extension(filepath, ft_ext):
         pass
     #return the resulting filepath
     return filepath
+
+

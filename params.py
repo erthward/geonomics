@@ -553,7 +553,7 @@ params = {
         'time': {
             #parameters to control the number of burn-in and main timesteps to
             #run for each iterations
-            'T':            40,
+            'T':            12,
                 #total model runtime (in timesteps)
             'burn_T':       30
                 #minimum burn-in runtime (in timesteps; this is a mininimum because 
@@ -584,7 +584,7 @@ params = {
                     #radius around sampling points within which to sample
                     #individuals (only needed is scheme is 'point' or
                     #'transect')
-                'when':                 15,
+                'when':                 10,
                     #can be an integer (in which case data will be collected every 
                     #that many timesteps, plus at the end) or a list of specific
                     #timesteps; a value of 0 or None will default to a single
@@ -622,19 +622,24 @@ params = {
                     # 'het' : heterozygosity
                     # 'maf' : minor allele frequency
                     # 'ld'  : linkage disequilibrium
-            'Nt':       {'calc' : True,
-                         'freq': 1,
+                    # 'mean_trt_fit' : mean trait fitness (i.e. not including
+                                       #deleterious mutations)
+            'Nt':       {'calc': True,
+                         'freq': 2,
                         },
-            'het':      {'calc' : True,
+            'het':      {'calc': True,
                          'freq': 1,
                          'mean': False,
                         },
-            'maf':      {'calc' : True,
-                         'freq': 1,
+            'maf':      {'calc': True,
+                         'freq': 5,
                         },
-            #'ld':       {'calc' : True,
-            #             'freq': 1,
-            #            }
+            #'ld':       {'calc': True,
+            #             'freq': 10,
+            #            },
+            'mean_trt_fit': {'calc': True,
+                             'freq': 3,
+                        },
             }, # <END> 'stats'
 
         } # <END> 'model'

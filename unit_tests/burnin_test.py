@@ -3,7 +3,7 @@ from sim import burnin
 from sim import model
 import copy
 
-class burinTestCases(unittest.TestCase):
+class BurinTestCases(unittest.TestCase):
     """Tests for `burnin.py`."""
 
     def test_test_adf_threshold(self): 
@@ -14,6 +14,7 @@ class burinTestCases(unittest.TestCase):
 
     def test_test_t_threshold(self): 
         params = exec(open('./params.py', 'r').read())
+        pop = None
         self.assertEquals(True, burnin.test_t_threshold(pop, 2))
 
 

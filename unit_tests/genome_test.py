@@ -3,7 +3,7 @@ from structs import genome
 from ops import mutation
 
 
-class genomeTestCasese(unittest.TestCase):        
+class GenomeTestCasese(unittest.TestCase):        
     def test_make_genomic_architecture(self):
         params = exec(open('./params.py', 'r').read())
         g_params = params.genome
@@ -17,5 +17,9 @@ class genomeTestCasese(unittest.TestCase):
             genome.make_recomb_array(g_params)
         except:
             print("Can't make the recomb array")
+
+    
+
+    
 if __name__ == '__main__':
     unittest.main()

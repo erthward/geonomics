@@ -3,7 +3,7 @@ from structs import community
 from structs import landscape
 import params
 
-class communityTestCases(unittest.TestCase):
+class CommunityTestCases(unittest.TestCase):
     def testMakeCommunity(self):
         params = exec(open('./params.py', 'r').read())
         land = landscape.make_land(params)

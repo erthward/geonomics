@@ -4,7 +4,7 @@ from sim import model
 from structs import landscape
 import copy
 
-class landscapeTestCases(unittest.TestCase):
+class LandscapeTestCases(unittest.TestCase):
     def test_make_random_scape(self): 
         params = exec(open('./params.py', 'r').read())
         dim = params.land.main.dim 

@@ -3,7 +3,7 @@ from sim import model
 from structs import individual
 from structs import genome
 
-class individualTestCases(unittest.TestCase):
+class IndividualTestCases(unittest.TestCase):
     def test_make_individual_simple_case(self):
         params = exec(open('./params.py', 'r').read())
         genome_arch = genome.make_genomic_architecture(params)

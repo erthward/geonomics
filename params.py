@@ -68,14 +68,14 @@ params = {
                     #initiating parameters for this scape
                     'name':             'scape0',
                         #each scape can take a unique string name (e.g. 'scape0', '1994', 'mean_T')
-                    'rand': {
-                        #parameters for making a scape using interpolation from randomly located random values
-                        'n_pts':                        500,
-                            #number of random coordinates to be used in generating random landscapes 
-                                #(only needed if rand == True)
-                        'interp_method':                'cubic'
-                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
-                        }
+                    # 'rand': {
+                    #     #parameters for making a scape using interpolation from randomly located random values
+                    #     'n_pts':                        500,
+                    #         #number of random coordinates to be used in generating random landscapes 
+                    #             #(only needed if rand == True)
+                    #     'interp_method':                'cubic'
+                    #         # interpolation method (valid: 'linear', 'cubic', 'nearest')
+                    #     }
 #                    'defined': {
 #                        #parameters for making a scape using interpolation from a defined set of valued points
 #                        'pts':                    None,
@@ -90,18 +90,18 @@ params = {
 #                        'interp_method':                None
 #                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
 #                        },
-#                    'gis': {
-#                        #parameters for making a scape using a GIS raster file
-#                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
-#                            #filepath to read into this scape
-#                        'scale_min_val':                -1.37,
-#                            #minimum values to use for rescaling the raster (will be
-#                                #rescaled to 0<=x<=1); NOTE: this may be different than the actual minimum 
-#                                #value in the raster, especially if raster will be changing to a future raster 
-#                                #with values outside the range of this one
-#                        'scale_max_val':                19.11   
-#                            #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
-#                        }
+                   'gis': {
+                       #parameters for making a scape using a GIS raster file
+                       'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
+                           #filepath to read into this scape
+                       'scale_min_val':                -1.37,
+                           #minimum values to use for rescaling the raster (will be
+                               #rescaled to 0<=x<=1); NOTE: this may be different than the actual minimum 
+                               #value in the raster, especially if raster will be changing to a future raster 
+                               #with values outside the range of this one
+                       'scale_max_val':                19.11   
+                           #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
+                       }
                     } # <END> 'init'
 
         ################

@@ -4,7 +4,7 @@ from structs import landscape
 from structs import population
 import copy
 
-class statstestCases(unittest.TestCase):
+class StatstestCases(unittest.TestCase):
     
     def test_make_population(self): 
 

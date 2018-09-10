@@ -7,7 +7,7 @@
 
 Module name:              genome
 
-Module contents:          - definition of the Genome and Genomic_Architecture classes
+Module contents:          - definition of the Trait, RecombinationPaths, and  GenomicArchitecture classes
                           - function for simulation of genomic architecture, simulation of a new genome, and associated functions
 
 
@@ -26,6 +26,7 @@ from ops import mutation
 
 #other imports
 import numpy as np
+import pandas as pd
 from numpy import random as r
 from collections import OrderedDict as OD
 import random
@@ -68,7 +69,7 @@ class Trait:
         self.loci = np.hstack((self.loci, np.array([*loci])))
         self.n_loci = self.loci.size
 
-class Recomb_Paths:
+class RecombinationPaths:
     def __init__(self, recomb_paths):
         self.recomb_paths = recomb_paths
 
@@ -76,7 +77,7 @@ class Recomb_Paths:
         return(random.sample(self.recomb_paths, n))
 
 
-class Genomic_Architecture:
+class GenomicArchitecture:
     def __init__(self, p, h, r, g_params):
         self.x = 2              #ploidy (NOTE: for now will be 2 by default; later could consider enabling polyploidy)
         self.L = g_params.L              #total length (i.e. number of markers)
@@ -182,7 +183,6 @@ class Genomic_Architecture:
         #otherwise, assign a single locus
         else:
             n = 1
-        #if loci are provided manually, use those
         if loci is not None:
             if not np.iterable(loci):
                 loci = [loci]
@@ -200,8 +200,8 @@ class Genomic_Architecture:
         #if the effect size(s) is/are provided, use those
         if alpha is not None:
             if not np.iterable(alpha):
-                alpha = np.array([alpha])
-            effects = alpha
+                alpha = np.array([alpha]) 
+            effects = np.array([*alpha])
         #else, draw effects from a Gaussian dist with mean 0 and sigma provided by trait params (as per e.g. Yeaman and Whitlock 2011)
         else:
             effects = self.draw_trait_alpha(trait_num, n)
@@ -213,7 +213,7 @@ class Genomic_Architecture:
     
     #method for creating and assigning the r_lookup attribute
     def make_recomb_paths(self):
-        self.recomb_paths = Recomb_Paths(make_recomb_paths_bitarrays(self))
+        self.recomb_paths = RecombinationPaths(make_recomb_paths_bitarrays(self))
 
 
     #method for showing all allele frequencies for the population
@@ -302,14 +302,14 @@ def get_chrom_breakpoints(l_c, L):
     return(breakpoints)
 
 
-#carry out recombination, using the lookup array in a Genomic_Architecture object
+#carry out recombination, using the lookup array in a GenomicArchitecture object
 def make_recombinants(r_lookup, n_recombinants):
     recombinants = np.array([r.choice(r_lookup[i,], size = n_recombinants, replace = True) for i in range(len(r_lookup))])
     recombinants = np.cumsum(recombinants, axis = 0)%2
     return(recombinants)
 
 
-def make_recomb_array(g_params):
+def make_recomb_array(g_params, recomb_values):
     #get L (num of loci) and l_c (if provided; num of loci per chromsome) from the genome params dict
     L = g_params.L
     if ('l_c' in g_params.keys() and g_params['l_c'] != None and len(g_params['l_c']) > 1):
@@ -319,52 +319,37 @@ def make_recomb_array(g_params):
     else:
         l_c = [L]
 
-
     #if g_params.recomb_array (i.e a linkage map) manually provided (will break if not a list, tuple, or np.array), 
     #then set that as the recomb_array, and check that len(recomb_array) == L
-    if ('recomb_array' in g_params.keys() and g_params['recomb_array'] != None):
-        recomb_array = np.array(g_params.recomb_array)
-        assert len(recomb_array) == L, "Length of recomb_array provided not equal to stipulated genome length ('L')."
+    if recomb_values is not None:
+        assert len(recomb_values) == L, ('The length of the the table is the '
+        'custom genomic-architecture file must be equal to the stipulated '
+        "genome length ('L').")
+        recomb_array = recomb_values[:]
 
-        #NOTE: #Always necessary to set the first locus r = 1/ploidy, to ensure independent assortment of homologous chromosomes
-        recomb_array[0] = 0.5
-        #NOTE: for now, obligate diploidy
-        #recomb_array[0] = 1/g_params.x 
-
-        return(recomb_array, sorted(l_c))
-
-    
     #otherwise, create recomb array
     else:
-
         #if a custom recomb_fn is provided, grab it
-        if ('recomb_rate_custom_fn' in g_params.values() and g_params['recomb_rate_custom_fn'] is not None):
-            recomb_rate_fn = g_params.recomb_rate_custom_fn
-            assert callable(recomb_rate_fn), "The 'recomb_rate_custom_fn' provided in the parameters appears not to be defined properly as a callable function."
-            #then call the draw_r() function for each locus, using custom recomb_fn
-            recomb_array = draw_r(g_params, recomb_fn = recomb_rate_fn)
-
-
+        if 'recomb_rate_custom_fn' in g_params.values():
+            if g_params['recomb_rate_custom_fn'] is not None:
+                recomb_rate_fn = g_params.recomb_rate_custom_fn
+                assert callable(recomb_rate_fn), "The 'recomb_rate_custom_fn' provided in the parameters appears not to be defined properly as a callable function."
+                #then call the draw_r() function for each locus, using custom recomb_fn
+                recomb_array = draw_r(g_params, recomb_fn = recomb_rate_fn)
 
         #otherwise, use the default draw_r function to draw recomb rates
         else:
             recomb_array = draw_r(g_params) 
 
+    #if more than one chromosome (i.e. if l_c provided in g_params dict and of length >1), 
+    #set recomb rate at the appropriate chrom breakpoints to 0.5
+    if len(l_c) >1:
+        bps = get_chrom_breakpoints(l_c, L)
+        recomb_array[bps] = 0.5
+    #NOTE: #Always set the first locus r = 0.5, to ensure independent assortment of homologous chromosomes
+    recomb_array[0] = 0.5
 
-        #if more than one chromosome (i.e. if l_c provided in g_params dict and of length >1), 
-        #set recomb rate at the appropriate chrom breakpoints to 0.5
-        if len(l_c) >1:
-            bps = get_chrom_breakpoints(l_c, L)
-            recomb_array[bps] = 0.5
-
-
-        #NOTE: #Always necessary to set the first locus r = 0.5, to ensure independent assortment of homologous chromosomes
-        recomb_array[0] = 0.5
-        #NOTE: for now, obligate diploidy
-        #recomb_array[0] = 1/g_params.x
-
-
-        return(recomb_array, sorted(l_c))
+    return(recomb_array, sorted(l_c))
 
 
 #function to create a lookup array, for raster recombination of larger numbers of loci on the fly
@@ -406,28 +391,64 @@ def make_genomic_architecture(pop_params):
     #get the genome parameters
     g_params = pop_params.genome
 
+    #get the custom genomic-architecture file, if provided
+    gen_arch_file = None
+    if 'gen_arch_file' in g_params.keys():
+        if g_params.gen_arch_file is not None:
+            gen_arch_file = pd.read_csv(g_params.gen_arch_file)
+            assert len(gen_arch_file) == g_params.L, ('The custom '
+            'genomic architecture file must contain a table with number of '
+            'rows equal to the genome length stipulated in the genome '
+            'parameters (params.comm[<pop_num>].genome.L).')
+            assert np.all(gen_arch_file['locus'].values == 
+                          np.array([*range(len(gen_arch_file))])), ('The '
+            "'locus' column of the custom genomic architecture file must "
+            "contain serial integers from 0 to 1 - the length of the table.")
+
     #also get the sex parameter and add it as an item in g_params
     g_params['sex'] = pop_params.mating.sex
 
-    #draw locus-wise 1-allele frequencies
-    p = draw_allele_freqs(g_params.L)  
+    #draw locus-wise 1-allele frequencies, unless provided in custom gen-arch file
+    if gen_arch_file is None: 
+        p = draw_allele_freqs(g_params.L)
+    else:
+        p = gen_arch_file['p'].values
+
+    #get the custom recomb_values, if provided in a custom gen-arch file
+    recomb_values = None
+    if gen_arch_file is not None:
+        recomb_values = gen_arch_file['r'].values
+        assert recomb_values[0] == 0.5, ("The top recombination rate value "
+        "in the custom genomic-architecture file's 'r' column must be set "
+        "to 0.5, to effect independent assortment of sister chromatids.")
 
     #draw locus-wise heterozygosity-effect values
         #TODO: THIS WHOLE FUNCTIONALITY NEEDS TO BE EITHER RETOOLED OR ELSE ERADICATED
     h = draw_h(g_params.L)
-
     
-    r, l_c = make_recomb_array(g_params)
+    r, l_c = make_recomb_array(g_params, recomb_values = recomb_values)
     #in case g_params.l_c was missing or None, because only a single chromosome is being simulated, then
     #replace g_params.l_c with the returned l_c value
     g_params.l_c = l_c
 
     #now make the gen_arch object
-    gen_arch = Genomic_Architecture(p,h, r, g_params)
+    gen_arch = GenomicArchitecture(p,h, r, g_params)
 
-    #add the loci and effect sizes for each of the traits
-    for trait_num in gen_arch.traits.keys():
-        gen_arch.set_trait_loci(trait_num, mutational = False, loci = None)
+    #set the loci and effect sizes for each trait, using the custom gen-arch
+    #file, if provided
+    if gen_arch_file is not None: 
+        trait_effects = {trait_num: 
+            {int(k): v for k,v, in gen_arch_file[gen_arch_file['trait'] == trait_num][['locus','alpha']].values}
+            for trait_num in gen_arch.traits.keys()}
+        #add the loci and effect sizes for each of the traits
+        for trait_num in gen_arch.traits.keys():
+            gen_arch.set_trait_loci(trait_num, mutational = False, 
+                                loci = trait_effects[trait_num].keys(), 
+                                alpha = trait_effects[trait_num].values())
+    #or else randomly set the loci and effect sizes for each trait
+    else:
+        for trait_num in gen_arch.traits.keys():
+            gen_arch.set_trait_loci(trait_num, mutational = False)
 
     assert len(set(range(gen_arch.L)).difference(gen_arch.neut_loci.union(gen_arch.nonneut_loci))) == 0, 'ERROR: The union of the gen_arch.neut_loci and gen_arch.nonneut_loci sets does not contain all loci indicated by gen_arch.L'
 
@@ -456,8 +477,10 @@ def set_genomes(pop, burn_T, T):
     #use mean n_births at tail end of burn-in to estimate number of mutations, and randomly choose set of neutral loci 
     #of that length to go into the pop.gen_arch.mutable_loci attribute
     n_muts = mutation.calc_estimated_total_mutations(pop, burn_T, T)
-    #add 25, just a random small number, to be safe in case n_muts evals to 0
-    n_muts += 25
+    #add a small number if n_muts evaluates to 0
+    if n_muts == 0:
+        neut_loci_remaining = pop.gen_arch.L - len(pop.gen_arch.nonneut_loci)
+        n_muts = min(int(np.ceil(0.1*neut_loci_remaining)), neut_loci_remaining)
     muts = set(r.choice([*pop.gen_arch.neut_loci], n_muts, replace = False))
     pop.gen_arch.mutable_loci.update(muts)
 

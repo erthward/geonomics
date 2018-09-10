@@ -9,7 +9,7 @@ Module name:          ops.demography
 
 Module contains:
                       - Functions to control demography/population dynamics
-                      - a Debug_Plotter class, which will create a series 
+                      - a DebugPlotter class, which will create a series 
                         of plots to help debug the pop_dynamics function
                         (and general model behavior) if that function is 
                         called with debug = True
@@ -46,7 +46,7 @@ from operator import itemgetter
 # -----------------------------------#
 ######################################
 
-class Debug_Plotter:
+class DebugPlotter:
     def __init__(self, land, pop, timestep):
         self.subplot = 241
         self.timestep = timestep
@@ -197,7 +197,7 @@ def do_pop_dynamics(land, pop, with_selection = True, burn = False, births_befor
     #create the debug-plotter, id debug == True
     if debug:
         timestep = -99999
-        dp = Debug_Plotter(land, pop, timestep)
+        dp = DebugPlotter(land, pop, timestep)
 
     #find mating pairs
     pairs = pop.find_mating_pairs()

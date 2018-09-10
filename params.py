@@ -45,10 +45,13 @@ params = {
             'res':                      (1,1),
                 #landscape resolution in x and y dimensions (for crosswalking with real-world 
                 #distances; defaults to meaningless (1,1), will be reset if GIS rasters are read in 
-            'ulc':                      (0,0)
+            'ulc':                      (0,0),
                 #upper-left corner of the landscape; defaults to meaningless (0,0), can be set 
                 #to alternative values for crosswalking with real-world data, and will be 
                 #reset if GIS rasters are read in 
+            'prj':                      None,
+                #projection of the landscape; only applicable if layers are to
+                #be read in from a raster file; defaults to None
             }, # <END> 'main'
 
     ################
@@ -84,12 +87,13 @@ params = {
 #                                #the scape_pt_vals array, to be used as the points
 #                                #to be interpolated; only needed if rand == False)
 #                        'vals':                      None,
-#                            #point values to use to interpolate defined landscape layers (a  1xn Numpy array, 
+#                            #point values to use to interpolate defined landscape layers (a 1xn Numpy array, 
 #                                #where n matches the number of points in scape_pt_coords arrays;
 #                                #only needed if rand == False)
 #                        'interp_method':                None
 #                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
 #                        },
+<<<<<<< HEAD
                    'gis': {
                        #parameters for making a scape using a GIS raster file
                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
@@ -102,6 +106,20 @@ params = {
                        'scale_max_val':                19.11   
                            #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
                        }
+=======
+#                    'file': {
+#                        #parameters for making a scape using a GIS raster file or a numpy txt array
+#                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
+#                            #filepath to read into this scape
+#                        'scale_min_val':                -1.37,
+#                            #minimum values to use for rescaling the raster (will be
+#                                #rescaled to 0<=x<=1); NOTE: this may be different than the actual minimum 
+#                                #value in the raster, especially if raster will be changing to a future raster 
+#                                #with values outside the range of this one
+#                        'scale_max_val':                19.11   
+#                            #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
+#                        }
+>>>>>>> master
                     } # <END> 'init'
 
         ################
@@ -160,8 +178,8 @@ params = {
 #                        'interp_method':                None
 #                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
 #                        },
-#                    'gis': {
-#                        #parameters for making a scape using a GIS raster file
+#                    'file': {
+#                        #parameters for making a scape using a GIS raster file or a numpy txt array
 #                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
 #                            #filepath to read into this scape
 #                        'scale_min_val':                -1.37,
@@ -212,7 +230,7 @@ params = {
             ##############
 
                 'init': {
-                    'name': 'pop0',         
+                    'name': 'pop0',
                         #each pop can take a unique string name (e.g. 'pop0', 'south', 'C_fasciata')
                     'N':                200,
                         #starting population size
@@ -331,10 +349,15 @@ params = {
                 'genome': {
                     'L':                        1000,
                         #total number of loci
-                    'l_c':                      [500, 500],
+                    'l_c':                      [500,300,200],
                         #chromosome lengths [sum(l_c) == L enforced]
-                    'recomb_array':             None,
-                        #predetermined linkage map to use for the simulated loci (optional)
+                    'gen_arch_file':            None,
+                        #if not None, should point to a file stipulating a
+                            #custom genomic architecture (i.e. a CSV with loci 
+                            #as rows and 'locus_num', 'p', 'r', 'trait', and 
+                            #'alpha' as columns, such as is created by
+                            #main.make_params_file, when the custom_gen_arch
+                            #arugment is True)
                     'mu_neut':          1e-9,
                         #genome-wide neutral mutation rate, per base per generation
                             #(set to 0 to disable neutral mutation)
@@ -384,7 +407,7 @@ params = {
                                 #phenotypic selection coefficient for this trait; can either be a 
                                     #numeric value, or can be an array of spatialized selection 
                                     #values (with dimensions equal to land.dims)
-                            'n_loci':           10,
+                            'n_loci':           1,
                                 #number of loci to be assigned to this trait
                             'mu':      1e-9,
                                 #mutation rate for this trait (if set to 0, or if genome['mutation'] == False, no mutation will occur)
@@ -416,7 +439,7 @@ params = {
                                 #phenotypic selection coefficient for this trait; can either be a 
                                     #numeric value, or can be an array of spatialized selection 
                                     #values (with dimensions equal to land.dims)
-                            'n_loci':           1,
+                            'n_loci':           10,
                                 #number of loci to be assigned to this trait
                             'mu':      1e-9,
                                 #mutation rate for this trait (if set to 0, or if genome['mutation'] == False, no mutation will occur)
@@ -520,7 +543,6 @@ params = {
 ###############
 
     'model': {
-        'name': 'sample_model',
         'seed': {
             #parameters to control whether and how to set the seed
             'set':          True,
@@ -546,7 +568,7 @@ params = {
         'time': {
             #parameters to control the number of burn-in and main timesteps to
             #run for each iterations
-            'T':            10,
+            'T':            12,
                 #total model runtime (in timesteps)
             'burn_T':       30
                 #minimum burn-in runtime (in timesteps; this is a mininimum because 
@@ -556,30 +578,55 @@ params = {
         'data': {
             #dictionary defining the data to be collected, the sampling 
             #strategy to use, the timesteps for collection, and other parameters
-            'sampling_args': {
+            'sampling': {
                 #args to be unpacked into sampling function (see docstring 
                     #of sample_data function in data module for details)
-                'scheme':           'random',
+                'scheme':               'random',
                     #valid: 'all', 'random', 'point', or 'transect'
-                'n':            50        
+                'n':                    50,
                     #size of samples to be collected (in number of individuals)
+                'points':               None,
+                    #the x,y points at which data should be sampled (expressed
+                        #as a list or tuple of length-2 lists or 2-tuples)
+                'transect_endpoints':   [(0,0), (20,20)],
+                    #endpoints of the transect to be sampled (only needed if
+                        #scheme is 'transect), expressed as a pair of 
+                        #ordered x,y pairs (in tuples or lists)
+                'n_transect_points':    4,
+                    #the number of evenly spaced points along the transect
+                    #at which to sample (only needed if scheme is 'transect')
+                'radius':               2,
+                    #radius around sampling points within which to sample
+                    #individuals (only needed is scheme is 'point' or
+                    #'transect')
+                'when':                 10,
+                    #can be an integer (in which case data will be collected every 
+                    #that many timesteps, plus at the end) or a list of specific
+                    #timesteps; a value of 0 or None will default to a single
+                    #data-collection step after the model has run
+                'include_land':         True,
+                    #if True, will save the Land object each time other data is saved 
+                    #(probably only useful if land is changing in some way not manually coded by the user)
+                'include_fixed_sites':  False,
+                    #if True, and if genetic data is to be formatted as VCFs,
+                        #the VCFs will contain fixed sites, not just variants
+                        #(defaults to False)
                 },
-            'freq':                 15,
-                #can be an integer (in which case data will be collected every 
-                #that many timesteps, plus at the end) or a list of specific timesteps
-            'include_land':         False,
-                #if True, will save the Land object each time other data is saved 
-                #(probably only useful if land is changing in some way not manually coded by the user)
-            'gen_data_format':      'vcf',
-                #can be 'vcf', 'fasta', or 'ms'
-            'geo_point_format':     'csv', 
-                #format to use for saving geographic points; currently valid: 'csv', 'shapefile'
-            'geo_rast_format':      'geotiff',
-                #format to use for saving geographic raster; currently valid: 'geotiff'
-            'run_name':             'test',
-                #a name for this parameterization and run (used to name the data_directory and files)
-            'write_intermittent':   True,
-            'drop_after_write':     True
+            'format': {
+                'gen_format':           ['vcf', 'fasta'],
+                    #format to use for saving genetic data; 
+                        #currently valid values: 'vcf', 'fasta', 
+                        #or a list containing both, if both 
+                        #should be written
+                'geo_vect_format':      'csv',
+                    #format to use for saving geographic points; 
+                        #currently valid values: 'csv', 'shapefile', 'geojson'
+                'geo_rast_format':      'geotiff',
+                    #format to use for saving landscape rasters (which will
+                        #only be saved if the 'include_land' parameter in the
+                        #sampling subdict is True);
+                        #currently valid values: 'geotiff', 'txt'
+                },
             }, #<END> 'data'
 
         'stats': {
@@ -590,10 +637,24 @@ params = {
                     # 'het' : heterozygosity
                     # 'maf' : minor allele frequency
                     # 'ld'  : linkage disequilibrium
-            'Nt':       {'calc' : True, 'freq': 1},
-            'het':      {'calc' : True, 'freq': 1},
-            'maf':      {'calc' : True, 'freq': 1},
-            'ld':       {'calc' : True, 'freq': 1}
+                    # 'mean_trt_fit' : mean trait fitness (i.e. not including
+                                       #deleterious mutations)
+            'Nt':       {'calc': True,
+                         'freq': 2,
+                        },
+            'het':      {'calc': True,
+                         'freq': 1,
+                         'mean': False,
+                        },
+            'maf':      {'calc': True,
+                         'freq': 5,
+                        },
+            #'ld':       {'calc': True,
+            #             'freq': 10,
+            #            },
+            'mean_trt_fit': {'calc': True,
+                             'freq': 3,
+                        },
             }, # <END> 'stats'
 
         } # <END> 'model'

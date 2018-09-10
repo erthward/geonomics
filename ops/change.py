@@ -40,16 +40,8 @@ from copy import deepcopy
         #to just further generalize the dem-change functions to allow for linear, stochastic, cyclic, or custom
         #changes of other param values?
 
-    #2 do I need to create a Gen_Changer?
-
-    #3 then write the overall Sim_Changer class to unite everything? or should the Changers actually be
-        #created and made to inhere as attributes of the Landscape_Stack and Population classes instead?
-
-        #4 as soon as I revamp the movement_surf so that it's a pop attribute rather than a land attribute then
-        #this will likewise need to be revamped! (because right now movement_surf changes are lumped with landscape changes)
-
-    #5 I think this can be standardized (e.g. Land_Changer get_<   >_change_fns functions I believe return just the
-    #functions, whereas Pop_Changer ones return list(zip(t, change_fn)) objects) and generalized still
+    #5 I think this can be standardized (e.g. LandChanger get_<   >_change_fns functions I believe return just the
+    #functions, whereas PopChanger ones return list(zip(t, change_fn)) objects) and generalized still
     #further. Worth doing now, while the code is fresh in my head...
 
 
@@ -112,9 +104,9 @@ class Changer:
         self.changes = iter(changes)
 
 
-class Land_Changer(Changer):
+class LandChanger(Changer):
     def __init__(self, land, land_change_params):
-        super(Land_Changer, self).__init__(land_change_params)
+        super(LandChanger, self).__init__(land_change_params)
         #set the type-label of the changer
         self.type = 'land'
 
@@ -133,13 +125,21 @@ class Land_Changer(Changer):
         scapes = {}
         surfs = {}
         for scape_num in self.change_params.keys():
-            scape_series, dim, res, ulc = make_linear_scape_series(land[scape_num].rast, **self.change_params[scape_num])
-            assert dim == land.dim, 'ERROR: dimensionality of scape_series fed into Land_Changer does not match that of the land to be changed.'
-            assert res == land.res or res is None, 'ERROR: resolution of scape_series fed into Land_Changer does not match that of the land to be changed.'
-            assert ulc == land.ulc or ulc is None, 'ERROR: upper-left corner of scape_series fed into Land_Changer does not match that of the land to be changed.'
+            scape_series, dim, res, ulc, prj = make_linear_scape_series(land[scape_num].rast, **self.change_params[scape_num])
+            assert dim == land.dim, ('Dimensionality of scape_series fed into '
+                'LandChanger does not match that of the land to be changed.')
+            assert res == land.res or res is None, ('Resolution of scape_series'
+                'fed into LandChanger does not match that of the land to be '
+                'changed.')
+            assert ulc == land.ulc or ulc is None, ('Upper-left corner of '
+                'scape_series fed into LandChanger does not match that of '
+                'the land to be changed.')
+            assert prj == land.prj or prj is None, ('Projection of '
+            'scape_series fed into LandChanger does not match that of the '
+            'land to be changed.')
             scapes[scape_num] = scape_series
 
-            #set the Land_Changer.change_info attribute, so that it can be grabbed later for building move_surf and other objects
+            #set the LandChanger.change_info attribute, so that it can be grabbed later for building move_surf and other objects
             self.change_info[scape_num] = {**self.change_params[scape_num]}
             self.change_info[scape_num]['end_rast'] = scape_series[-1][1]
 
@@ -158,9 +158,9 @@ class Land_Changer(Changer):
         self.set_next_change()
 
 
-class Pop_Changer(Changer):
+class PopChanger(Changer):
     def __init__(self, pop, pop_change_params, land=None):
-        super(Pop_Changer, self).__init__(pop_change_params)
+        super(PopChanger, self).__init__(pop_change_params)
         self.type = 'pop'
         
         #an attribute that is used by some dem-change fns, as a baseline population size at the start of the
@@ -240,25 +240,6 @@ class Pop_Changer(Changer):
         #set pop back to its original value
         pop = cop_pop
             
-
-class Gen_Changer:
-    def __init__(self, change_vals, params):
-        self.type = 'gen'
-
-
-#an overall Sim_Changer class, which will contain and operate the Land_, Pop_, and Gen_Changer objects
-#and will make each timestep's necessary changes in that order (land-level changes, then population, then genome)
-class Sim_Changer:
-    def __init__(self, changers, params):
-        type_getter = ag('type')
-        valid_changer_types = ['land', 'pop', 'gen']
-        types = list(map(type_getter, changers))
-        for t in types:
-            setattr(self, t, [changer for changer in changers if changer.type == t])
-        for t in set(valid_changer_types) - set(types):
-            setattr(self, t, None)
-
-
 ######################################
 # -----------------------------------#
 # FUNCTIONS -------------------------#
@@ -266,7 +247,7 @@ class Sim_Changer:
 ######################################
 
     ####################
-    # for Land_Changer #
+    # for LandChanger #
     ####################
     
 #function that takes a starting scape, an ending scape, a number of timesteps, and a Model object,
@@ -275,12 +256,13 @@ def make_linear_scape_series(start_rast, end_rast, start_t, end_t, n_steps):
     assert start_rast.shape == end_rast.shape, 'ERROR: The starting raster and ending raster for the land-change event are not of the same dimensions: START: %s,  END %s' % (str(start_rast.shape), str(end_rast.shape))
 
     if type(end_rast) is str:
-        end_rast, dim, ulc, res = io.read_raster(end_rast)
+        end_rast, dim, res, ulc, prj = io.read_raster(end_rast)
 
     elif type(end_rast) is np.ndarray:
         dim = end_rast.shape
         ulc = None
         res = None
+        prj = None
         
     #get (rounded) evenly spaced timesteps at which to implement the changes
     timesteps = np.int64(np.round(np.linspace(start_t, end_t, n_steps)))
@@ -298,7 +280,7 @@ def make_linear_scape_series(start_rast, end_rast, start_t, end_t, n_steps):
     assert len(rast_series) == len(timesteps), "ERROR: the number of changing rasters created is not the same as the number of timesteps to be assigned to them"
     #zip the timesteps and the rasters together and return them as a list
     rast_series = list(zip(timesteps, rast_series))
-    return(rast_series, dim, res, ulc)
+    return(rast_series, dim, res, ulc, prj)
 
 
 #function that takes a Landscape_Stack, a scape_num and a dictionary of {t_change:new_scape} 
@@ -315,14 +297,14 @@ def get_scape_change_fn(land, scape_num, new_scape):
 
 
     ###################
-    # for Pop_Changer #
+    # for PopChanger #
     ###################
 
 def make_movement_surface_series(start_scape, end_rast, start_t, end_t, n_steps, t_res_reduct_factor=1):
     #get the time-series of scapes across the land-change event (can be at a reduced temporal resolution determined
     #by t_res_reduct_factor, because probably unnecessary to change the move_surf every time the land changes,
     #and the move_surf can be a fairly large object to hold in memory; but t_res_reduct_factor defaults to 1)
-    scape_series, dim, res, ulc = make_linear_scape_series(start_scape.rast, end_rast, start_t, end_t, int(n_steps*t_res_reduct_factor))
+    scape_series, dim, res, ulc, prj = make_linear_scape_series(start_scape.rast, end_rast, start_t, end_t, int(n_steps*t_res_reduct_factor))
     #then get the series of move_surf objects
     surf_series = []
     dummy_scape = deepcopy(start_scape)
@@ -476,20 +458,4 @@ def get_parameter_change_fns(pop, parameter, timesteps, vals):
     assert len(timesteps) == len(vals), "ERROR: For custom changes of the '%s' paramter, timesteps and vals must be iterables of equal length." % param
     change_fns = make_parameter_change_fns(pop, param, timesteps, vals)
     return(change_fns)
-
-
-    ###################
-    # for Gen_Changer #
-    ###################
-
-
-    ###################
-    # for Sim_Changer #
-    ###################
-
-
-    ###################
-    #     Others      #
-    ###################
-    
 

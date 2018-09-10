@@ -36,7 +36,8 @@ from structs import population
 #NOTE: this class won't be doing too much right away, but it lays the foundation 
 #for enabling interactions between populations (i.e. species) further down the road
 class Community(dict):
-    def __init__(self, pops):
+    def __init__(self, land, pops):
+        self.land = land
         self.update(pops)
         self.n_pops = len(pops)
         self.t = -1 #counter for timesteps (starts at -1, to indicate that the
@@ -46,6 +47,7 @@ class Community(dict):
         #has successfully completed, and will be used by the Model object to determine whether 
         #or not burn-in needs to happen each iteration)
         self.burned = False
+
 
     #method to increment the self.t attribute (the timestep counter)
     def set_t(self):
@@ -64,5 +66,5 @@ class Community(dict):
 #function for making a community using a Land object and params
 def make_community(land, params, burn=False):
     pops = {k: population.make_population(land = land, pop_params = params.comm.pops[k], burn = burn) for k in params.comm.pops.keys()}
-    return Community(pops) 
+    return Community(land, pops) 
 

@@ -46,15 +46,19 @@ from shapely import geometry as g
 ######################################
 
 class Scape:
-    def __init__(self, rast, scape_type, name, dim, res=(1,1), ulc = (0,0), scale_min=0, scale_max=1):
+    def __init__(self, rast, scape_type, name, dim, res=(1,1), ulc = (0,0),
+                 prj=None, scale_min=0, scale_max=1):
         self.idx = None
         self.type = scape_type
         self.name = name
         self.dim = dim
         assert type(self.dim) in [tuple, list], "dim must be expressed on a tuple or a list"
-        #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc) to defaults; will be reset if landscape read in from a GIS raster
-        self.res = res  
+        #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc)
+        #to defaults; will be reset if landscape read in from a GIS raster or
+        #numpy txt array file
+        self.res = res
         self.ulc = ulc
+        self.prj = prj
         self.rast = rast
         assert type(self.rast) == np.ndarray, "rast should be a numpy.ndarray"
         self.scale_min = scale_min
@@ -76,6 +80,23 @@ class Scape:
         plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
         viz.show_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, mask_val = mask_val, vmin = vmin, vmax = vmax)
 
+    #method for writing the scape's raster to a file of the specified format
+    def write_raster(self, filepath, raster_format):
+        assert raster_format in ['geotiff', 'txt'], ("The raster_format "
+            "must be one of the following: 'geotiff', 'txt'.")
+        if raster_format == 'geotiff':
+            self.write_geotiff(filepath)
+        elif raster_format == 'txt':
+            self.write_txt_array(filepath)
+
+    #method for writing the scape's raster to a geotiff raster file
+    def write_geotiff(self, filepath):
+        io.write_geotiff(filepath, self)
+
+    #method for writing the scape's raster to a numpy txt array
+    def write_txt_array(self, filepath):
+        io.write_txt_array(filepath, self)
+
 
 class Land(dict):
 
@@ -83,7 +104,7 @@ class Land(dict):
     ### SPECIAL METHODS ###
     #######################
 
-    def __init__(self, scapes, params=None, res=(1,1), ulc = (0,0)):
+    def __init__(self, scapes, res=(1,1), ulc=(0,0), prj=None):
         #check the scapes dict is correct, then update the Land with it
         assert False not in [scape.__class__.__name__ == 'Scape' for scape in scapes.values()], 'ERROR: All landscapes supplied in scapes must be of type landscape.Scape.'
         self.update(scapes)
@@ -102,20 +123,37 @@ class Land(dict):
         self.dim = list(self.values())[0].dim
         #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
         self.dim_om = max([len(str(d)) for d in self.dim]) 
-        #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc) to 0th scape's values (equality
-        #across scapes should already have been checked); will be reset if landscape read in from a GIS raster
-        self.res = [*self.values()][0].res
-        self.ulc = [*self.values()][0].ulc
-        self.set_scapes_res_ulc()
+        #set the resoultion (res; i.e. cell-size), upper-left corner (ulc), and
+        #projection (prj) to the provided values
+        self.res = res
+        self.ulc = ulc
+        self.prj = prj
+        #TODO: DO I ACTUALLY HAVE TO RUN THIS LINE?
+        #self.set_scapes_res_ulc_prj()
+        #And check that the Scapes' res, ulc, and prj values are equal to 
+        #the Land's values
+        assert np.all([scape.res == self.res for scape in self.values()]), ("Not"
+            " all Scapes have the same resolution value (attribute 'res') "
+            "as the 'res' value being used to create the Land object that "
+            "should contain them.")
+        assert np.all([scape.ulc == self.ulc for scape in self.values()]), ("Not"
+            " all Scapes have the same upper-left corner value (attribute "
+            " 'ulc') as the 'ulc' value being used to create the Land object "
+            "that should contain them.")
+        assert np.all([scape.prj == self.prj for scape in self.values()]), ('Not'
+            " all Scapes have the same projection (attribute 'prj') "
+            "as the 'prj' value being used to create the Land object that "
+            "should contain them.")
 
-        #create a changer attribute that defaults to None but will be set to an ops.change.Land_Changer object
-        #if params call for it
+        #create a changer attribute (defaults to None, but will later be set
+        #to an ops.change.LandChanger object if params call for it)
         self.changer = None
 
         self.island_mask_scape_num = None
 
     #define the __str__ and __repr__ special methods
-    #NOTE: this doesn't excellently fit the Python docs' specification for __repr__; I should massage this #some more once I'm done writing the codebase
+    #NOTE: this doesn't excellently fit the Python docs' specification for 
+    #__repr__; I should massage this some more when done writing the codebase
     def __str__(self):
         type_str = str(type(self))
         scapes_str = '\n%i Scapes:\n' % self.n_scapes
@@ -136,9 +174,10 @@ class Land(dict):
         self[scape_num].rast = rast
 
     #method to res all scapes' res and ulc attributes 
-    def set_scapes_res_ulc(self):
+    def set_scapes_res_ulc_prj(self):
         [setattr(scape, 'res', self.res) for scape in self.values()]
         [setattr(scape, 'ulc', self.ulc) for scape in self.values()]
+        [setattr(scape, 'prj', self.prj) for scape in self.values()]
 
     #method to make landscape changes
     def make_change(self, t):
@@ -210,7 +249,6 @@ class Land(dict):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)
-
 
 ######################################
 # -----------------------------------#
@@ -290,17 +328,23 @@ def make_land(params, num_hab_types=2):
     dim = params.land.main.dim
     res = params.land.main.res
     ulc = params.land.main.ulc
+    prj = params.land.main.prj
     if res is None:
         res = (1,1)
     if ulc is None:
         ulc = (0,0)
+    #leave default projection as None for now
+    if prj is None:
+        prj = None
 
     #create a dictionary to hold all the scapes to be created
     scapes = {}
 
-    #create a list to hold the information for any GIS rasters to be created (because they will all be created
-    #after the loop over the scapes, so that it's simpler to check agreement among raster resoultions and registrations
-    gis_scape_params = {'names': [], 'scape_nums':[], 'filepaths':[], 'scale_min_vals':[], 'scale_max_vals':[]}
+    #create a list to hold the information for any rasters to be created from
+    #file (because they will all be created after the loop over the scapes, so
+    #that it's simpler to check agreement among raster resolutions and 
+    #registrations
+    file_scape_params = {'names': [], 'scape_nums':[], 'filepaths':[], 'scale_min_vals':[], 'scale_max_vals':[]}
 
     #then loop over the scapes in params.land.scapes and create each one
     for n, (k, scape_params) in enumerate(params.land.scapes.items()):
@@ -311,12 +355,19 @@ def make_land(params, num_hab_types=2):
         #get the scape name
         name = init_params.pop('name')
 
-        #determine which type of scape this is to be (valid: 'rand', 'defined', 'gis')
+        #determine which type of scape this is to be (valid: 'rand', 'defined', 'file')
         init_keys = [*init_params]
         if len(init_keys) > 1:
-            raise ValueError('ERROR: The %ith scape (params["land"]["scapes"] key "%s") appears to have parameters for more than one scape type.  Choose a single scape type (valid values: "rand", "defined", "gis") and provide a sub-dictionary of parameters for only that type.' % (n, str(k)))
+            raise ValueError(('ERROR: The %ith scape (params["land"]["scapes"] '
+                'key "%s") appears to have parameters for more than one scape '
+                'type.  Choose a single scape type (valid values: "rand", '
+                '"defined", "file") and provide a sub-dictionary of parameters '
+                'for only that type.') % (n, str(k)))
         scape_type = init_keys[0] 
-        assert scape_type in ['rand', 'defined', 'gis'], 'ERROR: The parameters sub-dictionary for the %ith scape (params["land"]["scapes"] key "%s") has an invalid key value. Valid keys are: "rand", "defined", "gis".' % (n, str(k))
+        assert scape_type in ['rand', 'defined', 'file'], ('ERROR: The '
+        'parameters sub-dictionary for the %ith scape (params["land"]'
+        '["scapes"] key "%s") has an invalid key value. Valid keys are: '
+        '"rand", "defined", "file".') % (n, str(k))
 
         #create a random scape, if called for
         if scape_type == 'rand':
@@ -328,44 +379,45 @@ def make_land(params, num_hab_types=2):
             #create the defined raster
             scapes[n] = Scape(make_defined_scape(dim, **init_params[scape_type], num_hab_types=num_hab_types), scape_type = scape_type, name = name, dim = dim, res = res, ulc = ulc)
 
-        #or else create a GIS scape
-        elif scape_type == 'gis':
+        #or else create a scape from file
+        elif scape_type == 'file':
             #set this scape to None, temporarily
             scapes[n] = None
-            #then store the relevant info for this scape in the gis_scape_params dict; this scape's raster
-            #will be replaced with a GIS raster after the Land is #created (NOTE: easier to do this all at 
+            #then store the relevant info for this scape in the file_scape_params dict; this scape's raster
+            #will be replaced with a GIS or numpy raster after the Land is #created (NOTE: easier to do this all at 
             #once afterward, to check that the resolution and registration of the rasters all agree)
-            gis_scape_params['scape_nums'].append(n)
-            gis_scape_params['names'].append(name)
-            [gis_scape_params[k+'s'].append(v) for k,v in init_params[scape_type].items()]
+            file_scape_params['scape_nums'].append(n)
+            file_scape_params['names'].append(name)
+            [file_scape_params[k+'s'].append(v) for k,v in init_params[scape_type].items()]
 
-    #now set the necessary layers to their GIS rasters, if applicable
-    if True in [len(v) > 0 for v in gis_scape_params.values()]:
-        gis_scapes, res, ulc = get_gis_rasters(land_dim = dim, **gis_scape_params)
-        for n in gis_scape_params['scape_nums']:
-            scapes[n] = gis_scapes[n]
+    #now set the necessary layers to their file rasters, if applicable
+    if True in [len(v) > 0 for v in file_scape_params.values()]:
+        file_scapes, res, ulc, prj = get_file_rasters(land_dim = dim, **file_scape_params)
+        for n in file_scape_params['scape_nums']:
+            scapes[n] = file_scapes[n]
 
     #create the land object
-    land = Land(scapes, params=params, res=res, ulc=ulc)
+    land = Land(scapes, res=res, ulc=ulc, prj=prj)
 
     #grab the change parameters into a dictionary of scape_num:events:events_params hierarchical
     change_params = {k:v.change for k,v in params.land.scapes.items() if 'change' in v.keys()} 
-    #and then replace the land.changer attribute with an ops.change.Land_Changer object, if params call for it
+    #and then replace the land.changer attribute with an ops.change.LandChanger object, if params call for it
     if len(change_params) > 0:
-        land.changer = change.Land_Changer(land, change_params) 
+        land.changer = change.LandChanger(land, change_params) 
 
     return land
 
 
-def get_gis_rasters(land_dim, names, scape_nums, filepaths, scale_min_vals, scale_max_vals):
+def get_file_rasters(land_dim, names, scape_nums, filepaths, scale_min_vals, scale_max_vals):
     assert len(scape_nums)==len(filepaths), 'ERROR: Parameters provide a different number of GIS raster files to read in than of scape numbers to set them to .'
     res = []
     ulc = []
+    prj = []
     rasters = []
     scapes = []
     for n,filepath in enumerate(filepaths):
-        #get the array, dim, top-left, and res from io.read_raster
-        rast_array, rast_dim, rast_ulc, rast_res = io.read_raster(filepath)
+        #get the array, dim, res, upper-left corner, and projection from io.read_raster
+        rast_array, rast_dim, rast_res, rast_ulc, rast_prj = io.read_raster(filepath, dim)
         #check that the dimensions are right
         assert rast_dim == land_dim, 'ERROR: land_dim and the dimensions of the input raster %s appear to differ. Please clip %s to the correct dimensions and try again. %s has dimensions (%i, %i), but land has dimensions (%i,%i)' % (filepath, filepath, filepath, rast_dim[0], rast_dim[1], land_dim[0], land_dim[1])
         #scale the raster to 0<=x<=1
@@ -375,25 +427,38 @@ def get_gis_rasters(land_dim, names, scape_nums, filepaths, scale_min_vals, scal
         #and add the raster's ulc and res attributes to the appropriate lists
         res.append(tuple(rast_res))
         ulc.append(tuple(rast_ulc))
+        prj.append(rast_prj)
         #and update scale_min_vals and scale_max_vals if the values used in spt.scale_raster() don't equal the
         #values from params (should only occur if the params values provided were None)
         if scale_min != scale_min_vals[n]:
             scale_min_vals[n] = scale_min
         if scale_max != scale_max_vals[n]:
             scale_max_vals[n] = scale_max
-    #check that there is only one unique tuple each in res_list and ulc list (otherwise rasters are not in the same projection and/or registration)
+    #check that there is only one unique tuple each in res and ulc lists,
+    #and only one unique WKT string in the prj list
+    #(otherwise rasters are not in the same projection and/or registration)
     res_C = C(res)
     ulc_C = C(ulc)
-    assert len(res_C) == 1 and list(res_C.values())[0] == len(res), 'ERROR: Some of the GIS rasters read in appear to differ in resolution.'
-    assert len(ulc_C) == 1 and list(ulc_C.values())[0] == len(ulc), 'ERROR: Some of the GIS rasters read in appear to differ in registration (i.e. top-left corner).'
+    prj_C = C(prj)
+    assert len(res_C) == 1 and list(res_C.values())[0] == len(res), ('Some of '
+            'the rasters read in from file appear to differ in resolution.')
+    assert len(ulc_C) == 1 and list(ulc_C.values())[0] == len(ulc), ('Some of '
+            'the rasters read in from file appear to differ in registration (i.e. '
+            'top-left corner).')
+    assert len(prj_C) == 1 and list(prj_C.values())[0] == len(prj), ('Some of '
+            'the rasters read in from file appear to have different projections.')
     #then get the res and ulc values
     res = res[0]
     ulc = ulc[0]
+    prj = prj[0]
     #create scapes from the rasters
-    scapes = [Scape(rast, scape_type = 'gis', name = name, dim = land_dim, res = res, ulc = ulc, scale_min=scale_min, scale_max=scale_max) for scape_num, name, rast, scale_min, scale_max in zip(scape_nums, names, rasters, scale_min_vals, scale_max_vals)]
-    return(scapes, res, ulc)
+    scapes = [Scape(rast, scape_type = 'file', name = name, dim = land_dim,
+            res = res, ulc = ulc, prj = prj, scale_min=scale_min,
+            scale_max=scale_max) for scape_num, name, rast, scale_min,
+            scale_max in zip(scape_nums, names, rasters, scale_min_vals, scale_max_vals)]
+    return(scapes, res, ulc, prj)
 
-        
+
 # function for reading in a pickled landscape stack
 def read_pickled_land(filename):
     import cPickle

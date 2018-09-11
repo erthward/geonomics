@@ -23,7 +23,7 @@ Documentation:        URL
 '''
 
 #geonomics imports
-from sim import model
+from sim import model, params
 
 #other imports
 import re
@@ -116,17 +116,30 @@ def make_params_file(filename, n_scapes, n_pops, scape_change=None,
                     df.to_csv(os.path.splitext(filename)[0] + 
                               '_pop%i_gen_arch_.csv' % n, index = False)
 
-
-
-def read_params_file(params_file):
-    name = os.path.splitext(os.path.split(params_file)[-1])[0]
-    params = sim.params.read(params_file)
-    params['name'] = name
+#wrapper around params.read
+def read_params(params_filepath):
+    sim.params.read(params_filepath)
     return(params)
 
 
-def make_model(params_file, verbose=False):
-    mod = model.Model(name, params, verbose=verbose)
-    return(mod)
-
+#function to create a model from a ParamsDict object
+def make_model(params, verbose=False):
+    #TODO: ASSERT THAT params is either a ParamsDict object 
+    #OR a filepath (and if so, that it can be turned into a ParamsDict object)
+    if type(params) is str:
+        try:
+            params = read_params(params)
+        except Exception as e:
+            raise ValueError(("Failed to read the parameters file at the "
+                "filepath that was provided. The following error was raised: "
+                "\n\t%s\n\n") % e)
+    elif type(params) == "<class '__main__.Params_Dict'>":
+        pass
+    try:
+        model = model.Model(name, params, verbose=verbose)
+        return(model)
+    except Exception as e:
+            raise ValueError(("Failed to create a Model object from the "
+                "ParamsDict object that was provided. "
+                "The following error was raised: \n\t%s\n\n") % e)
 

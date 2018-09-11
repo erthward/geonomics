@@ -7,7 +7,7 @@
 Module name:              sim/params
 
 Module contents:          - definition of the parameters-file strings
-                          - definition of the __DynAttrDict__ and ParamsDict
+                          - definition of the __DynAttrDict__ and ParametersDict
                             classes
                           - definiton of functions for making and reading
                             params files
@@ -66,7 +66,7 @@ import numpy as np
     #%s = its_params,
     #%s = data_params,
     #%s = stats_params,
-MAIN_BLOCK = '''
+PARAMS = '''
 params = {
 
 ##############
@@ -172,7 +172,8 @@ SCAPE_PARAMS = '''
 '''
 
 #the block of random-scape parameters
-RAND_SCAPE_PARAMS = ''''rand': {
+RAND_SCAPE_PARAMS = '''
+                    'rand': {
                         #parameters for making a scape using interpolation from randomly located random values
                         'n_pts':                        500,
                             #number of random coordinates to be used in generating random landscapes
@@ -183,7 +184,8 @@ RAND_SCAPE_PARAMS = ''''rand': {
 '''
 
 #the block of defined-scape parameters
-DEFINED_SCAPE_PARAMS = ''''defined': {
+DEFINED_SCAPE_PARAMS = '''
+                    'defined': {
                         #parameters for making a scape using interpolation from a defined set of valued points
                         'pts':                    None,
                             #coords of points to use to interpolate defined scape (provided as
@@ -200,7 +202,8 @@ DEFINED_SCAPE_PARAMS = ''''defined': {
 '''
 
 #the block of file-scape parameters
-FILE_SCAPE_PARAMS = ''''file': {
+FILE_SCAPE_PARAMS = '''
+                    'file': {
                         #parameters for making a scape using a GIS raster file or a numpy txt array
                         'filepath':                     '/PATH/TO/FILE.EXT',
                             #filepath to read into this scape
@@ -238,9 +241,9 @@ SCAPE_CHANGE_PARAMS = '''
     #%i = pop_num,
     #%i = pop_num,
     #%s = islands_params,
-    #%s = movement_params,
+    #%s = move_params,
     #%s = genome_params,
-    #%s = pop_change_params,
+    #%s = change_params,
     #%i = pop_num,
 POP_PARAMS = '''
             %i  :   {
@@ -337,7 +340,7 @@ ISLANDS_PARAMS = '''
 #block for movement params
 #STRING SLOTS:
     #%s = move_surf_params
-MOVEMENT_PARAMS = '''
+MOVE_PARAMS = '''
             ##################
             #### movement ####
             ##################
@@ -390,10 +393,10 @@ GENOME_PARAMS = '''
             ################
 
                 'genome': {
-                    'L':                        1000,
+                    'L':                        10,
                         #total number of loci
-                    'l_c':                      [500,300,200],
-                        #chromosome lengths [sum(l_c) == L enforced]
+                    'l_c':                      [10],
+                        #chromosome lengths [sum(l_c) == L is enforced]
                     'gen_arch_file':            None,
                         #if not None, should point to a file stipulating a
                             #custom genomic architecture (i.e. a CSV with loci
@@ -401,27 +404,27 @@ GENOME_PARAMS = '''
                             #'alpha' as columns, such as is created by
                             #main.make_params_file, when the custom_gen_arch
                             #arugment is True)
-                    'mu_neut':          1e-9,
+                    'mu_neut':                  1e-9,
                         #genome-wide neutral mutation rate, per base per generation
                             #(set to 0 to disable neutral mutation)
-                    'mu_delet':            1e-9,
+                    'mu_delet':                 1e-9,
                         #genome-wide deleterious mutation rate, per base per generation
                             #(set to 0 to disable deleterious mutation)
                             #NOTE: these mutations will fall outside the loci involved in any traits
                             #being simulated, and are simply treated as universally deleterious, with the same
                             #negative influence on fitness regardless of spatial context
-                    'mut_log':              False,
+                    'mut_log':                  False,
                         #whether or not to store a mutation log; if true, will be saved as mut_log.txt
                         #within each iteration's subdirectory
-                    'shape_delet_s_dist':      0.2,
-                    'scale_delet_s_dist':   0.2,
+                    'shape_delet_s_dist':       0.2,
+                    'scale_delet_s_dist':       0.2,
                         #mean and standard deviation of the per-allele effect size of deleterious mutations (std = 0 will fix all
                             #mutations for the mean value)
-                    'alpha_r_dist':                  0.5,
+                    'alpha_r_dist':             0.5,
                         #alpha for beta distribution of linkage values
                             #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333,
                             #with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
-                    'beta_r_dist':                   400,
+                    'beta_r_dist':              15e9,
                         #beta for beta distribution of linkage values
                     'use_dom':                  False,
                         #whether or not to use dominance (default to False)
@@ -496,14 +499,14 @@ TRAIT_PARAMS = '''
 '''
 
 #block for pop_change params
-
+#STRING SLOTS:
+    #%s = dem_and-or_param_change_params_str,
 POP_CHANGE_PARAMS = '''
             ################
             #### change ####
             ################
 
                 'change': {
-%s
 %s
                         } # <END> 'change'
 '''
@@ -722,16 +725,16 @@ class __DynAttrDict__(dict):
     def __deepcopy__(self, memo):
         return __DynAttrDict__(copy.deepcopy(dict(self)))
 
-#a ParamsDict class (which is just a recursion the __DynAttrDict__ over the
+#a ParametersDict class (which is just a recursion the __DynAttrDict__ over the
 #whole params dict, to make all its levels dicts with dynamic attributes, 
 #i.e indexable by dot notation and responsive to tab completion)
-class ParamsDict(__DynAttrDict__):
+class ParametersDict(__DynAttrDict__):
     def __init__(self, params):
-        params_dict = make_params_dict(params)
+        params_dict = make_parameters_dict(params)
         self.update(params)
     #re-enable deepcopy, because the class inherits from a dict
     def __deepcopy__(self, memo):
-        return ParamsDict(copy.deepcopy(dict(self)))
+        return ParametersDict(copy.deepcopy(dict(self)))
 
 
 ######################################
@@ -742,15 +745,18 @@ class ParamsDict(__DynAttrDict__):
 
 #function to create the scapes-params section of a params file
 def make_scapes_params_str(scapes=1):
+    #create an empty list, to be filled with one params string per scape
+    scapes_params_list = []
     #if scapes is an integer, create a string of identical parameter sections
     if type(scapes) is int:
-        #create an empty list, to be filled with one params string per scape
-        scapes_params_list = []
+        #assert that it's an integer greater than 0
+        assert scapes > 0, ("The number of Scapes to be created must be a "
+        "positive integer.")
         #for each scape
         for i in range(scapes):
             #use scape-type 'random'
             type_params = RAND_SCAPE_PARAMS
-            #add no change params (zero-length string)
+            #add no change params (i.e. a zero-length string)
             change_params = ''
             #create the scape_params str
             scape_params_str = SCAPE_PARAMS % (i, i, type_params,
@@ -761,8 +767,13 @@ def make_scapes_params_str(scapes=1):
     #or if scapes is a list of dicts, then create individually customized
     #params sections for each Scape
     elif type(scapes) is list:
-        #create an empty list, to be filled with one params string per scape
-        scapes_params_list = []
+        #assert that each item in the list is a dict
+        assert False not in [type(item) is dict for item in scapes], ("All "
+            "items in the argument 'scapes' must be of type dict if it is "
+            "provided as a list.")
+        assert False not in [type(item) is dict for item in scapes], ("If the "
+            "'scapes' argument is a list then it must contain only "
+            "objects of type dict.")
         #create lookup dicts for the params strings for different scape params
         #sections
         scape_type_params_str_dict = {'random': RAND_SCAPE_PARAMS,
@@ -794,13 +805,158 @@ def make_scapes_params_str(scapes=1):
             scapes_params_list.append(scape_params_str)
 
     #join the whole list into one str
-    scapes_params_str = '\n'.join(scapes_params_list)
+    scapes_params_str = ''.join(scapes_params_list)
     return scapes_params_str
 
 
-#TODO function to create the pops-params section of a params file
-def make_pops_params_str(pops=1):
-    pass
+#function to create the pops-params section of a params file
+def make_populations_params_str(populations=1):
+    #create an empty list, to be filled with one params string per pop
+    pops_params_list = []
+    #if pops is an integer, create a string of identical parameter sections
+    if type(populations) is int:
+        #assert that it's an integer greater than 0
+        assert populations > 0, ("The number of Populations to be created "
+        "must be a positive integer.")
+                #for each pop
+        for i in range(populations):
+            #use no islands (i.e. a zero-length str)
+            islands_params = ''
+            #use movement params, but with no movement surface (i.e.
+            #string-format with a zero-length str)
+            move_params = MOVE_PARAMS % ''
+            #use genome params, but with no traits (i.e. string-format with a
+            #zero-length str)
+            genome_params = GENOME_PARAMS % ''
+            #add no change params
+            change_params = ''
+            #create the pop_params str
+            pop_params_str = POP_PARAMS % (i, i, islands_params, move_params,
+                                            genome_params, change_params, i)
+            #append to the pops_params_list
+            pops_params_list.append(pop_params_str)
+
+    #or if populations is a list of dicts, then create individually customized
+    #params sections for each Population
+    elif type(populations) is list:
+        #assert that each item in the list is a dict
+        assert False not in [type(item) is dict for item in pops], ("If the "
+            "'populations' argument is a list then it must contain only "
+            "objects of type dict.")
+        #create a lookup dict for the params strings for different pop params
+        #sections
+        params_str_dict = {'islands': {True: ISLANDS_PARAMS},
+                        'move': {True: MOVE_PARAMS},
+                        'move_surf': {True: MOVE_SURF_PARAMS},
+                        'genome': {True: GENOME_PARAMS},
+                        'change': {True: POP_CHANGE_PARAMS},
+                        'dem_change': {True: POP_DEM_CHANGE_EVENT_PARAMS},
+                        'dem_events': {True: POP_DEM_CHANGE_EVENTS_PARAMS},
+                        'param_change': {True: POP_PARAM_CHANGE_PARAMS},
+
+                            }
+        [v.update({False: ''}) for v in params_str_dict.values()]
+        #for each pop
+        for i, pop_dict in enumerate(populations):
+            #assert that the argument values are valid
+            bool_args= ['movement', 'movement_surface', 'genomes', 'islands', 
+                                                        'parameter_change']
+            int_args = ['n_traits', 'demographic_change']
+            for arg in bool_args:
+                if arg in [*pop_dict]:
+                    assert type(pop_dict[arg]) is bool, ("The '%s' key in each "
+                        "Population's dictionary must contain a boolean value. "
+                        "But dict number %i contains a non-boolean "
+                        "value.") % (arg, i)
+            for arg in int_args:
+                if arg in [*pop_dict]:
+                    assert type(pop_dict[arg]) is int, ("The '%s' "
+                        "key in each Population's dictionary must contain an "
+                        "integer value. But dict number %i contains a "
+                        "non-integer value.") % (i, arg)
+                    int_arg_str_fmt_dict = {'n_traits':'Traits',
+                            'demographic_change': 'demographic change events'}
+                    assert pop_dict[arg] > 0, ("The number of %s to "
+                                    "be created must be a positive " 
+                                    "integer.") % (int_arg_str_fmt_dict[arg])
+            #get the islands params
+            if 'islands' in [*pop_dict]:
+                islands_params = params_pop_dict['islands'][pop_dict['islands']]
+            #or get empty str
+            else:
+                islands_params = ''
+            #get the movement surf and movement params, if required
+            #NOTE: check if pop_dict['movement'] is True, so that poorly
+            #entered arguments (i.e. 'movement': False, 'movement_surface':True)
+            #don't inadvertently try to format a zero-length string with the
+            #movement-surface params str
+            if 'movement' in [*pop_dict] and pop_dict['movement']:
+                if 'movement_surface' in [*pop_dict]:
+                    ms_arg = pop_dict['movement_surface']
+                    move_surf_params = params_str_dict['move_surf'][ms_arg]
+                else:
+                    move_surf_params = ''
+                move_params = params_str_dict['move'][pop_dict['movement']]
+                move_params = move_params % move_surf_params
+            #or get empty str
+            else:
+                move_params = ''
+            #get the genome params, if required
+            if 'genome' in [*pop_dict] and pop_dict['genome']:
+                #if this population's genomes should have traits
+                if 'n_traits' in [*pop_dict]:
+                    #get a list of params strings of length equal
+                    #to the number of traits it should have
+                    trait_params_list = []
+                    for trt in range(pop_dict['n_traits']):
+                        trait_params = TRAIT_PARAMS % (trt, trt, trt)
+                        trait_params_list.append(trait_params)
+                    #join the list into a single str
+                    traits_params = ''.join(trait_params_list)
+                else:
+                    traits_params = ''
+                genome_params = params_str_dict['genome'][pop_dict['genome']]
+                genome_params = genome_params % traits_params
+            #or get empty str
+            else:
+                genome_params = ''
+            #get the pop-change params (if either dem or param changes are
+            #required
+            if (('demographic_change' in [*pop_dict] 
+                 and pop_dict['demographic_change']) 
+                or ('parameter_change' in [*pop_dict]
+                    and pop_dict['parameter_change'])):
+                #create an empty string to tack either/both section(s) onto
+                change_series_str = ''
+                #tack on the dem-change events params str, if required
+                if 'demographic_change' in [*pop_dict]:
+                    dem_change_event_params_list = []
+                    for i in range(pop_dict['demographic_change']):
+                        params_str = params_str_dict['dem_change']
+                        dem_change_event_params_list.append(params_str % (i, i))
+                    events_series = ''.join(dem_change_even_params_list)
+                    events_params_str = params_str_dict['dem_events']
+                    events_params_str = events_params_str % events_series
+                    change_series_str = change_series_str + events_params_str
+                #tack on the param-change params, if required
+                if 'parameter_change' in [*pop_dict]:
+                    param_change_params_str = params_str_dict['param_change']
+                    events_params_str=events_params_str+ param_change_params_str
+                change_params = params_str_dict['change']
+                change_params = change_params % events_params_str
+            #or get empty str
+            else:
+                change_params = ''
+            #get the overall pop params str for this pop
+            pop_params_str = POP_PARAMS % (i, i, islands_params, move_params,
+                                            genome_params, change_params, i)
+            #append to the pops_params_list
+            pops_params_list.append(pop_params_str)
+
+    #join the whole list into one str
+    pops_params_str = ''.join(pops_params_list)
+    return pops_params_str
+
 
 #function to create the data-, stats-, and seed-params sections of params file
 #TODO: Add option for the argument to make_parameters_file() to list the stats 
@@ -820,8 +976,10 @@ def make_model_params_strs(section, arg=None):
         elif section == 'seed':
             return SEED_PARAMS
 
-#TODO function to create a default params file, to be filled in by the user
-def make_parameters_file(scapes=1, pops=1, data=None, stats=None, seed=None):
+
+#function to create a default params file, to be filled in by the user
+def make_parameters_file(scapes=1, populations=1, data=None, stats=None,
+                                                                seed=None):
     '''
     Write a new template params file (to then be filled in by the user).
 
@@ -833,7 +991,7 @@ def make_parameters_file(scapes=1, pops=1, data=None, stats=None, seed=None):
                     - parameters for creating Scapes of type 'random' (i.e.
                       Scapes that will be generated by interpolation from
                       randomly valued random points)
-                    - no ScapeChanger
+                    - no ScapeChanger parameters
             [dict, ..., dict]:
                 Each dict should be of the form:
                     {'type':   <one value from ['random', 'defined', 'file']>,
@@ -843,22 +1001,25 @@ def make_parameters_file(scapes=1, pops=1, data=None, stats=None, seed=None):
                 and with change parameters as indicated, for each dict in the 
                 list.
 
-        'pops' can take the following values:
+        'populations' can take the following values:
             int:
                 Will add sections for the stipulated number of Populations, each
                 with default settings:
-                    - random movement without a MovementSurface
-                    - GenomicArchitecture with with a single Trait
-                    - no Islands
-                    - no PopulationChanger
+                    - parameters for movement without a MovementSurface
+                    - parameters for a GenomicArchitecture with 0 
+                      Traits (i.e. with only neutral loci)
+                    - no Islands paramters
+                    - no PopulationChanger parameters
             [dict, ..., dict]:
-                Each dict should be of the form:
+                Each dict should contain at least one argument from among the
+                following:
                     {'movement':            bool,
                      'movement_surface':    bool,
-                     'genome':              bool,
+                     'genomes':             bool,
                      'n_traits':            int,
                      'islands':             bool,
-                     'change':              bool
+                     'demographic_change':  int,
+                     'parameter_change':    bool,
                      }
                 This will add one section of Population parameters, customized
                 as indicated, for each dict in the list.
@@ -900,8 +1061,7 @@ def make_parameters_file(scapes=1, pops=1, data=None, stats=None, seed=None):
 
     scapes_params_str = make_scapes_params_str(scapes = scapes)
 
-    #TODO
-    pops_params_str = None
+    pops_params_str = make_populations_params_str(populations = populations)
 
     data_params_str = make_model_params_strs('data', arg = data)
 
@@ -912,7 +1072,7 @@ def make_parameters_file(scapes=1, pops=1, data=None, stats=None, seed=None):
     #TODO DECIDE IF THIS SHOULD BE MADE OPTIONAL IN SOME WAY
     its_params_str = ITS_PARAMS
 
-    file_str = MAIN_BLOCK % (scapes_params_str, pops_params_str,
+    file_str = PARAMS % (scapes_params_str, pops_params_str,
         seed_params_str, its_params_str, data_params_str, stats_params_str)
 
     #get a string of the date and time
@@ -922,10 +1082,11 @@ def make_parameters_file(scapes=1, pops=1, data=None, stats=None, seed=None):
     with open(filename, 'w') as f:
         f.write(file_str)
 
+
 #function to recurse over the params dictionary 
-#and return it as a Params_Dict object (i.e. a
+#and return it as a Parameters_Dict object (i.e. a
 #dict with k:v pairs as dynamic attributes)
-def make_params_dict(params):
+def make_parameters_dict(params):
     for k, v in params.items():
         method_names = ['clear', 'copy', 'fromkeys', 'get', 'items', 'keys',
                         'pop', 'popitem', 'setdefault', 'update', 'values']
@@ -934,19 +1095,21 @@ def make_params_dict(params):
             'Please edit name.\n\tNOTE: It holds the following value:'
             '\n%s' % (str(k), str(v)))
         if isinstance(v, dict):
-            #params.update({k:params_dict(v)})
-            params[k] = make_params_dict(params[k])
+            params[k] = make_parameters_dict(params[k])
     params = __DynAttrDict__(params)
     return(params)
 
-#read a params file and return a ParamsDict object
+
+#read a params file and return a ParametersDict object
 def read(filepath):
     #get the filename (minus path and extension) as the model name
-    name = os.path.splitext(os.path.split(params_filepath)[-1])[0]
+    name = os.path.splitext(os.path.split(filepath)[-1])[0]
     #read and execute the file (to create a plain dict called 'params')
+    #FIXME: FOR SOME REASON, WHEN IT EXECUTES INSIDE THE FUNCTION THE PARAMS FILE, WHICH CREATES A
+    #SIMPLE DICT CALLED 'params', params IS NOT VISIBLE AFTERWARD
     exec(open(filepath, 'r').read())
-    #turn the params dict into a ParamsDict object
-    params = ParamsDict(params)
+    #turn the params dict into a ParametersDict object
+    params = ParametersDict(params)
     #set the model's name
     params['name'] = name
     return(params)

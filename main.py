@@ -122,10 +122,10 @@ def read_params(params_filepath):
     return(params)
 
 
-#function to create a model from a ParamsDict object
+#function to create a model from a ParametersDict object
 def make_model(params, verbose=False):
-    #TODO: ASSERT THAT params is either a ParamsDict object 
-    #OR a filepath (and if so, that it can be turned into a ParamsDict object)
+    #TODO: ASSERT THAT params is either a ParametersDict object 
+    #OR a filepath (and if so, that it can be turned into a ParametersDict object)
     if type(params) is str:
         try:
             params = read_params(params)
@@ -133,13 +133,13 @@ def make_model(params, verbose=False):
             raise ValueError(("Failed to read the parameters file at the "
                 "filepath that was provided. The following error was raised: "
                 "\n\t%s\n\n") % e)
-    elif type(params) == "<class '__main__.Params_Dict'>":
+    elif type(params) == "<class '__main__.Parameters_Dict'>":
         pass
     try:
         model = model.Model(name, params, verbose=verbose)
         return(model)
     except Exception as e:
             raise ValueError(("Failed to create a Model object from the "
-                "ParamsDict object that was provided. "
+                "ParametersDict object that was provided. "
                 "The following error was raised: \n\t%s\n\n") % e)
 

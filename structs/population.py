@@ -109,10 +109,11 @@ class Population(OD):
 
         #grab all of the mating, mortality, and movement parameters as Population attributes
         for section in ['mating', 'mortality', 'movement']:
-            for att,val in pop_params[section].items():
-                #leave out the move_surf and islands components, which will be handled separately
-                if not isinstance(val, dict):
-                    setattr(self, att, pop_params[section][att])
+            if section in [*pop_params]:
+                for att,val in pop_params[section].items():
+                    #leave out the move_surf and islands components, which will be handled separately
+                    if not isinstance(val, dict):
+                        setattr(self, att, pop_params[section][att])
 
         #TODO: probably get rid of this, or move it elsewhere in the package?
         #set the heterozygote effects dictionary
@@ -127,13 +128,20 @@ class Population(OD):
 
         #set the GenomicArchitecture object
         self.gen_arch = genomic_architecture
-        assert self.gen_arch.__class__.__name__ == 'GenomicArchitecture', "self.gen_arch must be an instance of the genome.GenomicArchitecture class"
+        assert (self.gen_arch.__class__.__name__ == 'GenomicArchitecture'
+                or self.gen_arch is None), ("The Population.gen_arch attribute "
+                "must be an instance of the genome.GenomicArchitecture class "
+                "or else None.")
 
         #set the self.mutate attribute (a boolean indicating whether or not to enact mutation, which is True if gen_arch.mu_tot > 0
-        self.mutate = self.gen_arch.mu_tot > 0
+        self.mutate = (self.gen_arch is not None
+                       and self.gen_arch.mu_tot is not None
+                       and self.gen_arch.mu_tot > 0)
 
         #set the self.mut_log attribute, which dictates whether or not a mutation log should be written for this pop
-        self.mut_log = pop_params.genome.mut_log
+        self.mut_log = None
+        if 'gen_arch' in [*pop_params]:
+            self.mut_log = pop_params.gen_arch.mut_log
 
         #create a couple getter functions, for use in getting all individs' coordinates and certain individs' coordinates
         self.__coord_attrgetter__ = attrgetter('x', 'y')
@@ -273,7 +281,9 @@ class Population(OD):
                 self[offspring_key] = individual.Individual(idx = offspring_key, age = age, new_genome = new_genome, x = offspring_x, y = offspring_y, sex = sex)
 
                 #set new individual's phenotype (won't be set during burn-in, because no genomes assigned; won't be set if the population has not gen_arch)
-                if self.gen_arch is not None and not burn:
+                if (self.gen_arch is not None 
+                    and self.gen_arch.traits is not None 
+                    and not burn):
                     self[offspring_key].set_phenotype(self.gen_arch)
 
         # sample all individuals' habitat values, to initiate for offspring
@@ -719,10 +729,12 @@ def make_population(land, pop_params, burn=False):
     init_params = deepcopy(pop_params.init)
 
     #if this population should have genomes, create the genomic architecture
-    if 'genome' in pop_params.keys():
-        g_params = pop_params.genome
+    if 'gen_arch' in pop_params.keys():
+        g_params = pop_params.gen_arch
         #make genomic_architecture
         gen_arch = genome.make_genomic_architecture(pop_params = pop_params)
+    else:
+        gen_arch = None
 
     #make individs
     N = init_params.pop('N')
@@ -754,7 +766,7 @@ def make_population(land, pop_params, burn=False):
     pop.set_dens_grids()
 
     #if movement and movement_surf
-    if pop_params.movement.move:
+    if 'movement' in [*pop_params] and pop_params.movement.move:
         if 'move_surf' in pop_params.movement.keys():
             ms_params = deepcopy(pop_params.movement.move_surf)
             #TODO: Once I have a meta-function that takes arguments about whether or not a movement_surface is

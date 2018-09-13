@@ -99,7 +99,8 @@ def calc_prob_death(pop, d):
     w = np.array([1]*len(pop))
 
     #get trait-related fitness, if traits
-    if len(pop.gen_arch.traits) > 0:
+    if (pop.gen_arch.traits is not None 
+        and len(pop.gen_arch.traits) > 0):
         w = w * calc_fitness_traits(pop)
 
     #if the population has deleterious mutations, get fitnesses related to them (i.e. operationalize background selection)

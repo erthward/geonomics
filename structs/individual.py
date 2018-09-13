@@ -57,7 +57,7 @@ class Individual:
 
         self.habitat = None
 
-        self.phenotype = None
+        self.phenotype = []
 
         self.fitness = None
 

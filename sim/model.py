@@ -524,6 +524,13 @@ class Model:
         mode='burn'.
         '''
 
+        #throw an error and quit if mode == 'main' but the community is 
+        #not burned in
+        if mode == 'main' and not self.comm.burned:
+            raise ValueError(("The Model.walk method cannot be run in 'main' "
+                "mode if the Model's Community has not yet been burned in "
+                "(i.e. if Model.comm.burned is False)."))
+
         #temporarily change the model's verbose flag, if necessary
         if verbose is not None:
             old_verbose = self.verbose

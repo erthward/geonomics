@@ -154,7 +154,7 @@ class DataCollector:
             else:
                 self.when = [*range(0, self.T, int(self.when))]
         #add the final timestep, if not already in self.when
-        if self.when[-1] != self.T-1:
+        if (len(self.when) == 0 or self.when[-1] != self.T-1):
             self.when.append(self.T-1)
         #now turn the when attribute into an iterator
         self.when = iter(self.when)

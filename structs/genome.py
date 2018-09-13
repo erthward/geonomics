@@ -107,7 +107,6 @@ class GenomicArchitecture:
 
         #attribute for trait (i.e. adaptive) loci
         self.traits = None
-        print([*g_params])
         if 'traits' in [*g_params]:
             self.traits = make_traits(g_params.traits)
 

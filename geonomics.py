@@ -25,6 +25,7 @@ Documentation:        URL
 #geonomics imports
 from sim import model
 from sim import params as par
+from structs import landscape, genome, individual, population, community
 
 #other imports
 import re
@@ -158,4 +159,55 @@ def make_model(params, verbose=False):
                 "ParametersDict object that was provided. "
                 "The following error was raised: \n\t%s\n\n") % e)
 
+
+#wrapper around landscape.make_land
+def make_land(params):
+    land = landscape.make_land(params)
+    return land
+
+
+#wrapper around genome.make_genomic_architecture
+def make_genomic_architecture(params):
+    gen_arch = genome.make_genomic_architecture(params)
+    return gen_arch
+
+
+#wrapper around individual.make_individual
+    #should provide either a new genome for the individual, or a
+    #genomic_architecture to use to draw its genome;
+    #and should provide either a parental centerpoint to disperse from, or a
+    #landscape.dim tuple within whihc to choose a location;
+    #burn can be True (i.e. then the individual will have a [[0,0]] genome)
+def make_individual(idx, genomic_architecture=None, new_genome=None, dim=None,
+    parental_centerpoint=None, sex=None, age=0, burn=False):
+    assert (genomic_architecture is not None
+            or new_genome is not None), ("Either a new genome must be provided "
+    "(i.e. 'new_genome' must not be None) or a genomic architecture from which "
+    "to draw a new genome must be provided (i.e. 'genomic_architecture' must "
+    "not be None.")
+    assert (parental_centerpoint is not None
+            or dim is not None), ("Either a landscape-dimension tuple must be "
+            "provided (i.e. 'dim' must not be None) or a parental centerpoint "
+            "from which to disperse the individual must be provided (i.e. "
+            "'parental_centerpoint' must not be None).")
+    ind = individual.make_individaul(idx = idx, offspring = False, 
+            dim = dim, genomic_architecture = genomic_architecture,
+            new_genome = new_genome, sex = sex, 
+            parental_centerpoint = parental_centerpoint, age = age,
+            burn = burn)
+    return ind
+
+
+#wrapper around population.make_population
+    #burn can be True (i.e. then the individuals will have a [[0,0]] genome)
+def make_population(land, pop_params, burn=False):
+    pop = population.make_population(land, pop_params, burn = burn)
+    return(pop)
+
+
+#wrapper around community.make_comunity
+    #burn can be True (i.e. then the individuals will have a [[0,0]] genome)
+def make_community(land, params, burn=False):
+    comm = community.make_community(land, params, burn = burn)
+    return comm
 

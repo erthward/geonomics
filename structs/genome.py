@@ -220,8 +220,8 @@ class GenomicArchitecture:
         self.recomb_paths = RecombinationPaths(make_recomb_paths_bitarrays(self))
 
 
-    #method for showing all allele frequencies for the population
-    def show_freqs(self, pop):
+    #method for plotting all allele frequencies for the population
+    def plot_freqs(self, pop):
         populome = np.hstack([ind.genome for ind in pop.values()])
         freqs = populome.sum(axis = 1)/(2*populome.shape[0])
         plt.plot(range(self.L), self.p, ':r')

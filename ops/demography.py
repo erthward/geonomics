@@ -62,7 +62,7 @@ class DebugPlotter:
                 fig = plt.gcf()
             plt.subplot(self.subplot)
             plt.title(varname)
-            self.pop.show(self.land, 1, size = 8, hide_land = True)
+            self.pop.plot(self.land, 1, size = 8, hide_land = True)
             plt.imshow(var, interpolation = 'nearest', cmap = 'terrain')
             plt.colorbar()
             self.subplot += 1

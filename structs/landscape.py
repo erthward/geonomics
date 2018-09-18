@@ -72,13 +72,13 @@ class Scape:
     ### OTHER METHODS ###
     #####################
 
-    def show(self, colorbar=True, im_interp_method='nearest', cmap = 'terrain', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
+    def plot(self, colorbar=True, im_interp_method='nearest', cmap = 'terrain', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
         if self.mask_island_vals:
             mask_val = 1e-7
         else:
             mask_val = None
         plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
-        viz.show_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, mask_val = mask_val, vmin = vmin, vmax = vmax)
+        viz.plot_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, mask_val = mask_val, vmin = vmin, vmax = vmax)
 
     #method for writing the scape's raster to a file of the specified format
     def write_raster(self, filepath, raster_format):
@@ -184,65 +184,13 @@ class Land(dict):
         self.changer.make_change(t)
 
     #method to plot the landscape (or just a certain scape)
-    def show(self, scape_num=None, colorbar=True, cmap='terrain', im_interp_method='nearest', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
+    def plot(self, scape_num=None, colorbar=True, cmap='terrain', im_interp_method='nearest', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
         if True in [scape.mask_island_vals for scape in self.values()]:
             mask_val = 1e-7
         else:
             mask_val = None
         plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
-        viz.show_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, mask_val = mask_val, plt_lims = plt_lims, vmin = vmin, vmax = vmax)
-
-
-    #method for plotting the movement surface (in various formats)
-    def show_movement_surface(self, style, x, y, zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
-        '''
-        'style' can take values: 'hist', 'circ_hist', 'vect', or 'circ_draws'
-        '''
-        if self.move_surf is None:
-            print('ERROR: This landscape stack appears to have no movement surface layer. Function not valid.')
-            return
-        elif style not in ['hist', 'circ_hist', 'vect', 'circ_draws']:
-            print("ERROR: The 'style' argument must take one of the following values: 'hist', 'circ_hist', 'vect', 'circ_draws'")
-            return
-        elif style == 'hist':
-            plt.hist(r.choice(self.move_surf[i,j,:], size = 10000, replace = True), bins=100, density=True, alpha=0.5)
-
-        else:
-            #display the movement-surface raster
-            scape_num = self.move_surf_scape_num
-            self[scape_num].show(zoom_width = zoom_width, x = x, y = y)
-
-            if style == 'circ_hist':
-                v, a = np.histogram(r.choice(self.move_surf[y,x,:], replace = True, size = 7500), bins=15)
-                v = v / float(v.sum())
-                a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
-                xs = [np.cos(a[n]) * 0.5 for n in range(len(a))]
-                ys = [np.sin(a[n]) * 0.5 for n in range(len(a))]
-                xs = np.array(xs) * v * scale_fact
-                ys = np.array(ys) * v * scale_fact
-                [plt.plot((x, (x + xs[n])), (y, (y + ys[n])), linewidth=2, color=color) for n in range(len(xs))]
-
-            elif style == 'circ_draws':
-                pts = [(np.cos(a), np.sin(a)) for a in r.choice(self.move_surf[y,x,:], size = 1000, replace = True)]
-                plt.scatter([pt[0] * 0.5 + x for pt in pts], [pt[1] * 0.5 + y for pt in pts], color='red', alpha=0.1, marker = '.')
-
-            elif style == 'vect':
-                def plot_one_cell(i, j):
-                    # draw sample of angles from the Gaussian KDE representing the von mises mixture distribution (KDE)
-                    samp = self.move_surf[i,j,:]
-                    # create lists of the x and y (i.e. cos and sin) components of each angle in the sample
-                    x_vects = np.cos(samp)
-                    y_vects = np.sin(samp)
-                    # define the dx and dy distances used to the position the arrowhead
-                    # (divide by sqrt(2)/2, to scale to the size of half of the diagonal of a cell)
-                    dx = np.mean(x_vects) / np.sqrt(2)
-                    dy = np.mean(y_vects) / np.sqrt(2)
-                    # now plot the arrow
-                    plt.arrow(j, i, dx, dy, alpha=0.75, color='black', head_width=0.24, head_length=0.32)
-
-                # call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
-                [[plot_one_cell(i, j) for i in range(self.move_surf.shape[0])] for j in range(self.move_surf.shape[1])]
-
+        viz.plot_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, mask_val = mask_val, plt_lims = plt_lims, vmin = vmin, vmax = vmax)
 
     # method for pickling a landscape stack
     def write_pickle(self, filename):

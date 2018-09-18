@@ -43,7 +43,7 @@ from ops import movement
 
 
 
-def show_movement(pop, land, scape_num, num_timesteps, params = None, mu_direction = None, kappa_direction =
+def plot_movement(pop, land, scape_num, num_timesteps, params = None, mu_direction = None, kappa_direction =
         None, mu_distance = None, sigma_distance = None, move_surf = None, subset_pop = None, color = 'black', color_by_individ = False):
 
     '''Useful for visual exploration of the movement parameters. Either provide a params dictionary with the
@@ -100,7 +100,7 @@ def show_movement(pop, land, scape_num, num_timesteps, params = None, mu_directi
         [toy_pop.pop(ind) for ind in cull_individs]
 
 
-    toy_pop.show(land, scape_num, color = 'white', markersize = 10)
+    toy_pop.plot(land, scape_num, color = 'white', markersize = 10)
 
     linewidths = np.linspace(2,5, num = num_timesteps)
 

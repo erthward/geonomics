@@ -40,7 +40,7 @@ import sys
 # -----------------------------------#
 ######################################
 
-def show_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest', cmap='terrain', plt_lims=None, mask_val=None, vmin=0, vmax=1):
+def plot_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest', cmap='terrain', plt_lims=None, mask_val=None, vmin=0, vmax=1):
     #if a figure is already open, force colorbar to False
     if plt.get_fignums() and plt.gcf().get_axes():
         colorbar = False
@@ -92,7 +92,7 @@ def show_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest'
             title.set_font_properties(font)
 
 
-def show_points(points, scape_num=None, color='black', edge_color='face', text_color='black', linewidth=0.5,
+def plot_points(points, scape_num=None, color='black', edge_color='face', text_color='black', linewidth=0.5,
         pt_cmap=None, size=25, text_size=9, alpha=False, text=None, plt_lims=None, vmin=None, vmax=None):
     #get the x and y coordinates from the points (and subtract 0.5 to line the points up with the plt.imshow()
     #grid of a landscape raster; imshow plots each pixel centered on its index, but the points then plot on 
@@ -127,14 +127,14 @@ def show_points(points, scape_num=None, color='black', edge_color='face', text_c
 
     #add text, if requested
     if text is not None:
-        show_text = []
+        plot_text = []
         for n,t in enumerate(text):
             if plt_lims is not None:
                 if plt_lims[0][0] <= x[n] <= plt_lims[0][1] and plt_lims[1][0] <= y[n] <= plt_lims[1][1]:
-                    show_text.append((x[n], y[n], t))
+                    plot_text.append((x[n], y[n], t))
             else:
-                show_text.append((x[n], y[n], t))
-        [plt.text(*item, color=text_color, size=text_size, alpha=alpha) for item in show_text];
+                plot_text.append((x[n], y[n], t))
+        [plt.text(*item, color=text_color, size=text_size, alpha=alpha) for item in plot_text];
 
     if plt_lims is not None and len(plt_lims) == 2 and [len(item) for item in plt_lims] == [2,2]:
         plt.xlim(plt_lims[0])
@@ -161,7 +161,7 @@ def get_zoom_plt_lims(x, y, zoom_width):
 
 def get_plt_lims(land=None, x=None, y=None, zoom_width=None):
     if zoom_width is not None and x is not None and y is not None:
-        plt_lims = calc_zoom_plt_lims(x, y, zoom_width) 
+        plt_lims = get_zoom_plt_lims(x, y, zoom_width) 
     else: 
         plt_lims = get_scape_plt_lims(land)
     return(plt_lims)
@@ -200,7 +200,7 @@ def make_fitness_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn', max_
         tick_labs = ['$1-\prod_{trait=1}^{t} \phi_{t} = %0.2f$' % round(min_val,2) if n == ind_closest else str(tick) for n,tick in enumerate(ticks)]
     else:
         tick_labs = ['$1-\phi_{trait=%i} = %0.2f$' % (trait_num, round(min_val,2)) if n == ind_closest else str(tick) for n,tick in enumerate(ticks)]
-    #create a function for making the colorbar, to be shipped out to and called within population.Population.show_fitness()
+    #create a function for making the colorbar, to be shipped out to and called within population.Population.plot_fitness()
     def make_cbar(ax):
         cbar = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm, spacing='proportional', ticks=ticks, boundaries=bounds, format='%1i')
         cbar.set_ticks(ticks)

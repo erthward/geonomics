@@ -527,7 +527,7 @@ class Population(OD):
         return(dists, pairs)
 
     #method for plotting the population (or a subset of its individuals, by ID) on top of a landscape (or landscape stack)
-    def show(self, scape_num=None, hide_land=False, individs=None, text=False, color='black',
+    def plot(self, scape_num=None, hide_land=False, individs=None, text=False, color='black',
             edge_color='face', text_color='black', colorbar=True, size=25, text_size=9, im_interp_method='nearest', 
             land_cmap='terrain', pt_cmap=None, alpha=False, zoom_width=None, x=None, y=None, vmin = None, vmax = None):
         #convert individs to a list (in case comes in as a numpy array)
@@ -550,23 +550,23 @@ class Population(OD):
         if hide_land:
             pass
         else:
-            viz.show_rasters(self.land, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = land_cmap, plt_lims = plt_lims)
+            viz.plot_rasters(self.land, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = land_cmap, plt_lims = plt_lims)
         #and plot the individuals
-        viz.show_points(coords, scape_num = scape_num, color = color, edge_color = edge_color, text_color = text_color, size = size, text_size = text_size, alpha = alpha, text = text, plt_lims = plt_lims, pt_cmap = pt_cmap, vmin = vmin, vmax = vmax)
+        viz.plot_points(coords, scape_num = scape_num, color = color, edge_color = edge_color, text_color = text_color, size = size, text_size = text_size, alpha = alpha, text = text, plt_lims = plt_lims, pt_cmap = pt_cmap, vmin = vmin, vmax = vmax)
 
 
     #method for plotting the population on top of its estimated population-density raster
-    def show_density(self, normalize_by='pop_size', individs=None, text=False, max_1=False, color='black', edge_color='face', 
+    def plot_density(self, normalize_by='pop_size', individs=None, text=False, max_1=False, color='black', edge_color='face', 
             text_color='black', size=25, text_size = 9, alpha=0.5, zoom_width=None, x=None, y=None):
         dens = self.calc_density(normalize_by=normalize_by, max_1=max_1)
         plt_lims = viz.get_plt_lims(self.land, x, y, zoom_width)
-        viz.show_rasters(dens, plt_lims = plt_lims)
-        self.show(hide_land=True, individs = individs, text = text, color=color, edge_color = edge_color, text_color = text_color,
+        viz.plot_rasters(dens, plt_lims = plt_lims)
+        self.plot(hide_land=True, individs = individs, text = text, color=color, edge_color = edge_color, text_color = text_color,
                size=size, text_size = text_size, alpha=alpha, zoom_width = zoom_width, x = x, y = y)
 
 
     # method for plotting individuals colored by their genotype at a given locus
-    def show_genotype(self, locus, scape_num=None, individs=None, text=False, size=25, text_size = 9,
+    def plot_genotype(self, locus, scape_num=None, individs=None, text=False, size=25, text_size = 9,
             edge_color='black', text_color='black', colorbar=True, im_interp_method='nearest',
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
@@ -585,14 +585,14 @@ class Population(OD):
             genotype_individs = [i for i, g in genotypes.items() if np.atleast_1d(g)[0] == genotype]
             # plot if there are any individuals of this genotype
             if len(genotype_individs) >= 1:
-                self.show(scape_num = scape_num, individs = genotype_individs, text = text, color = colors[n], edge_color = edge_color, 
+                self.plot(scape_num = scape_num, individs = genotype_individs, text = text, color = colors[n], edge_color = edge_color, 
                     text_color = text_color, colorbar = colorbar, size = size, text_size = text_size, 
                     im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y,
                     vmin = 0, vmax = 1)
 
 
     # method for plotting individuals colored by their phenotypes for a given trait
-    def show_phenotype(self, trait, scape_num=None, individs=None, text=False, size=25, text_size = 9, 
+    def plot_phenotype(self, trait, scape_num=None, individs=None, text=False, size=25, text_size = 9, 
             edge_color='black', text_color='black', colorbar=True, im_interp_method='nearest', 
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
@@ -600,7 +600,7 @@ class Population(OD):
         if individs is not None:
             z = {i:v for i,v in z.items() if i in individs}
 
-        self.show(scape_num = scape_num, individs = individs, text = text, color = list(z.values()),
+        self.plot(scape_num = scape_num, individs = individs, text = text, color = list(z.values()),
                 pt_cmap = 'terrain', edge_color = edge_color, text_color = text_color, colorbar = colorbar, 
                 size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, 
                 zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1)
@@ -608,7 +608,7 @@ class Population(OD):
 
     # method for plotting individuals colored by their overall fitnesses, or by their fitnesses for a single
     # trait (if trait is not None)
-    def show_fitness(self, scape_num=None, trait_num=None, individs=None, text=False, size=100, text_size = 9, 
+    def plot_fitness(self, scape_num=None, trait_num=None, individs=None, text=False, size=100, text_size = 9, 
             edge_color='black', text_color='black', fit_cmap = 'RdYlGn', colorbar=True, im_interp_method='nearest', 
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
@@ -639,14 +639,14 @@ class Population(OD):
         #plot the trait phenotype in larger circles first, if trait is not None
         if trait_num is not None:
             #plot the outer (phenotype) circles
-            self.show_phenotype(trait=trait_num, scape_num=scape_num, individs=individs, text=False,
+            self.plot_phenotype(trait=trait_num, scape_num=scape_num, individs=individs, text=False,
                     size=size, text_size = text_size, edge_color=edge_color, text_color=text_color,
                     colorbar=colorbar, im_interp_method=im_interp_method, 
                     alpha=alpha, by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y)
             #make size smaller for the next layer of inner (fitness) circles
             size = round(0.2*size)
 
-        self.show(scape_num = scape_num, individs = individs, text = text, color = list(w.values()),
+        self.plot(scape_num = scape_num, individs = individs, text = text, color = list(w.values()),
                 pt_cmap = cmap, edge_color = edge_color, text_color = text_color, colorbar = colorbar, 
                 size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y)
 
@@ -654,13 +654,64 @@ class Population(OD):
         viz.make_fitness_cbar(make_cbar, min_fit)
 
 
-    def show_hist_fitness(self):
+    def plot_hist_fitness(self):
         plt.hist(list(self.get_fitness()))
+
+
+    #method for plotting the movement surface (in various formats)
+    def plot_movement_surface(self, style, x, y, zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
+        '''
+        'style' can take values: 'hist', 'circ_hist', 'vect', or 'circ_draws'
+        '''
+        if self.move_surf is None:
+            print('ERROR: This Population appears to have no MovementSurface. Function not valid.')
+            return
+        elif style not in ['hist', 'circ_hist', 'vect', 'circ_draws']:
+            print("ERROR: The 'style' argument must take one of the following values: 'hist', 'circ_hist', 'vect', 'circ_draws'")
+            return
+        elif style == 'hist':
+            plt.hist(r.choice(self.move_surf.surf[y,x,:], size = 10000, replace = True), bins=100, density=True, alpha=0.5)
+
+        else:
+            #display the movement-surface raster
+            scape_num = self.move_surf.scape_num
+            self.land[scape_num].plot(zoom_width = zoom_width, x = x, y = y)
+
+            if style == 'circ_hist':
+                v, a = np.histogram(r.choice(self.move_surf.surf[y,x,:], replace = True, size = 7500), bins=15)
+                v = v / float(v.sum())
+                a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
+                xs = [np.cos(a[n]) * 0.5 for n in range(len(a))]
+                ys = [np.sin(a[n]) * 0.5 for n in range(len(a))]
+                xs = np.array(xs) * v * scale_fact
+                ys = np.array(ys) * v * scale_fact
+                [plt.plot((x, (x + xs[n])), (y, (y + ys[n])), linewidth=2, color=color) for n in range(len(xs))]
+
+            elif style == 'circ_draws':
+                pts = [(np.cos(a), np.sin(a)) for a in r.choice(self.move_surf.surf[y,x,:], size = 1000, replace = True)]
+                plt.scatter([pt[0] * 0.5 + x for pt in pts], [pt[1] * 0.5 + y for pt in pts], color='red', alpha=0.1, marker = '.')
+
+            elif style == 'vect':
+                def plot_one_cell(x, y):
+                    # draw sample of angles from the Gaussian KDE representing the von mises mixture distribution (KDE)
+                    samp = self.move_surf.surf[y,x,:]
+                    # create lists of the x and y (i.e. cos and sin) components of each angle in the sample
+                    x_vects = np.cos(samp)
+                    y_vects = np.sin(samp)
+                    # define the dx and dy distances used to the position the arrowhead
+                    # (divide by sqrt(2)/2, to scale to the size of half of the diagonal of a cell)
+                    dx = np.mean(x_vects) / np.sqrt(2)
+                    dy = np.mean(y_vects) / np.sqrt(2)
+                    # now plot the arrow
+                    plt.arrow(x, y, dx, dy, alpha=0.75, color='black', head_width=0.24, head_length=0.32)
+
+                # call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
+                [[plot_one_cell(j, i) for i in range(self.move_surf.surf.shape[0])] for j in range(self.move_surf.surf.shape[1])]
 
 
     # method for plotting a population pyramid
     # NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS
-    def show_demographic_pyramid(self):
+    def plot_demographic_pyramid(self):
         #make dict of female and male colors
         col_dict = {-1: 'cyan', 1: 'pink'}
         #create a figure
@@ -689,10 +740,10 @@ class Population(OD):
         plt.xticks(locs, [str(int(loc)) for loc in np.abs(locs)])
         #add sex symbols as title
         plt.suptitle('\u2642%s\u2640' % ''.join([' ' for _ in range(20)]), size = 30)
-        #show
+        #show it
         plt.show()
 
-    def show_pop_growth(self):
+    def plot_pop_growth(self):
         T = range(len(self.Nt))
         x0 = self.Nt[0] / self.K.sum()
         plt.plot(T, [demography.calc_logistic_soln(x0, self.R, t) * self.K.sum() for t in T], color='red')
@@ -700,11 +751,11 @@ class Population(OD):
         plt.xlabel('t')
         plt.ylabel('N(t)')
 
-    def show_demographic_changes(self):
+    def plot_demographic_changes(self):
         if self.changer is None:
             print('This population has no changer object.')
         else:
-            self.changer.show_dem_changes(self)
+            self.changer.plot_dem_changes(self)
 
     def write_pickle(self, filename):
         import cPickle

@@ -225,7 +225,7 @@ class StatsCollector:
           
     #TODO: USE A CHECK OF THE SHAPES OF THE STATS TO DECIDE HOW TO PLOT
     #method to plot whichever stat as a function of runtime
-    def show_stat(self, stat, pop_name=None):
+    def plot_stat(self, stat, pop_name=None):
         #check that the stat argument is valid
         assert type(stat) is str, "The 'stat' argument must be a string."
         assert stat in [*self.stats.values()][0].keys(), ("The 'stat' "
@@ -280,7 +280,7 @@ def calc_Nt(pop):
 
 
 #TODO: REVIEW AND FIX/EDIT AS NEEDED
-#TODO: INCORPORATE THE PLOTTING STUFF BELOW INTO self.show_stat() INSTEAD
+#TODO: INCORPORATE THE PLOTTING STUFF BELOW INTO self.plot_stat() INSTEAD
 def calc_ld(pop, plot = False):
     
     #TODO: I should also include (either as an alternative within this fn,

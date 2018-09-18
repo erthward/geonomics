@@ -215,7 +215,7 @@ class PopChanger(Changer):
             self.set_next_change()
 
     #a method to visualize the population changes that will occur
-    def show_dem_changes(self, pop):
+    def plot_dem_changes(self, pop):
         cop_pop = deepcopy(pop)
         cop_self = deepcopy(self)
         cop_changes = deepcopy(cop_self.changes)

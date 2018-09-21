@@ -404,6 +404,16 @@ MOVE_SURF_PARAMS = '''
                             #use a landscape layer as a resistance surface, or habitat quality layer, to direct movement?
                         'scape_num':                    0,
                             #scape number to use as the movement surface
+                        'mixture':                      True,
+                            #should this MovementSurface be composed of
+                            #VonMises mixture distribution approximations (i.e.
+                            #True) or of unimodal VonMises distribution
+                            #approximations (i.e. False); the latter is better
+                            #for landscapes characterized by gradual gradients
+                            #(i.e. where many cells' neighborhoods have very
+                            #little variation between the highest- and lowest
+                            #permeability values, so that mixture distributions
+                            #would be largely uniform in all directions)
                         'approximation_len':            7500,
                             #length of the lookup vectors (numpy arrays) used to approximate
                                 #the VonMises mixture distributions at each cell

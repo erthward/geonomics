@@ -58,7 +58,7 @@ def plot_movement(pop, land, scape_num, num_timesteps, params = None, mu_directi
         toy_params = deepcopy(params)
 
 
-        toy_m_params = toy_params['pop']['movement']
+        toy_m_params = toy_params.comm.pops[0].movement
         #then override existing values in params dictionary, if a new value has been entered for trial
         if mu_direction != None:
             toy_m_params['mu_direction'] = mu_direction
@@ -71,7 +71,7 @@ def plot_movement(pop, land, scape_num, num_timesteps, params = None, mu_directi
         if move_surf != None:
             toy_m_params['move_surf'] = move_surf
 
-        toy_params['pop']['movement'] = toy_m_params
+        toy_params.comm.pops[0].movement = toy_m_params
 
 
     #if no params dictionary provided, create toy_params from the individual parameter values that were fed in
@@ -100,7 +100,7 @@ def plot_movement(pop, land, scape_num, num_timesteps, params = None, mu_directi
         [toy_pop.pop(ind) for ind in cull_individs]
 
 
-    toy_pop.plot(land, scape_num, color = 'white', markersize = 10)
+    toy_pop.plot(land, scape_num, color = 'white', size = 10)
 
     linewidths = np.linspace(2,5, num = num_timesteps)
 

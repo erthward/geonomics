@@ -148,7 +148,7 @@ class DensityGridStack:
 
 
 class MovementSurface:
-    def __init__(self, move_scape, approximation_len = 5000, vm_kappa = 12, gauss_KDE_bw = 0.2):
+    def __init__(self, move_scape, mixture, approximation_len = 5000, vm_kappa = 12, gauss_KDE_bw = 0.2):
         #dimensions
         self.dim = move_scape.dim
         #resolution (i.e. cell-size); defaults to 1
@@ -166,7 +166,7 @@ class MovementSurface:
 
         self.scape_num = move_scape.idx
         self.approximation_len = approximation_len
-        self.surf = make_movement_surface(move_scape.rast, approximation_len = self.approximation_len, vm_kappa = vm_kappa, gauss_KDE_bw = gauss_KDE_bw)
+        self.surf = make_movement_surface(move_scape.rast, mixture = mixture, approximation_len = self.approximation_len, vm_kappa = vm_kappa, gauss_KDE_bw = gauss_KDE_bw)
 
         assert self.approximation_len == self.surf.shape[2], "ERROR: MovementSurface.approximation_len not equal to MovementSurface.surf.shape[2]"
 
@@ -282,7 +282,7 @@ def make_density_grids(land, ww):
 
 
 # Function to generate a simulative Von Mises mixture distribution sampler function
-def make_von_mises_mix_sampler(neigh, dirs, vm_kappa=12, approximation_len = 5000):
+def make_von_mises_mixture_sampler(neigh, dirs, vm_kappa=12, approximation_len = 5000):
     # Returns a lambda function that is a quick and reliable way to simulate draws from a Von Mises mixture distribution:
     # 1.) Chooses a direction by neighborhood-weighted probability
     # 2.) Makes a random draw from a Von Mises dist centered on the direction, with a vm_kappa value set such that the net effect, 
@@ -295,8 +295,8 @@ def make_von_mises_mix_sampler(neigh, dirs, vm_kappa=12, approximation_len = 500
     # between the 8 queen's neighborhood directions (i.e. doesn't simulate the mixing well enough), and would
     # generate artefactual movement behavior); 12 also seemed to really well in generating probability valleys
     # when tested on neighborhoods that should generate bimodal distributions
-    d = list(dirs.ravel())
-    n = list(neigh.ravel())
+    d = [*dirs.ravel()]
+    n = [*neigh.ravel()]
     del d[4]
     del n[4]
     sum_n = float(sum(n))
@@ -310,9 +310,49 @@ def make_von_mises_mix_sampler(neigh, dirs, vm_kappa=12, approximation_len = 500
     return approx
 
 
-# Runs the Von Mises mixture sampler function (make_von_mises_mix_sampler) across the entire landscape and returns an array-like (list of
-# lists) of the resulting lambda-function samplers
-def make_movement_surface(rast, approximation_len=5000, vm_kappa=12, gauss_KDE_bw=0.2):
+# Function to generate a simulative Von Mises mixture distribution sampler function
+def make_von_mises_unimodal_sampler(neigh, dirs, vm_kappa=12, approximation_len = 5000):
+    # Returns a lambda function that is a quick and reliable way to simulate draws from a Von Mises mixture distribution:
+    # 1.) Chooses a direction by neighborhood-weighted probability
+    # 2.) Makes a random draw from a Von Mises dist centered on the direction, with a vm_kappa value set such that the net effect, 
+    #when doing this a ton of times for a given neighborhood and then plotting the resulting histogram, gives the 
+    #visually/heuristically satisfying approximation of a Von Mises mixture distribution
+
+    # NOTE: Just visually, heuristically, vm_kappa = 10 seemed like a perfect middle value (vm_kappa ~3 gives too
+    # wide of a Von Mises variance and just chooses values around the entire circle regardless of neighborhood
+    # probability, whereas vm_kappa ~20 produces noticeable reductions in probability of moving to directions
+    # between the 8 queen's neighborhood directions (i.e. doesn't simulate the mixing well enough), and would
+    # generate artefactual movement behavior); 12 also seemed to really well in generating probability valleys
+    # when tested on neighborhoods that should generate bimodal distributions
+
+    #unravel the directions and neighborhood
+    d = dirs.ravel()
+    n = neigh.ravel()
+    #set the center cell to -1 so it's never the max (because it's not part of
+    #its own neighborhood)
+    n[4] = -1
+    #get the indices of the max neighborhood value (or values)
+    max_n_ind = np.where(n == n.max())[0]
+    #and randomly choose one, if there are equal values
+    if max_n_ind.size > 1:
+        max_n_ind = r.choice(max_n_ind)
+    #or else just take the max value
+    else:
+        max_n_ind = max_n_ind[0]
+    #get the direction corresponding to the max neighborhood value
+    dir_max_n = d[max_n_ind]
+    #draw n random numbers from a VonMises centered at the direction
+    #corresponding to the max neighborhood value (where n = approximation_len)
+    approx = s_vonmises.rvs(vm_kappa, loc=dir_max_n , scale=1, 
+                            size = approximation_len)
+    return approx
+
+
+# Runs the Von Mises mixture sampler function (make_von_mises_mixture_sampler)
+# or the Von Mises unimodal sampler function (make_von_mises_unimodal_sampler)
+#across the entire landscape and returns an array-like (list of lists) of the 
+#resulting lambda-function samplers
+def make_movement_surface(rast, mixture=True, approximation_len=5000, vm_kappa=12, gauss_KDE_bw=0.2):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0], [3 * pi / 4, pi / 2, pi / 4]])
 
     # grab the correct landscape raster
@@ -322,15 +362,16 @@ def make_movement_surface(rast, approximation_len=5000, vm_kappa=12, gauss_KDE_b
     embedded_rast = np.zeros(shape=[n + 2 for n in rast.shape])
     embedded_rast[1:embedded_rast.shape[0] - 1, 1:embedded_rast.shape[1] - 1] = rast
 
-    # create list of lists (aping an array) for storage of resulting functions
-    #move_surf = [[None for j in range(land.dim[1])] for i in range(land.dim[0])]
-    #NOTE: nevermind that, create an actual array and store vectors approximating the functions!
+    #create a numpy array and store vectors approximating the functions!
     move_surf = np.float16(np.zeros((rast.shape[0], rast.shape[1], approximation_len)))
 
     for i in range(rast.shape[0]):
         for j in range(rast.shape[1]):
             neigh = embedded_rast[i:i + 3, j:j + 3].copy()
-            move_surf[i, j, :] = make_von_mises_mix_sampler(neigh, queen_dirs, vm_kappa = vm_kappa, approximation_len= approximation_len)
+            if mixture:
+                move_surf[i, j, :] = make_von_mises_mixture_sampler(neigh, queen_dirs, vm_kappa = vm_kappa, approximation_len= approximation_len)
+            else:
+                move_surf[i, j, :] = make_von_mises_unimodal_sampler(neigh, queen_dirs, vm_kappa = vm_kappa, approximation_len= approximation_len)
     return move_surf
 
 

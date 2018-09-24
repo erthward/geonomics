@@ -9,3 +9,11 @@
 *./python_model/*.txt
 *./python_model/*.tmp
 *.csv
+*.tsv
+*.tif
+*.tiff
+*.json
+*.geojson
+*.vcf
+*.fasta
+

@@ -106,14 +106,17 @@ class GenomicArchitecture:
         self.scale_delet_s_dist = g_params.scale_delet_s_dist
 
         #attribute for trait (i.e. adaptive) loci
-        self.traits = make_traits(g_params.traits)
+        self.traits = None
+        if 'traits' in [*g_params]:
+            self.traits = make_traits(g_params.traits)
 
         #other attributes associated with mutation
             #a set to contain all mutable loci (i.e. loci where mutations can land)
         self.mutable_loci = set()    #a set containing eligible loci for mutation; after burn-in, will be updated
             #set self.mu_tot, the total per-site, per-generation mutation rate
         mus = [mu for mu in (self.mu_neut, self.mu_delet) if mu is not None]
-        mus = mus + [trt.mu for trt in self.traits.values()]
+        if self.traits is not None:
+            mus = mus + [trt.mu for trt in self.traits.values()]
         self.mu_tot = sum(mus)
         self.mut_fns = self.make_mut_fns_dict()
 
@@ -126,10 +129,11 @@ class GenomicArchitecture:
         if self.mu_delet > 0:
             fn = lambda pop,offspring: mutation.do_deleterious_mutation(pop, offspring)
             mut_fns.update({'delet': fn})
-        for trait_num in self.traits:
-            if self.traits[trait_num].mu > 0:
-                fn = lambda pop,offspring: mutation.do_trait_mutation(pop, offspring, trait_num)
-                mut_fns.update({'t%i' % trait_num: fn})
+        if self.traits is not None:
+            for trait_num in self.traits:
+                if self.traits[trait_num].mu > 0:
+                    fn = lambda pop,offspring: mutation.do_trait_mutation(pop, offspring, trait_num)
+                    mut_fns.update({'t%i' % trait_num: fn})
         return mut_fns
 
     #method to draw mutation types for any number of mutations chosen to occur in a given timestep 
@@ -216,8 +220,8 @@ class GenomicArchitecture:
         self.recomb_paths = RecombinationPaths(make_recomb_paths_bitarrays(self))
 
 
-    #method for showing all allele frequencies for the population
-    def show_freqs(self, pop):
+    #method for plotting all allele frequencies for the population
+    def plot_freqs(self, pop):
         populome = np.hstack([ind.genome for ind in pop.values()])
         freqs = populome.sum(axis = 1)/(2*populome.shape[0])
         plt.plot(range(self.L), self.p, ':r')
@@ -389,7 +393,7 @@ def make_bitarray_recomb_subsetter(recomb_path):
 def make_genomic_architecture(pop_params):
 
     #get the genome parameters
-    g_params = pop_params.genome
+    g_params = pop_params.gen_arch
 
     #get the custom genomic-architecture file, if provided
     gen_arch_file = None
@@ -399,7 +403,7 @@ def make_genomic_architecture(pop_params):
             assert len(gen_arch_file) == g_params.L, ('The custom '
             'genomic architecture file must contain a table with number of '
             'rows equal to the genome length stipulated in the genome '
-            'parameters (params.comm[<pop_num>].genome.L).')
+            'parameters (params.comm[<pop_num>].gen_arch.L).')
             assert np.all(gen_arch_file['locus'].values == 
                           np.array([*range(len(gen_arch_file))])), ('The '
             "'locus' column of the custom genomic architecture file must "
@@ -447,8 +451,9 @@ def make_genomic_architecture(pop_params):
                                 alpha = trait_effects[trait_num].values())
     #or else randomly set the loci and effect sizes for each trait
     else:
-        for trait_num in gen_arch.traits.keys():
-            gen_arch.set_trait_loci(trait_num, mutational = False)
+        if gen_arch.traits is not None:
+            for trait_num in gen_arch.traits.keys():
+                gen_arch.set_trait_loci(trait_num, mutational = False)
 
     assert len(set(range(gen_arch.L)).difference(gen_arch.neut_loci.union(gen_arch.nonneut_loci))) == 0, 'ERROR: The union of the gen_arch.neut_loci and gen_arch.nonneut_loci sets does not contain all loci indicated by gen_arch.L'
 
@@ -490,7 +495,8 @@ def set_genomes(pop, burn_T, T):
     #now reassign genotypes to all individuals, using gen_arch.p
     [ind.set_genome(draw_genome(pop.gen_arch)) for ind in pop.values()]
     #and then reset the individuals' phenotypes
-    [ind.set_phenotype(pop.gen_arch) for ind in pop.values()];
+    if pop.gen_arch.traits is not None:
+        [ind.set_phenotype(pop.gen_arch) for ind in pop.values()];
 
        
 #method for loading a pickled genomic architecture

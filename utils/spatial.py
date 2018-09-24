@@ -282,7 +282,7 @@ def make_density_grids(land, ww):
 
 
 # Function to generate a simulative Von Mises mixture distribution sampler function
-def make_von_mises_mixture_sampler(neigh, dirs, vm_kappa=12, approximation_len = 5000):
+def make_von_mises_mix_sampler(neigh, dirs, vm_kappa=12, approximation_len = 5000):
     # Returns a lambda function that is a quick and reliable way to simulate draws from a Von Mises mixture distribution:
     # 1.) Chooses a direction by neighborhood-weighted probability
     # 2.) Makes a random draw from a Von Mises dist centered on the direction, with a vm_kappa value set such that the net effect, 
@@ -295,8 +295,8 @@ def make_von_mises_mixture_sampler(neigh, dirs, vm_kappa=12, approximation_len =
     # between the 8 queen's neighborhood directions (i.e. doesn't simulate the mixing well enough), and would
     # generate artefactual movement behavior); 12 also seemed to really well in generating probability valleys
     # when tested on neighborhoods that should generate bimodal distributions
-    d = [*dirs.ravel()]
-    n = [*neigh.ravel()]
+    d = list(dirs.ravel())
+    n = list(neigh.ravel())
     del d[4]
     del n[4]
     sum_n = float(sum(n))
@@ -307,44 +307,6 @@ def make_von_mises_mixture_sampler(neigh, dirs, vm_kappa=12, approximation_len =
     loc_choices = r.choice(d, approximation_len, replace = True, p = n_probs)
     loc_choices = list(C(loc_choices).items())
     approx = np.hstack([s_vonmises.rvs(vm_kappa, loc=loc, scale=1, size = size) for loc, size in loc_choices])
-    return approx
-
-
-# Function to generate a simulative Von Mises mixture distribution sampler function
-def make_von_mises_unimodal_sampler(neigh, dirs, vm_kappa=12, approximation_len = 5000):
-    # Returns a lambda function that is a quick and reliable way to simulate draws from a Von Mises mixture distribution:
-    # 1.) Chooses a direction by neighborhood-weighted probability
-    # 2.) Makes a random draw from a Von Mises dist centered on the direction, with a vm_kappa value set such that the net effect, 
-    #when doing this a ton of times for a given neighborhood and then plotting the resulting histogram, gives the 
-    #visually/heuristically satisfying approximation of a Von Mises mixture distribution
-
-    # NOTE: Just visually, heuristically, vm_kappa = 10 seemed like a perfect middle value (vm_kappa ~3 gives too
-    # wide of a Von Mises variance and just chooses values around the entire circle regardless of neighborhood
-    # probability, whereas vm_kappa ~20 produces noticeable reductions in probability of moving to directions
-    # between the 8 queen's neighborhood directions (i.e. doesn't simulate the mixing well enough), and would
-    # generate artefactual movement behavior); 12 also seemed to really well in generating probability valleys
-    # when tested on neighborhoods that should generate bimodal distributions
-
-    #unravel the directions and neighborhood
-    d = dirs.ravel()
-    n = neigh.ravel()
-    #set the center cell to -1 so it's never the max (because it's not part of
-    #its own neighborhood)
-    n[4] = -1
-    #get the indices of the max neighborhood value (or values)
-    max_n_ind = np.where(n == n.max())[0]
-    #and randomly choose one, if there are equal values
-    if max_n_ind.size > 1:
-        max_n_ind = r.choice(max_n_ind)
-    #or else just take the max value
-    else:
-        max_n_ind = max_n_ind[0]
-    #get the direction corresponding to the max neighborhood value
-    dir_max_n = d[max_n_ind]
-    #draw n random numbers from a VonMises centered at the direction
-    #corresponding to the max neighborhood value (where n = approximation_len)
-    approx = s_vonmises.rvs(vm_kappa, loc=dir_max_n , scale=1, 
-                            size = approximation_len)
     return approx
 
 

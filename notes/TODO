@@ -1,5 +1,5 @@
 - knock out these secondary to-do items:
-        - fecundity selection (optional, allow offspring drawn to be dependent on parental fitness)
+        - make osgeo into an optional dependency somehow
         - finalize nice string representations for all classes
         - make Scape and Population names their params keys, rather than the 'name' dict entry inside them
         - change Population back from a class that inherits from an OrderedDict to one that inherits from a plain old dict (since dicts are now ordered, as of Py 3.6 [reliable starting Py 3.7])

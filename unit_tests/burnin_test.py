@@ -1,4 +1,5 @@
 import unittest
+import sim 
 from sim import burnin
 from sim import model
 import copy
@@ -16,6 +17,7 @@ class BurinTestCases(unittest.TestCase):
         params = exec(open('./params.py', 'r').read())
         pop = None
         self.assertEquals(True, burnin.test_t_threshold(pop, 2))
+
 
 
 if __name__ == '__main__':

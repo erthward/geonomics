@@ -1,7 +1,8 @@
 import unittest
+import structs
+from structs import genome
 from sim import model
 from structs import individual
-from structs import genome
 
 class IndividualTestCases(unittest.TestCase):
     def test_make_individual_simple_case(self):
@@ -17,4 +18,5 @@ class IndividualTestCases(unittest.TestCase):
         self.assertIsInstance(ind, individual.Individual)
 
 if __name__ == '__main__':
+    from structs import genome
     unittest.main()

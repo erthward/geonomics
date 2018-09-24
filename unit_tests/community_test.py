@@ -1,6 +1,7 @@
 import unittest
 from structs import community
 from structs import landscape
+from test import autotest 
 import params
 
 class CommunityTestCases(unittest.TestCase):

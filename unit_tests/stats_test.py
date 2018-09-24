@@ -1,12 +1,21 @@
 import unittest
-from sim import model
 from structs import landscape
 from structs import population
-import copy
+from sim import stats
 
 class StatstestCases(unittest.TestCase):
-    
-    def test_make_population(self): 
+    def test_write_stats(self):
+        params = exec(open('./params.py', 'r').read())
+        land = landscape.make_land(params)
+        pop = population.make_population(land, params)
+        stats.calc_ld(pop) 
 
-if __name__ == '__main__':
+    def test_cal_het(self):
+        params = exec(open('./params.py', 'r').read())
+        land = landscape.make_land(params)
+        pop = population.make_population(land, params)
+        np_array = stats.calc_ld(pop)
+        print(np_array) 
+
+if __name__ /== '__main__':
     unittest.main()

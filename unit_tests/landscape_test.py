@@ -32,7 +32,7 @@ class LandscapeTestCases(unittest.TestCase):
         
     def test_get_gis_rasters(self):
         #TODO: get_gis_rasters has wrong number of parameters compared with the one called in function at line 344
-   
+        return 
 
 
 if __name__ == '__main__':

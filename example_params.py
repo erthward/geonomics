@@ -93,7 +93,6 @@ params = {
 #                        'interp_method':                None
 #                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
 #                        },
-<<<<<<< HEAD
                    'gis': {
                        #parameters for making a scape using a GIS raster file
                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
@@ -106,20 +105,7 @@ params = {
                        'scale_max_val':                19.11   
                            #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
                        }
-=======
-#                    'file': {
-#                        #parameters for making a scape using a GIS raster file or a numpy txt array
-#                        'filepath':                     '/home/ihavehands/Desktop/stuff/berk/research/projects/sim/yos_30yr_normals_90x90.tif', 
-#                            #filepath to read into this scape
-#                        'scale_min_val':                -1.37,
-#                            #minimum values to use for rescaling the raster (will be
-#                                #rescaled to 0<=x<=1); NOTE: this may be different than the actual minimum 
-#                                #value in the raster, especially if raster will be changing to a future raster 
-#                                #with values outside the range of this one
-#                        'scale_max_val':                19.11   
-#                            #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
-#                        }
->>>>>>> master
+
                     } # <END> 'init'
 
         ################

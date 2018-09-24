@@ -56,7 +56,7 @@ def calc_fitness_one_trait(t, e, z, pop):
     return(fit)
 
 
-def calc_fitness_traits(pop, trait_num = None, set_fit = False):
+def calc_fitness_traits(pop, trait_num = None):
     traits = pop.gen_arch.traits.values()
     #subset for single trait, if indicated
     if trait_num is not None:
@@ -72,11 +72,6 @@ def calc_fitness_traits(pop, trait_num = None, set_fit = False):
     fit = np.stack(list(map(calc_fitness_lambda, traits))).prod(axis = 0)
     #for polygenic traits, loci with very large effect sizes can generate fitnesses less than 0; correct for this
     fit = np.clip(fit, a_min = 0.001, a_max = None)
-    #set individuals' fitness attributes, if indicated
-    [ind.set_fitness(f) for ind,f in zip(pop.values(), fit)];
-    #if set_fit:
-    #    indices = [*pop]
-    #    [pop[indices[n]].set_fitness(f) for n,f in enumerate(fit)];
     return(fit)
 
 
@@ -90,29 +85,38 @@ def calc_fitness_deleterious_mutations(pop):
     return(fit)
 
 
-#Get the vector of mortalities (probabilies of death) for a given density-dependent Pr(death) at a cell, the
-#environmental value(s) at that cell, the phenotype(s) of the trait(s) for the individuals found there, and the selection
-#coefficient(s) on the trait(s)
-def calc_prob_death(pop, d):
-
+#one function to calculate total fitness, including traits and deleterious
+#loci, as applicable
+def calc_fitness(pop, trait_num=None):
     #set a default w array
     w = np.array([1]*len(pop))
 
     #get trait-related fitness, if traits
     if (pop.gen_arch.traits is not None 
         and len(pop.gen_arch.traits) > 0):
-        w = w * calc_fitness_traits(pop)
+        w = w * calc_fitness_traits(pop, trait_num = trait_num)
 
-    #if the population has deleterious mutations, get fitnesses related to them (i.e. operationalize background selection)
-    if len(pop.gen_arch.delet_loci) > 0:
-        w = w * calc_fitness_deleterious_mutations(pop) 
+    #if fitness is not supposed to be calculated for a specific trait, and if 
+    #population has deleterious mutations, then get the fitnesses related to 
+    #the deleterious traits (i.e. operationalize background selection)
+    if trait_num is None and 
+        len(pop.gen_arch.delet_loci) > 0:
+            w = w * calc_fitness_deleterious_mutations(pop) 
+
+    return w
+
+
+#Get the vector of mortalities (probabilies of death) for a given density-dependent Pr(death) at a cell, the
+#environmental value(s) at that cell, the phenotype(s) of the trait(s) for the individuals found there, and the selection
+#coefficient(s) on the trait(s)
+def calc_prob_death(pop, d):
+
+    #get the fitness values
+    w = calc_fitness(pop)
 
     #[death_probs.update({i: 1-(1-d[i])*w}) for i, w in W.items()];
     death_probs = 1-(1-d)*w
    
-    #assert np.alltrue(np.array(list(death_probs.values()))>=0)
-    #assert np.alltrue(np.array(list(death_probs.values()))<=1)
-
     #assert False not in [w >= 0 and w <= 1 for w in death_probs.values()], 'ERROR: Some fitness values outside the 0-to-1 range.'
     assert (death_probs > 0).all() and (death_probs < 1).all(), 'ERROR: Some fitness values outside the 0-to-1 range.'
 

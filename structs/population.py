@@ -391,10 +391,8 @@ class Population(OD):
         [ind.set_phenotype(self.gen_arch) for ind in self.values()];
 
 
-    def set_fitness(self):
-        indices = [*self]  #get list of individs' indices
-        fit = self.get_fitness()
-        [self[i].set_fitness(fit[n]) for n, i in enumerate(indices)]
+    def set_fitness(self, fit):
+        [ind.set_fitness(f) for ind, f in zip(pop.values(), fit)];
         
 
     #method to set population's coords and cells arrays
@@ -430,15 +428,6 @@ class Population(OD):
                 habs = np.array(ig(habs))
         return habs
 
-    def get_age(self, individs=None):
-        if individs is None:
-            ages = np.array([ind.age for ind in self.values()])
-        else:
-            ig = itemgetter(*individs)
-            ages = {i: ind.age for i, ind in self.items()}
-            ages = np.array(ig(ages))
-        return ages
-
     def get_genotype(self, locus, return_format='mean', individs=None, by_dominance=False):
 
         if individs is None:
@@ -455,18 +444,37 @@ class Population(OD):
             return dict(zip(individs, self.heterozygote_effects[h](
                 np.array([ind.genome[locus,] for i, ind in self.items() if i in individs]))))
 
+    #convenience method for getting a scalar attribute for some or all individs
+    def get_scalar_attr(self, attr_name, individs=None):
+        if individs is None:
+            vals = np.array([get_attr(ind, attr_name) for ind in self.values()])
+        else:
+            ig = itemgetter(*individs)
+            vals = {i: getattr(ind, attr_name) for i, ind in self.items()}
+            vals = np.array(ig(vals))
+        return vals
+
+    #convenience method for getting age of whole population
+    def get_age(self, individs=None):
+        ages = self.get_scalar_attr('age', individs = individs)
+        return ages
+
     # convenience method for getting whole population's phenotype
     def get_phenotype(self, individs=None):
-        if individs is None:
-            zs = np.array([ind.phenotype for ind in self.values()])
-        else: 
-            ig = itemgetter(*individs)
-            zs = {i:ind.phenotype for i, ind in self.items()}
-            zs = np.array(ig(zs))
+        zs = self.get_scalar_attr('phenotype', individs = individs)
         return zs
 
-    def get_fitness(self, trait_num = None, set_fit = False):
-        return selection.calc_fitness_traits(self, trait_num = trait_num, set_fit = set_fit)
+    #convenience method for getting whole population's fitnesses
+    def get_fitness(self, individs = None):
+        fits = self.get_scalar_attr('fitness', individs = individs)
+        return fits
+
+    def calc_fitness(self, trait_num = None, set_fit = True):
+        fit = selection.calc_fitness(self, trait_num = trait_num)
+        #set individuals' fitness attributes, if indicated
+        if set_fit:
+            self.set_fitness(fit)
+        return fit
 
     def get_dom(self, locus):
         return {locus: self.gen_arch.h[locus]}
@@ -614,9 +622,9 @@ class Population(OD):
 
         # get all individs' fitness values
         if trait_num is None:
-            w = self.get_fitness()
+            w = self.calc_fitness()
         else:
-            w = self.get_fitness(trait_num = trait_num)
+            w = self.calc_fitness(trait_num = trait_num)
 
         #filter out unwanted individs, if necessary
         w = OD(zip([*self], w))
@@ -655,7 +663,7 @@ class Population(OD):
 
 
     def plot_hist_fitness(self):
-        plt.hist(list(self.get_fitness()))
+        plt.hist(list(self.calc_fitness()))
 
 
     #method for plotting the movement surface (in various formats)

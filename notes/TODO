@@ -1,0 +1,42 @@
+- knock out these secondary to-do items:
+        - fecundity selection (optional, allow offspring drawn to be dependent on parental fitness)
+        - finalize nice string representations for all classes
+        - make Scape and Population names their params keys, rather than the 'name' dict entry inside them
+        - change Population back from a class that inherits from an OrderedDict to one that inherits from a plain old dict (since dicts are now ordered, as of Py 3.6 [reliable starting Py 3.7])
+        - decide whether to keep heterozygosit effects, and if so, update
+        - use Wright's genetic neighborhood/cruising distance to set window width of DensityGrids
+        - add sex ratio as an extra parameter
+        - remove 'ERROR' from all my assert/raise error strings
+        - fix the FIXME note in sim.model.reset() fn
+        - add an 'nlmpy'-type scape (its params section, and a function to wrap around nlmpy key function(s))
+        - decide whether or not to enable non-moving populations! (right now it's offered in the params, but then doesn't work)
+        - add type annotation to all functions
+        - write lots of checks on the types of all the data in the params file, with informative errors
+        - generalize the change fns some more, so that landscape changes can also be made cyclical, random, etc (like pop-dem changes)
+        - standardize dist-parameter names across the whole pkg; perhaps the convention should be <param_name><dist_name>_dist? e.g. mean_distance_dist?
+
+- systematically debug all 'plot' functions
+
+- walk through & methodically clean up all code and comments, line by line
+
+- integrate unit tests into master branch
+
+- write popgen-based theoretical validations-tests
+
+- add docstrings to all functions (look up current standards first)
+
+- pull docstrings into a single LaTeX file, then add title, intro, TOC, and general info sections, and figures, to create V0.0 of the docs
+
+- add an ./ex directory, which will contain a Yosemite simulation
+
+- finalize pkg structure
+
+- prep for PyPi release
+
+- prep for Oct 22 lab meeting
+
+- script and run sims for the first study
+
+- put together analyses and manuscript
+
+- send out for publication

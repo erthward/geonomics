@@ -154,8 +154,12 @@ def find_mates(pop, land=None, sex=False, repro_age=None, dist_weighted_birth=Fa
     return(mates)   # Return an array or arrays, each inner array containing a mating-pair
 
 
-def draw_n_births(num_pairs, n_births_lambda):
-    num_births = [r.poisson(n_births_lambda - 1 + .0001) + 1 for i in range(num_pairs)]
+def draw_n_births(num_pairs, n_births_lambda, fecundity=1):
+    #NOTE: subtracting nearly 1 from the lambda, then adding 1 to the drawn
+    #value, guarantees that at least 1 offspring will be born for each pair
+    #chosen to mate
+    num_births = r.poisson((n_births_lambda * fecundity) - 0.999999, num_pairs)
+    num_births = np.clip(num_births, a_min = 1, a_max = None)
     return (num_births)
 
 

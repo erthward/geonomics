@@ -1,0 +1,13 @@
+- assortative mating (based on some trait)
+- add module for interactions between populations
+- fecundity selection:
+        - need to add a params option for fecundity selection
+        - should I also then make viability selection optional?
+        - already added a fecundity option to draw_n_births, defaulting to 1, but this should instead
+          be able to take a 1d array of parents' avg fitness, equal in length to the number of mating
+          pairs, in which case each pair's poisson draw will be based on a lambda < (if pair mean 
+          fitness is < 1) or = (if = 1) the params-file's lambda value
+        - if I do implement this then it is very worth it to make it so that fitness is calculated once
+          per turn, perhaps right after movement and before mating, and then memoized (in which case 
+          pop.calc_fitness should calculate it, and should call pop.set_fitness to set it, and then 
+          pop.get_fitness should get it obviously)

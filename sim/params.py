@@ -201,7 +201,8 @@ SCAPE_PARAMS = '''
 #the block of random-scape parameters
 RAND_SCAPE_PARAMS = '''
                     'rand': {
-                        #parameters for making a scape using interpolation from randomly located random values
+                        #parameters for making a random scape (interpolated 
+                        #from randomly located random values)
                         'n_pts':                        500,
                             #number of random coordinates to be used in generating random landscapes
                                 #(only needed if rand == True)
@@ -213,7 +214,8 @@ RAND_SCAPE_PARAMS = '''
 #the block of defined-scape parameters
 DEFINED_SCAPE_PARAMS = '''
                     'defined': {
-                        #parameters for making a scape using interpolation from a defined set of valued points
+                        #parameters for making a defined scape (interpolated
+                        #from a provided set of valued points)
                         'pts':                    None,
                             #coords of points to use to interpolate defined scape (provided as
                                 #a nx2 Numpy array, where n matches the number of points in
@@ -231,7 +233,8 @@ DEFINED_SCAPE_PARAMS = '''
 #the block of file-scape parameters
 FILE_SCAPE_PARAMS = '''
                     'file': {
-                        #parameters for making a scape using a GIS raster file or a numpy txt array
+                        #parameters for making a scape from a file (read in
+                        #from a GIS raster file or a numpy txt array file)
                         'filepath':                     '/PATH/TO/FILE.EXT',
                             #filepath to read into this scape
                         'scale_min_val':                -1.37,
@@ -413,7 +416,8 @@ MOVE_SURF_PARAMS = '''
                             #(i.e. where many cells' neighborhoods have very
                             #little variation between the highest- and lowest
                             #permeability values, so that mixture distributions
-                            #would be largely uniform in all directions)
+                            #would be largely uniform in all directions);
+                            #defaults to True
                         'approximation_len':            7500,
                             #length of the lookup vectors (numpy arrays) used to approximate
                                 #the VonMises mixture distributions at each cell

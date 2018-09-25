@@ -99,8 +99,8 @@ def calc_fitness(pop, trait_num=None):
     #if fitness is not supposed to be calculated for a specific trait, and if 
     #population has deleterious mutations, then get the fitnesses related to 
     #the deleterious traits (i.e. operationalize background selection)
-    if trait_num is None and 
-        len(pop.gen_arch.delet_loci) > 0:
+    if (trait_num is None and 
+        len(pop.gen_arch.delet_loci) > 0):
             w = w * calc_fitness_deleterious_mutations(pop) 
 
     return w

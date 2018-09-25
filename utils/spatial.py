@@ -337,7 +337,8 @@ def make_movement_surface(rast, mixture=True, approximation_len=5000, vm_kappa=1
     return move_surf
 
 
-#linearly scale a raster to 0 <= x <= 1, and return the function to back-convert as well
+#linearly scale a raster to 0 <= x <= 1, and return the min and max input vals
+#as well (for possible reversion)
 def scale_raster(rast, min_inval=None, max_inval=None, min_outval=0, max_outval=1):
     if min_inval is None:
         min_inval = rast.min()

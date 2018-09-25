@@ -37,6 +37,7 @@ from copy import deepcopy
 from operator import itemgetter as ig
 from scipy import interpolate
 from shapely import geometry as g
+from nlmpy import nlmpy
 
 
 ######################################
@@ -306,26 +307,53 @@ def make_land(params, num_hab_types=2):
         #determine which type of scape this is to be (valid: 'rand', 'defined', 'file')
         init_keys = [*init_params]
         if len(init_keys) > 1:
-            raise ValueError(('ERROR: The %ith scape (params["land"]["scapes"] '
-                'key "%s") appears to have parameters for more than one scape '
-                'type.  Choose a single scape type (valid values: "rand", '
-                '"defined", "file") and provide a sub-dictionary of parameters '
-                'for only that type.') % (n, str(k)))
+            raise ValueError(("ERROR: The %ith scape (params['land']['scapes'] "
+                "key '%s') appears to have parameters for more than one scape "
+                "type.  Choose a single scape type (valid values: 'rand', "
+                "'defined', 'file', 'nlmpy') and provide a sub-dictionary of parameters "
+                "for only that type.") % (n, str(k)))
         scape_type = init_keys[0] 
-        assert scape_type in ['rand', 'defined', 'file'], ('ERROR: The '
-        'parameters sub-dictionary for the %ith scape (params["land"]'
-        '["scapes"] key "%s") has an invalid key value. Valid keys are: '
-        '"rand", "defined", "file".') % (n, str(k))
+        assert scape_type in ['rand', 'defined', 'file', 'nlmpy'], ("ERROR: "
+            "The parameters sub-dictionary for the %ith scape (params['land']"
+            "['scapes'] key '%s') has an invalid key value. Valid keys are: "
+            "'rand', 'defined', 'file'.") % (n, str(k))
 
         #create a random scape, if called for
         if scape_type == 'rand':
             #create the random scape and add it to the scapes dict
             scapes[n] = Scape(make_random_scape(dim, **init_params[scape_type], num_hab_types=num_hab_types), scape_type = scape_type, name = name, dim = dim, res = res, ulc = ulc)
 
-        #or else create a defined landscape 
+        #or else create a defined scape 
         elif scape_type == 'defined':
             #create the defined raster
             scapes[n] = Scape(make_defined_scape(dim, **init_params[scape_type], num_hab_types=num_hab_types), scape_type = scape_type, name = name, dim = dim, res = res, ulc = ulc)
+
+        #or else create an nlmpy scape
+        elif scape_type == 'nlmpy':
+            #get the params
+            nlmpy_params = init_params[scape_type]
+            #pop out the name of the function to be called
+            fn_name = nlmpy_params.pop('function')
+            #try to create the nlmpy raster
+            try:
+                #get the function to be called
+                fn = getattr(nlmpy, fn_name)
+                nlm = fn(**nlmpy_params)
+            except Exception as e:
+                raise ValueError(("NLMpy could not generate the raster as "
+                    "parameterized. Threw the following error:\n\n\t"
+                    "%s\n\n.") % e)
+            #check that the dimensions of the nlm raster are the same as the
+            #land dims
+            assert nlm.shape == dim, ("The dimensions of the NLM created "
+                "appear to differ from the Land dims: Land has dims %s, NLM "
+                "has dims %s.\n\n") % (str(dim), str(nlm.shape))
+            #if the nlm generated is not constrained between 0 and 1, rescale
+            #to that range
+            if nlm.min() < 0 or nlm.max() > 1:
+                nlm, min_inval, max_inval = spt.scale_raster(nlm)
+            #set the nlm as the nth scape
+            scapes[n] = Scape(nlm, scape_type = scape_type, name = name, dim = dim, res = res, ulc = ulc)
 
         #or else create a scape from file
         elif scape_type == 'file':

@@ -107,13 +107,19 @@ class Population(OD):
         #create an empty changer attribute, which will be reset if the parameters define changes for this pop
         self.changer = None
 
+        #set the sex_ratio to 0.5 default (but this will be changed if a sex
+        #ratio is provided in the params and it is not 1/1)
+        self.sex_ratio = 0.5
         #grab all of the mating, mortality, and movement parameters as Population attributes
         for section in ['mating', 'mortality', 'movement']:
             if section in [*pop_params]:
                 for att,val in pop_params[section].items():
                     #leave out the move_surf and islands components, which will be handled separately
                     if not isinstance(val, dict):
-                        setattr(self, att, pop_params[section][att])
+                        #convert sex ratio to the probabilty of drawing a male
+                        if att == 'sex_ratio':
+                            val = val / (val + 1)
+                        setattr(self, att, val)
 
         #TODO: probably get rid of this, or move it elsewhere in the package?
         #set the heterozygote effects dictionary
@@ -177,7 +183,9 @@ class Population(OD):
         last_ind_str = ', '.join(self.items().__str__().split(', ')[-2:])
         inds_str = inds_str + first_ind_str + last_ind_str + '\n'
         params = sorted([str(k) + ': ' +str(v) for k,v in vars(self).items() if type(v) in (str, int, bool, float)], key = lambda x: x.lower())
-        params_str = "Parameters:\n\t" + ',\n\t'.join(params)
+        params_str = "Parameters:\n\t" + ',\n\t'.join(params[:2])
+        params_str = params_str + '\n\t...\n\t'
+        params_str = params_str + ',\n\t'.join(params[-2:])
         return '\n'.join([type_str, inds_str, params_str])
 
     def __repr__(self):
@@ -264,7 +272,7 @@ class Population(OD):
 
                 #set the sex correctly
                 if self.sex:
-                    sex = r.binomial(1, 0.5)
+                    sex = r.binomial(1, self.sex_ratio)
                 else:
                     sex = None
 

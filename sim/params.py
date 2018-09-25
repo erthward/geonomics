@@ -247,6 +247,28 @@ FILE_SCAPE_PARAMS = '''
                         },
 '''
 
+#the block of nlmpy-scape parameters
+NLMPY_SCAPE_PARAMS = '''
+                    'nlmpy': {
+                        #parameters for making an nlmpy scape (using any nlmpy
+                        #function for which valid arguments are provided)
+                        #NOTE: all other parameters in this dictionary will be
+                        #unpacked as arguments to the nlmpy function chosen;
+                        #thus, all necessary and only valid arguments must be
+                        #provided or a general error will be thrown
+                        'function':                 'mpd',
+                            #filepath to read into this scape
+                        'nRow':                     20,
+                            #number of rows (must agree with land dimensions)
+                        'nCol':                     20,
+                            #number of columns (must agree with land
+                            #dimensions)
+                        'h':                        1,
+                            #"controls the level of spatial autocorrelation
+                            #in element values"
+                        },
+'''
+
 #the block of scape-change parameters
 #STRING SLOTS:
     #%i = scape_num,
@@ -312,6 +334,8 @@ POP_PARAMS = '''
                         #age beyond which all individuals will automatically die; default to None
                     'sex':                  False,
                         #is this a sexual species?
+                    'sex_ratio':            1/1,
+                        #ratio of males to females
                     'dist_weighted_birth':  False,
                         #should the probability of birth be weighted by the distance between
                             #individuals in a pair?
@@ -826,7 +850,8 @@ def make_scapes_params_str(scapes=1):
         #sections
         scape_type_params_str_dict = {'random': RAND_SCAPE_PARAMS,
                                       'defined': DEFINED_SCAPE_PARAMS,
-                                      'file': FILE_SCAPE_PARAMS
+                                      'file': FILE_SCAPE_PARAMS,
+                                      'nlmpy': NLMPY_SCAPE_PARAMS,
                                      }
         scape_change_params_str_dict = {True: SCAPE_CHANGE_PARAMS,
                                         False: ''}
@@ -834,9 +859,10 @@ def make_scapes_params_str(scapes=1):
         for i, scape_dict in enumerate(scapes):
             #assert that the 'type' value is valid
             if 'type' in [*scape_dict]:
-                assert scape_dict['type'] in ['random', 'defined', 'file'], ("The "
-                    "value provided for the 'type' of Scape %i is invalid. Valid "
-                    "values include: ['random', 'defined', 'file'].") % i
+                assert scape_dict['type'] in ['random', 'defined', 'file',
+                    'nlmpy'], ("The value provided for the 'type' of Scape "
+                    "%i is invalid. Valid values include: ['random', "
+                    "'defined', 'file', 'nlmpy'].") % i
                 #get the type params for this scape
                 scape_type = scape_dict['type']
             else:

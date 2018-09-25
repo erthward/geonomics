@@ -360,41 +360,6 @@ def get_transect_points(endpoints, n):
     y_pts = np.linspace(endpoints[0][1] , endpoints[1][1], n)
     return(list(zip(x_pts, y_pts)))
 
-def format_fasta_2(gen_data):
-    file_name = "fasta_model" + ".fasta"
-    try: 
-        file = open(file_name, 'w')
-        file.write(">")
-    #TODO: Need to write for each iteration here
-        file.write(gen_data['individs'].idx)
-        file.write("\n")
-    #TODO: writing sequence data here
-        gen_data['individs'].genome = make_genome()
-        content = ','.join(str(n) for n in list(gen_data['individs'].genome.flatten()[:50]))
-        file.write('>' + content)
-        file.close()
-    except: 
-        print("Not able to create the fasta file")
-        sys.exit(0)
-    return file
-
-
-
-def format_vcf_2(data): 
-    data["individs"].genome = make_genome()
-    vcf_model = vcf.model._Record(CHROM = data["individs"].genome, POS = None, ID = None, REF = None, ALT = None, QUAL = None, FILTER = "PASS", INFO = None, FORMAT = ",", sample_indexes = [], samples=None)  
-    file_name = "vcf_model" + ".vcf"
-    try:
-        file = open(file_name, 'w+')
-        file.close()
-    except: 
-        print("Not able to create the vcf file")
-        sys.exit(0)
-    file.vcf.Writer.write_record(vcf_model)
-    return file
-
-
-
 
 #a function to make shapely geometry buffers around a set of points
 def make_point_buffers(points, radius):

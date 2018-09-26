@@ -40,7 +40,7 @@ import sys
 # -----------------------------------#
 ######################################
 
-def plot_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest', cmap='terrain', plt_lims=None, mask_val=None, vmin=0, vmax=1):
+def plot_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest', cmap='terrain', plt_lims=None, vmin=0, vmax=1):
     #if a figure is already open, force colorbar to False
     if plt.get_fignums() and plt.gcf().get_axes():
         colorbar = False
@@ -60,10 +60,6 @@ def plot_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest'
     if type(cmap) == str:
         #get the requested cmap 
         cmap = getattr(plt.cm, cmap)
-    #mask values below mask_val, if not None
-    if mask_val is not None:
-        cmap.set_under(color = 'black')
-        vmin = mask_val
 
     #create cmaps and alphas lists, in case multiple rasters are to be plotted
     cmaps = [cmap] + ['bone'] * (len(rasters)-1)

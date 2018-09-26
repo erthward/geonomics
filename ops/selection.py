@@ -117,8 +117,7 @@ def calc_prob_death(pop, d):
     #[death_probs.update({i: 1-(1-d[i])*w}) for i, w in W.items()];
     death_probs = 1-(1-d)*w
    
-    #assert False not in [w >= 0 and w <= 1 for w in death_probs.values()], 'ERROR: Some fitness values outside the 0-to-1 range.'
-    assert (death_probs > 0).all() and (death_probs < 1).all(), 'ERROR: Some fitness values outside the 0-to-1 range.'
+    assert (death_probs > 0).all() and (death_probs < 1).all(), 'Some fitness values outside the 0-to-1 range.'
 
     #return
     return(death_probs)

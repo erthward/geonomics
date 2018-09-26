@@ -29,9 +29,17 @@ import csv
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from osgeo import gdal
 from shapely.geometry import Point
+import warnings
 
+#optional imports
+try:
+    from osgeo import gdal
+except Exception as e:
+    warnings.warn(("Unable to import module 'osgeo.gdal'. Will not be able to "
+        "use it to make read or write GIS raster files. The following error "
+        "was raised:\n\t%s\n\n") % e)
+                      
 
 ######################################
 # -----------------------------------#
@@ -93,13 +101,17 @@ def read_raster(filepath, dim=None):
         ulc = (0,0)
         prj = None
     else:
-        rast_file = gdal.Open(filepath)
-        rast = rast_file.ReadAsArray()
-        dim = rast.shape
-        res = [i for n,i in enumerate(rast_file.GetGeoTransform()) if n in [1,5]]
-        ulc = [i for n,i in enumerate(rast_file.GetGeoTransform()) if n in [0,3]]
-        #get the projection as WKT
-        prj = rast_file.GetProjection()
+        if 'gdal' in globals():
+            rast_file = gdal.Open(filepath)
+            rast = rast_file.ReadAsArray()
+            dim = rast.shape
+            res = [i for n,i in enumerate(rast_file.GetGeoTransform()) if n in [1,5]]
+            ulc = [i for n,i in enumerate(rast_file.GetGeoTransform()) if n in [0,3]]
+            #get the projection as WKT
+            prj = rast_file.GetProjection()
+        else:
+            raise ModuleNotFoundError(("It appears that 'osgeo.gdal' was not "
+                "imported successfully."))
     return(rast, dim, res, ulc, prj)
 
 #read a txt file containing a stack of 2d arrays (such as is created to save 
@@ -201,47 +213,53 @@ def write_txt_array(filepath, scape):
 
 #write a geotiff from a landscape.Scape object's numpy-array raster
 def write_geotiff(filepath, scape):
-    filepath = set_extension(filepath, ['tif', 'tiff'])
-    #TODO: this is a tweak on code taken from https://gis.stackexchange.com/
-    #questions/58517/python-gdal-save-array-as-raster-with-projection-from-
-    #other-file
-    #get the driver
-    driver = gdal.GetDriverByName('GTiff')
-    #get values
-    #number of pixels in x and y
-    x_pixels = scape.dim[0]
-    y_pixels = scape.dim[1]
-    #resolution
-    PIXEL_SIZE = scape.res[0]
-    #x_min & y_max are the "top-left corner"
-    x_min = scape.ulc[0]
-    y_max = scape.ulc[1] + (scape.dim[1]*scape.res[1])
-    #get the WKT projection
-    wkt_projection = scape.prj
-    if wkt_projection is None:
-        #TODO: FOR NOW THIS DEFAULTS TO THE __DEFAULT_PROJ__
-        #VARIABLE, BUT THINK ABOUT WHETHER IT MAKES ANY SENSE TO HAVE
-        #SUCH A DEFAULT, AND IF SO, WHETHER OR NOT THERE'S A BETTER
-        #OPTION
-        wkt_projection = __DEFAULT_PROJ__
-    dataset = driver.Create(
-       filepath,
-       x_pixels,
-       y_pixels,
-       1,
-       gdal.GDT_Float32, )
-    dataset.SetGeoTransform((
-       x_min,        # 0
-       PIXEL_SIZE,   # 1
-       0,            # 2
-       y_max,        # 3
-       0,            # 4
-       -PIXEL_SIZE)) # 5
-    #set the projection
-    dataset.SetProjection(wkt_projection)
-    #and write to disk
-    dataset.GetRasterBand(1).WriteArray(scape.rast)
-    dataset.FlushCache()
+    if 'gdal' in globals():
+        filepath = set_extension(filepath, ['tif', 'tiff'])
+        #TODO: this is a tweak on code taken from https://gis.stackexchange.com/
+        #questions/58517/python-gdal-save-array-as-raster-with-projection-from-
+        #other-file
+        #get the driver
+        driver = gdal.GetDriverByName('GTiff')
+        #get values
+        #number of pixels in x and y
+        x_pixels = scape.dim[0]
+        y_pixels = scape.dim[1]
+        #resolution
+        PIXEL_SIZE = scape.res[0]
+        #x_min & y_max are the "top-left corner"
+        x_min = scape.ulc[0]
+        y_max = scape.ulc[1] + (scape.dim[1]*scape.res[1])
+        #get the WKT projection
+        wkt_projection = scape.prj
+        if wkt_projection is None:
+            #TODO: FOR NOW THIS DEFAULTS TO THE __DEFAULT_PROJ__
+            #VARIABLE, BUT THINK ABOUT WHETHER IT MAKES ANY SENSE TO HAVE
+            #SUCH A DEFAULT, AND IF SO, WHETHER OR NOT THERE'S A BETTER
+            #OPTION
+            wkt_projection = __DEFAULT_PROJ__
+        dataset = driver.Create(
+           filepath,
+           x_pixels,
+           y_pixels,
+           1,
+           gdal.GDT_Float32, )
+        dataset.SetGeoTransform((
+           x_min,        # 0
+           PIXEL_SIZE,   # 1
+           0,            # 2
+           y_max,        # 3
+           0,            # 4
+           -PIXEL_SIZE)) # 5
+        #set the projection
+        dataset.SetProjection(wkt_projection)
+        #and write to disk
+        dataset.GetRasterBand(1).WriteArray(scape.rast)
+        dataset.FlushCache()
+    else:
+        raise ModuleNotFoundError(("It appears that 'osgeo.gdal' was not "
+            "imported successfully."))
+
+
 
 
     #########

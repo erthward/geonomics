@@ -455,7 +455,7 @@ def make_genomic_architecture(pop_params):
             for trait_num in gen_arch.traits.keys():
                 gen_arch.set_trait_loci(trait_num, mutational = False)
 
-    assert len(set(range(gen_arch.L)).difference(gen_arch.neut_loci.union(gen_arch.nonneut_loci))) == 0, 'ERROR: The union of the gen_arch.neut_loci and gen_arch.nonneut_loci sets does not contain all loci indicated by gen_arch.L'
+    assert len(set(range(gen_arch.L)).difference(gen_arch.neut_loci.union(gen_arch.nonneut_loci))) == 0, 'The union of the gen_arch.neut_loci and gen_arch.nonneut_loci sets does not contain all loci indicated by gen_arch.L'
 
     #create the r_lookup attribute
     gen_arch.make_recomb_paths()

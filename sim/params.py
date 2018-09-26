@@ -21,26 +21,6 @@ Documentation:            URL
 ##########################################
 '''
 
-
-######################################
-#TODO:
- # write a function for generating a template params dictionary, taking
- # arguments for the number of scapes, number of pops, whether or not to include a genome, whether or not
- # to include land and pop changes, whether or not to include a model-manager section with data and/or stats
-
- #if I decide to use the recursive function below to create a dynamic-attribute dict class of arbitrary depth,
- #then IMPORTANT to check that none of the following serve as keys:
-    # ['clear', 'copy', 'fromkeys', 'get', 'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values']
-
-#if I decide to use the Params_Dict class, then keys CANNOT be numbers! (so come up with a different scheme
-#for pops and scapes ... perhaps the key should just be the name that the user wants, and names will be
-#rejected iff they clobber one of the dict methods listed above?
-
-#also, if I use the Params_Dict class then I could change all the params keys to use some standardization that
-#doesn't appear elsewhere in the package, e.g. ALL-CAPS-AND-HYPHENS?
-
-######################################
-
 #geonomics imports
 
 #other imports
@@ -169,7 +149,7 @@ params = {
 %s
         } # <END> 'model'
 
-    } # <END> 'params'
+    } # <END> params
 '''
 
 #block for scape params
@@ -297,7 +277,6 @@ SCAPE_CHANGE_PARAMS = '''
     #%i = pop_num,
     #%i = pop_num,
     #%i = pop_num,
-    #%s = islands_params,
     #%s = move_params,
     #%s = genome_params,
     #%s = change_params,
@@ -376,24 +355,11 @@ POP_PARAMS = '''
                         #minimum neutral (i.e. non-selection driven) probability of death
                     'd_max':                    0.90,
                         #maximum neutral probability of death
-%s 
                     }, # <END> 'mortality'
 %s
 %s
 %s
                     }, # <END> pop %i
-'''
-
-#block for islands params
-ISLANDS_PARAMS = '''
-                    'islands':  {
-                        'make':                 False,
-                            #create habitat islands (outside which individuals cannot move without dying)?
-                        'island_val':           0
-                            #if greater than 0 (and of course less than 1), the value will be used to
-                                #create habitat islands in a random landscape (i.e. all cells less than this
-                                #value will be made completely uninhabitable)
-                        }, # <END> 'islands'
 '''
 
 #block for movement params
@@ -427,8 +393,6 @@ MOVE_PARAMS = '''
 #block for movement-surface params
 MOVE_SURF_PARAMS = '''
                     'move_surf'     : {
-                        'make':                         True,
-                            #use a landscape layer as a resistance surface, or habitat quality layer, to direct movement?
                         'scape_num':                    0,
                             #scape number to use as the movement surface
                         'mixture':                      True,
@@ -902,8 +866,6 @@ def make_populations_params_str(populations=1):
         "must be a positive integer.")
                 #for each pop
         for i in range(populations):
-            #use no islands (i.e. a zero-length str)
-            islands_params = ''
             #use movement params, but with no movement surface (i.e.
             #string-format with a zero-length str)
             move_params = MOVE_PARAMS % (i, '')
@@ -913,8 +875,8 @@ def make_populations_params_str(populations=1):
             #add no change params
             change_params = ''
             #create the pop_params str
-            pop_params_str = POP_PARAMS % (i, i, i, i, i, islands_params, 
-                                move_params, genome_params, change_params, i)
+            pop_params_str = POP_PARAMS % (i, i, i, i, i, move_params, 
+                                           genome_params, change_params, i)
             #append to the pops_params_list
             pops_params_list.append(pop_params_str)
 
@@ -929,8 +891,7 @@ def make_populations_params_str(populations=1):
             "objects of type dict.")
         #create a lookup dict for the params strings for different pop params
         #sections
-        params_str_dict = {'islands': {True: ISLANDS_PARAMS},
-                        'move': {True: MOVE_PARAMS},
+        params_str_dict = {'move': {True: MOVE_PARAMS},
                         'move_surf': {True: MOVE_SURF_PARAMS},
                         'genome': {True: GENOME_PARAMS},
                         'change': {True: POP_CHANGE_PARAMS},
@@ -943,7 +904,7 @@ def make_populations_params_str(populations=1):
         #for each pop
         for i, pop_dict in enumerate(populations):
             #assert that the argument values are valid
-            bool_args= ['movement', 'movement_surface', 'genomes', 'islands', 
+            bool_args= ['movement', 'movement_surface', 'genomes', 
                                                         'parameter_change']
             int_args = ['n_traits', 'demographic_change']
             for arg in bool_args:
@@ -963,12 +924,6 @@ def make_populations_params_str(populations=1):
                     assert pop_dict[arg] > 0, ("The number of %s to "
                                     "be created must be a positive " 
                                     "integer.") % (int_arg_str_fmt_dict[arg])
-            #get the islands params
-            if 'islands' in [*pop_dict]:
-                islands_params = params_str_dict['islands'][pop_dict['islands']]
-            #or get empty str
-            else:
-                islands_params = ''
             #get the movement surf and movement params, if required
             #NOTE: check if pop_dict['movement'] is True, so that poorly
             #entered arguments (i.e. 'movement': False, 'movement_surface':True)
@@ -1037,8 +992,8 @@ def make_populations_params_str(populations=1):
             else:
                 change_params = ''
             #get the overall pop params str for this pop
-            pop_params_str = POP_PARAMS % (i, i, i, i, i, islands_params, 
-                                move_params, genome_params, change_params, i)
+            pop_params_str = POP_PARAMS % (i, i, i, i, i, move_params, 
+                                           genome_params, change_params, i)
             #append to the pops_params_list
             pops_params_list.append(pop_params_str)
 
@@ -1114,7 +1069,7 @@ def make_parameters_dict(params):
     for k, v in params.items():
         method_names = ['clear', 'copy', 'fromkeys', 'get', 'items', 'keys',
                         'pop', 'popitem', 'setdefault', 'update', 'values']
-        assert k not in method_names, ('ERROR: The key "%s" in your params '
+        assert k not in method_names, ('The key "%s" in your params '
             'file is disallowed because it would clobber a Python method. '
             'Please edit name.\n\tNOTE: It holds the following value:'
             '\n%s' % (str(k), str(v)))

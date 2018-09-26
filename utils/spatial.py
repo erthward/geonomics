@@ -21,6 +21,9 @@ Documentation:        URL
 ##########################################
 '''
 
+#geonomics imports
+
+#other imports
 import numpy as np
 import numpy.random as r
 import random
@@ -36,6 +39,15 @@ from itertools import repeat, starmap
 from scipy import interpolate
 from scipy.spatial import cKDTree
 from shapely import geometry as g
+import warnings
+
+#optional imports
+try:
+    from nlmpy import nlmpy
+except Exception as e:
+    warnings.warn(("Unable to import module 'nlmpy.nlmpy'. Will not be able to "
+        "use it package to make NLMpy rasters (neutral landscape models. The "
+        "following error was raised:\n\t%s\n\n") % e)
 
 
 ######################################
@@ -168,7 +180,7 @@ class MovementSurface:
         self.approximation_len = approximation_len
         self.surf = make_movement_surface(move_scape.rast, mixture = mixture, approximation_len = self.approximation_len, vm_kappa = vm_kappa, gauss_KDE_bw = gauss_KDE_bw)
 
-        assert self.approximation_len == self.surf.shape[2], "ERROR: MovementSurface.approximation_len not equal to MovementSurface.surf.shape[2]"
+        assert self.approximation_len == self.surf.shape[2], "MovementSurface.approximation_len not equal to MovementSurface.surf.shape[2]"
 
     def draw_directions(self, x, y):
         choices = r.randint(low = 0, high = self.approximation_len, size = len(x))
@@ -337,6 +349,30 @@ def make_movement_surface(rast, mixture=True, approximation_len=5000, vm_kappa=1
     return move_surf
 
 
+#coarse wrapper around the nlmpy package
+def make_nlmpy_raster(nlmpy_params):
+    if 'nlmpy' in globals():
+        #pop out the name of the function to be called
+        fn_name = nlmpy_params.pop('function')
+        #try to create the nlmpy raster
+        try:
+            #get the function to be called
+            fn = getattr(nlmpy, fn_name)
+            nlm = fn(**nlmpy_params)
+        except Exception as e:
+            raise ValueError(("NLMpy could not generate the raster using the "
+                "parameters provided. It threw the following error:\n\n\t"
+                "%s\n\n.") % e)
+        #if the nlm generated is not constrained between 0 and 1, rescale
+        #to that range
+        if nlm.min() < 0 or nlm.max() > 1:
+            nlm, min_inval, max_inval = scale_raster(nlm)
+        return nlm
+    else:
+        raise ModuleNotFounderror(("It appears that 'nlmpy.nlmpy' was not "
+            "imported successfully."))
+
+
 #linearly scale a raster to 0 <= x <= 1, and return the min and max input vals
 #as well (for possible reversion)
 def scale_raster(rast, min_inval=None, max_inval=None, min_outval=0, max_outval=1):
@@ -346,4 +382,7 @@ def scale_raster(rast, min_inval=None, max_inval=None, min_outval=0, max_outval=
         max_inval = rast.max()
     scale_rast = (rast - min_inval)/(max_inval - min_inval)
     return(scale_rast, min_inval, max_inval)
+
+
+
 

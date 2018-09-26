@@ -78,7 +78,6 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
                     - parameters for movement without a MovementSurface
                     - parameters for a GenomicArchitecture with 0 
                       Traits (i.e. with only neutral loci)
-                    - no Islands paramters
                     - no PopulationChanger parameters
             [dict, ..., dict]:
                 Each dict should contain at least one argument from among the
@@ -87,7 +86,6 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
                      'movement_surface':    bool,
                      'genomes':             bool,
                      'n_traits':            int,
-                     'islands':             bool,
                      'demographic_change':  int,
                      'parameter_change':    bool,
                      }

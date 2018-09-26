@@ -59,8 +59,8 @@ class Population(OD):
     def __init__(self, name, inds, land, pop_params, genomic_architecture=None):
 
         #check the inds object is correct
-        assert type(inds) in (OD, dict), "ERROR: inds must be of type dict or type collections.Ordered_Dict"
-        assert list(set([i.__class__.__name__ for i in list(inds.values())])) == [ 'Individual'], "ERROR: inds must be a dictionary containing only instances of the individual.Individual class"
+        assert type(inds) in (OD, dict), "Argument inds must be of type dict or type collections.Ordered_Dict"
+        assert list(set([i.__class__.__name__ for i in list(inds.values())])) == [ 'Individual'], "Argument inds must be a dictionary containing only instances of the individual.Individual class"
 
         #then add the individuals
         self.update(inds) # update with the input dict of all individuals, as instances of individual.Individual class
@@ -99,11 +99,6 @@ class Population(OD):
         #which may be created, depending on paramters
         self.move_surf = None
 
-        #create empty attributes for islands and related attributes,
-        #which may be created, depending on paramters
-        self.islands = None
-        self.n_island_mask_scape = None
-
         #create an empty changer attribute, which will be reset if the parameters define changes for this pop
         self.changer = None
 
@@ -114,7 +109,7 @@ class Population(OD):
         for section in ['mating', 'mortality', 'movement']:
             if section in [*pop_params]:
                 for att,val in pop_params[section].items():
-                    #leave out the move_surf and islands components, which will be handled separately
+                    #leave out the move_surf components, which will be handled separately
                     if not isinstance(val, dict):
                         #convert sex ratio to the probabilty of drawing a male
                         if att == 'sex_ratio':
@@ -455,7 +450,7 @@ class Population(OD):
     #convenience method for getting a scalar attribute for some or all individs
     def get_scalar_attr(self, attr_name, individs=None):
         if individs is None:
-            vals = np.array([get_attr(ind, attr_name) for ind in self.values()])
+            vals = np.array([getattr(ind, attr_name) for ind in self.values()])
         else:
             ig = itemgetter(*individs)
             vals = {i: getattr(ind, attr_name) for i, ind in self.items()}
@@ -517,7 +512,7 @@ class Population(OD):
 
     #method to return an n-length list of random individs; return individuals, or indices, as indicated
     def get_rand_individs(self, n, return_format='index'):
-        assert return_format in ['index', 'individual'], "ERROR: return_format can take only 'index' or 'individual' as values (defaults to 'index')."
+        assert return_format in ['index', 'individual'], "Argument return_format can take only 'index' or 'individual' as values (defaults to 'index')."
         choices = choices = r.choice(list(range(len(pop))), n)
         inds = np.array(list(pop.keys()))[choices]
         if return_format=='individual':
@@ -680,10 +675,10 @@ class Population(OD):
         'style' can take values: 'hist', 'circ_hist', 'vect', or 'circ_draws'
         '''
         if self.move_surf is None:
-            print('ERROR: This Population appears to have no MovementSurface. Function not valid.')
+            print('This Population appears to have no MovementSurface. Function not valid.')
             return
         elif style not in ['hist', 'circ_hist', 'vect', 'circ_draws']:
-            print("ERROR: The 'style' argument must take one of the following values: 'hist', 'circ_hist', 'vect', 'circ_draws'")
+            print("The 'style' argument must take one of the following values: 'hist', 'circ_hist', 'vect', 'circ_draws'")
             return
         elif style == 'hist':
             plt.hist(r.choice(self.move_surf.surf[y,x,:], size = 10000, replace = True), bins=100, density=True, alpha=0.5)
@@ -836,49 +831,12 @@ def make_population(land, pop_params, burn=False):
     if 'movement' in [*pop_params] and pop_params.movement.move:
         if 'move_surf' in pop_params.movement.keys():
             ms_params = deepcopy(pop_params.movement.move_surf)
-            #TODO: Once I have a meta-function that takes arguments about whether or not a movement_surface is
-            #desired for each pop, and the same for islands, and then generates a template params file, then I
-            #will get rid of the 'make' keys here and in the islands section below
-            make_ms = ms_params.pop('make')
-            if make_ms:
-                #grab the scape number for the scape that the movement surface is to be based on
-                move_surf_scape_num = ms_params.pop('scape_num')
-                #then grab the move_surf scape's raster
-                move_rast = land[move_surf_scape_num].rast
-
-###ISLANDS############################################################################################################
-                #TODO: EITHER GET RID OF, OR DEEPLY RETHINK, THE ISLANDS THING
-                #make the islands layer if required
-                if 'islands' in pop_params.mortality.keys():
-                    is_params = deepcopy(pop_params.mortality.islands)
-                    make_is = is_params.pop('make')
-                    if make_is:
-                        move_rast[move_rast < is_params.island_val] = 1e-8
-                            #TODO: if I keep this functionality, consider adding a params option to read in the mask
-                            #from a raster file or numpy array or both
-                        #set the scape's mask_island_vals attribute
-                        land[move_surf_scape_num].mask_island_vals = True
-                            #TODO: if I keep this functionality, also come up with a better way to tell the land 
-                            #to mask the 1e-8 vals when plotting the raster
-                        #create a new scape for the island mask
-                        is_mask = landscape.Scape(np.ma.masked_less_equal(move_rast, 1e-8).mask)
-                        #set its island_mask attribute to True
-                        is_mask.island_mask = True
-                        #then set it as the last scape in the Land object
-                        land[land.n_scapes] = is_mask
-                        #and set the land's island_mask_scape_num attribute
-                        land.island_mask_scape_num = land.n_scapes
-                        #and increment land.n_scapes by 1
-                        land.n_scapes += 1
-                #reset the raster from the scape the move_surf is based on back to the raster we grabbed from
-                #it earlier, in case any changes were made by the islands functionality
-                    #TODO: because multiple populations could use the same scape for different things, it actually
-                    #makes no sense to do this any more!
-                land[move_surf_scape_num].rast = move_rast
-######################################################################################################################
-
-                #make the movement surface and set it as the pop's move_surf attribute
-                pop.move_surf = spt.MovementSurface(land[move_surf_scape_num], **ms_params)
+            #grab the scape number for the scape that the movement surface is to be based on
+            move_surf_scape_num = ms_params.pop('scape_num')
+            #then grab the move_surf scape's raster
+            move_rast = land[move_surf_scape_num].rast
+            #make the movement surface and set it as the pop's move_surf attribute
+            pop.move_surf = spt.MovementSurface(land[move_surf_scape_num], **ms_params)
 
     #if this population has changes parameterized, create a PopChanger object for it
     if 'change' in pop_params.keys():

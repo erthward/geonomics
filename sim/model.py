@@ -504,7 +504,7 @@ class Model:
             except Exception as e:
                 print('XXXX\tAn error occurred during iteration %i.\n \tPLEASE COPY AND REPORT THE FOLLOWING, to help us debug Geonomics:\n' % self.it)
                 print('<>' * int(self.__term_width__/2))
-                print('ERROR MESSAGE:\n\t%s\n\n' % e)
+                print('Error message:\n\t%s\n\n' % e)
                 traceback.print_exc(file=sys.stdout)
                 print()
                 print('<>' * int(self.__term_width__/2) + '\n\n')

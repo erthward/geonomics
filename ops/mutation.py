@@ -50,12 +50,12 @@ def do_neutral_mutation(pop, offspring, locus=None, individ=None):
     if individ is None:
         individ = r.choice(offspring)
     else:
-        assert individ in pop.keys(), 'ERROR: The individual provided is not in pop.keys().'
+        assert individ in pop.keys(), 'The individual provided is not in pop.keys().'
     #randomly choose a locus from among the mutables, if not provided
     if locus is None:
         locus = r.choice([*pop.gen_arch.mutable_loci])
     else:
-        assert locus in pop.gen_arch.mutable_loci, 'ERROR: The locus provided is not in the pop.gen_arch.mutable_loci set.'
+        assert locus in pop.gen_arch.mutable_loci, 'The locus provided is not in the pop.gen_arch.mutable_loci set.'
     #remove the locus from the mutable_loci set
     pop.gen_arch.mutable_loci.remove(locus)
     #randomly choose a chromosome on which to place the mutation in the individual
@@ -69,7 +69,7 @@ def do_nonneutral_mutation(pop, offspring, locus=None, individ=None):
     #choose a new locus, if not provided
     if locus is None:
         locus = pop.gen_arch.draw_mut_loci()
-        assert locus in pop.gen_arch.mutable_loci, 'ERROR: The locus provided is not in pop.gen_arch.mutable_loci.'
+        assert locus in pop.gen_arch.mutable_loci, 'The locus provided is not in pop.gen_arch.mutable_loci.'
     #remove the locus from the mutable_loci and neut_loci sets
     pop.gen_arch.mutable_loci.remove(locus)
     pop.gen_arch.neut_loci.remove(locus)

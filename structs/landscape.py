@@ -37,7 +37,6 @@ from copy import deepcopy
 from operator import itemgetter as ig
 from scipy import interpolate
 from shapely import geometry as g
-from nlmpy import nlmpy
 
 
 ######################################
@@ -65,21 +64,13 @@ class Scape:
         self.scale_min = scale_min
         self.scale_max = scale_max
 
-        #islands attributes; TODO: probably get rid of these!
-        self.island_mask = False
-        self.mask_island_vals = False
-
     #####################
     ### OTHER METHODS ###
     #####################
 
     def plot(self, colorbar=True, im_interp_method='nearest', cmap = 'terrain', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
-        if self.mask_island_vals:
-            mask_val = 1e-7
-        else:
-            mask_val = None
         plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
-        viz.plot_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, mask_val = mask_val, vmin = vmin, vmax = vmax)
+        viz.plot_rasters(self, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, vmin = vmin, vmax = vmax)
 
     #method for writing the scape's raster to a file of the specified format
     def write_raster(self, filepath, raster_format):
@@ -107,7 +98,7 @@ class Land(dict):
 
     def __init__(self, scapes, res=(1,1), ulc=(0,0), prj=None):
         #check the scapes dict is correct, then update the Land with it
-        assert False not in [scape.__class__.__name__ == 'Scape' for scape in scapes.values()], 'ERROR: All landscapes supplied in scapes must be of type landscape.Scape.'
+        assert False not in [scape.__class__.__name__ == 'Scape' for scape in scapes.values()], 'All landscapes supplied in scapes must be of type landscape.Scape.'
         self.update(scapes)
         #set the scapes attribute to the dict values (it still changes dynamically as things update, it runs
         #3x faster than calling values() during the model, and it makes code nicer looking
@@ -119,7 +110,7 @@ class Land(dict):
         [setattr(v, 'idx', k) for k, v in self.items()]
 
         #check that scapes' dimensions are all the same
-        assert len(set([land.dim for land in list(self.values())])) == 1, 'ERROR: Dimensions of all landscapes must be equal.'
+        assert len(set([land.dim for land in list(self.values())])) == 1, 'Dimensions of all landscapes must be equal.'
         #then set the dim to the 0th landscape's dim 
         self.dim = list(self.values())[0].dim
         #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
@@ -149,8 +140,6 @@ class Land(dict):
         #create a changer attribute (defaults to None, but will later be set
         #to an ops.change.LandChanger object if params call for it)
         self.changer = None
-
-        self.island_mask_scape_num = None
 
     #define the __str__ and __repr__ special methods
     #NOTE: this doesn't excellently fit the Python docs' specification for 
@@ -186,12 +175,8 @@ class Land(dict):
 
     #method to plot the landscape (or just a certain scape)
     def plot(self, scape_num=None, colorbar=True, cmap='terrain', im_interp_method='nearest', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
-        if True in [scape.mask_island_vals for scape in self.values()]:
-            mask_val = 1e-7
-        else:
-            mask_val = None
         plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
-        viz.plot_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, mask_val = mask_val, plt_lims = plt_lims, vmin = vmin, vmax = vmax)
+        viz.plot_rasters(self, scape_num = scape_num, colorbar = colorbar, im_interp_method = im_interp_method, cmap = cmap, plt_lims = plt_lims, vmin = vmin, vmax = vmax)
 
     # method for pickling a landscape stack
     def write_pickle(self, filename):
@@ -205,7 +190,7 @@ class Land(dict):
 # -----------------------------------#
 ######################################
 
-def make_random_scape(dim, n_pts, interp_method="cubic", island_val=0, num_hab_types=2, dist='beta', alpha=0.05, beta=0.05):  # requires landscape to be square, such that dim = domain = range
+def make_random_scape(dim, n_pts, interp_method="cubic", num_hab_types=2, dist='beta', alpha=0.05, beta=0.05):  # requires landscape to be square, such that dim = domain = range
     # NOTE: can use "nearest" interpolation to create random patches of habitat (by integer values); can change num_hab_types to > 2 to create a randomly multi-classed landscape
     # NOTE: I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
     # NOTE: This seems to generate decent, believable random rasters!
@@ -307,14 +292,14 @@ def make_land(params, num_hab_types=2):
         #determine which type of scape this is to be (valid: 'rand', 'defined', 'file')
         init_keys = [*init_params]
         if len(init_keys) > 1:
-            raise ValueError(("ERROR: The %ith scape (params['land']['scapes'] "
+            raise ValueError(("The %ith scape (params['land']['scapes'] "
                 "key '%s') appears to have parameters for more than one scape "
                 "type.  Choose a single scape type (valid values: 'rand', "
                 "'defined', 'file', 'nlmpy') and provide a sub-dictionary of parameters "
                 "for only that type.") % (n, str(k)))
         scape_type = init_keys[0] 
-        assert scape_type in ['rand', 'defined', 'file', 'nlmpy'], ("ERROR: "
-            "The parameters sub-dictionary for the %ith scape (params['land']"
+        assert scape_type in ['rand', 'defined', 'file', 'nlmpy'], ("The "
+            "parameters sub-dictionary for the %ith scape (params['land']"
             "['scapes'] key '%s') has an invalid key value. Valid keys are: "
             "'rand', 'defined', 'file'.") % (n, str(k))
 
@@ -332,27 +317,13 @@ def make_land(params, num_hab_types=2):
         elif scape_type == 'nlmpy':
             #get the params
             nlmpy_params = init_params[scape_type]
-            #pop out the name of the function to be called
-            fn_name = nlmpy_params.pop('function')
-            #try to create the nlmpy raster
-            try:
-                #get the function to be called
-                fn = getattr(nlmpy, fn_name)
-                nlm = fn(**nlmpy_params)
-            except Exception as e:
-                raise ValueError(("NLMpy could not generate the raster as "
-                    "parameterized. Threw the following error:\n\n\t"
-                    "%s\n\n.") % e)
-            #check that the dimensions of the nlm raster are the same as the
-            #land dims
+            #make the nlm
+            nlm = spt.make_nlmpy_raster(nlmpy_params)
+            #check that its dimensions match those of the Land
             assert nlm.shape == dim, ("The dimensions of the NLM created "
                 "appear to differ from the Land dims: Land has dims %s, NLM "
                 "has dims %s.\n\n") % (str(dim), str(nlm.shape))
-            #if the nlm generated is not constrained between 0 and 1, rescale
-            #to that range
-            if nlm.min() < 0 or nlm.max() > 1:
-                nlm, min_inval, max_inval = spt.scale_raster(nlm)
-            #set the nlm as the nth scape
+            #set the nlm as the nth Scape in the Land
             scapes[n] = Scape(nlm, scape_type = scape_type, name = name, dim = dim, res = res, ulc = ulc)
 
         #or else create a scape from file
@@ -385,7 +356,7 @@ def make_land(params, num_hab_types=2):
 
 
 def get_file_rasters(land_dim, names, scape_nums, filepaths, scale_min_vals, scale_max_vals):
-    assert len(scape_nums)==len(filepaths), 'ERROR: Parameters provide a different number of GIS raster files to read in than of scape numbers to set them to .'
+    assert len(scape_nums)==len(filepaths), 'Parameters provide a different number of GIS raster files to read in than of scape numbers to set them to .'
     res = []
     ulc = []
     prj = []
@@ -395,7 +366,7 @@ def get_file_rasters(land_dim, names, scape_nums, filepaths, scale_min_vals, sca
         #get the array, dim, res, upper-left corner, and projection from io.read_raster
         rast_array, rast_dim, rast_res, rast_ulc, rast_prj = io.read_raster(filepath, dim)
         #check that the dimensions are right
-        assert rast_dim == land_dim, 'ERROR: land_dim and the dimensions of the input raster %s appear to differ. Please clip %s to the correct dimensions and try again. %s has dimensions (%i, %i), but land has dimensions (%i,%i)' % (filepath, filepath, filepath, rast_dim[0], rast_dim[1], land_dim[0], land_dim[1])
+        assert rast_dim == land_dim, 'Variable land_dim and the dimensions of the input raster %s appear to differ. Please clip %s to the correct dimensions and try again. %s has dimensions (%i, %i), but land has dimensions (%i,%i)' % (filepath, filepath, filepath, rast_dim[0], rast_dim[1], land_dim[0], land_dim[1])
         #scale the raster to 0<=x<=1
         rast_array, scale_min, scale_max = spt.scale_raster(rast_array, min_inval = scale_min_vals[n], max_inval = scale_max_vals[n])
         #add the rast_array to the rast_arrays list

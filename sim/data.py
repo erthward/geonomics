@@ -38,7 +38,6 @@ import re
 from shapely.geometry import Point, MultiPolygon
 import pandas as pd
 import geopandas as gpd
-from osgeo import gdal
 from itertools import chain
 
 
@@ -137,13 +136,13 @@ class DataCollector:
         assert type(self.when in (list, float, int, type(None)))
         #if it's a list, make sure no values are greater than final timestep
         if type(self.when) is list:
-            assert ([n < self.T for n in self.when]).all(), ('ERROR:'
-            ' Values provided for sampling times must be less '
-            'than total model run-time.')
+            assert ([n < self.T for n in self.when]).all(), (' Values '
+                'provided for sampling times must be less than total '
+                'model run-time.')
         #if it's a float, int, or None
         elif type(self.when) in (float, int, type(None)):
             #check value is less than or equal to last timestep (or None)
-            assert self.when is None or self.when < self.T, ('ERROR: Values '
+            assert self.when is None or self.when < self.T, ('Values '
             'provided for sampling times must be less than total '
             'model run-time.')
             #make it a list containing nothing (last timestep will be added),

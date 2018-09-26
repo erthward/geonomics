@@ -331,12 +331,6 @@ def do_pop_dynamics(land, pop, with_selection = True, burn = False, births_befor
         num_killed_age = np.sum(death_probs == 1)
         #print('\n\tINDIVIDUALS DEAD OF OLD AGE: %i  (%0.3f%% of pop)\n' % (num_killed_age, num_killed_age/pop.Nt[::-1][0]))
     
-    #kill (and track kills) outside islands
-    if pop.islands:
-        death_probs[pop.get_habitat(scape_num = land.n_island_mask_scape)] = 1
-        num_killed_isle = np.sum(death_probs == 1) - num_killed_age
-        #print('\n\tINDIVIDUALS KILLED OUTSIDE ISLANDS: %i  (%0.3f%% of pop)\n' % (num_killed_isle, num_killed_isle/pop.Nt[::-1][0]))
-
     #Use the per-individual death probabilities to carry out mortality 
     num_deaths = do_mortality(land, pop, death_probs)
     pop.set_coords_and_cells()

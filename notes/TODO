@@ -1,17 +1,14 @@
 - knock out these secondary to-do items:
-        - make osgeo into an optional dependency somehow
-        - finalize nice string representations for all classes
-        - make Scape and Population names their params keys, rather than the 'name' dict-entry inside their params dicts
-        - decide whether to keep heterozygosity effects, and if so, update
-        - decide whether to keep islands, and if so, fix/finalize/clean up
-        - use Wright's genetic neighborhood/cruising distance to set window width of DensityGrids
-        - remove 'ERROR' from all my assert/raise error strings
-        - fix the FIXME note in sim.model.reset() fn
-        - decide whether or not to enable non-moving populations! (right now it's offered in the params, but then doesn't work)
-        - add type annotation to all functions
-        - write lots of checks on the types of all the data in the params file, with informative errors
-        - generalize the change fns some more, so that landscape changes can also be made cyclical, random, etc (like pop-dem changes)
-        - standardize dist-parameter names across the whole pkg; perhaps the convention should be <param_name><dist_name>_dist? e.g. mean_distance_dist?
+        2 finalize nice string representations for all classes
+        4 make Scape and Population names their params keys, rather than the 'name' dict-entry inside their params dicts
+        5 decide whether to keep heterozygosity effects, and if so, update
+        5 use Wright's genetic neighborhood/cruising distance to set window width of DensityGrids
+        5 fix the FIXME note in sim.model.reset() fn
+        5 decide whether or not to enable non-moving populations! (right now it's offered in the params, but then doesn't work)
+        5 add type annotation to all functions
+        5 write lots of checks on the types of all the data in the params file, with informative errors
+        4 generalize the change fns some more, so that landscape changes can also be made cyclical, random, etc (like pop-dem changes)
+        5 standardize dist-parameter names across the whole pkg; perhaps the convention should be <param_name><dist_name>_dist? e.g. mean_distance_dist?
 
 - systematically debug all 'plot' functions
 

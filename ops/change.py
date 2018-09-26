@@ -253,7 +253,7 @@ class PopChanger(Changer):
 #function that takes a starting scape, an ending scape, a number of timesteps, and a Model object,
 #and returns a linearly interpolated stack of rasters
 def make_linear_scape_series(start_rast, end_rast, start_t, end_t, n_steps):
-    assert start_rast.shape == end_rast.shape, 'ERROR: The starting raster and ending raster for the land-change event are not of the same dimensions: START: %s,  END %s' % (str(start_rast.shape), str(end_rast.shape))
+    assert start_rast.shape == end_rast.shape, 'The starting raster and ending raster for the land-change event are not of the same dimensions: START: %s,  END %s' % (str(start_rast.shape), str(end_rast.shape))
 
     if type(end_rast) is str:
         end_rast, dim, res, ulc, prj = io.read_raster(end_rast)
@@ -276,8 +276,9 @@ def make_linear_scape_series(start_rast, end_rast, start_t, end_t, n_steps):
     #then reshape each timeslice into the dimensions of start_rast
     rast_series = [rast_series[:,i].reshape(start_rast.shape) for i in range(rast_series.shape[1])]
     #check that all the lenghts match up
-    assert len(rast_series) == n_steps, "ERROR: len(rast_series) != n_steps"
-    assert len(rast_series) == len(timesteps), "ERROR: the number of changing rasters created is not the same as the number of timesteps to be assigned to them"
+    assert len(rast_series) == n_steps, ("The length of the rast_series "
+        "variable is not equal to the n_steps variable.")
+    assert len(rast_series) == len(timesteps), "The number of changing rasters created is not the same as the number of timesteps to be assigned to them"
     #zip the timesteps and the rasters together and return them as a list
     rast_series = list(zip(timesteps, rast_series))
     return(rast_series, dim, res, ulc, prj)
@@ -392,7 +393,7 @@ def get_stochastic_dem_change_fns(pop, size_range, start, end, interval, dist = 
         sd = (size_range[1] - size_range[0])/6
         sizes = r.normal(loc = mean, scale = sd, size = len(timesteps))
     else:
-        raise ValueError("ERROR: dist must be a value among ['uniform', 'normal']")
+        raise ValueError("Argument 'dist' must be a value among ['uniform', 'normal']")
     #make size return to starting size
     sizes[-1] = 1
     #make all the change functions
@@ -408,9 +409,9 @@ def get_cyclical_dem_change_fns(pop, start, end, n_cycles, size_range=None, min_
         pass
     #and throw an informative error if both size_range and min_size&max_size arguments are provided (or neither)
     else:
-        raise ValueError('ERROR: Must either provide size_range (as a tuple of minimum and maximum sizes), or provide min_size and max_size separately, but not both.')
+        raise ValueError('Must either provide size_range (as a tuple of minimum and maximum sizes), or provide min_size and max_size separately, but not both.')
     #check that there are enough timesteps to complete the cycles
-    assert n_cycles <= (end - start)/2, 'ERROR: The number of cycles requested must be no more than half the number of time steps over which the cycling should take place.'
+    assert n_cycles <= (end - start)/2, 'The number of cycles requested must be no more than half the number of time steps over which the cycling should take place.'
     #create a base cycle (one sine cycle)
     base = np.sin(np.linspace(0, 2*np.pi,1000)) 
     #flip it if cycles should decrease before increasing
@@ -435,7 +436,7 @@ def get_cyclical_dem_change_fns(pop, start, end, n_cycles, size_range=None, min_
 
 
 def get_custom_dem_change_fns(pop, timesteps, sizes):
-    assert len(timesteps) == len(sizes), 'ERROR: For custom demographic changes, timesteps and sizes must be iterables of equal length.'
+    assert len(timesteps) == len(sizes), 'For custom demographic changes, timesteps and sizes must be iterables of equal length.'
     change_fns = make_dem_change_fns(pop, sizes, timesteps, K_mode = 'base')
     return(change_fns)
 
@@ -455,7 +456,7 @@ def make_parameter_change_fns(pop, parameter, timesteps, vals):
 
 
 def get_parameter_change_fns(pop, parameter, timesteps, vals):
-    assert len(timesteps) == len(vals), "ERROR: For custom changes of the '%s' paramter, timesteps and vals must be iterables of equal length." % param
+    assert len(timesteps) == len(vals), "For custom changes of the '%s' paramter, timesteps and vals must be iterables of equal length." % param
     change_fns = make_parameter_change_fns(pop, param, timesteps, vals)
     return(change_fns)
 

@@ -50,7 +50,7 @@ def plot_movement(pop, land, scape_num, num_timesteps, params = None, mu_directi
     necessary information in it, or provide the necessary parameters piecemeal.'''
 
     if params == None and mu_distance == None:
-        print('\n\n\tERROR: Must provide either a params dictionary or else stipulate parameter values.\n\tPlease try again.\n\n')
+        print('\n\n\tMust provide either a params dictionary or else stipulate parameter values.\n\tPlease try again.\n\n')
         return None
 
     #if a params dictionary was fed in, copy it as toy_params

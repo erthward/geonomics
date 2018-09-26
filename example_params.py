@@ -1,32 +1,3 @@
-#!/usr/bin/python
-#params.py
-
-'''Geonomics parameters file.'''
-
-
-######################################
-#TODO:
- # create a params.py MODULE instaed, with a function for generating a template params dictionary, taking
- # arguments for the number of scapes, number of pops, whether or not to include a genome, whether or not
- # to include land and pop changes, whether or not to include a model-manager section with data and/or stats
-
- #if I decide to use the recursive function below to create a dynamic-attribute dict class of arbitrary depth,
- #then IMPORTANT to check that none of the following serve as keys:
-    # ['clear', 'copy', 'fromkeys', 'get', 'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values']
-
-#if I decide to use the Params_Dict class, then keys CANNOT be numbers! (so come up with a different scheme
-#for pops and scapes ... perhaps the key should just be the name that the user wants, and names will be
-#rejected iff they clobber one of the dict methods listed above?
-
-#also, if I use the Params_Dict class then I could change all the params keys to use some standardization that
-#doesn't appear elsewhere in the package, e.g. ALL-CAPS-AND-HYPHENS?
-
-######################################
-
-
-
-import numpy as np
-
 params = {
 
 ##############
@@ -279,15 +250,6 @@ params = {
                         #minimum neutral (i.e. non-selection driven) probability of death
                     'd_max':                    0.90,
                         #maximum neutral probability of death
-                    'islands':  {
-                        'make':                 False,
-                            #create habitat islands (outside which individuals cannot move without dying)?
-                        'island_val':           0
-                            #if greater than 0 (and of course less than 1), the value will be used to
-                                #create habitat islands in a random landscape (i.e. all cells less than this 
-                                #value will be made completely uninhabitable)
-                        }, # <END> 'islands'
- 
                     }, # <END> 'mortality'
 
             ##################
@@ -647,47 +609,4 @@ params = {
 
     } # <END> 'params'
 
-
-
-#a dict class with k:v pairs as dynamic attributes
-class _Dyn_Attr_Dict_(dict):
-    def __getattr__(self, item):
-        return self[item]
-    def __dir__(self):
-        return super().__dir__() + [str(k) for k in self.keys()]
-    def __deepcopy__(self, memo):
-        return _Dyn_Attr_Dict_(copy.deepcopy(dict(self)))
-
-
-class Params_Dict(_Dyn_Attr_Dict_):
-    def __init__(self, params):
-        params_dict = make_params_dict(params)
-        self.update(params)
-    #re-enable deepcopy, because the class inherits from a dict
-    def __deepcopy__(self, memo):
-        return Params_Dict(copy.deepcopy(dict(self)))
-
-
-#function to recurse over the params dictionary 
-#and return it as a Params_Dict object (i.e. a
-#dict with k:v pairs as dynamic attributes)
-def make_params_dict(params):
-    for k, v in params.items():
-        method_names = ['clear', 'copy', 'fromkeys', 'get', 'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values']
-        assert k not in method_names, 'ERROR: The key "%s" in your params file is disallowed because it would clobber a Python method. Please edit name.\n\tNOTE: It holds the following value:\n%s' % (str(k), str(v))
-        if isinstance(v, dict):
-            #params.update({k:params_dict(v)})
-            params[k] = make_params_dict(params[k])
-    params = _Dyn_Attr_Dict_(params)
-    return(params)
-   
-
-
-#get the params as a Params_Dict object
-params = Params_Dict(params)
-
-
-
-
-
-# <END> params.py
+# <END> file

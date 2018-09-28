@@ -66,7 +66,7 @@ class Population(OD):
         self.update(inds) # update with the input dict of all individuals, as instances of individual.Individual class
 
         #set other attributes
-        self.name = name
+        self.name = str(name)
         self.land_dim = land.dim
         self.land = land
         self.it = None  # attribute to keep track of iteration number this pop is being used for
@@ -76,7 +76,8 @@ class Population(OD):
                      #to indicate unrun, and so that first timestep will be set to 0 at beginning of timestep)
             # NOTE: This way, if model is stopped, changes are made, then it is run further,
             # this makes it easy to continue tracking from the beginning
-        self.burned = False #will be switched to True when the population passes the burnin tests
+        self.burned = False #will be switched to True when the population
+                            #passes the burn-in tests
         self.extinct = False #will be switched to True if the population goes extinct
 
         self.start_N = len(self)
@@ -172,13 +173,16 @@ class Population(OD):
     #values, and also includes some parameters that are input in params.py but not all, and some params that
     #are created internally but not all
     def __str__(self):
+        #get a string representation of the class
         type_str = str(type(self))
+        #get a string representation of the first and last individuals
         inds_str = '\n%i Individuals:\n\t' % len(self)
         first_ind_str = OD(self.items()).__str__().split('), ')[0] + ')\n\t...\n\t'
         last_ind_str = ', '.join(self.items().__str__().split(', ')[-2:])
         inds_str = inds_str + first_ind_str + last_ind_str + '\n'
+        #get a string representation of the first two and last two parameters
         params = sorted([str(k) + ': ' +str(v) for k,v in vars(self).items() if type(v) in (str, int, bool, float)], key = lambda x: x.lower())
-        params_str = "Parameters:\n\t" + ',\n\t'.join(params[:2])
+        params_str = "Parameters:\n\t" + ',\n\t'.join(params[:2]) + ','
         params_str = params_str + '\n\t...\n\t'
         params_str = params_str + ',\n\t'.join(params[-2:])
         return '\n'.join([type_str, inds_str, params_str])
@@ -297,7 +301,6 @@ class Population(OD):
         if self.mutate:
             mutation.do_mutation(keys_list, self, log = self.mut_log)
 
-        #print('\n\t%i individuals born' % (total_births))
 
     #method to do population dynamics
     def do_pop_dynamics(self):
@@ -309,7 +312,6 @@ class Population(OD):
         #result, which will be True iff pop has gone extinct
         extinct = demography.do_pop_dynamics(self.land, self, with_selection = with_selection, burn = burn)
         if extinct:
-            #print('\n\nPOPULATION %s EXTINCT AT TIMESTEP %i\n\n' % (self.name, self.t))
             #set self.extinct equal to True, so that the iteration will be ended
             self.extinct = extinct
 
@@ -324,13 +326,13 @@ class Population(OD):
     #method to check if the population is burned in (i.e. if it passes the burn-in checks)
         #TODO: Add more and/or different tests? This is a pretty basic test so far,
         #based only on gross population size (not spationarity of spatial distribution)
-    def check_burned(self, burn_T):
-        burnin_status = len(self.Nt) >= burn_T
-        if burnin_status:
-            adf_test = burnin.test_adf_threshold(self, burn_T)
-            t_test = burnin.test_t_threshold(self, burn_T)
-            burnin_status = adf_test and t_test
-        self.burned = burnin_status
+    #def check_burned(self, burn_T):
+    #    burnin_status = len(self.Nt) >= burn_T
+    #    if burnin_status:
+    #        adf_test = burnin.test_adf_threshold(self, burn_T)
+    #        t_test = burnin.test_t_threshold(self, burn_T)
+    #        burnin_status = adf_test and t_test
+    #    self.burned = burnin_status
 
     #method to calculate population density
     def calc_density(self, normalize_by= None, min_0=True, max_1=False, max_val=None, as_landscape = False, set_N=False):
@@ -511,12 +513,12 @@ class Population(OD):
         return coords[:,1]
 
     #method to return an n-length list of random individs; return individuals, or indices, as indicated
-    def get_rand_individs(self, n, return_format='index'):
+    def get_random_individuals(self, n, return_format='index'):
         assert return_format in ['index', 'individual'], "Argument return_format can take only 'index' or 'individual' as values (defaults to 'index')."
-        choices = choices = r.choice(list(range(len(pop))), n)
-        inds = np.array(list(pop.keys()))[choices]
+        choices = choices = r.choice(list(range(len(self))), n)
+        inds = np.array(list(self.keys()))[choices]
         if return_format=='individual':
-            inds = [pop[ind] for ind in inds]
+            inds = [self[ind] for ind in inds]
         return(inds)
 
     #use the kd_tree attribute to find nearest neighbors either within the population, if within == True,
@@ -721,7 +723,6 @@ class Population(OD):
 
 
     # method for plotting a population pyramid
-    # NOTE: NEED TO FIX THIS SO THAT EACH HALF PLOTS ON OPPOSITE SIDES OF THE Y-AXIS
     def plot_demographic_pyramid(self):
         #make dict of female and male colors
         col_dict = {-1: 'cyan', 1: 'pink'}
@@ -786,7 +787,7 @@ def make_K(pop, land, K_scape_num, K_fact):
     return K_rast
 
 
-def make_population(land, pop_params, burn=False):
+def make_population(land, name, pop_params, burn=False):
     #get pop's intializing params
     init_params = deepcopy(pop_params.init)
 
@@ -808,7 +809,6 @@ def make_population(land, pop_params, burn=False):
         inds[idx] = ind
 
     #create the population from those individuals
-    name = init_params.pop('name')
     pop = Population(name = name, inds = inds, land = land, pop_params = pop_params, genomic_architecture=gen_arch)
 
     #use the remaining init_params to set the carrying-capacity raster (K)

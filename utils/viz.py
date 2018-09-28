@@ -48,14 +48,18 @@ def plot_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest'
     #if just a numpy.ndarray or a Scape (not a Land object) is provided, or if just a single raster is desired, grab the raster into a list
     if str(type(land)) == "<class 'numpy.ndarray'>":
         rasters = [land]
+        scape_names = ['n/a']
     elif str(type(land)) == "<class 'structs.landscape.Scape'>":
         rasters = [land.rast]
+        scape_names = [land.name]
     elif str(type(land)) == "<class 'structs.landscape.Land'>":
         if scape_num is not None:
             rasters = [land[scape_num].rast]
+            scape_names = [land[scape_num].name]
         #else just create a list of all rasters
         else:
             rasters = [scape.rast for scape in land.values()]
+            scape_names = [scape.name for scape in land.values()]
 
     if type(cmap) == str:
         #get the requested cmap 
@@ -81,7 +85,7 @@ def plot_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest'
             cbar_max_bound = max(rasters[n].max(), 1)
             cbar_bounds = np.linspace(0, cbar_max_bound, 51)
             cbar = plt.colorbar(boundaries=cbar_bounds)
-            cbar.ax.set_title('scape: %i' % n)
+            cbar.ax.set_title("scape: '%s'" % scape_names[n])
             ax = cbar.ax
             title = ax.title
             font = mpl.font_manager.FontProperties(family='sans-serif', style='normal', size=10)

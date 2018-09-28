@@ -30,6 +30,7 @@ from structs import landscape, genome, individual, population, community
 #other imports
 import re
 import os, sys
+from collections import Counter as C
 import numpy as np
 import pandas as pd
 
@@ -131,12 +132,35 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
 
 #wrapper around params.read
 def read_params(params_filepath):
+    #first read in file as a block of text
+    with open(params_filepath, 'r') as f:
+        txt = f.read()
+    #find all the scape names and pop names
+    scape_names = re.findall('\S+(?= *\: *\{.*\n.*#scape name)', txt) 
+    pop_names = re.findall('\S+(?= *\: *\{.*\n.*#pop name)', txt) 
+    #get Counter objects of each
+    scape_name_cts = C(scape_names)
+    pop_name_cts = C(pop_names)
+    #assert that each name is used only once
+    assert set([*scape_name_cts.values()]) == {1}, ("At least one of the Scape "
+        "names provided in the parameters file appears to be used more than "
+        "once. Violating names include: %s") % (';'.join([("'%s', used %i "
+            "times.") % (str(k), v) for k, v in scape_name_cts.items() if v>1]))
+    assert set([*pop_name_cts.values()]) == {1}, ("At least one of the "
+        "Population names provided in the parameters file appears to be used "
+        "more than once. Violating names include: %s") % (';'.join([("'%s', "
+            "used %i times.") % (
+                str(k), v) for k, v in pop_name_cts.items() if v>1]))
+
+
+    #regex to check that no scapes
+    #or pops have identical names (i.e. keys)
     params = par.read(params_filepath)
     return(params)
 
 
 #function to create a model from a ParametersDict object
-def make_model(params, verbose=False):
+def make_model(params):#, verbose=False):
     #TODO: ASSERT THAT params is either a ParametersDict object 
     #OR a filepath (and if so, that it can be turned into a ParametersDict object)
     if type(params) is str:
@@ -150,7 +174,7 @@ def make_model(params, verbose=False):
         pass
     try:
         name = params.model.name
-        mod = model.Model(name, params, verbose=verbose)
+        mod = model.Model(name, params)#, verbose=verbose)
         return(mod)
     except Exception as e:
             raise ValueError(("Failed to create a Model object from the "

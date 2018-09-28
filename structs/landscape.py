@@ -50,7 +50,7 @@ class Scape:
                  prj=None, scale_min=0, scale_max=1):
         self.idx = None
         self.type = scape_type
-        self.name = name
+        self.name = str(name)
         self.dim = dim
         assert type(self.dim) in [tuple, list], "dim must be expressed on a tuple or a list"
         #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc)
@@ -145,11 +145,24 @@ class Land(dict):
     #NOTE: this doesn't excellently fit the Python docs' specification for 
     #__repr__; I should massage this some more when done writing the codebase
     def __str__(self):
+        #get the longest scape name, to be used to horizontally rectify 
+        #all the lines for each of the scapes
+        max_len_scape_name = max([len(scape.name) for scape in self.values()])
+        #get a string representation of the class
         type_str = str(type(self))
+        #get a string of all the scapes
         scapes_str = '\n%i Scapes:\n' % self.n_scapes
-        scapes_str = scapes_str + ',\n'.join(sorted(['\t' + str(k) + ': ' + str(v) for k,v in self.items()])) + '},'
-        vars_str = "\nParameters:\n\t" + ',\n\t'.join(sorted([str(k) + ': ' + str(v) for k,v in vars(self).items()])) + '}}'
-        return '\n'.join([type_str, scapes_str, vars_str])
+        scapes_str = scapes_str + '\n'.join(['\tscape %i: ' % k +
+            "%s'%s':\t" % (' ' * (max_len_scape_name - len(v.name)), v.name) +
+            str(v) for k,v in self.items()])
+        #get a string representation of the first two and last two parameters
+        params_str = "\nParameters:\n\t" + ',\n\t'.join(sorted([str(k) +
+            ': ' + str(v) for k,v in vars(self).items()][:2])) + ','
+        params_str = params_str + '\n\t...\n\t'
+        params_str = params_str + ',\n\t'.join(sorted([str(k) +
+            ': ' + str(v) for k,v in vars(self).items()][-2:]))
+
+        return '\n'.join([type_str, scapes_str, params_str])
 
     def __repr__(self):
         repr_str = self.__str__()
@@ -281,13 +294,10 @@ def make_land(params, num_hab_types=2):
     file_scape_params = {'names': [], 'scape_nums':[], 'filepaths':[], 'scale_min_vals':[], 'scale_max_vals':[]}
 
     #then loop over the scapes in params.land.scapes and create each one
-    for n, (k, scape_params) in enumerate(params.land.scapes.items()):
+    for n, (scape_name, scape_params) in enumerate(params.land.scapes.items()):
 
         #get the init parameters
         init_params = deepcopy(scape_params.init)
-
-        #get the scape name
-        name = init_params.pop('name')
 
         #determine which type of scape this is to be (valid: 'rand', 'defined', 'file')
         init_keys = [*init_params]
@@ -306,25 +316,32 @@ def make_land(params, num_hab_types=2):
         #create a random scape, if called for
         if scape_type == 'rand':
             #create the random scape and add it to the scapes dict
-            scapes[n] = Scape(make_random_scape(dim, **init_params[scape_type], num_hab_types=num_hab_types), scape_type = scape_type, name = name, dim = dim, res = res, ulc = ulc)
+            scape_rast = make_random_scape(dim, **init_params[scape_type], 
+                                           num_hab_types=num_hab_types)
+            scapes[n] = Scape(scape_rast, scape_type = scape_type, 
+                name = scape_name, dim = dim, res = res, ulc = ulc)
 
         #or else create a defined scape 
         elif scape_type == 'defined':
             #create the defined raster
-            scapes[n] = Scape(make_defined_scape(dim, **init_params[scape_type], num_hab_types=num_hab_types), scape_type = scape_type, name = name, dim = dim, res = res, ulc = ulc)
+            scape_rast = make_defined_scape(dim, **init_params[scape_type],
+                                            num_hab_types=num_hab_types)
+            scapes[n] = Scape(scape_rast, scape_type = scape_type, 
+                name = scape_name, dim = dim, res = res, ulc = ulc)
 
         #or else create an nlmpy scape
         elif scape_type == 'nlmpy':
             #get the params
             nlmpy_params = init_params[scape_type]
             #make the nlm
-            nlm = spt.make_nlmpy_raster(nlmpy_params)
+            scape_rast = spt.make_nlmpy_raster(nlmpy_params)
             #check that its dimensions match those of the Land
-            assert nlm.shape == dim, ("The dimensions of the NLM created "
-                "appear to differ from the Land dims: Land has dims %s, NLM "
-                "has dims %s.\n\n") % (str(dim), str(nlm.shape))
+            assert scape_rast.shape == dim, ("The dimensions of the NLM created"
+                " appear to differ from the Land dims: Land has dims %s, NLM "
+                "has dims %s.\n\n") % (str(dim), str(scape_rast.shape))
             #set the nlm as the nth Scape in the Land
-            scapes[n] = Scape(nlm, scape_type = scape_type, name = name, dim = dim, res = res, ulc = ulc)
+            scapes[n] = Scape(scape_rast, scape_type = scape_type, 
+                name = scape_name, dim = dim, res = res, ulc = ulc)
 
         #or else create a scape from file
         elif scape_type == 'file':
@@ -334,7 +351,7 @@ def make_land(params, num_hab_types=2):
             #will be replaced with a GIS or numpy raster after the Land is #created (NOTE: easier to do this all at 
             #once afterward, to check that the resolution and registration of the rasters all agree)
             file_scape_params['scape_nums'].append(n)
-            file_scape_params['names'].append(name)
+            file_scape_params['names'].append(scape_name)
             [file_scape_params[k+'s'].append(v) for k,v in init_params[scape_type].items()]
 
     #now set the necessary layers to their file rasters, if applicable

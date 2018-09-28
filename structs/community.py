@@ -25,6 +25,10 @@ Documentation:             URL
 
 #geonomics imports
 from structs import population
+from sim import burnin
+
+#other imports
+import numpy as np
 
 
 ######################################
@@ -48,6 +52,36 @@ class Community(dict):
         #or not burn-in needs to happen each iteration)
         self.burned = False
 
+    #define the __str__ and __repr__ special methods
+    def __str__(self):
+        #get the longest pop name and longest string-repr pop size, to be used
+        #to horizontally rectify all the lines for each of the pops
+        max_len_pop_name = max([len(pop.name) for pop in self.values()])
+        max_len_pop_size = max([len(str(len(pop))) for pop in self.values()])
+        #get a string representation of the class
+        type_str = str(type(self))
+        #get a string representation of the populations
+        pops_str = '\n%i Populations:\n' % len(self)
+        pops_str = pops_str + '\n'.join(['\tpop %i: ' % k +
+            "%s'%s' (%s%s inds.): " % (' ' * (max_len_pop_name - len(v.name)),
+            v.name, ' ' * (max_len_pop_size - len(str(len(v)))),
+            str(len(v))) +
+            str(v).split('\n')[0] for k,v in self.items()])
+        ##get a string representation of the first two and last two parameters
+        #params_str = "\nParameters:\n\t" + ',\n\t'.join(sorted([str(k) +
+        #    ': ' + str(v) for k,v in vars(self).items()][:2])) + ','
+        #params_str = params_str + '\n\t...\n\t'
+        #params_str = params_str + ',\n\t'.join(sorted([str(k) +
+        #    ': ' + str(v) for k,v in vars(self).items()][-2:]))
+
+        #return '\n'.join([type_str, pops_str, params_str])
+        return '\n'.join([type_str, pops_str])
+
+    def __repr__(self):
+        repr_str = self.__str__()
+        return repr_str
+
+
 
     #method to increment the self.t attribute (the timestep counter)
     def set_t(self):
@@ -57,6 +91,23 @@ class Community(dict):
     def reset_t(self):
         self.t = -1
 
+    #method to check if all populations have burned in
+    def check_burned(self, burn_T):
+        #check minimum burn-in time has passed
+        burnin_status = np.all([len(pop.Nt) >= burn_T for pop in self.values()])
+        #if so, then check all burn-in tests for all pops
+        if burnin_status:
+            adf_tests = np.all([burnin.test_adf_threshold(pop, burn_T) for 
+                                pop in self.values()])
+            t_tests = np.all([burnin.test_t_threshold(pop, burn_T) for 
+                                pop in self.values()])
+            burnin_status = adf_tests and t_tests
+        #set the community burn-in tracker
+        self.burned = burnin_status
+        #and set the pops' burn-in trackers
+        [setattr(pop, 'burned', burnin_status) for pop in self.values()]
+
+
 ######################################
 # -----------------------------------#
 # FUNCTIONS -------------------------#
@@ -65,6 +116,8 @@ class Community(dict):
 
 #function for making a community using a Land object and params
 def make_community(land, params, burn=False):
-    pops = {k: population.make_population(land = land, pop_params = params.comm.pops[k], burn = burn) for k in params.comm.pops.keys()}
+    pops = {n: population.make_population(land = land, name = name, 
+        pop_params = params.comm.pops[name], burn = burn) for n, name in
+            enumerate(params.comm.pops.keys())}
     return Community(land, pops) 
 

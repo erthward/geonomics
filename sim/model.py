@@ -54,8 +54,8 @@ class Model:
         #set the model name (which will come from the params filename)
         self.name = name
 
-        #set the verbose flag
-        self.verbose = verbose
+        #set the __verbose__ flag
+        self.__verbose__ = verbose
         #and set the private __term_width__  and __tab_len__ attributes
         self.__set_term_width__()
         self.__set_tab_len__()
@@ -89,6 +89,11 @@ class Model:
         #make the land and community objects
         self.land = self.make_land()
         self.comm = self.make_community()
+
+        #and make the self.__never_run__ attribute to False,
+        #to prevent the land and community from being reset
+        #on the very first iteration
+        self.__never_run__ = True
 
         #make a data.DataCollector object for the self.collecter attribute
         #if necessary
@@ -176,8 +181,8 @@ class Model:
     def reset_land(self, rand_land=True):
         #deepcopy the original land if necessary (else randomly generate new land)
         if not rand_land:
-            #verbose output
-            if self.verbose:
+            #__verbose__ output
+            if self.__verbose__:
                 print('Copying the original land for iteration %i...\n\n' % self.it)
             #deepcopy the original land
             self.land = deepcopy(self.orig_land)
@@ -186,12 +191,12 @@ class Model:
             #updated attribute values)
             if self.land.changer is not None:
                 #verbose output
-                if self.verbose:
+                if self.__verbose__:
                     print('Resetting the land.changer.changes object...\n\n')
                 self.land.changer.set_changes(self.land)
         else:
             #verbose output
-            if self.verbose:
+            if self.__verbose__:
                 print('Creating new land for iteration %i...\n\n' % self.it)
             self.land = self.make_land()
 
@@ -206,7 +211,7 @@ class Model:
     def reset_community(self, rand_comm=True):
         if not rand_comm:
             #verbose output
-            if self.verbose:
+            if self.__verbose__:
                 print('Copying the original community for iteration %i...\n\n' % self.it)
             self.comm = deepcopy(self.orig_comm)
             #and reset the pop.changer.changes objects for each pop, if needed (so that they
@@ -215,12 +220,12 @@ class Model:
             for pop in self.comm.values():
                 if pop.changer is not None:
                     #verbose output
-                    if self.verbose:
+                    if self.__verbose__:
                         print('Resetting the pop.changer.changes object for population " %s"...\n\n' % pop.name)
                     pop.changer.set_changes(pop)
         else:
             #verbose ouput
-            if self.verbose:
+            if self.__verbose__:
                 print('Creating new community for iteration %i...\n\n' % self.it)
             self.comm = self.make_community()
 
@@ -271,16 +276,11 @@ class Model:
 
         #deepcopy the original land and comm if necessary (if told not to randomize
         #land and not at the beginning of the initial iteration), else randomly generate new
-        #FIXME: The way I have this written right now, the land and community
-            #are made when the Model object is made, and then they are needlessly
-            #reset before the first iteration is run (because self.reset() is called
-            #at the beginning of each iteration), which is a waste of computation;
-            #but if I run the following line then they never get reset; I NEED TO
-            #READ THROUGH THIS WHOLE MODULE AND SIMPLIFY/STREAMLINE! THIS PROBLEM
-            #ALL STARTED WHEN I WROTE THE self.run_interactive FUNCTION YESTERDAY!
-        #if not self.it == 0 and self.burn_t == 0:
-        self.reset_land(rand_land)
-        self.reset_community(rand_comm)
+        if not self.__never_run__:
+            self.reset_land(rand_land)
+            self.reset_community(rand_comm)
+        else:
+            self.__never_run__ = False
 
         #reset the self.burn_t and self.t attributes to -1
         self.reset_t()
@@ -308,11 +308,11 @@ class Model:
         #create new main fn queue (and burn fn queue, if needed)
         if rand_burn or self.it <= 0:
             #verbose output
-            if self.verbose:
+            if self.__verbose__:
                 print('Creating the burn-in function queue...\n\n')
             self.burn_fn_queue = self.make_fn_queue(burn = True)
         #verbose output
-        if self.verbose:
+        if self.__verbose__:
             print('Creating the main function queue...\n\n')
         self.main_fn_queue = self.make_fn_queue(burn = False)
 
@@ -377,16 +377,19 @@ class Model:
 
         #add the burn-in function if need be
         if burn:
-            for pop in self.comm.values():
-                queue.append(lambda: pop.check_burned(self.burn_T))
+            #for pop in self.comm.values():
+                #queue.append(lambda: pop.check_burned(self.burn_T))
+            queue.append(lambda: self.comm.check_burned(burn_T = self.burn_T))
         return(queue)
 
 
     #method to generate timestep_verbose_output
     def print_timestep_info(self, mode):
-        verbose_msg = '%s\n\t%i:%i\n' % (mode, self.it, [self.burn_t if mode == 'burn' else self.t][0])
-        pops_submsgs = ''.join(['\tN=%i\t(births=%i\tdeaths=%i)\n' %
-                                    (pop.Nt[:].pop(),
+        verbose_msg = '%s:\n\t%i:%i\n' % (mode, self.it, [self.burn_t if mode == 'burn' else self.t][0])
+        pops_submsgs = ''.join(['\tPOP: %s%sN=%i\t(births=%i\tdeaths=%i)\n' %
+                                    (pop.name,
+                                     ' ' * (30 - len(pop.name)),
+                                     pop.Nt[:].pop(),
                                      pop.n_births[:].pop(),
                                      pop.n_deaths[:].pop()) for pop in self.comm.values()])
         verbose_msg = verbose_msg + pops_submsgs
@@ -399,7 +402,7 @@ class Model:
         #do a burn-in step
         if mode == 'burn':
             [fn() for fn in self.burn_fn_queue]
-            if self.verbose:
+            if self.__verbose__:
                 self.print_timestep_info(mode)
             #if the burn-in is complete, reassign the genomes if needed
             #and then set self.comm.burned = True
@@ -408,7 +411,7 @@ class Model:
                     for pop in self.comm.values():
                         if pop.gen_arch is not None:
                             #verbose output
-                            if self.verbose:
+                            if self.__verbose__:
                                 print('Assigning genomes for population "%s"...\n\n' % pop.name)
                             genome.set_genomes(pop, self.burn_T, self.T)
                     #and then set the reassign_genomes attribute to False, so
@@ -417,18 +420,18 @@ class Model:
                 #mark the community as burned in
                 self.comm.burned = True
                 #verbose output
-                if self.verbose:
+                if self.__verbose__:
                     print('Burn-in complete.\n\n')
         #or do a main step
         elif mode == 'main':
             [fn() for fn in self.main_fn_queue]
-            if self.verbose:
+            if self.__verbose__:
                 self.print_timestep_info(mode)
 
         #then check if any populations are extinct and return the correpsonding boolean
         extinct = np.any([pop.extinct for pop in self.comm.values()])
         #verbose output
-        if extinct and self.verbose:
+        if extinct and self.__verbose__:
             print('XXXX     Population %s went extinct. Iteration %i aborting.\n\n' % (' & '.join(['"' + pop.name + '"' for pop in self.comm.values() if pop.extinct]), self.it))
         return(extinct)
 
@@ -438,7 +441,7 @@ class Model:
         #update the iteration numbers
         self.set_it()
         #verbose output
-        if self.verbose:
+        if self.__verbose__:
             print('~' * self.__term_width__ + '\n\n')
             print('Setting up iteration %i...\n\n' % self.it)
 
@@ -457,7 +460,7 @@ class Model:
         #loop over the burn-in timesteps running the burn-in queue (if copied pop isn't already burned in)
         if self.rand_comm or (not self.rand_comm and self.rand_burn) or self.it == 0:
             #verbose output
-            if self.verbose:
+            if self.__verbose__:
                 print('Running burn-in, iteration %i...\n\n' % self.it)
             #until all populations have pop.burned == True
             while not np.all([pop.burned for pop in self.comm.values()]):
@@ -470,12 +473,12 @@ class Model:
             #overwrite self.orig_comm with the burned-in community, if necessary
             if not self.rand_comm and not self.rand_burn:
                 #verbose output
-                if self.verbose:
+                if self.__verbose__:
                     print('Saving burned-in community...\n\n')
                 self.orig_comm = deepcopy(self.comm)
 
         #verbose output
-        if self.verbose:
+        if self.__verbose__:
             print('Running main model, iteration %i...\n\n' % self.it)
         #loop over the timesteps, running the run_main function repeatedly
         for t in range(self.T):
@@ -487,12 +490,15 @@ class Model:
 
 
     #method to run the overall model
-    def run(self):
+    def run(self, verbose=False):
 
         #TODO: Add some handler for farming instances out to different nodes, if available?
 
+        #set the self.__verbose__ flag
+        self.__verbose__ = verbose
+
         #verbose output
-        if self.verbose:
+        if self.__verbose__:
             print('\n\n' + '#' * self.__term_width__ + '\n\n')
             print('Running model "%s"...\n\n' % self.name)
 
@@ -502,7 +508,14 @@ class Model:
             try:
                 self.do_next_iteration()
             except Exception as e:
-                print('XXXX\tAn error occurred during iteration %i.\n \tPLEASE COPY AND REPORT THE FOLLOWING, to help us debug Geonomics:\n' % self.it)
+                msg = ('XXXX\tAn error occurred during iteration %i, '
+                    'timestep %i.\n \tPLEASE COPY AND REPORT THE FOLLOWING, '
+                    'to help us debug Geonomics:\n')
+                if self.comm.burned:
+                    msg = msg % (self.it, self.t)
+                else:
+                    msg = msg % (self.it, self.burn_t)
+                print(msg)
                 print('<>' * int(self.__term_width__/2))
                 print('Error message:\n\t%s\n\n' % e)
                 traceback.print_exc(file=sys.stdout)
@@ -510,14 +523,17 @@ class Model:
                 print('<>' * int(self.__term_width__/2) + '\n\n')
 
         #verbose output
-        if self.verbose:
+        if self.__verbose__:
             print('\n\nModel "%s" is complete.\n' % self.name)
             print('#' * self.__term_width__)
+
+        #set the __verbose__ flag back to False
+        self.__verbose__ = False
 
 
     #method to run the model interactively from the command line; named 'walk'
     #to succinctly differentiate it from 'run'
-    def walk(self, T=1, mode='main', verbose=None):
+    def walk(self, T=1, mode='main', verbose=False):
         '''Run the model, with its current parameterization, interactively from
         the command line. The number of timesteps provided (T) will be treated
         as burn_T (i.e. the minimum number of burn-in timesteps) if
@@ -531,13 +547,11 @@ class Model:
                 "mode if the Model's Community has not yet been burned in "
                 "(i.e. if Model.comm.burned is False)."))
 
-        #temporarily change the model's verbose flag, if necessary
-        if verbose is not None:
-            old_verbose = self.verbose
-            self.verbose = verbose
+        #set the model's __verbose__ flag
+        self.__verbose__ = verbose
 
         #if verbose, add a space below the command line prompt, for readability
-        if self.verbose:
+        if self.__verbose__:
             print('\n')
 
         #run the model for the stipulated number of timesteps
@@ -545,13 +559,13 @@ class Model:
             #exit if burn-in is complete
             if mode == 'burn' and self.comm.burned:
                 #verbose output
-                if self.verbose:
+                if self.__verbose__:
                     print('Burn-in complete.\n\n')
                 break
             #reset the mode, if mode is 'burn' and there is no mod.burn_fn_queue
             if mode == 'burn' and self.burn_fn_queue is None:
                 #verbose output
-                if self.verbose:
+                if self.__verbose__:
                     print(('No mod.burn_fn_queue was found. '
                           'Running mod.reset()...\n\n'))
                 self.reset()
@@ -559,9 +573,7 @@ class Model:
             #end the iteration early if any population is extinct
             if extinct:
                 break
-
-        #reset the old verbose flag, if necessary
-        if verbose is not None:
-            self.verbose = old_verbose
+        #reset self.__verbose__ to False
+        self.__verbose__ = False
 
 

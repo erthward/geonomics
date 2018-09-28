@@ -154,28 +154,27 @@ params = {
 
 #block for scape params
 #STRING SLOTS: 
-    #%i = scape_num,
-    #%i = scape_num,
+    #%s = scape_name,
     #%i = scape_num,
     #%s = scape_type_params,
     #%s = scape_change_params,
     #%i = scape_num,
 SCAPE_PARAMS = '''
-            %i: {
-                #scape number (this integer key should be incremented for each
-                #successive scape)
-        #######################
-        #### scape %i: init ####
-        #######################
+            %s: {
+                #scape name; each scape must be give a unique string or numeric 
+                #(e.g. 0, 0.1, 'scape0', '1994', 'mean_T'); default to serial
+                #integers from 0
+
+        ############################
+        #### scape num. %i: init ####
+        ############################
 
                 'init': {
                     #initiating parameters for this scape
-                    'name':             'scape%i',
-                        #each scape can take a unique string name (e.g. 'scape0', '1994', 'mean_T')
 %s
                     } # <END> 'init'
 %s
-                }, # <END> scape %i
+                }, # <END> scape num. %i
 '''
 
 #the block of random-scape parameters
@@ -253,9 +252,9 @@ NLMPY_SCAPE_PARAMS = '''
 #STRING SLOTS:
     #%i = scape_num,
 SCAPE_CHANGE_PARAMS = '''
-        #########################
-        #### scape %i: change ####
-        #########################
+        ##############################
+        #### scape num. %i: change ####
+        ##############################
 
                 'change': {
                     #land-change events for this scape
@@ -272,8 +271,7 @@ SCAPE_CHANGE_PARAMS = '''
 
 #block of population params
 #STRING SLOTS:
-    #%i = pop_num,
-    #%i = pop_num,
+    #%s = pop_name,
     #%i = pop_num,
     #%i = pop_num,
     #%i = pop_num,
@@ -282,16 +280,16 @@ SCAPE_CHANGE_PARAMS = '''
     #%s = change_params,
     #%i = pop_num,
 POP_PARAMS = '''
-            %i  :   {
-                #this integer key should be incremented for each successive population
+            %s  :   {
+                #pop name; each pop must get a unique numeric or string name 
+                #(e.g. 0, 0.1, 'pop0', 'south', 'C_fasciata'); default to 
+                #serial integers from 0
 
-            #####################
-            #### pop %i: init ####
-            #####################
+            ##########################
+            #### pop num. %i: init ####
+            ##########################
 
                 'init': {
-                    'name': 'pop%i',
-                        #each pop can take a unique string name (e.g. 'pop0', 'south', 'C_fasciata')
                     'N':                200,
                         #starting population size
                     'K_scape_num':      0,
@@ -300,9 +298,9 @@ POP_PARAMS = '''
                         #the factor to multiply the K raster by in order to generate pop.K
                     }, # <END> 'init'
 
-            #######################
-            #### pop %i: mating ####
-            #######################
+            ############################
+            #### pop num. %i: mating ####
+            ############################
 
                 'mating'    : {
                     'repro_age':            0,
@@ -332,9 +330,9 @@ POP_PARAMS = '''
                         #radius of mate-searching area
                     }, # <END> 'mating'
 
-            ##########################
-            #### pop %i: mortality ####
-            ##########################
+            ###############################
+            #### pop num. %i: mortality ####
+            ###############################
 
                 'mortality'     : {
                     'n_deaths_sigma':           0.2,
@@ -359,7 +357,7 @@ POP_PARAMS = '''
 %s
 %s
 %s
-                    }, # <END> pop %i
+                }, # <END> pop num. %i
 '''
 
 #block for movement params
@@ -367,9 +365,9 @@ POP_PARAMS = '''
     #%i = pop_num,
     #%s = move_surf_params,
 MOVE_PARAMS = '''
-            #########################
-            #### pop %i: movement ####
-            #########################
+            ##############################
+            #### pop num. %i: movement ####
+            ##############################
 
                 'movement': {
                    'move':          True,
@@ -424,9 +422,9 @@ MOVE_SURF_PARAMS = '''
     #%i = pop_num,
     #%s = traits_params,
 GENOME_PARAMS = '''
-            #########################
-            #### pop %i: gen_arch ####
-            #########################
+            ##############################
+            #### pop num. %i: gen_arch ####
+            ##############################
 
                 'gen_arch': {
                     'L':                        10,
@@ -538,9 +536,9 @@ TRAIT_PARAMS = '''
     #%i = pop_num,
     #%s = dem_and-or_param_change_params_str,
 POP_CHANGE_PARAMS = '''
-            #######################
-            #### pop %i: change ####
-            #######################
+            ############################
+            #### pop num. %i: change ####
+            ############################
 
                 'change': {
 %s
@@ -795,7 +793,7 @@ def make_scapes_params_str(scapes=1):
             #add no change params (i.e. a zero-length string)
             change_params = ''
             #create the scape_params str
-            scape_params_str = SCAPE_PARAMS % (i, i, i, type_params,
+            scape_params_str = SCAPE_PARAMS % (str(i), i, type_params,
                                                 change_params, i)
             #append it to the list
             scapes_params_list.append(scape_params_str)
@@ -845,7 +843,7 @@ def make_scapes_params_str(scapes=1):
             if change_params != '':
                 change_params = change_params % i
             #create the scape_params str for this Scape
-            scape_params_str = SCAPE_PARAMS % (i, i, i, type_params,
+            scape_params_str = SCAPE_PARAMS % (str(i), i, type_params,
                                                 change_params, i)
             #append it to the list
             scapes_params_list.append(scape_params_str)
@@ -875,7 +873,7 @@ def make_populations_params_str(populations=1):
             #add no change params
             change_params = ''
             #create the pop_params str
-            pop_params_str = POP_PARAMS % (i, i, i, i, i, move_params, 
+            pop_params_str = POP_PARAMS % (str(i), i, i, i, move_params, 
                                            genome_params, change_params, i)
             #append to the pops_params_list
             pops_params_list.append(pop_params_str)
@@ -992,7 +990,7 @@ def make_populations_params_str(populations=1):
             else:
                 change_params = ''
             #get the overall pop params str for this pop
-            pop_params_str = POP_PARAMS % (i, i, i, i, i, move_params, 
+            pop_params_str = POP_PARAMS % (str(i), i, i, i, move_params, 
                                            genome_params, change_params, i)
             #append to the pops_params_list
             pops_params_list.append(pop_params_str)
@@ -1046,7 +1044,7 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
         #get a string of the date and time
         datetime_str = time.strftime("%d-%m-%Y_%H:%M:%S", time.localtime())
         #and add a default filename
-        filepath = 'GEONOMICS_paramsfile_%s.py' % datetime_str
+        filepath = 'GEONOMICS_params_%s.py' % datetime_str
     #check the filepath is pointed somewhere valid
     assert (os.path.isdir(os.path.split(filepath)[0])
             or os.path.split(filepath)[0] is ''), ("The filepath to which to "

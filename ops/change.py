@@ -41,7 +41,7 @@ from copy import deepcopy
         #changes of other param values?
 
     #5 I think this can be standardized (e.g. LandChanger get_<   >_change_fns functions I believe return just the
-    #functions, whereas PopChanger ones return list(zip(t, change_fn)) objects) and generalized still
+    #functions, whereas PopulationChanger ones return list(zip(t, change_fn)) objects) and generalized still
     #further. Worth doing now, while the code is fresh in my head...
 
 
@@ -158,9 +158,9 @@ class LandChanger(Changer):
         self.set_next_change()
 
 
-class PopChanger(Changer):
+class PopulationChanger(Changer):
     def __init__(self, pop, pop_change_params, land=None):
-        super(PopChanger, self).__init__(pop_change_params)
+        super(PopulationChanger, self).__init__(pop_change_params)
         self.type = 'pop'
         
         #an attribute that is used by some dem-change fns, as a baseline population size at the start of the
@@ -298,7 +298,7 @@ def get_scape_change_fn(land, scape_num, new_scape):
 
 
     ###################
-    # for PopChanger #
+    # for PopulationChanger #
     ###################
 
 def make_movement_surface_series(start_scape, end_rast, start_t, end_t, n_steps, t_res_reduct_factor=1):

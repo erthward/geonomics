@@ -135,10 +135,10 @@ def calc_dNdt(land, R, N, K, pop_growth_eq = 'logistic'):
     return(dNdt)
 
    
-def calc_N_b(b, n_births_lambda, n_pairs):
-    #Use n_pairs, pop.b (i.e. probability that a pair gives birth), and pop.n_births_lambda (i.e.
+def calc_N_b(b, n_births_distr_lambda, n_pairs):
+    #Use n_pairs, pop.b (i.e. probability that a pair gives birth), and pop.n_births_distr_lambda (i.e.
     #expected number of births per pair) to calculate the N_b raster (expected number of births in each cell)
-    #according to N_b = b*E[N_b/pair]*n_pairs where E[N_b/pair] = n_births_lambda (b/c births Poission distributed)
+    #according to N_b = b*E[N_b/pair]*n_pairs where E[N_b/pair] = n_births_distr_lambda (b/c births Poission distributed)
         #NOTE: Would be good to in the future to use neg_binom dist to allow births to be modeled as Poisson
         #(using correct parameterization of neg_binom to approximate that) or overdispersed (to be parmeterized with field data)
 
@@ -149,7 +149,7 @@ def calc_N_b(b, n_births_lambda, n_pairs):
 
         #NOTE: Currently, birth rate is intrinsic to the species and cannot be made a function of density or
         #spatial fitness. Might be worth adding this at some point in the future though.
-    N_b = b * n_births_lambda * n_pairs
+    N_b = b * n_births_distr_lambda * n_pairs
     return(N_b)
 
 
@@ -259,7 +259,7 @@ def do_pop_dynamics(land, pop, with_selection = True, burn = False, births_befor
         dp.next_plot('dNdt', dNdt)
 
     #calculate N_b (raster of estimated births)
-    N_b = calc_N_b(b = pop.b, n_births_lambda = pop.n_births_lambda, n_pairs = n_pairs)
+    N_b = calc_N_b(b = pop.b, n_births_distr_lambda = pop.n_births_distr_lambda, n_pairs = n_pairs)
     #run checks on N_b
     if asserts:
         assert N_b.min() >= 0

@@ -236,7 +236,7 @@ class Population(OD):
     def do_mating(self, mating_pairs, burn=False):
 
         #draw the number of births for each pair, and append total births to self.n_births list
-        n_births = mating.draw_n_births(len(mating_pairs), self.n_births_lambda)
+        n_births = mating.draw_n_births(len(mating_pairs), self.n_births_distr_lambda)
         total_births = sum(n_births)
         self.n_births.append(total_births)
 
@@ -264,7 +264,7 @@ class Population(OD):
                 offspring_key = offspring_keys.pop()
 
                 offspring_x, offspring_y = movement.disperse(self.land, parent_centroid_x, parent_centroid_y,
-                        self.dispersal_mu, self.dispersal_sigma)
+                        self.dispersal_distr_mu, self.dispersal_distr_sigma)
 
                 #set the age to 0
                 age = 0
@@ -335,52 +335,44 @@ class Population(OD):
     #    self.burned = burnin_status
 
     #method to calculate population density
-    def calc_density(self, normalize_by= None, min_0=True, max_1=False, max_val=None, as_landscape = False, set_N=False):
+    def calc_density(self, normalize = False, as_landscape = False, set_N=False):
 
         '''
-        Calculate an interpolated raster of local population density, using spatial.DensityGridStack object
-        in self.dens_grids.
+        Calculate an interpolated raster of local population density, using
+        the spatial.DensityGridStack object stored in the 
+        Population.dens_grids attribute.
 
-        Valid values for normalize_by currently include 'pop_size' and 'none'. If normalize_by = 'pop_size', max_1 =
-        True will cause the output density raster to vary between 0 and 1, rather than between 0 and the current
-        max normalized density value. 
+        If normalize is True, the density raster will vary between 0 and 1 
+        (after being normalized by its own maximum value). If false, it will
+        vary between 0 and its maximum estimated density value. 
         '''
-
+        #check validity of normalize argument
+        assert type(normalize) is bool, ("The 'normalize' argument takes "
+            "a boolean value.\n")
+        #get population coordinates
         x = self.get_x_coords()
         y = self.get_y_coords()
-
+        #calculate the density array
         dens = self.dens_grids.calc_density(x, y)
-
-        if normalize_by is not None:
-
-            # if max_1 == True, set max_val to dens.max(), such that the density raster output will be normalized to
-            # its own max, and thus vary between 0 and 1; else set to 1, and the output raster will vary between 0 and the current max value
-            if max_1 == True:
-                max_val = dens.max()
-            elif max_1 == False:
-                max_val = 1
-
+        #set min value to 0
+        dens = np.clip(dens, a_min = 0, a_max = None)
+        #normalize, if necessary 
+        if normalize:
             # Use max_val to normalize the density raster to either 0 to its current max val or
             # 0 to 1, to make sure the interpolation didn't generate any values slightly outside this range
-            norm_factor = max_val - dens.min()
+            norm_factor = dens.max() - dens.min()
             dens = (dens - dens.min()) / norm_factor
-
-        if min_0:
-            dens[dens < 0] = 0
-
-        if max_val is not None:
-            dens[dens > max_val] = max_val
-
+        #return as landscape, if necessary
         if as_landscape == True:
             dens = landscape.Scape(self.land_dim, dens)
-
+        #set self.N attribute, if necessary
         if set_N:
             self.set_N(dens)
-
+        #or else return the density array
         else:
             return dens
 
-
+    #method to set the individuals' habitat attributes
     def set_habitat(self, individs = None):
         if individs is None:
             inds_to_set = self.values()
@@ -391,13 +383,13 @@ class Population(OD):
                 inds_to_set = (inds_to_set,)
         hab = [ind.set_habitat([scape.rast[int(ind.y), int(ind.x)] for scape in self.land.values()]) for ind in inds_to_set]
 
-    
+    #method to set the individuals' phenotype attributes 
     def set_phenotype(self):
         [ind.set_phenotype(self.gen_arch) for ind in self.values()];
 
-
+    #method to set the individuals' fitness attributes
     def set_fitness(self, fit):
-        [ind.set_fitness(f) for ind, f in zip(pop.values(), fit)];
+        [ind.set_fitness(f) for ind, f in zip(self.values(), fit)];
         
 
     #method to set population's coords and cells arrays
@@ -495,6 +487,10 @@ class Population(OD):
         else:
             coords = np.int32(np.floor(coords))
 
+        #make sure it's at least 2d (in case a single individual is requested)
+
+        coords = np.atleast_2d(coords)
+
         return coords
 
 
@@ -569,11 +565,16 @@ class Population(OD):
 
 
     #method for plotting the population on top of its estimated population-density raster
-    def plot_density(self, normalize_by='pop_size', individs=None, text=False, max_1=False, color='black', edge_color='face', 
+    def plot_density(self, normalize=False, individs=None, text=False, color='black', edge_color='face', 
             text_color='black', size=25, text_size = 9, alpha=0.5, zoom_width=None, x=None, y=None):
-        dens = self.calc_density(normalize_by=normalize_by, max_1=max_1)
+        assert type(normalize) is bool, ("The 'normalize' argument takes "
+            "a boolean value.\n")
+        dens = self.calc_density(normalize = normalize)
         plt_lims = viz.get_plt_lims(self.land, x, y, zoom_width)
-        viz.plot_rasters(dens, plt_lims = plt_lims)
+        if normalize:
+            viz.plot_rasters(dens, plt_lims = plt_lims)
+        else:
+            viz.plot_rasters(dens, plt_lims = plt_lims, vmax = dens.max())
         self.plot(hide_land=True, individs = individs, text = text, color=color, edge_color = edge_color, text_color = text_color,
                size=size, text_size = text_size, alpha=alpha, zoom_width = zoom_width, x = x, y = y)
 
@@ -624,6 +625,16 @@ class Population(OD):
     def plot_fitness(self, scape_num=None, trait_num=None, individs=None, text=False, size=100, text_size = 9, 
             edge_color='black', text_color='black', fit_cmap = 'RdYlGn', colorbar=True, im_interp_method='nearest', 
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
+        
+        #return messages if population does not have genomes or traits
+        if self.gen_arch is None:
+            print(("\nPopulation.plot_fitness is not valid for populations "
+                   "without genomes.\n"))
+            return
+        elif self.gen_arch.traits is None:
+            print(("\nPopulation.plot_fitness is not valid for populations "
+                   "without traits.\n"))
+            return
 
         # get all individs' fitness values
         if trait_num is None:
@@ -647,7 +658,7 @@ class Population(OD):
         #then get uneven cmap and cbar-maker (needs to be uneven to give color-resolution to values varying
         #between 1 and the minimum-fitness value assuming all phenotypes are constrained 0<=z<=1, but then also
         #allow gradually deepening reds for fitness values lower than that minimum value), using the min_fit val
-        cmap, make_cbar = viz.make_fitness_cmap_and_cbar_maker(min_val = min_fit, max_val = 1, cmap = fit_cmap, trait_num = trait_num)
+        cmap, make_cbar_fn = viz.make_fitness_cmap_and_cbar_maker(min_val = min_fit, max_val = 1, cmap = fit_cmap, trait_num = trait_num)
 
         #plot the trait phenotype in larger circles first, if trait is not None
         if trait_num is not None:
@@ -664,17 +675,45 @@ class Population(OD):
                 size = size, text_size = text_size, im_interp_method = im_interp_method, alpha = alpha, zoom_width = zoom_width, x = x, y = y)
 
         #and make a colorbar for the fitness values 
-        viz.make_fitness_cbar(make_cbar, min_fit)
+        viz.make_fitness_cbar(make_cbar_fn, min_fit)
+
+    #method to plot a population's allele frequencies
+    def plot_allele_frequencies(self):
+        if self.gen_arch is None:
+            print(("\nPopulation.plot_allele_frequencies is not valid for "
+                "populations without genomes.\n"))
+        else:
+            self.gen_arch.plot_allele_frequencies(self)
 
 
     def plot_hist_fitness(self):
         plt.hist(list(self.calc_fitness()))
+        plt.xlabel('Fitness')
+        plt.ylabel('Count')
 
 
     #method for plotting the movement surface (in various formats)
     def plot_movement_surface(self, style, x, y, zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
         '''
-        'style' can take values: 'hist', 'circ_hist', 'vect', or 'circ_draws'
+        The 'style' argument can take the following values: 
+            'hist': 
+                Plot a classic histogram approximating the Von Mises 
+                distribution at the cell indicated by position x,y.
+            'circle_hist':
+                Plot a circular histogram approximating the Von Mises
+                distribution at the cell indicated by position x,y;
+                plot will be drawn inside the chosen cell on the 
+                MovementSurface raster.
+            'circle_draws':
+                Plot points on the unit circle, whose locations were 
+                drawn from the Von Mises distribution at the cell indicated 
+                by position x,y; plot will be drawn inside the chosen cell 
+                on the MovementSurface raster.
+            'vect':
+                Inside each cell of the MovementSurface raster, plot the mean
+                direction vector of directions drawn from that cell's Von Mises
+                distribution.
+
         '''
         if self.move_surf is None:
             print('This Population appears to have no MovementSurface. Function not valid.')
@@ -765,7 +804,9 @@ class Population(OD):
 
     def plot_demographic_changes(self):
         if self.changer is None:
-            print('This population has no changer object.')
+            print(("\nPopulation.plot_demographic_changes is not valid "
+                "for populations with no PopulationChanger object.\n"))
+ 
         else:
             self.changer.plot_dem_changes(self)
 
@@ -838,15 +879,15 @@ def make_population(land, name, pop_params, burn=False):
             #make the movement surface and set it as the pop's move_surf attribute
             pop.move_surf = spt.MovementSurface(land[move_surf_scape_num], **ms_params)
 
-    #if this population has changes parameterized, create a PopChanger object for it
+    #if this population has changes parameterized, create a PopulationChanger object for it
     if 'change' in pop_params.keys():
         #grab the change params
         ch_params = pop_params.change
-        #make PopChanger and set it to the pop's changer attribute
+        #make PopulationChanger and set it to the pop's changer attribute
         if land.changer is not None:
-            pop.changer = change.PopChanger(pop, ch_params, land = land)
+            pop.changer = change.PopulationChanger(pop, ch_params, land = land)
         else:
-            pop.changer = change.PopChanger(pop, ch_params, land = None)
+            pop.changer = change.PopulationChanger(pop, ch_params, land = None)
 
     return pop
 

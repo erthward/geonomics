@@ -85,7 +85,7 @@ def plot_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest'
             cbar_max_bound = max(rasters[n].max(), 1)
             cbar_bounds = np.linspace(0, cbar_max_bound, 51)
             cbar = plt.colorbar(boundaries=cbar_bounds)
-            cbar.ax.set_title("scape: '%s'" % scape_names[n])
+            cbar.ax.set_title("scape: %s" % scape_names[n])
             ax = cbar.ax
             title = ax.title
             font = mpl.font_manager.FontProperties(family='sans-serif', style='normal', size=10)
@@ -102,7 +102,9 @@ def plot_points(points, scape_num=None, color='black', edge_color='face', text_c
     #handle the alpha value as necessary
     if alpha == True and type(alpha) == bool:
         alpha = 0.6
-    elif alpha == True and type(alpha) == float:
+    elif alpha != False and type(alpha) in (int, float):
+        assert alpha >= 0 and alpha <= 1, ("Values of 'alpha' must be between "
+            "0 and 1.")
         alpha = alpha
     else:
         alpha = 1.0
@@ -197,7 +199,7 @@ def make_fitness_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn', max_
     ticks = sorted(ticks)
     ticks = [round(tick, 2) for tick in ticks]
     if trait_num is None:
-        tick_labs = ['$1-\prod_{trait=1}^{t} \phi_{t} = %0.2f$' % round(min_val,2) if n == ind_closest else str(tick) for n,tick in enumerate(ticks)]
+        tick_labs = ['$1-\prod_{trait=1}^{t} \phi_{t} \prod_{del.mut.=1}^{d} \phi_{d} = %0.2f$' % round(min_val,2) if n == ind_closest else str(tick) for n,tick in enumerate(ticks)]
     else:
         tick_labs = ['$1-\phi_{trait=%i} = %0.2f$' % (trait_num, round(min_val,2)) if n == ind_closest else str(tick) for n,tick in enumerate(ticks)]
     #create a function for making the colorbar, to be shipped out to and called within population.Population.plot_fitness()
@@ -207,11 +209,11 @@ def make_fitness_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn', max_
         cbar.set_ticklabels(tick_labs)
     return(cmap, make_cbar)
 
-def make_fitness_cbar(make_cbar, min_fit):
+def make_fitness_cbar(make_cbar_fn, min_fit):
     fig = plt.gcf()
     ax1 = plt.gca()
     ax2 = fig.add_axes([0.84, 0.106, 0.02, 0.7774])
-    make_cbar(ax2)
+    make_cbar_fn(ax2)
     ax2.plot([0,1],[round(min_fit,2)]*2, c = 'black', lw = 1)
     ax2.set_title('fitness')
     title = ax2.title

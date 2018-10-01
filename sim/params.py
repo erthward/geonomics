@@ -4,7 +4,7 @@
 '''
 ##########################################
 
-Module name:              sim/params
+Module name:              sim.params
 
 Module contents:          - definition of the parameters-file strings
                           - definition of the __DynAttrDict__ and ParametersDict
@@ -313,7 +313,8 @@ POP_PARAMS = '''
                         #is this a sexual species?
                     'sex_ratio':            1/1,
                         #ratio of males to females
-                    'dist_weighted_birth':  False,
+                    #NOTE: I CAN PROBABLY GET RID OF THIS PARAMETER...
+                    'distweighted_birth':  False,
                         #should the probability of birth be weighted by the distance between
                             #individuals in a pair?
                     'R':                    0.5,
@@ -324,7 +325,7 @@ POP_PARAMS = '''
                             #NOTE: this may later need to be re-implemented to allow for spatial
                             #variation in intrinsic rate (e.g. expression as a raster) and/or for
                             #density-dependent births as well as deaths
-                    'n_births_lambda':      4,
+                    'n_births_distr_lambda':      4,
                         #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
                     'mating_radius':        1
                         #radius of mate-searching area
@@ -335,7 +336,7 @@ POP_PARAMS = '''
             ###############################
 
                 'mortality'     : {
-                    'n_deaths_sigma':           0.2,
+                    'n_deaths_distr_sigma':           0.2,
                         #std for the normal distribution used to choose the r.v. of deaths
                             #per timestep (mean of this distribution is the overshoot,
                             #as calculated from pop.size and pop.census())
@@ -372,17 +373,17 @@ MOVE_PARAMS = '''
                 'movement': {
                    'move':          True,
                         #is this a mobile species?
-                    'direction_mu':     0,
+                    'direction_distr_mu':     0,
                         #mu for von mises distribution defining movement directions
-                    'direction_kappa':  0,
+                    'direction_distr_kappa':  0,
                         #kappa for von mises distribution
-                    'distance_mu':      0.5,
+                    'distance_distr_mu':      0.5,
                         #mean movement-distance (lognormal distribution)
-                    'distance_sigma':   0.5,
+                    'distance_distr_sigma':   0.5,
                         #sd of movement distance
-                    'dispersal_mu':     0.5,
+                    'dispersal_distr_mu':     0.5,
                         #mean dispersal distance (lognormal distribution)
-                    'dispersal_sigma':  0.5,
+                    'dispersal_distr_sigma':  0.5,
                         #sd of dispersal distance
 %s
                     },    # <END> 'movement'
@@ -407,7 +408,7 @@ MOVE_SURF_PARAMS = '''
                         'approximation_len':            7500,
                             #length of the lookup vectors (numpy arrays) used to approximate
                                 #the VonMises mixture distributions at each cell
-                        'vm_kappa':                     None,
+                        'vm_distr_kappa':                     None,
                             #kappa value to use in the von Mises mixture distributions (KDEs)
                                 #underlying resistance surface movement
                         'gauss_KDE_bw':                 None
@@ -450,15 +451,17 @@ GENOME_PARAMS = '''
                     'mut_log':                  False,
                         #whether or not to store a mutation log; if true, will be saved as mut_log.txt
                         #within each iteration's subdirectory
-                    'shape_delet_s_dist':       0.2,
-                    'scale_delet_s_dist':       0.2,
-                        #mean and standard deviation of the per-allele effect size of deleterious mutations (std = 0 will fix all
-                            #mutations for the mean value)
-                    'alpha_r_dist':             0.5,
+                    'delet_s_distr_shape':       0.2,
+                    'delet_s_distr_scale':       0.2,
+                        #mean and standard deviation of the gamma distribution
+                        #parameterizig the per-allele effect size of 
+                        #deleterious mutations (std = 0 will fix all mutations
+                        #for the mean value)
+                    'r_distr_alpha':             0.5,
                         #alpha for beta distribution of linkage values
                             #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333,
                             #with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
-                    'beta_r_dist':              15e9,
+                    'r_distr_beta':              15e9,
                         #beta for beta distribution of linkage values
                     'use_dom':                  False,
                         #whether or not to use dominance (default to False)
@@ -514,8 +517,8 @@ TRAIT_PARAMS = '''
                             'mu':      1e-9,
                                 #mutation rate for this trait (if set to 0, or if genome['mutation'] == False, no mutation will occur)
                                     #(set to 0 to disable mutation for this trait)
-                            'mean_alpha_dist' : 0,
-                            'std_alpha_dist' : 0.5,
+                            'alpha_distr_mu' : 0,
+                            'alpha_distr_sigma' : 0.5,
                                 #the mean and standard deviation of the normal distribution used to choose effect size
                                     #(alpha) for this trait's loci
                                     #NOTE: for mean = 0, std = 0.5, one average locus is enough to generate both optimum
@@ -723,8 +726,7 @@ STATS_PARAMS = '''
                     # 'het' : heterozygosity
                     # 'maf' : minor allele frequency
                     # 'ld'  : linkage disequilibrium
-                    # 'mean_trt_fit' : mean trait fitness (i.e. not including
-                                       #deleterious mutations)
+                    # 'mean_fit' : mean fitness 
             'Nt':       {'calc': True,
                          'freq': 2,
                         },
@@ -738,7 +740,7 @@ STATS_PARAMS = '''
             'ld':       {'calc': True,
                          'freq': 10,
                         },
-            'mean_trt_fit': {'calc': True,
+            'mean_fit': {'calc': True,
                              'freq': 3,
                         },
             }, # <END> 'stats'
@@ -916,7 +918,8 @@ def make_populations_params_str(populations=1):
                     assert type(pop_dict[arg]) is int, ("The '%s' "
                         "key in each Population's dictionary must contain an "
                         "integer value. But dict number %i contains a "
-                        "non-integer value.") % (i, arg)
+                        "non-integer value:\n\n\t" "'%s': %s ") % (arg, i, arg,
+                                                            str(pop_dict[arg]))
                     int_arg_str_fmt_dict = {'n_traits':'Traits',
                             'demographic_change': 'demographic change events'}
                     assert pop_dict[arg] > 0, ("The number of %s to "

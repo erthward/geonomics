@@ -1,20 +1,81 @@
 - knock out these secondary to-do items
-        2 finalize nice string representations for all classes
+
         5 decide whether to keep heterozygosity effects, and if so, update
+
         5 use Wright's genetic neighborhood/cruising distance to set window width of DensityGrids
+
         5 decide whether or not to enable non-moving populations! (right now it's offered in the params, but then doesn't work)
+                IF SO, PROBABLY NEED TO CREATE A DISPERSAL SURFACE JUST LIKE THE MOVEMENT SURFACE
+
         5 add type annotation to all functions
+
         5 write lots of checks on the types of all the data in the params file, with informative errors
-        4 generalize the change fns some more, so that landscape changes can also be made cyclical, random, etc (like pop-dem changes)
-        5 standardize dist-parameter names across the whole pkg; perhaps the convention should be <param_name><dist_name>_dist? e.g. mean_distance_dist?
 
+        2 finalize nice string representations for all classes
 
+        2 generalize the change fns some more, so that landscape changes can also be made cyclical, random, etc (like pop-dem changes)
 
-- systematically debug all 'plot' functions
+        1 write a function for plotting the community (where each pop has a different color) (how about some way for each population to have its fitness
+          plotted with colors as usual, but SHAPE to be population indicator?)
+
+        5 fix the Genome.plot_allele_frequencies fn
+
+        5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+burn:                                                                                                                                                         
+        0:53                                                                                                                                                  
+        POP: 0                             N=221        (births=64      deaths=63)                                                                            
+        POP: 1                             N=208        (births=86      deaths=53)                                                                            
+        POP: 2                             N=2  (births=0       deaths=2)                                                                                     
+                                                                                                                                                              
+        ......................................................................                                                                                
+XXXX     Population "2" went extinct. Iteration 0 aborting.
+
+                                                                   
+Saving burned-in community...
+                                  
+                                                                                                           
+Running main model, iteration 0...
+                                                                                                                         
+                                      
+XXXX    An error occurred during iteration 0, timestep 53.                                                         
+        PLEASE COPY AND REPORT THE FOLLOWING, to help us debug Geonomics:
+                                                                                                                  
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+Error message:                                                                                                              
+        tuple index out of range
+                                                                             
+ceback (most recent call last):
+  File "/usr/local/lib/python3.6/dist-packages/numpy/lib/shape_base.py", line 778, in split
+    len(indices_or_sections)
+TypeError: object of type 'int' has no len()
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ihavehands/Desktop/stuff/berk/research/projects/sim/geonomics/sim/model.py", line 509, in run
+    self.do_next_iteration()
+  File "/home/ihavehands/Desktop/stuff/berk/research/projects/sim/geonomics/sim/model.py", line 486, in do_next_iteration
+    extinct = self.do_timestep('main')
+  File "/home/ihavehands/Desktop/stuff/berk/research/projects/sim/geonomics/sim/model.py", line 427, in do_timestep
+    [fn() for fn in self.main_fn_queue]
+  File "/home/ihavehands/Desktop/stuff/berk/research/projects/sim/geonomics/sim/model.py", line 427, in <listcomp>
+    [fn() for fn in self.main_fn_queue]
+  File "/home/ihavehands/Desktop/stuff/berk/research/projects/sim/geonomics/structs/population.py", line 226, in do_movement
+    movement.move(self)
+  File "/home/ihavehands/Desktop/stuff/berk/research/projects/sim/geonomics/ops/movement.py", line 55, in move
+    old_x, old_y = [a.flatten() for a in np.split(pop.get_coords(), 2, axis = 1)]
+  File "/usr/local/lib/python3.6/dist-packages/numpy/lib/shape_base.py", line 781, in split
+    N = ary.shape[axis]
+IndexError: tuple index out of range
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
 
 - walk through & methodically clean up all code and comments, line by line
-
-- integrate unit tests into master branch
 
 - write popgen-based theoretical validations-tests
 

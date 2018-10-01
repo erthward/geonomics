@@ -160,9 +160,34 @@ def read_params(params_filepath):
 
 
 #function to create a model from a ParametersDict object
-def make_model(params):#, verbose=False):
-    #TODO: ASSERT THAT params is either a ParametersDict object 
-    #OR a filepath (and if so, that it can be turned into a ParametersDict object)
+def make_model(params=None):
+    if params is None:
+        try:
+            params_files = [f for f in os.listdir('.') if (
+                f.startswith('GEONOMICS_params') 
+                and os.path.splitext(f)[1] == '.py')]
+            assert len(params_files) == 1, ("The 'params' argument was not "
+                "provided, and it appears that the current working directory "
+                "contains more than one 'GEONOMICS_params_<...>.py' file. "
+                "Please run again, providing a valid value for the 'params' "
+                "argument.")
+            params = params_files[0]
+            print(("\n\nUsing the following file, in the current working "
+                "directory to create the Model object:\n\t%s\n\n") % params)
+        except Exception as e:
+            raise ValueError(("The 'params' argument was not provided, and the "
+                "failed to identify a single 'GEONOMICS_params_<...>.py' file "
+                "in the current working directory from which to create the "
+                "Model object. The following error was thrown: %s") % e)
+                
+    assert ( (type(params) is str and os.path.isfile(params))
+        or str(type(params)) is "<class 'sim.params.ParametersDict'>"), ("If "
+        "the 'params' argument is provided, its value must be either a string "
+        "pointing to a valid Geonomics parameters file or an object of the "
+        "ParametersDict class. If it is not provided, the current working "
+        "directory must contain a single 'GEONOMICS_params_<...>.py' file "
+        "from which to create the Model object.")
+    
     if type(params) is str:
         try:
             params = read_params(params)
@@ -170,11 +195,11 @@ def make_model(params):#, verbose=False):
             raise ValueError(("Failed to read the parameters file at the "
                 "filepath that was provided. The following error was raised: "
                 "\n\t%s\n\n") % e)
-    elif type(params) == "<class '__main__.Parameters_Dict'>":
+    elif str(type(params)) == "<class '__main__.Parameters_Dict'>":
         pass
     try:
         name = params.model.name
-        mod = model.Model(name, params)#, verbose=verbose)
+        mod = model.Model(name, params)
         return(mod)
     except Exception as e:
             raise ValueError(("Failed to create a Model object from the "

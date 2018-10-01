@@ -71,12 +71,12 @@ def move(pop):
     # else, choose direction using a random walk with a uniform vonmises
     elif not pop.move_surf:
 
-        direction = r_vonmises(pop.direction_mu, pop.direction_kappa, size = len(old_x))
+        direction = r_vonmises(pop.direction_distr_mu, pop.direction_distr_kappa, size = len(old_x))
        
 
     # choose distance
     # NOTE: Instead of lognormal, could use something with long right tail for Levy-flight type movement, same as below
-    distance = wald(pop.distance_mu, pop.distance_sigma, size = len(old_x))
+    distance = wald(pop.distance_distr_mu, pop.distance_distr_sigma, size = len(old_x))
 
     #create the new locations by adding x- and y-dim line segments to their current positions, using trig
     #then clip the values to be within the landscape dimensions
@@ -91,14 +91,14 @@ def move(pop):
     [ind.set_pos(x, y) for ind, x, y in zip(pop.values(), new_x, new_y)];
 
 
-def disperse(land, parent_centroid_x, parent_centroid_y, mu_dispersal, sigma_dispersal, mu_dir = 0, kappa_dir = 0): 
+def disperse(land, parent_centroid_x, parent_centroid_y, dispersal_distr_mu, dispersal_distr_sigma, mu_dir = 0, kappa_dir = 0): 
     within_landscape = False
     while within_landscape == False:
 
         #NOTE: For now, dispersal random and equally probable in all directions, but I would love to
         #operationalize an environmental layer that can be used here just like it is used in movement (for e.g.  wind or current dispersal)
         direction = r_vonmises(mu_dir, kappa_dir)  
-        distance = lognormal(mu_dispersal, sigma_dispersal)
+        distance = lognormal(dispersal_distr_mu, dispersal_distr_sigma)
 
         offspring_x = parent_centroid_x + np.cos(direction)*distance
         offspring_y = parent_centroid_y + np.sin(direction)*distance

@@ -5,7 +5,7 @@
 '''
 ##########################################
 
-Module name:              genome
+Module name:              structs.genome
 
 Module contents:          - definition of the Trait, RecombinationPaths, and  GenomicArchitecture classes
                           - function for simulation of genomic architecture, simulation of a new genome, and associated functions
@@ -28,6 +28,7 @@ from ops import mutation
 import numpy as np
 import pandas as pd
 from numpy import random as r
+import matplotlib.pyplot as plt
 from collections import OrderedDict as OD
 import random
 import bitarray
@@ -40,7 +41,7 @@ import bitarray
 ######################################
 
 class Trait:
-    def __init__(self, idx, name, phi, n_loci, mu, scape_num, mean_alpha_dist, std_alpha_dist, gamma, univ_advant):
+    def __init__(self, idx, name, phi, n_loci, mu, scape_num, alpha_distr_mu, alpha_distr_sigma, gamma, univ_advant):
         self.idx = idx
         self.name = name
         self.phi = phi
@@ -49,8 +50,8 @@ class Trait:
             mu = 0
         self.mu = mu
         self.scape_num = scape_num
-        self.mean_alpha_dist = mean_alpha_dist
-        self.std_alpha_dist = std_alpha_dist
+        self.alpha_distr_mu = alpha_distr_mu
+        self.alpha_distr_sigma = alpha_distr_sigma
         self.gamma = gamma
         self.univ_advant = univ_advant
 
@@ -102,8 +103,8 @@ class GenomicArchitecture:
         #attributes for deleterious loci
         self.mu_delet = g_params.mu_delet                #genome-wide deleterious mutation rate
         self.delet_loci = OD()
-        self.shape_delet_s_dist = g_params.shape_delet_s_dist
-        self.scale_delet_s_dist = g_params.scale_delet_s_dist
+        self.delet_s_distr_shape = g_params.delet_s_distr_shape
+        self.delet_s_distr_scale = g_params.delet_s_distr_scale
 
         #attribute for trait (i.e. adaptive) loci
         self.traits = None
@@ -152,7 +153,7 @@ class GenomicArchitecture:
 
     #method for drawing an effect size for one or many loci 
     def draw_trait_alpha(self, trait_num, n=1):
-        alpha = r.normal(self.traits[trait_num].mean_alpha_dist, self.traits[trait_num].std_alpha_dist, n)
+        alpha = r.normal(self.traits[trait_num].alpha_distr_mu, self.traits[trait_num].alpha_distr_sigma, n)
         #set all effects to positive if the trait is monogenic (because effects will be added to 0)
         if self.traits[trait_num].n_loci == 1:
             alpha = np.abs(alpha)
@@ -170,7 +171,7 @@ class GenomicArchitecture:
 
     #method for drawing new deleterious mutational fitness effects
     def draw_delet_s(self):
-        s = r.gamma(self.shape_delet_s_dist, self.scale_delet_s_dist)
+        s = r.gamma(self.delet_s_distr_shape, self.delet_s_distr_scale)
         s = min(s, 1)
         return(s)
 
@@ -221,7 +222,7 @@ class GenomicArchitecture:
 
 
     #method for plotting all allele frequencies for the population
-    def plot_freqs(self, pop):
+    def plot_allele_frequencies(self, pop):
         populome = np.hstack([ind.genome for ind in pop.values()])
         freqs = populome.sum(axis = 1)/(2*populome.shape[0])
         plt.plot(range(self.L), self.p, ':r')
@@ -282,13 +283,13 @@ def draw_r(g_params, recomb_rate_fn = None):
     else: 
         L = g_params.L
 
-        param_vals = {'alpha_r': 7e2, 'beta_r': 7e3}
+        param_vals = {'r_distr_alpha': 7e2, 'beta_r': 7e3}
 
-        for param in ['alpha_r', 'beta_r']:
+        for param in ['r_distr_alpha', 'beta_r']:
             if (param in g_params.keys() and g_params[param] != None):
                 param_vals[param] = g_params[param]
        
-        recomb_array = np.array([max(0,min(0.5, recomb_rate)) for recomb_rate in r.beta(a = param_vals['alpha_r'], b = param_vals['beta_r'], size = L)])
+        recomb_array = np.array([max(0,min(0.5, recomb_rate)) for recomb_rate in r.beta(a = param_vals['r_distr_alpha'], b = param_vals['beta_r'], size = L)])
     #NOTE: for now, using the Beta, which can be very flexibly parameterized
     #NOTE: current default alpha/beta vals, after being subtracted from 0.5 in sim_r function, will result in a tight distribution of r vals around 0.21 (~ 95% between 0.19 and 0.22)
     #NOTE: to essentially fix r at 0.5, Beta(1,1e7) will do...

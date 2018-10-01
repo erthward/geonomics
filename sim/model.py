@@ -533,7 +533,7 @@ class Model:
 
     #method to run the model interactively from the command line; named 'walk'
     #to succinctly differentiate it from 'run'
-    def walk(self, T=1, mode='main', verbose=False):
+    def walk(self, T=1, mode='main', verbose=True):
         '''Run the model, with its current parameterization, interactively from
         the command line. The number of timesteps provided (T) will be treated
         as burn_T (i.e. the minimum number of burn-in timesteps) if

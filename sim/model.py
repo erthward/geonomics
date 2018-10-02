@@ -385,7 +385,7 @@ class Model:
 
     #method to generate timestep_verbose_output
     def print_timestep_info(self, mode):
-        verbose_msg = '%s:\n\t%i:%i\n' % (mode, self.it, [self.burn_t if mode == 'burn' else self.t][0])
+        verbose_msg = '%s:\t%i:%i\n' % (mode, self.it, [self.burn_t if mode == 'burn' else self.t][0])
         pops_submsgs = ''.join(['\tPOP: %s%sN=%i\t(births=%i\tdeaths=%i)\n' %
                                     (pop.name,
                                      ' ' * (30 - len(pop.name)),

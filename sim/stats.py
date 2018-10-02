@@ -63,7 +63,7 @@ class StatsCollector:
                              'ld':  calc_ld,
                              'het': calc_het,
                              'maf': calc_maf,
-                             'mean_trt_fit': calc_mean_trait_fitness,
+                             'mean_fit': calc_mean_fitness,
                               }
         
         #a dictionary to link the stats' names in the params dict 
@@ -79,11 +79,11 @@ class StatsCollector:
                                 'ld':  'LD.txt',
                                 'het': 'HET.csv',
                                 'maf': 'MAF.csv',
-                                'mean_trt_fit': 'OTHER_STATS.csv',
+                                'mean_fit': 'OTHER_STATS.csv',
                                  }
 
         #get the population names
-        pop_names_and_genomes = {str(k):('genome' in v.keys()) for k, v
+        pops_with_wout_genomes = {str(k):('gen_arch' in v.keys()) for k, v
                                  in params.comm.pops.items()}
 
         #list stats that cannot be calculated for populations without genomes
@@ -91,7 +91,7 @@ class StatsCollector:
 
         #create a stats attribute, to store all stats calculated
         self.stats = {}
-        for pop_name, genome in pop_names_and_genomes.items():
+        for pop_name, genome in pops_with_wout_genomes.items():
             self.stats[pop_name] = {}
             for stat, stat_params in stats_params.items():
                 #skip populations without genomes for stats that require genomes
@@ -143,12 +143,23 @@ class StatsCollector:
             else:
                 #or else only calculate based on the parameterized frequencies
                 #for each stat
-                calc_list = [k for k,v in self.stats[pop.name].items() if t % v['freq'] == 0]
-            #then calculate each and append it to self.stats
+                calc_list = [k for k,v in self.stats[pop.name].items() if (
+                                                        t % v['freq'] == 0)]
+            #then calculate each stat
             for stat in calc_list:
                 vals = self.calc_fn_dict[stat](pop,
-                                        **self.stats[pop.name][stat]['other_params'])
-                self.stats[pop.name][stat]['vals'][t] = vals
+                                **self.stats[pop.name][stat]['other_params'])
+                #and add each stat to the right location (by timestep)
+                #in its list
+                try:
+                    self.stats[pop.name][stat]['vals'][t] = vals
+                #unless the list isn't long enough (which happens if mod.walk
+                #has been used to run the model past its initially stipulated
+                #length of time), in which case make it long enough and make
+                #the last value the stat just calculated
+                except IndexError:
+                    stats_list = self.stats[pop.name][stat]['vals']
+                    stats_list.extend([np.nan] * (t-len(stats_list)) + [vals])
         #and write whichever stats are necessary to file
         self.write_stats(t)
 
@@ -161,9 +172,10 @@ class StatsCollector:
         for pop_name in [*self.stats]:
             #get the subdirectory name and filename for this population
             subdirname = os.path.join(dirname, 'pop-%s' % pop_name)
-            #for each statistic
+            #make this subdir, and any parent dirs as necessary
+            os.makedirs(subdirname, exist_ok = True)
+            #create the filename and filepath for this pop, for each stat
             for stat in [*self.stats[pop_name]]:
-            #create the filename and filepath for this pop and stat
                 filename = 'mod-%s_it-%i_pop-%s_%s' % (self.model_name,
                     iteration, pop_name, self.file_suffix_dict[stat])
                 filepath = os.path.join(subdirname, filename)
@@ -265,6 +277,22 @@ class StatsCollector:
         #show
         fig.show()
 
+    #TODO: SECTION FOR PLOTTING LD ARRAYS
+    #if plot == True:
+    #    fig = plt.figure()
+    #    ax = fig.add_subplot(1,2,1)
+    #    #plot of LD matrix
+    #    plt.imshow(np.clip(r2_mat, a_min = 0, a_max = None),
+    #                                interpolation = 'nearest')
+    #    ax = fig.add_subplot(1,2,2)
+    #    #plot of mean linkage values
+    #    r2_list = [r2_mat[0,1]]
+    #    for i in range(1,L-1):
+    #        r2_list.append(np.mean([r2_mat[i-1,i], r2_mat[i,i+1]]))
+    #    r2_list.append(r2_mat[L-2,L-1])
+    #    plt.scatter(range(L), r2_list, c = 'red', marker = 'o', s=25)
+
+
 
 ######################################
 # -----------------------------------#
@@ -279,7 +307,6 @@ def calc_Nt(pop):
     return(Nt)
 
 
-#TODO: REVIEW AND FIX/EDIT AS NEEDED
 #TODO: INCORPORATE THE PLOTTING STUFF BELOW INTO self.plot_stat() INSTEAD
 def calc_ld(pop, plot = False):
     
@@ -314,19 +341,6 @@ def calc_ld(pop, plot = False):
             r2 = (D_1_1**2)/(f1_i*(1-f1_i)*f1_j*(1-f1_j))
             r2_mat[i,j] = r2
 
-    if plot == True:
-        fig = plt.figure()
-        ax = fig.add_subplot(1,2,1)
-        #plot of LD matrix
-        plt.imshow(np.clip(r2_mat, a_min = 0, a_max = None),
-                                    interpolation = 'nearest')
-        ax = fig.add_subplot(1,2,2)
-        #plot of mean linkage values
-        r2_list = [r2_mat[0,1]]
-        for i in range(1,L-1):
-            r2_list.append(np.mean([r2_mat[i-1,i], r2_mat[i,i+1]]))
-        r2_list.append(r2_mat[L-2,L-1])
-        plt.scatter(range(L), r2_list, c = 'red', marker = 'o', s=25)
     return(r2_mat)
 
 
@@ -361,9 +375,13 @@ def calc_maf(pop):
 
 
 #function to calculate the mean fitness of the population
-def calc_mean_trait_fitness(pop):
-    #calculate the mean fitness
-    mean_fit = np.mean(selection.calc_fitness_traits(pop))
+def calc_mean_fitness(pop):
+    #calculate the mean fitness, if this population has traits
+    if pop.gen_arch.traits is not None:
+        mean_fit = np.mean(selection.calc_fitness(pop))
+    #or else return NaN
+    else:
+        mean_fit = np.nan
     return(mean_fit)
 
 

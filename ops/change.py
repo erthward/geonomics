@@ -73,10 +73,10 @@ class Changer:
         except StopIteration:
             self.next_change = None
 
-    def make_change(self, t):
+    def make_change(self, t, for_plotting=False):
         #if this is the right timestep for the next change
         if self.next_change is not None:
-            if t == self.next_change[0]:
+            if t == self.next_change[0] and for_plotting == False:
                 print("\t**** Running the next change\t%s\n\n" % str(self.next_change))
                 #call the next_change function to make the change
                 self.next_change[1](self) 
@@ -177,9 +177,14 @@ class PopulationChanger(Changer):
     #method to set the changes stipulated in params dict for the pop object
     def set_changes(self, pop, land=None):
         #pull out the parts of the params
-        dem_change_params = self.change_params.dem
-        parameter_change_params = self.change_params.parameters
-
+        try:
+            dem_change_params = self.change_params.dem
+        except Exception:
+            dem_change_params = None
+        try:
+            parameter_change_params = self.change_params.parameters
+        except Exception:
+            parameter_change_params = None
         #check if this pop has a move_surf, and if there are land-changes that affect its scape
         move_surf_change_fns = []
         if pop.move_surf is not None and land is not None and pop.move_surf.scape_num in land.changer.change_info.keys():
@@ -193,15 +198,19 @@ class PopulationChanger(Changer):
 
         #set the demographic changes, if applicable
         dem_change_fns = []
-        for event, event_params in dem_change_params.items():
-            if True in [v is not None for v in event_params.values()]:
-                dem_change_fns.extend(get_dem_change_fns(pop, **event_params))
+        if dem_change_params is not None:
+            for event, event_params in dem_change_params.items():
+                if True in [v is not None for v in event_params.values()]:
+                    dem_change_fns.extend(get_dem_change_fns(pop,
+                                                             **event_params))
 
         #set the other changes, if applicable
         parameter_change_fns = []
-        for parameter, parameter_params in parameter_change_params.items():
-            if True in [v is not None for v in parameter_params.values()]:
-                parameter_change_fns.extend(get_parameter_change_fns(pop, parameter, **parameter_change_params))
+        if parameter_change_params is not None:
+            for parameter, parameter_params in parameter_change_params.items():
+                if True in [v is not None for v in parameter_params.values()]:
+                    parameter_change_fns.extend(get_parameter_change_fns(pop,
+                                        parameter, **parameter_change_params))
 
         #put all the changes in chronological order
         if len(dem_change_fns) + len(parameter_change_fns) + len(move_surf_change_fns) > 0:
@@ -216,30 +225,34 @@ class PopulationChanger(Changer):
 
     #a method to visualize the population changes that will occur
     def plot_dem_changes(self, pop):
-        cop_pop = deepcopy(pop)
-        cop_self = deepcopy(self)
-        cop_changes = deepcopy(cop_self.changes)
-        step_list = [cop_self.next_change[0]]
-        more = True
-        while more:
-            try:
-                next_change = next(cop_changes)
-                step_list.append(next_change[0])
-            except StopIteration:
-                more = False
-        end = int(1.1*max(step_list))
-        #set pop.K to 1, for viz purposes
-        pop.K = 1
-        #and set cop_self.base_K 
-        cop_self.set_base_K(pop)
-        Ks = []
-        for t in range(end):
-            cop_self.make_change(t)
-            Ks.append(pop.K)
-        plt.plot(range(end), Ks)
-        #set pop back to its original value
-        pop = cop_pop
-            
+        if self.next_change is None:
+            print(("No demographic changes remaining for this population. "
+                "They were likely already run."))
+        else:
+            cop_pop = deepcopy(pop)
+            cop_self = deepcopy(self)
+            cop_changes = deepcopy(cop_self.changes)
+            step_list = [cop_self.next_change[0]]
+            more = True
+            while more:
+                try:
+                    next_change = next(cop_changes)
+                    step_list.append(next_change[0])
+                except StopIteration:
+                    more = False
+            end = int(1.1*max(step_list))
+            #set pop.K to 1, for viz purposes
+            pop.K = 1
+            #and set cop_self.base_K 
+            cop_self.set_base_K(pop)
+            Ks = []
+            for t in range(end):
+                cop_self.make_change(t, for_plotting = True)
+                Ks.append(pop.K)
+            plt.plot(range(end), Ks)
+            #set pop back to its original value
+            pop = cop_pop
+
 ######################################
 # -----------------------------------#
 # FUNCTIONS -------------------------#

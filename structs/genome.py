@@ -223,10 +223,10 @@ class GenomicArchitecture:
 
     #method for plotting all allele frequencies for the population
     def plot_allele_frequencies(self, pop):
-        populome = np.hstack([ind.genome for ind in pop.values()])
-        freqs = populome.sum(axis = 1)/(2*populome.shape[0])
+        populome = np.stack([ind.genome for ind in pop.values()])
+        freqs = populome.sum(axis = 2).sum(axis = 0)/(2*populome.shape[0])
         plt.plot(range(self.L), self.p, ':r')
-        plt.plot(range(self.L), freqs, '_b')
+        plt.plot(range(self.L), freqs, '-b')
         plt.show()
 
 

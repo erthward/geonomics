@@ -83,8 +83,8 @@ class StatsCollector:
                                  }
 
         #get the population names
-        pop_names_and_genomes = {v.init.name:('genome' in v.keys()) for v 
-                                 in params.comm.pops.values()}
+        pop_names_and_genomes = {str(k):('genome' in v.keys()) for k, v
+                                 in params.comm.pops.items()}
 
         #list stats that cannot be calculated for populations without genomes
         stats_invalid_wout_genomes = ['ld', 'het', 'maf', 'mean_fit']
@@ -155,7 +155,7 @@ class StatsCollector:
     #a method to make the filenames for all of the stats to be saved
     def set_filepaths(self, iteration):
         #get the directory name for this model and iteration
-        dirname = os.path.join('GEONOMICS_mod-%s' % self.model_name, 
+        dirname = os.path.join('GEONOMICS_mod-%s' % self.model_name,
                                'it-%i' % iteration)
         #for each population
         for pop_name in [*self.stats]:
@@ -222,7 +222,7 @@ class StatsCollector:
         if t == self.T-1:
             self.write_other_stats()
 
-          
+
     #TODO: USE A CHECK OF THE SHAPES OF THE STATS TO DECIDE HOW TO PLOT
     #method to plot whichever stat as a function of runtime
     def plot_stat(self, stat, pop_name=None):
@@ -235,7 +235,7 @@ class StatsCollector:
         #get the list of pops to plot
         if pop_name is None:
             pop_names = [*self.stats]
-        elif (pop_name is not None 
+        elif (pop_name is not None
               and type(pop_name) is str and pop_name in [*self.stats]):
             pop_names = [pop_name]
         else:
@@ -246,15 +246,15 @@ class StatsCollector:
         #plot each population for the chosen statistic 
         for n, pop_name in enumerate(pop_names):
             #add axes objects horizontally across
-            ax = fig.add_subplot(1, len(pop_names), n)
+            ax = fig.add_subplot(1, len(pop_names), n+1)
             #get the stat values to plot
-            vals = self.stats[pop_name]['vals']
+            vals = self.stats[pop_name][stat]['vals']
             #get the indices of non-NaN values to be plotted
-            indices_to_plot = np.where(np.invert(np.isnan(vals)))
+            indices_to_plot = np.array(np.where(np.invert(np.isnan(vals)))[0])
             #get the timesteps at the non-NaN values
             x = np.arange(0, len(vals))[indices_to_plot]
             #get the non-NaN values
-            y = vals[indices_to_plot]
+            y = np.array(vals)[indices_to_plot]
             #plot a dotted line (which necessarily linearly interpolates 
             #between collected timesteps if not all timesteps were collected)
             plt.plot(x, y, ':')

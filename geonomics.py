@@ -8,7 +8,7 @@ Module name:          main
 
 
 Module contains:
-                      - the Geonomics main module, containing the key, 
+                      - the Geonomics main module, containing the key,
                         highest-level functions the common user would need
 
 
@@ -175,11 +175,12 @@ def make_model(params=None):
             print(("\n\nUsing the following file, in the current working "
                 "directory to create the Model object:\n\t%s\n\n") % params)
         except Exception as e:
-            raise ValueError(("The 'params' argument was not provided, and the "
-                "failed to identify a single 'GEONOMICS_params_<...>.py' file "
-                "in the current working directory from which to create the "
-                "Model object. The following error was thrown: %s") % e)
-                
+            raise ValueError(("The 'params' argument was not provided, and "
+                "Geonomics could not identify a single "
+                "'GEONOMICS_params_<...>.py' file in the current working "
+                "directory from which to create the Model object. The "
+                "following error was thrown: %s") % e)
+
     assert ( (type(params) is str and os.path.isfile(params))
         or str(type(params)) is "<class 'sim.params.ParametersDict'>"), ("If "
         "the 'params' argument is provided, its value must be either a string "
@@ -187,7 +188,7 @@ def make_model(params=None):
         "ParametersDict class. If it is not provided, the current working "
         "directory must contain a single 'GEONOMICS_params_<...>.py' file "
         "from which to create the Model object.")
-    
+
     if type(params) is str:
         try:
             params = read_params(params)

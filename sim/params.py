@@ -911,14 +911,15 @@ def make_populations_params_str(populations=1):
                 if arg in [*pop_dict]:
                     assert type(pop_dict[arg]) is bool, ("The '%s' key in each "
                         "Population's dictionary must contain a boolean value. "
-                        "But dict number %i contains a non-boolean "
-                        "value.") % (arg, i)
+                        "But dict number %i in the 'population' argument "
+                        "contains a non-boolean value.") % (arg, i)
             for arg in int_args:
                 if arg in [*pop_dict]:
                     assert type(pop_dict[arg]) is int, ("The '%s' "
                         "key in each Population's dictionary must contain an "
-                        "integer value. But dict number %i contains a "
-                        "non-integer value:\n\n\t" "'%s': %s ") % (arg, i, arg,
+                        "integer value. But dict number %i in the "
+                        "'populations' argument contains a non-integer "
+                        "value:\n\n\t" "'%s': %s ") % (arg, i, arg,
                                                             str(pop_dict[arg]))
                     int_arg_str_fmt_dict = {'n_traits':'Traits',
                             'demographic_change': 'demographic change events'}

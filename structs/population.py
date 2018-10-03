@@ -628,11 +628,11 @@ class Population(OD):
         
         #return messages if population does not have genomes or traits
         if self.gen_arch is None:
-            print(("\nPopulation.plot_fitness is not valid for populations "
+            print(("Population.plot_fitness is not valid for populations "
                    "without genomes.\n"))
             return
         elif self.gen_arch.traits is None:
-            print(("\nPopulation.plot_fitness is not valid for populations "
+            print(("Population.plot_fitness is not valid for populations "
                    "without traits.\n"))
             return
 
@@ -680,7 +680,7 @@ class Population(OD):
     #method to plot a population's allele frequencies
     def plot_allele_frequencies(self):
         if self.gen_arch is None:
-            print(("\nPopulation.plot_allele_frequencies is not valid for "
+            print(("Population.plot_allele_frequencies is not valid for "
                 "populations without genomes.\n"))
         else:
             self.gen_arch.plot_allele_frequencies(self)
@@ -804,7 +804,7 @@ class Population(OD):
 
     def plot_demographic_changes(self):
         if self.changer is None:
-            print(("\nPopulation.plot_demographic_changes is not valid "
+            print(("Population.plot_demographic_changes is not valid "
                 "for populations with no PopulationChanger object.\n"))
  
         else:

@@ -1,7 +1,5 @@
 - knock out these secondary to-do items
 
-        5 finalize stats.py (fix the plot_stat fn so that it handles each stat separately)
-
         5 figure out why model tries to use the gen_arch for pop2 when I have a model w pop1 and pop2 but only pop1 actually has genomes
 
         5 decide whether to keep heterozygosity effects, and if so, update

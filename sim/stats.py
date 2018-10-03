@@ -226,8 +226,17 @@ class StatsCollector:
                     write_fn = self.write_fn_dict[stat]
                     #call the write_fn to write the data to disk
                     write_fn(filepath, stat_dict['vals'][t], t)
-                    #then replace the data with None, to free up its memory
-                    stat_dict['vals'][t] = None
+                    #then replace the last data collected prior to this
+                    #timestep's data with None, to free up memory but still
+                    #maintain the latest data in case of plotting
+                    rev_nonnull = [n for n, v in enumerate(
+                        stat_dict['vals'][::-1]) if (v is not np.nan and 
+                                                        v is not None)]
+                    nonnull = [range(len(
+                        stat_dict['vals']))[::-1][n] for n in rev_nonnull]
+                    nonnull = [v for v in nonnull if v != t]
+                    for v in nonnull: 
+                        stat_dict['vals'][v] = None
 
 
         #or write all 'other stats' to disk, if it's the last timestep
@@ -257,41 +266,95 @@ class StatsCollector:
         fig = plt.figure()
         #plot each population for the chosen statistic 
         for n, pop_name in enumerate(pop_names):
-            #add axes objects horizontally across
-            ax = fig.add_subplot(1, len(pop_names), n+1)
             #get the stat values to plot
             vals = self.stats[pop_name][stat]['vals']
-            #get the indices of non-NaN values to be plotted
-            indices_to_plot = np.array(np.where(np.invert(np.isnan(vals)))[0])
-            #get the timesteps at the non-NaN values
-            x = np.arange(0, len(vals))[indices_to_plot]
-            #get the non-NaN values
-            y = np.array(vals)[indices_to_plot]
-            #plot a dotted line (which necessarily linearly interpolates 
-            #between collected timesteps if not all timesteps were collected)
-            plt.plot(x, y, ':')
-            #and plot dots at each of the collected timesteps
-            plt.plot(x, y, '.')
-            #set the title to the population's name
-            ax.set_title("POP: '%s'" % pop_name)
-        #show
+            #plot 'Nt' or 'mean_fit'
+            if stat in ['Nt', 'mean_fit']:
+                #add axes objects horizontally across
+                ax = fig.add_subplot(1, len(pop_names), n+1)
+                #get the indices of non-NaN values to be plotted
+                indices_to_plot = np.array(np.where(np.invert(np.isnan(vals)))[0])
+                #get the timesteps at the non-NaN values
+                x = np.arange(0, len(vals))[indices_to_plot]
+                #get the non-NaN values
+                y = np.array(vals)[indices_to_plot]
+                #plot a dotted line (which necessarily linearly interpolates 
+                #between collected timesteps if not all timesteps were collected)
+                plt.plot(x, y, ':')
+                #and plot dots at each of the collected timesteps
+                plt.plot(x, y, '.')
+                #set the title to the stat and the population's name
+                ax.set_title("POP: '%s'" % (pop_name))
+                #set the x- and y-labels
+                plt.xlabel('timestep')
+                plt.ylabel(stat)
+
+            #or plot 'maf' or 'het'
+            elif stat in ['het', 'maf']:
+                #add axes objects horizontally across
+                ax = fig.add_subplot(1, len(pop_names), n+1)
+                #get the reversed-list index of the last set of values 
+                #calculated
+                rev_idx_last_vals = [n for n,v in enumerate(vals[::-1]) if (
+                    v is not None and v is not np.nan)][0]
+                #get the last set of values calculated
+                last_vals = vals[::-1][rev_idx_last_vals]
+                #get the timestep of the last set of values
+                t_last_vals = range(len(vals))[::-1][rev_idx_last_vals]
+                #plot the values
+                plt.plot(range(len(last_vals)), last_vals, '-')
+                #set the title to the population's name and timestep of the
+                #values plotted
+                ax.set_title("POP: '%s';   T: %i" % (pop_name, t_last_vals))
+                #set the x- and y-labels
+                plt.xlabel('locus')
+                plt.ylabel(stat)
+
+            #or plot 'ld'
+            elif stat in ['ld']:
+                #get the reversed-list index of the last set of values 
+                #calculated
+                rev_idx_last_vals = [n for n,v in enumerate(vals[::-1]) if (
+                    v is not None and v is not np.nan)][0]
+                #get the last set of values (i.e. r^2 array) calculated
+                r2_mat = vals[::-1][rev_idx_last_vals]
+                #get the timestep of the last set of values
+                t_last_vals = range(len(vals))[::-1][rev_idx_last_vals]
+                #add axes objects horizontally across, in two rows
+                ax = fig.add_subplot(2, len(pop_names), n+1)
+                #plot the LD matrix in row 1
+                plt.imshow(np.clip(r2_mat, a_min = 0, a_max = None),
+                                            interpolation = 'nearest')
+                plt.colorbar()
+                #set plot title
+                ax.set_title(("POP: '%s';   T: %i\nLocus-wise " 
+                            "linkage matrix") %  (pop_name, t_last_vals))
+                #set the x- and y-labels
+                plt.xlabel('locus')
+                plt.ylabel('locus')
+                ax = fig.add_subplot(2, len(pop_names), n+1+len(pop_names))
+                #plot of mean linkage values
+                r2_list = [r2_mat[0,1]]
+                L = r2_mat.shape[0]
+                for i in range(1,L-1):
+                    r2_list.append(np.mean([r2_mat[i-1,i], r2_mat[i,i+1]]))
+                r2_list.append(r2_mat[L-2,L-1])
+                plt.scatter(range(L), r2_list, c = 'red', marker = 'o', s=25)
+                #set plot title
+                ax.set_title("Locus-wise mean linkage values")
+                #set the x- and y-labels
+                plt.xlabel('locus')
+                plt.ylabel('mean linkage')
+
+            #or else return informative error message
+            else:
+                raise ValueError(("The value provided for the 'stat' argument "
+                    "is not a valid statistic. Valid values include: %s\n\n")%(
+                    ','.join(['%s' % k for k in [*self.calc_fn_dict]])))
+        #set the main title to the stat plotted
+        fig.suptitle('STAT: %s' % stat)
+        #show the image
         fig.show()
-
-    #TODO: SECTION FOR PLOTTING LD ARRAYS
-    #if plot == True:
-    #    fig = plt.figure()
-    #    ax = fig.add_subplot(1,2,1)
-    #    #plot of LD matrix
-    #    plt.imshow(np.clip(r2_mat, a_min = 0, a_max = None),
-    #                                interpolation = 'nearest')
-    #    ax = fig.add_subplot(1,2,2)
-    #    #plot of mean linkage values
-    #    r2_list = [r2_mat[0,1]]
-    #    for i in range(1,L-1):
-    #        r2_list.append(np.mean([r2_mat[i-1,i], r2_mat[i,i+1]]))
-    #    r2_list.append(r2_mat[L-2,L-1])
-    #    plt.scatter(range(L), r2_list, c = 'red', marker = 'o', s=25)
-
 
 
 ######################################

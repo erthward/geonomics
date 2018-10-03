@@ -91,6 +91,7 @@ def calc_fitness(pop, trait_num=None):
     #set a default w array
     w = np.array([1]*len(pop))
 
+    #NOTE:START WORKING HERE
     #get trait-related fitness, if traits
     if (pop.gen_arch.traits is not None 
         and len(pop.gen_arch.traits) > 0):

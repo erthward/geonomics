@@ -135,6 +135,11 @@ class Population(OD):
                 "must be an instance of the genome.GenomicArchitecture class "
                 "or else None.")
 
+        #set the selection attribute, to indicate whether or not
+        #natural selection should be implemented for the population
+        self.selection = (self.gen_arch is not None and 
+            (self.gen_arch.mu_delet > 0 or self.gen_arch.traits is not None))
+
         #set the self.mutate attribute (a boolean indicating whether or not to enact mutation, which is True if gen_arch.mu_tot > 0
         self.mutate = (self.gen_arch is not None
                        and self.gen_arch.mu_tot is not None
@@ -246,7 +251,7 @@ class Population(OD):
         #copy the keys, for use in mutation.do_mutation()
         keys_list = [*offspring_keys]
 
-        if not burn:
+        if not burn and self.gen_arch is not None:
             recomb_paths = self.gen_arch.recomb_paths.get_paths(total_births*2)
             new_genomes = mating.do_mating(self, mating_pairs, n_births, recomb_paths)
 
@@ -279,6 +284,8 @@ class Population(OD):
                 if self.gen_arch is not None:
                     if burn:
                         new_genome = np.array([0])
+                    elif self.gen_arch is None:
+                        new_genome = None
                     else:
                         new_genome = new_genomes[n_pair][n]
                 else:

@@ -244,7 +244,6 @@ class StatsCollector:
             self.write_other_stats()
 
 
-    #TODO: USE A CHECK OF THE SHAPES OF THE STATS TO DECIDE HOW TO PLOT
     #method to plot whichever stat as a function of runtime
     def plot_stat(self, stat, pop_name=None):
         #check that the stat argument is valid
@@ -370,7 +369,6 @@ def calc_Nt(pop):
     return(Nt)
 
 
-#TODO: INCORPORATE THE PLOTTING STUFF BELOW INTO self.plot_stat() INSTEAD
 def calc_ld(pop, plot = False):
     
     #TODO: I should also include (either as an alternative within this fn,

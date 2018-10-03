@@ -340,8 +340,6 @@ POP_PARAMS = '''
                         #std for the normal distribution used to choose the r.v. of deaths
                             #per timestep (mean of this distribution is the overshoot,
                             #as calculated from pop.size and pop.census())
-                    'selection':                True,
-                        #should the population undergo natural selection?
                     'dens_dependent_fitness':   True,
                         #should fitness be density dependent? (note: helps to avoid subpopulation 'clumping')
                     'dens_grid_window_width':   None,
@@ -442,7 +440,7 @@ GENOME_PARAMS = '''
                     'mu_neut':                  1e-9,
                         #genome-wide neutral mutation rate, per base per generation
                             #(set to 0 to disable neutral mutation)
-                    'mu_delet':                 1e-9,
+                    'mu_delet':                 0,
                         #genome-wide deleterious mutation rate, per base per generation
                             #(set to 0 to disable deleterious mutation)
                             #NOTE: these mutations will fall outside the loci involved in any traits
@@ -741,7 +739,7 @@ STATS_PARAMS = '''
                          'freq': 10,
                         },
             'mean_fit': {'calc': True,
-                             'freq': 3,
+                         'freq': 3,
                         },
             }, # <END> 'stats'
 '''

@@ -1,6 +1,8 @@
 - knock out these secondary to-do items
 
-        5 decide whether to keep heterozygosity effects, and if so, update
+        5 finish fixing up the heterozygosity thing (test and debug the custom gen_arch file-writing ability of params.py, then the ability to read that file's 'dom' column and use, and the ability to otherwise set dom to 0 or 1 based on the params file, and then the ability to correctly calculate phenotypes using dominance based on the new method I wrote
+
+        5 figure out what's going on with the 'sex' parameter, and if I need it
 
         5 use Wright's genetic neighborhood/cruising distance to set window width of DensityGrids
 
@@ -17,8 +19,6 @@
 
         1 write a function for plotting the community (where each pop has a different color) (how about some way for each population to have its fitness
           plotted with colors as usual, but SHAPE to be population indicator?)
-
-        5 fix the Genome.plot_allele_frequencies fn
 
         5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
 

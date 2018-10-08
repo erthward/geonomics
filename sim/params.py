@@ -419,6 +419,7 @@ MOVE_SURF_PARAMS = '''
 #block for genome params
 #STRING SLOTS:
     #%i = pop_num,
+    #%s = gen_arch_file_string
     #%s = traits_params,
 GENOME_PARAMS = '''
             ##############################
@@ -430,11 +431,11 @@ GENOME_PARAMS = '''
                         #total number of loci
                     'l_c':                      [10],
                         #chromosome lengths [sum(l_c) == L is enforced]
-                    'gen_arch_file':            None,
+                    'gen_arch_file':            %s,
                         #if not None, should point to a file stipulating a
                             #custom genomic architecture (i.e. a CSV with loci
-                            #as rows and 'locus_num', 'p', 'r', 'trait', and
-                            #'alpha' as columns, such as is created by
+                            #as rows and 'locus_num', 'p', 'dom', 'r', 'trait', 
+                            #and 'alpha' as columns, such as is created by
                             #main.make_params_file, when the custom_gen_arch
                             #arugment is True)
                     'mu_neut':                  1e-9,
@@ -449,21 +450,22 @@ GENOME_PARAMS = '''
                     'mut_log':                  False,
                         #whether or not to store a mutation log; if true, will be saved as mut_log.txt
                         #within each iteration's subdirectory
-                    'delet_s_distr_shape':       0.2,
-                    'delet_s_distr_scale':       0.2,
+                    'delet_s_distr_shape':      0.2,
+                    'delet_s_distr_scale':      0.2,
                         #mean and standard deviation of the gamma distribution
                         #parameterizig the per-allele effect size of 
                         #deleterious mutations (std = 0 will fix all mutations
                         #for the mean value)
-                    'r_distr_alpha':             0.5,
+                    'r_distr_alpha':            0.5,
                         #alpha for beta distribution of linkage values
                             #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333,
                             #with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
-                    'r_distr_beta':              15e9,
+                    'r_distr_beta':             15e9,
                         #beta for beta distribution of linkage values
-                    'use_dom':                  False,
-                        #whether or not to use dominance (default to False)
-                            #NOTE: REALLY JUST NEED TO GET RID OF THE DOMINANCE THING; IT'S ALL MESSED UP
+                    'dom':                      False,
+                        #whether or not loci should be dominant 
+                        #(if True, the 1 allele will be dominant at each locus;
+                        #if False, all loci will be codominant; defaults to False)
                     'pleiotropy':               True,
                         #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?) false
                     'recomb_rate_custom_fn':    None,
@@ -869,7 +871,7 @@ def make_populations_params_str(populations=1):
             move_params = MOVE_PARAMS % (i, '')
             #use genome params, but with no traits (i.e. string-format with a
             #zero-length str)
-            genome_params = GENOME_PARAMS % (i, '')
+            genome_params = GENOME_PARAMS % (i, 'None', '')
             #add no change params
             change_params = ''
             #create the pop_params str
@@ -942,6 +944,17 @@ def make_populations_params_str(populations=1):
                 move_params = ''
             #get the genome params, if required
             if 'genomes' in [*pop_dict] and pop_dict['genomes'] in [True, 'custom']:
+                #if this population should have a custom gen_arch_file made
+                if 'custom_genomic_architecture' in [*pop_dict] and 
+                    pop_dict['custom_genomic_architecture']:
+                    gen_arch_file_str = "'%%GEN_ARCH_FILE_STR%%_pop_%i.csv'"
+                    gen_arch_file_str = gen_arch_file_str % i
+                    #make a tmp gen_arch_file for this pop
+                    tmp_gen_arch_filename = '%i_%s.tmp' % (i, 
+                        str(np.random.randint(0, 10000)).zfill(5))
+                    make_custom_genomic_architecture_file(tmp_gen_arch_filename)
+                else:
+                    gen_arch_file_string = 'None'
                 #if this population's genomes should have traits
                 if 'n_traits' in [*pop_dict]:
                     #get a list of params strings of length equal
@@ -958,7 +971,7 @@ def make_populations_params_str(populations=1):
                 else:
                     traits_params = ''
                 genome_params = params_str_dict['genome'][pop_dict['genomes']]
-                genome_params = genome_params % (i, traits_params)
+                genome_params = genome_params % (i, gen_arch_file_str, traits_params)
             #or get empty str
             else:
                 genome_params = ''
@@ -1056,6 +1069,19 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
     file_str = PARAMS % (os.path.split(filepath)[1], scapes_params_str, 
         pops_params_str, its_params_str, data_params_str, stats_params_str,
         seed_params_str)
+
+    #add the gen_arch_file name and then create the files, if needed
+    if re.search('%%GEN_ARCH_FILE_STR%%', file_str):
+        #get the file prefix
+        gen_arch_file_prefix = os.path.splitext(os.path.split(filepath)[1])[0]
+        #rename the tmp files that were created
+        tmp_files = [f for f in os.listdir('.') if (
+            os.path.splitext(f)[1] == '.tmp')]
+        for tmp_file in tmp_files:
+            os.rename(tmp_file, gen_arch_file_prefix + 
+                '_pop%i.csv' % (tmp_file[0]))
+        #replace the standin pattern with the file prefix
+        re.sub('%%GEN_ARCH_FILE_STR%%', gen_arch_file_prefix, file_str)
 
     #write the file_str to a "GEONOMICS_params_<datetime>.py" file
     with open(filepath, 'w') as f:

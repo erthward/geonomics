@@ -83,12 +83,13 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
             [dict, ..., dict]:
                 Each dict should contain at least one argument from among the
                 following:
-                    {'movement':            bool,
-                     'movement_surface':    bool,
-                     'genomes':             bool,
-                     'n_traits':            int,
-                     'demographic_change':  int,
-                     'parameter_change':    bool,
+                    {'movement':                        bool,
+                     'movement_surface':                bool,
+                     'genomes':                         bool,
+                     'n_traits':                        int,
+                     'custom_genomic_architecture':     bool,
+                     'demographic_change':              int,
+                     'parameter_change':                bool,
                      }
                 This will add one section of Population parameters, customized
                 as indicated, for each dict in the list.

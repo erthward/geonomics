@@ -117,17 +117,6 @@ class Population(OD):
                             val = val / (val + 1)
                         setattr(self, att, val)
 
-        #TODO: probably get rid of this, or move it elsewhere in the package?
-        #set the heterozygote effects dictionary
-        self.heterozygote_effects = {
-            0: lambda g: [np.ceil(np.mean(g[i,])) for i in range(g.shape[0])],
-            # relative fitness of homozygous 1 = relative fitness of heterozygote, i.e. 1 = 1-hs
-            0.5: lambda g: [np.mean(g[i,]) for i in range(g.shape[0])],
-            # relative fitness of heterozygote halfway between homozygotes, i.e 1-hs = 1-s/2
-            1: lambda g: [np.floor(np.mean(g[i,])) for i in range(g.shape[0])]
-            # relative fitness of homozygous 0 = relative fitness of heterozygote, i.e. 1-hs = 1-s
-        }
-
         #set the GenomicArchitecture object
         self.gen_arch = genomic_architecture
         assert (self.gen_arch.__class__.__name__ == 'GenomicArchitecture'
@@ -432,20 +421,21 @@ class Population(OD):
                 habs = np.array(ig(habs))
         return habs
 
-    def get_genotype(self, locus, return_format='mean', individs=None, by_dominance=False):
+    def get_genotype(self, locus, biallelic=False, individs=None, 
+                                                        by_dominance=True):
 
         if individs is None:
             individs = [*self]
 
-        if return_format == 'biallelic':
+        if biallelic:
             return {i: self[i].genome[locus, :] for i in [*self] if i in individs}
 
-        elif return_format == 'mean':
+        else:
             if by_dominance == True:
-                h = self.gen_arch.h[locus]
+                d = self.gen_arch.d[locus]
             else:
-                h = 0.5
-            return dict(zip(individs, self.heterozygote_effects[h](
+                d = 0.5
+            return dict(zip(individs, self.gen_arch.dom_effects[h](
                 np.array([ind.genome[locus,] for i, ind in self.items() if i in individs]))))
 
     #convenience method for getting a scalar attribute for some or all individs
@@ -615,7 +605,7 @@ class Population(OD):
     # method for plotting individuals colored by their phenotypes for a given trait
     def plot_phenotype(self, trait, scape_num=None, individs=None, text=False, size=25, text_size = 9, 
             edge_color='black', text_color='black', colorbar=True, im_interp_method='nearest', 
-            alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
+            alpha=1, zoom_width=None, x=None, y=None):
 
         z = OD(zip([*self], self.get_phenotype()[:,trait]))
         if individs is not None:
@@ -631,7 +621,7 @@ class Population(OD):
     # trait (if trait is not None)
     def plot_fitness(self, scape_num=None, trait_num=None, individs=None, text=False, size=100, text_size = 9, 
             edge_color='black', text_color='black', fit_cmap = 'RdYlGn', colorbar=True, im_interp_method='nearest', 
-            alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
+            alpha=1, zoom_width=None, x=None, y=None):
         
         #return messages if population does not have genomes or traits
         if self.gen_arch is None:
@@ -673,7 +663,7 @@ class Population(OD):
             self.plot_phenotype(trait=trait_num, scape_num=scape_num, individs=individs, text=False,
                     size=size, text_size = text_size, edge_color=edge_color, text_color=text_color,
                     colorbar=colorbar, im_interp_method=im_interp_method, 
-                    alpha=alpha, by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y)
+                    alpha=alpha, zoom_width=zoom_width, x=x, y=y)
             #make size smaller for the next layer of inner (fitness) circles
             size = round(0.2*size)
 

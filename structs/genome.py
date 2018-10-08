@@ -79,13 +79,22 @@ class RecombinationPaths:
 
 
 class GenomicArchitecture:
-    def __init__(self, p, h, r, g_params):
+    def __init__(self, p, dom, r, g_params):
         self.x = 2              #ploidy (NOTE: for now will be 2 by default; later could consider enabling polyploidy)
         self.L = g_params.L              #total length (i.e. number of markers)
         self.l_c = g_params.l_c          #length of each chromosome
         self.p = p              #Dict of allele frequencies for the 1-alleles for all (numbered by keys) chromosomes in haploid genome
         self.pleiotropy  = g_params.pleiotropy  #True/False regarding whether to allow a locus to affect the phenotype of more than one trait; defaults to False
-        self.h = h          #Dict of heterozygous effects for all loci, for all chroms
+        self.dom = dom          #array of dominance values for all loci
+        #set the dominance-effects dictionary
+#        self.dom_effects = {
+#            #dominance uses np.ceil(np.mean(genotype)) to represent all 
+#            #(1,1) and (0,1) genotypes to effective genotypes of 1
+#            1: lambda g: np.ceil(np.mean(g, axis = 1)),
+#            #codominance uses np.mean(genotype) to represent (0,0) as an
+#            #effective genotype of 0, (0,1) as 0.5, and (1,1) as 1
+#            0: lambda g: np.mean(g, axis = 1)
+#        }
         self.sex = g_params.sex
         self.r = r              #Dict of recombination rates between each locus and the next, for all chroms (NOTE: first will be forced to 1/float(x), to effect independent segregation of chroms, after which recomb occurs as a crossing-over path down the chroms
         self.recomb_lookup_array_size = g_params.recomb_lookup_array_size
@@ -175,8 +184,8 @@ class GenomicArchitecture:
         s = min(s, 1)
         return(s)
 
-    #a method to set the heterozygosity values at certain loci
-    def set_heterozgosity(self, loci, het_value):
+    #a method to set the dominance values at certain loci
+    def set_dominance(self, loci, value):
         pass
 
     #method for assigning loci to traits 
@@ -225,6 +234,9 @@ class GenomicArchitecture:
     def plot_allele_frequencies(self, pop):
         populome = np.stack([ind.genome for ind in pop.values()])
         freqs = populome.sum(axis = 2).sum(axis = 0)/(2*populome.shape[0])
+        print(self.p.shape)
+        print(freqs.shape)
+        print(freqs)
         plt.plot(range(self.L), self.p, ':r')
         plt.plot(range(self.L), freqs, '-b')
         plt.show()
@@ -251,15 +263,6 @@ def draw_allele_freqs(l):
 #simulate genotypes
 def draw_genotype(p): 
     return(r.binomial(1, p))
-
-
-#randomly assign heterozygous effects, choosing from either 0, 0.5, or 1,
-#where 0 = allele 1 (A1) dominant, 0.5 = codominant, 1 = A1 recessive, i.e.
-#relative fitnesses: A1A1 = 1, A1A2 = 1-hs, A2A2 = 1-s
-#NOTE: Should be able to also implement negative h values here, for overdominance
-def draw_h(l, low = 0, high = 2):
-    h  = r.randint(low = 0, high = 3, size = l)/2.   #NOTE: Pythonic style, so high is exclusive, hence high = 3
-    return(h)
 
 
 def make_traits(traits_params):
@@ -409,6 +412,10 @@ def make_genomic_architecture(pop_params):
                           np.array([*range(len(gen_arch_file))])), ('The '
             "'locus' column of the custom genomic architecture file must "
             "contain serial integers from 0 to 1 - the length of the table.")
+            assert (np.all((gen_arch_file['dom'] == 0) 
+                + gen_arch_file['dom'] == 1)), ("The 'dom' column of the '
+                'custom genomic architecture file must contain only 0s "
+                "and 1s.")
 
     #also get the sex parameter and add it as an item in g_params
     g_params['sex'] = pop_params.mating.sex
@@ -427,17 +434,23 @@ def make_genomic_architecture(pop_params):
         "in the custom genomic-architecture file's 'r' column must be set "
         "to 0.5, to effect independent assortment of sister chromatids.")
 
-    #draw locus-wise heterozygosity-effect values
-        #TODO: THIS WHOLE FUNCTIONALITY NEEDS TO BE EITHER RETOOLED OR ELSE ERADICATED
-    h = draw_h(g_params.L)
-    
+    #set locus-wise dominance values for the 1-alleles, using the 'dom' value
+    #in the gen_arch params, unless a gen_arch_file was provided
+    if gen_arch_file is None: 
+        #create an L-length array of boolean integers (where 0 = codominance,
+        #1 = dominance)
+        dom = np.array([int(g_params.dom)] * g_params.L)
+    else:
+        #get the 'dom' column from the gen_arch_file
+        dom = gen_arch_file['dom'].values
+
     r, l_c = make_recomb_array(g_params, recomb_values = recomb_values)
     #in case g_params.l_c was missing or None, because only a single chromosome is being simulated, then
     #replace g_params.l_c with the returned l_c value
     g_params.l_c = l_c
 
     #now make the gen_arch object
-    gen_arch = GenomicArchitecture(p,h, r, g_params)
+    gen_arch = GenomicArchitecture(p, dom, r, g_params)
 
     #set the loci and effect sizes for each trait, using the custom gen-arch
     #file, if provided
@@ -507,4 +520,5 @@ def read_pickled_genomic_architecture(filename):
         gen_arch = cPickle.load(f)
 
     return gen_arch
+
 

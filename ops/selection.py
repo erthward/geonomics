@@ -38,15 +38,19 @@ def calc_phenotype(ind, trait):
     #get number of loci and their allelic effect sizes
     n_loci = trait.n_loci
     alpha = trait.alpha
+    dom = gen_arch.dom[trait.loci]
 
-    #if monogenic, then divide genotype by 2, 
-    #but if polygenic then multiply genotype by alpha (i.e. effect size) 
-    #at all loci, sum across loci, then add to 0.5 (the null phenotypic value)
-    phenotype = np.float32(ind.genome[trait.loci,:].sum(axis = 1))
+    #calculate the effective genotype, by accounting for dominance at each locus
+    genotype = np.float32(np.floor(np.mean(ind.genome[trait.loci], axis = 1) +
+                         dom[trait.loci]*0.5))
+    #if polygenic, multiply genotype by alpha (i.e. effect size) 
+    #at all loci, sum across loci, then add to 0.5 (the null phenotypic
+    #value), to get phenotype
     if n_loci > 1:
-        phenotype = 0.5 + sum(phenotype*alpha)
+        phenotype = 0.5 + sum(genotype*alpha)
+    #else if monogenic, then divide genotype by 2 to get phenotype 
     else:
-        phenotype = phenotype[0]/2
+        phenotype = genotype[0]/2
 
     return(phenotype)
 

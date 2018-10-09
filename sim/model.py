@@ -404,37 +404,37 @@ class Model:
             for fn in self.burn_fn_queue:
                 if True not in [pop.extinct for pop in self.comm.values()]:
                     fn()
-                    if self.__verbose__:
-                        self.print_timestep_info(mode)
-                    #if the burn-in is complete, reassign the genomes if needed
-                    #and then set self.comm.burned = True
-                    if np.all([pop.burned for pop in self.comm.values()]):
-                        if self.reassign_genomes:
-                            for pop in self.comm.values():
-                                if pop.gen_arch is not None:
-                                    #verbose output
-                                    if self.__verbose__:
-                                        print('Assigning genomes for population "%s"...\n\n' % pop.name)
-                                    genome.set_genomes(pop, self.burn_T, self.T)
-                            #and then set the reassign_genomes attribute to False, so
-                            #that they won'r get reassigned again during this iteration
-                            self.reassign_genomes = False
-                        #mark the community as burned in
-                        self.comm.burned = True
-                        #verbose output
-                        if self.__verbose__:
-                            print('Burn-in complete.\n\n')
                 else:
                     break
+            if self.__verbose__:
+                self.print_timestep_info(mode)
+            #if the burn-in is complete, reassign the genomes if needed
+            #and then set self.comm.burned = True
+            if np.all([pop.burned for pop in self.comm.values()]):
+                if self.reassign_genomes:
+                    for pop in self.comm.values():
+                        if pop.gen_arch is not None:
+                            #verbose output
+                            if self.__verbose__:
+                                print('Assigning genomes for population "%s"...\n\n' % pop.name)
+                            genome.set_genomes(pop, self.burn_T, self.T)
+                    #and then set the reassign_genomes attribute to False, so
+                    #that they won'r get reassigned again during this iteration
+                    self.reassign_genomes = False
+                #mark the community as burned in
+                self.comm.burned = True
+                #verbose output
+                if self.__verbose__:
+                    print('Burn-in complete.\n\n')
         #or do a main step
         elif mode == 'main':
             for fn in self.main_fn_queue:
                 if  True not in [pop.extinct for pop in self.comm.values()]:
                     fn()
-                    if self.__verbose__:
-                        self.print_timestep_info(mode)
                 else:
                     break
+            if self.__verbose__:
+                self.print_timestep_info(mode)
 
         #then check if any populations are extinct and return the correpsonding boolean
         extinct = np.any([pop.extinct for pop in self.comm.values()])

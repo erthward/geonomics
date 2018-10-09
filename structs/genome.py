@@ -86,15 +86,9 @@ class GenomicArchitecture:
         self.p = p              #Dict of allele frequencies for the 1-alleles for all (numbered by keys) chromosomes in haploid genome
         self.pleiotropy  = g_params.pleiotropy  #True/False regarding whether to allow a locus to affect the phenotype of more than one trait; defaults to False
         self.dom = dom          #array of dominance values for all loci
-        #set the dominance-effects dictionary
-#        self.dom_effects = {
-#            #dominance uses np.ceil(np.mean(genotype)) to represent all 
-#            #(1,1) and (0,1) genotypes to effective genotypes of 1
-#            1: lambda g: np.ceil(np.mean(g, axis = 1)),
-#            #codominance uses np.mean(genotype) to represent (0,0) as an
-#            #effective genotype of 0, (0,1) as 0.5, and (1,1) as 1
-#            0: lambda g: np.mean(g, axis = 1)
-#        }
+        #set the use_dom attribute based on whether any loci have a 1 for
+        #their dominance value
+        self.use_dom = np.any(self.dom)
         self.sex = g_params.sex
         self.r = r              #Dict of recombination rates between each locus and the next, for all chroms (NOTE: first will be forced to 1/float(x), to effect independent segregation of chroms, after which recomb occurs as a crossing-over path down the chroms
         self.recomb_lookup_array_size = g_params.recomb_lookup_array_size
@@ -408,14 +402,13 @@ def make_genomic_architecture(pop_params):
             'genomic architecture file must contain a table with number of '
             'rows equal to the genome length stipulated in the genome '
             'parameters (params.comm[<pop_num>].gen_arch.L).')
-            assert np.all(gen_arch_file['locus'].values == 
+            assert np.all(gen_arch_file['locus'].values ==
                           np.array([*range(len(gen_arch_file))])), ('The '
             "'locus' column of the custom genomic architecture file must "
             "contain serial integers from 0 to 1 - the length of the table.")
-            assert (np.all((gen_arch_file['dom'] == 0) 
-                + gen_arch_file['dom'] == 1)), ("The 'dom' column of the '
-                'custom genomic architecture file must contain only 0s "
-                "and 1s.")
+            assert (np.all((gen_arch_file['dom'] == 0) + gen_arch_file['dom'] == 1)), ("The "
+                "'dom' column of the custom genomic architecture file must "
+                "contain only 0s and 1s.")
 
     #also get the sex parameter and add it as an item in g_params
     g_params['sex'] = pop_params.mating.sex

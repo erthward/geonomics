@@ -956,7 +956,7 @@ def make_populations_params_str(populations=1):
                         str(np.random.randint(0, 10000)).zfill(5))
                     make_custom_genomic_architecture_file(tmp_gen_arch_filename)
                 else:
-                    gen_arch_file_string = 'None'
+                    gen_arch_file_str = 'None'
                 #if this population's genomes should have traits
                 if 'n_traits' in [*pop_dict]:
                     #get a list of params strings of length equal

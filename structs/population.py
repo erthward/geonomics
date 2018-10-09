@@ -103,8 +103,8 @@ class Population(OD):
         #create an empty changer attribute, which will be reset if the parameters define changes for this pop
         self.changer = None
 
-        #set the sex_ratio to 0.5 default (but this will be changed if a sex
-        #ratio is provided in the params and it is not 1/1)
+        #set the sex_ratio to 0.5 default (but this will be changed if a
+        #non-1/1 sex ratio is provided in the params)
         self.sex_ratio = 0.5
         #grab all of the mating, mortality, and movement parameters as Population attributes
         for section in ['mating', 'mortality', 'movement']:
@@ -116,6 +116,12 @@ class Population(OD):
                         if att == 'sex_ratio':
                             val = val / (val + 1)
                         setattr(self, att, val)
+
+        #if sex is True and repro_age is an int or float, coerce to a tuple
+        #(one val for each sex)
+        if self.sex:
+            if type(self.repro_age) in [float, int]:
+                self.repro_age = (self.repro_age, self.repro_age)
 
         #set the GenomicArchitecture object
         self.gen_arch = genomic_architecture

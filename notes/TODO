@@ -1,7 +1,5 @@
 - knock out these secondary to-do items
 
-        5 finish fixing up the heterozygosity thing (test and debug the custom gen_arch file-writing ability of params.py, then the ability to read that file's 'dom' column and use, and the ability to otherwise set dom to 0 or 1 based on the params file, and then the ability to correctly calculate phenotypes using dominance based on the new method I wrote
-
         5 figure out what's going on with the 'sex' parameter, and if I need it
 
         5 decide what to do if someone instantiates a model that has no neutral loci (line 126 in genome.py currently throws an error)

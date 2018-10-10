@@ -2,26 +2,26 @@
 #STUDY THIS TO FIGURE OUT HOW TO SET UP MY OWN!
 
 """
-=========
+#########
 Geonomics
-=========
+#########
 
 An individual-based, spatially explicit, forward-time, and highly
 customizable landscape-genomics simulator in Python. 
 
 The packages provides:
 
-  1. Land, GenomicArchitecture, Individual, Population, and Community
+  #. Land, GenomicArchitecture, Individual, Population, and Community
      classes
-  2. A Model class that holds contains objects of the classes and uses them 
+  #. A Model class that holds contains objects of the classes and uses them 
      organize, run, and collect data and basic statistics from numerous runs
-  3. Numerous visualization methods, for help designing, running, exploring,
+  #. Numerous visualization methods, for help designing, running, exploring,
      presenting, and explaining model behavior and results
 
 
------------------
+*****************
 The documentation
------------------
+*****************
 Documentation is available in two forms: as docstrings provided
 with the code, and as a reference guide on the `geonomics webpage
 <http://www.PAGE_HERE.com>`_.
@@ -55,9 +55,9 @@ TODO: CHANGE THESE TO MY SUBPACKAGES!
 #####################################
 #####################################
 
------------
+***********
 Subpackages
------------
+***********
 doc
     Topical documentation on broadcasting, indexing, etc.
 lib

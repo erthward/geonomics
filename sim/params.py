@@ -1066,7 +1066,8 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
     assert (os.path.isdir(os.path.split(filepath)[0])
             or os.path.split(filepath)[0] is ''), ("The filepath to which to "
             "write the parameters file does not point to a valid directory.")
-
+    #coerce the file to a .py extension if it is not already provided
+    filepath = os.path.splitext(filepath)[0] + '.py'
     #create the full params-file string
     file_str = PARAMS % (os.path.split(filepath)[1], scapes_params_str,
         pops_params_str, its_params_str, data_params_str, stats_params_str,

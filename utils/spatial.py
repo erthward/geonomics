@@ -134,6 +134,12 @@ class DensityGridStack:
             closest_fact = min([f[1] for f in facts])
             window_width = [f[0] for f in facts if f[1] == closest_fact][0]
 
+        #TODO: Should figure out how to make attributes like this one
+        #(window_width) unchangeable by the user, because the ability to change
+        #them gives the impression that density will be calculated with the
+        #newly changed value whereas in fact it will still always be calculated
+        #with whatever window_width was initially used to create the grid stack
+
         #set window width of the grid-cell windows within which to count the population
         self.window_width = window_width
 

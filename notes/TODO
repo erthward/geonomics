@@ -3,6 +3,12 @@
         5 decide what to do if someone instantiates a model that has no neutral loci (line 126 in genome.py currently throws an error)
 
         5 use Wright's genetic neighborhood/cruising distance to set window width of DensityGrids
+                BUT: I can't exactly do this without working out the following issues:
+                1. - If I try to use a window width that isn't a whole-number factor of the landscape
+                     dimensions then I get weird errors in the calculated density surface (I have
+                     images of this saved under 10-09-18 in the images directory on my Desktop)
+                2. - The runtime get ridiculous at small window widths for large landscapes and large
+                     numbers of individuals (see runtime plots, also in the same directory as above)
 
         5 decide whether or not to enable non-moving populations! (right now it's offered in the params, but then doesn't work)
                 IF SO, PROBABLY NEED TO CREATE A DISPERSAL SURFACE JUST LIKE THE MOVEMENT SURFACE

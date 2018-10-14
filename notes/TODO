@@ -1,5 +1,24 @@
 - knock out these secondary to-do items
 
+        5 finish making all appropriate functions, methods, attributes, and classes private (by adding _ at front), while also reading through the code line by line
+          - and do I need to make all the attributes of private classes (e.g. _DensityGridStack) also private?
+
+        5 make all lines <= 80 length!
+
+        5 pick through all the notes in demography.py and decide which are taken care of, which need to stay, which I still need to take care of, etc. 
+
+        5 finish draft docs:
+          - typing up the Data Structures and Operations sections of the draft docs.txt
+          - toy around with Sphinx and ReST, to make sure that my docs work for that (or adjust formatting if not)
+          - fix comments for all of the params file, then figure out best way to copy/paste the full params file into the docs draft
+          - then added longer-form version where the comment next to each parameter is explained in detail
+          - write docstrings for all the key classes
+          - add the docstrings to the docs draft (maybe write a Py script to do this, so that I can rerun it to recompile the docs whenever the docstrings are updated?)
+          - make some simple flow diagram for now
+
+        3 make trait names also their dict-entry keys, rather than values inside their dicts (like pop and scape), then add the check of
+          of trait-name uniqueness for each pop to gnx.read_params()
+
         5 decide what to do if someone instantiates a model that has no neutral loci (line 126 in genome.py currently throws an error)
 
         5 use Wright's genetic neighborhood/cruising distance to set window width of DensityGrids

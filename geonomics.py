@@ -53,19 +53,18 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
                          stats=None, seed=None):
     """
     Create a new parameters file.
-    
+
     Write to disk a new, template parameters file. The file will contain the
     numbers and types of sections indicated by the parameters fed to this
-    function. It will often be ready to be used 'out of the box' to make
-    a new Model object, but typically it will be edited by the user to 
-    stipulate the scenario being simulated prior to being instantiated as a
-    Model.
+    function. It can often be used 'out of the box' to make a new Model
+    object, but typically it will be edited by the user to stipulate
+    the scenario being simulated, then used to instantiate a Model.
 
     Parameters
     ----------
     filepath : str, optional
         Where to write the resulting parameters file, in /path/to/filename.py
-        format. Defaults to None. If None, a file named 
+        format. Defaults to None. If None, a file named
         "GEONOMICS_params_<datetime>.py" will be written to the working
         directory.
     scapes : {int, list of dicts}, optional
@@ -83,7 +82,7 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
         [dict, ..., dict]:
             Each dict in this list should be of the form:
                 {'type':    'random', 'defined', 'file', or 'nlmpy',
-                'change':   bool 
+                'change':   bool
                 }
             This will add one section of Scape parameters, with the
             contents indicated, for each dict in this list.
@@ -130,11 +129,11 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
             (This which will be managed by the model's DataCollector
             object.)
 
-    stats : bool, optional 
+    stats : bool, optional
         Whether to include a Stats-parameter section in the parameters file that
         is generated. Defaults to None. Valid values and their associated
         behaviors are:
-        
+
         None, False:
             Will not add a section for parameterizing the statistics to be
             calculated. No StatsCollector will be created for the Model
@@ -160,9 +159,10 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
 
     Returns
     -------
-    Returns no output. Resulting parameters file will be written to the
-    location and filename indicated (or by default, will be written to a file
-    named "GEONOMICS_params_<datetime>.py" in the working directory).
+    out : None
+        Returns no output. Resulting parameters file will be written to the
+        location and filename indicated (or by default, will be written to a
+        file named "GEONOMICS_params_<datetime>.py" in the working directory).
 
     See Also
     --------
@@ -180,48 +180,64 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
 
     Examples
     --------
-    >>> #import geonomics
-    >>> import geonomics as gnx
-    >>> #create a parameters file for the default model
+    In the simplest example, we can create a parameters file for the default
+    model. Then (assuming it is the only Geonomics parameters file in the
+    current working directory, so that it can be unambiguously identified) we
+    can call the gnx.make_model function to create a Model object from that
+    file, and then call the Model.run method to run the model (setting the
+    'verbose' parameter to True, so that we can observe model output).
+
     >>> gnx.make_parameters_file()
-    >>> #instantiate a model from that parameters file (assuming it is the only
-    >>> #parameters file in the working directory, so will be succesfully
-    >>> #identified by geonomics without user specification)
     >>> mod = gnx.make_model()
-    >>> #run the resulting model (in verbose mode)
     >>> mod.run(verbose = True)
-    >>>
+    TODO: PUT TYPICAL MODEL OUTPUT HERE, EVEN THOUGH IT'S ONLY PRINTED?
 
-    >>> #create a parameters file for a model scenario with 3 scapes, 1
-    >>> #population, and data-collection
+    We can use some of the function's arguments, to create a parameters
+    file for a model with 3 Scapes and 1 Population (all with the default
+    components for their sections of the parameters file) and with a section
+    for parameterizing data collection.
+
     >>> gnx.make_parameters_file(scapes = 3, data = True)
-    >>>
 
-    >>> #create a parameters file for a model scenario with 2 scapes (one being
-    >>> #an nlmpy Scape that will not change over model time, the other being
-    >>> #read in from a GIS raster file and being subject to change over model
-    >>> #time); 2 populations (the first having a genomes, 2 Traits, and with
-    >>> #movement being dictated by a MovementSurface; the second not having
-    >>> #genomes, but having a MovementSurface as well, and undergoing
-    >>> #demographic change over model time); also with data-collection, stats-
-    >>> #collection, and a parameters section for setting the seed for the
-    >>> #random-number generators; and saved to the file
-    >>> #"2-pop_2-trait_model.py"
+    As a more complex example that is likely to be similar to most use cases,
+    we can create a parameters file for a model scenario with:
+        - 2 Scapes (one being an nlmpy Scape that will not change over model
+          time, the other being a raster read in from a GIS file and being
+          subject to change over model time);
+        - 2 Populations (the first having genomes, 2 Traits, and movement
+          that is dictated by a MovementSurface; the second not having
+          genomes but having a MovementSurface as well, and undergoing
+          demographic change)
+        - data-collection;
+        - stats-collection;
+        - a section for setting the seed for the random-number generators.
+    We can save this to a file named "2-pop_2-trait_model.py" in our current
+    working directory.
+
     >>> gnx.make_parameters_file(
-    >>>     #list of 2 dicts containings the values for each scape-parameter
-    >>>     #section to be included in the resulting parameters file
-    >>>     scapes = [{'type': 'nlmpy'}, {'type': 'gis', 'change': True}],
-    >>>     #list of 2 dicts containings the values for each population-
-    >>>     #parameter section to be included in the resulting parameters file
-    >>>     populations = [{'genomes': True, 'n_traits': 2, 
-    >>>                     'movement': True, 'movement_surface': True},
-    >>>         {'genomes': False, 'movement': True, 'movement_surface': True,
-    >>>          'demographic_change': True}],
+    >>>     #list of 2 dicts, each containing the values for each Scape's
+    >>>     #parameters section
+    >>>     scapes = [
+    >>>         {'type': 'nlmpy'},                              #scape 1 
+    >>>         {'type': 'gis',                                 #scape 2 
+    >>>          'change': True}
+    >>>         ],
+    >>>     #list of 2 dicts, each containing the values for each Population's
+    >>>     #parameters section
+    >>>     populations = [
+    >>>         {'genomes': True,                               #pop 1
+    >>>          'n_traits': 2,
+    >>>          'movement': True,
+    >>>          'movement_surface': True},
+    >>>         {'genomes': False,                              #pop 2
+    >>>          'movement': True,
+    >>>          'movement_surface': True,
+    >>>          'demographic_change': True}
+    >>>         ],
     >>>     #arguments to the data, stats,and seed parameters
     >>>     data = True, stats = True, seed = True,
     >>>     #destination to which to write the resulting parameter file
     >>>     filepath = '2-pop_2-trait_model.py')
-    >>>
 
     """
 
@@ -229,14 +245,58 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
                                 populations = populations, data = data,
                                 stats = stats, seed = seed)
 
+
 #wrapper around params.read
-def read_params(params_filepath):
+def read_parameters_file(filepath):
+    """
+    Create a new ParametersDict object.
+
+    Read the Geonomics parameters file saved at the location indicated by
+    'filepath', check its validity (i.e. that all the Scapes and Populations
+    parameterized in that file have been given distinct names), then use the
+    file to instantiate a ParametersDict object.
+
+    Parameters
+    ----------
+    filepath : str
+        String indicating the location of the Geonomics parameters file that
+        should be made into a ParametersDict object.
+
+    Returns
+    -------
+
+    An object of the ParametersDict class (a dict of nested dicts, all
+    of which have key-value pairs whose values can be accessed using typical
+    dict notation or using dot notation with the keys).
+
+    Raises
+    ------
+    AssertionError
+        If either the Scapes or the Populations parameterized in the parameters
+        file have not all been given distinct names
+
+    See Also
+    --------
+    sim.params.read
+    sim.params.ParametersDict
+
+    Examples
+    --------
+    Read a parameters file called "null_model.py" (located in the current
+    working directory).
+
+    >>> gnx.read_parameters_file('null_model.py')
+    <class 'sim.params.ParametersDict'>
+    Model name:                                     GEONOMICS_params_13-10-2018_15:54:03
+
+    """
+
     #first read in file as a block of text
-    with open(params_filepath, 'r') as f:
+    with open(filepath, 'r') as f:
         txt = f.read()
     #find all the scape names and pop names
-    scape_names = re.findall('\S+(?= *\: *\{.*\n.*#scape name)', txt) 
-    pop_names = re.findall('\S+(?= *\: *\{.*\n.*#pop name)', txt) 
+    scape_names = re.findall('\S+(?= *\: *\{.*\n.*#scape name)', txt)
+    pop_names = re.findall('\S+(?= *\: *\{.*\n.*#pop name)', txt)
     #get Counter objects of each
     scape_name_cts = C(scape_names)
     pop_name_cts = C(pop_names)
@@ -250,61 +310,142 @@ def read_params(params_filepath):
         "more than once. Violating names include: %s") % (';'.join([("'%s', "
             "used %i times.") % (
                 str(k), v) for k, v in pop_name_cts.items() if v>1]))
-
-
-    #regex to check that no scapes
-    #or pops have identical names (i.e. keys)
-    params = par.read(params_filepath)
+    #now read the file in as a ParametersDict object
+    params = par.read(filepath)
     return(params)
 
 
 #function to create a model from a ParametersDict object
-def make_model(params=None):
-    if params is None:
+def make_model(parameters=None):
+    """
+    Create a new Model object.
+
+    Use either a ParametersDict object or the path to a valid Geonomics
+    parameters file (whichever is provided to the 'parameters' argument) to
+    create a new Model object.
+
+    Parameters
+    ----------
+    parameters : {ParametersDict, str}, optional
+        The parameters to be used to make the Model object.
+        If `parameters` is a ParametersDict object, the object will be used to
+        make the Model.
+        If `parameters` is a string, Geonomics will call
+        `gnx.read_parameters_file` to make a ParametersDict object, then use
+        that object to make the Model.
+        If `parameters` is None, or is not provided, then Geonomics will
+        attempt to find a single parameters file in the current working
+        directory with the filename "GEONOMICS_params_<...>.py", will use that
+        file to make a ParametersDict object, then will use that object to
+        make the Model.
+
+    Returns
+    -------
+    out : Model
+        An object of the Model class
+
+    Raises
+    ------
+    ValueError
+        If the `parameters` argument was not provided and a single, valid
+        Geonomics parameters file could not be identified in the current
+        working directory
+    ValueError
+        If the `parameters` arugment was given a string that does not point
+        to a valid parameters file
+    ValueError
+        If the ParametersDict provided to the `parameters` argument, or created
+        from the parameters file being used, cannot be successfully made into a
+        Model
+
+    See Also
+    --------
+    gnx.read_parameters_file
+    sim.model.Model
+
+    Examples
+    --------
+    Make a Model from a single, valid "GEONOMICS_params_<...>.py" file that can
+    be found in the current working directory (such as a file that would be
+    produced by calling gnx.make_parameters_file without any arguments).
+
+    >>> gnx.make_model()
+    <class 'sim.model.Model'>
+    Model name:                                     GEONOMICS_params_13-10-2018_15:54:03
+    Scapes:                                         0: '0'
+    Populations:                                    0: '0'
+    Number of iterations:                           1
+    Number of burn-in timesteps (minimum):          30
+    Number of main timesteps:                       100
+    Geo-data collected:                             {}
+    Gen-data collected:                             {}
+    Stats collected:                                {}
+
+
+    Make a Model from a file called 'null_model.py', in the current working
+    directory.
+
+    >>> gnx.make_model('null_model.py')
+    <class 'sim.model.Model'>
+    Model name:                                     null_model
+    Scapes:                                         0: 'tmp'
+                                                    1: 'ppt'
+    Populations:                                    0: 'C. fasciata'
+    Number of iterations:                           2500
+    Number of burn-in timesteps (mininum):          100
+    Number of main timesteps:                       1000
+    Geo-data collected:                             {csv, geotiff}
+    Gen-data collected:                             {vcf, fasta}
+    Stats collected:                                {maf, ld, mean_fit, het, Nt}
+
+    """
+
+    if parameters is None:
         try:
             params_files = [f for f in os.listdir('.') if (
-                f.startswith('GEONOMICS_params') 
+                f.startswith('GEONOMICS_params_')
                 and os.path.splitext(f)[1] == '.py')]
-            assert len(params_files) == 1, ("The 'params' argument was not "
+            assert len(params_files) == 1, ("The 'parameters' argument was not "
                 "provided, and it appears that the current working directory "
                 "contains more than one 'GEONOMICS_params_<...>.py' file. "
-                "Please run again, providing a valid value for the 'params' "
-                "argument.")
-            params = params_files[0]
+                "Please run again, providing a valid value for the 'parameters'"
+                " argument.")
+            parameters = params_files[0]
             print(("\n\nUsing the following file, in the current working "
-                "directory to create the Model object:\n\t%s\n\n") % params)
+                "directory to create the Model object:\n\t%s\n\n") % parameters)
         except Exception as e:
-            raise ValueError(("The 'params' argument was not provided, and "
+            raise ValueError(("The 'parameters' argument was not provided, and "
                 "Geonomics could not identify a single "
                 "'GEONOMICS_params_<...>.py' file in the current working "
                 "directory from which to create the Model object. The "
                 "following error was thrown: %s") % e)
 
-    assert ( (type(params) is str and os.path.isfile(params))
-        or str(type(params)) is "<class 'sim.params.ParametersDict'>"), ("If "
-        "the 'params' argument is provided, its value must be either a string "
-        "pointing to a valid Geonomics parameters file or an object of the "
-        "ParametersDict class. If it is not provided, the current working "
+    assert ( (type(parameters) is str and os.path.isfile(parameters))
+        or str(type(parameters)) is "<class 'sim.params.ParametersDict'>"),("If"
+        " the 'parameters' argument is provided, its value must be either a "
+        "string pointing to a valid Geonomics parameters file or an object of "
+        "the ParametersDict class. If it is not provided, the current working "
         "directory must contain a single 'GEONOMICS_params_<...>.py' file "
         "from which to create the Model object.")
 
-    if type(params) is str:
+    if type(parameters) is str:
         try:
-            params = read_params(params)
+            parameters = read_parameters_file(parameters)
         except Exception as e:
             raise ValueError(("Failed to read the parameters file at the "
                 "filepath that was provided. The following error was raised: "
                 "\n\t%s\n\n") % e)
-    elif str(type(params)) == "<class '__main__.Parameters_Dict'>":
+    elif str(type(parameters)) == "<class '__main__.Parameters_Dict'>":
         pass
     try:
-        name = params.model.name
-        mod = model.Model(name, params)
+        name = parameters.model.name
+        mod = model.Model(name, parameters)
         return(mod)
     except Exception as e:
             raise ValueError(("Failed to create a Model object from the "
-                "ParametersDict object that was provided. "
+                "ParametersDict object being used. "
                 "The following error was raised: \n\t%s\n\n") % e)
+
 
 #convenience function for creating a parameters-file for, instantiating, and
 #running the default model
@@ -354,9 +495,9 @@ def make_individual(idx, genomic_architecture=None, new_genome=None, dim=None,
             "provided (i.e. 'dim' must not be None) or a parental centerpoint "
             "from which to disperse the individual must be provided (i.e. "
             "'parental_centerpoint' must not be None).")
-    ind = individual.make_individaul(idx = idx, offspring = False, 
+    ind = individual.make_individaul(idx = idx, offspring = False,
             dim = dim, genomic_architecture = genomic_architecture,
-            new_genome = new_genome, sex = sex, 
+            new_genome = new_genome, sex = sex,
             parental_centerpoint = parental_centerpoint, age = age,
             burn = burn)
     return ind

@@ -7,7 +7,7 @@
 Module name:              sim.params
 
 Module contents:          - definition of the parameters-file strings
-                          - definition of the __DynAttrDict__ and ParametersDict
+                          - definition of the _DynAttrDict and ParametersDict
                             classes
                           - definiton of functions for making and reading
                             params files
@@ -22,6 +22,7 @@ Documentation:            URL
 '''
 
 #geonomics imports
+from utils import _str_repr_ as _sr_
 
 #other imports
 import os, time, datetime
@@ -137,7 +138,7 @@ params = {
         'time': {
             #parameters to control the number of burn-in and main timesteps to
             #run for each iterations
-            'T':            12,
+            'T':            100,
                 #total model runtime (in timesteps)
             'burn_T':       30
                 #minimum burn-in runtime (in timesteps; this is a mininimum because
@@ -162,7 +163,7 @@ params = {
     #%i = scape_num,
 SCAPE_PARAMS = '''
             %s: {
-                #scape name; each scape must be give a unique string or numeric 
+                #scape name; each scape must be give a unique string or numeric
                 #(e.g. 0, 0.1, 'scape0', '1994', 'mean_T'); default to serial
                 #integers from 0
 
@@ -181,7 +182,7 @@ SCAPE_PARAMS = '''
 #the block of random-scape parameters
 RAND_SCAPE_PARAMS = '''
                     'rand': {
-                        #parameters for making a random scape (interpolated 
+                        #parameters for making a random scape (interpolated
                         #from randomly located random values)
                         'n_pts':                        500,
                             #number of random coordinates to be used in generating random landscapes
@@ -282,8 +283,8 @@ SCAPE_CHANGE_PARAMS = '''
     #%i = pop_num,
 POP_PARAMS = '''
             %s  :   {
-                #pop name; each pop must get a unique numeric or string name 
-                #(e.g. 0, 0.1, 'pop0', 'south', 'C_fasciata'); default to 
+                #pop name; each pop must get a unique numeric or string name
+                #(e.g. 0, 0.1, 'pop0', 'south', 'C_fasciata'); default to
                 #serial integers from 0
 
             ##########################
@@ -435,7 +436,7 @@ GENOME_PARAMS = '''
                     'gen_arch_file':            %s,
                         #if not None, should point to a file stipulating a
                             #custom genomic architecture (i.e. a CSV with loci
-                            #as rows and 'locus_num', 'p', 'dom', 'r', 'trait', 
+                            #as rows and 'locus_num', 'p', 'dom', 'r', 'trait',
                             #and 'alpha' as columns, such as is created by
                             #main.make_params_file, when the custom_gen_arch
                             #arugment is True)
@@ -727,7 +728,7 @@ STATS_PARAMS = '''
                     # 'het' : heterozygosity
                     # 'maf' : minor allele frequency
                     # 'ld'  : linkage disequilibrium
-                    # 'mean_fit' : mean fitness 
+                    # 'mean_fit' : mean fitness
             'Nt':       {'calc': True,
                          'freq': 2,
                         },
@@ -753,25 +754,41 @@ STATS_PARAMS = '''
 # -----------------------------------#
 ######################################
 
-#a __DynAttrDict__ dict class with k:v pairs as dynamic attributes
-class __DynAttrDict__(dict):
+#a _DynAttrDict dict class with k:v pairs as dynamic attributes
+class _DynAttrDict(dict):
     def __getattr__(self, item):
         return self[item]
     def __dir__(self):
         return super().__dir__() + [str(k) for k in self.keys()]
     def __deepcopy__(self, memo):
-        return __DynAttrDict__(copy.deepcopy(dict(self)))
+        return _DynAttrDict(copy.deepcopy(dict(self)))
 
 #a ParametersDict class (which is just a recursion the __DynAttrDict__ over the
 #whole params dict, to make all its levels dicts with dynamic attributes, 
 #i.e indexable by dot notation and responsive to tab completion)
-class ParametersDict(__DynAttrDict__):
+class ParametersDict(_DynAttrDict):
     def __init__(self, params):
-        params_dict = make_parameters_dict(params)
+        params_dict = _make_parameters_dict(params)
         self.update(params)
+
     #re-enable deepcopy, because the class inherits from a dict
     def __deepcopy__(self, memo):
         return ParametersDict(copy.deepcopy(dict(self)))
+
+    #define the __str__ and __repr__ special methods
+    def __str__(self):
+        #get a string representation of the class
+        type_str = str(type(self))
+        #get the model name str
+        name_str = "Model name:%s%s"
+        name_str = name_str % (_sr_.get_spacing(name_str), self.model.name)
+        #concatenate the strings
+        tot_str = '\n'.join([type_str, name_str])
+        return tot_str
+
+    def __repr__(self):
+       repr_str = self.__str__()
+       return repr_str
 
 
 ######################################
@@ -835,9 +852,9 @@ def make_scapes_params_str(scapes=1):
             type_params = scape_type_params_str_dict[scape_type]
             #assert that the 'change' value is valid
             if 'change' in [*scape_dict]:
-                assert type(scape_dict['change']) is bool, ("The value provided "
-                    "for the 'change' value of Scape %i is invalid. Value must "
-                    "be a boolean.") % i
+                assert type(scape_dict['change']) is bool, ("The value "
+                    "provided for the 'change' value of Scape %i is invalid. "
+                    "Value must be a boolean.") % i
                 #get the change params for this scape
                 scape_change = scape_dict['change']
             else:
@@ -857,7 +874,7 @@ def make_scapes_params_str(scapes=1):
 
 
 #function to create the pops-params section of a params file
-def make_populations_params_str(populations=1):
+def _make_populations_params_str(populations=1):
     #create an empty list, to be filled with one params string per pop
     pops_params_list = []
     #if pops is an integer, create a string of identical parameter sections
@@ -876,7 +893,7 @@ def make_populations_params_str(populations=1):
             #add no change params
             change_params = ''
             #create the pop_params str
-            pop_params_str = POP_PARAMS % (str(i), i, i, i, move_params, 
+            pop_params_str = POP_PARAMS % (str(i), i, i, i, move_params,
                                            genome_params, change_params, i)
             #append to the pops_params_list
             pops_params_list.append(pop_params_str)
@@ -905,7 +922,7 @@ def make_populations_params_str(populations=1):
         #for each pop
         for i, pop_dict in enumerate(populations):
             #assert that the argument values are valid
-            bool_args= ['movement', 'movement_surface', 'genomes', 
+            bool_args= ['movement', 'movement_surface', 'genomes',
                                                         'parameter_change']
             int_args = ['n_traits', 'demographic_change']
             for arg in bool_args:
@@ -925,7 +942,7 @@ def make_populations_params_str(populations=1):
                     int_arg_str_fmt_dict = {'n_traits':'Traits',
                             'demographic_change': 'demographic change events'}
                     assert pop_dict[arg] > 0, ("The number of %s to "
-                                    "be created must be a positive " 
+                                    "be created must be a positive "
                                     "integer.") % (int_arg_str_fmt_dict[arg])
             #get the movement surf and movement params, if required
             #NOTE: check if pop_dict['movement'] is True, so that poorly
@@ -944,7 +961,8 @@ def make_populations_params_str(populations=1):
             else:
                 move_params = ''
             #get the genome params, if required
-            if 'genomes' in [*pop_dict] and pop_dict['genomes'] in [True, 'custom']:
+            if 'genomes' in [*pop_dict] and pop_dict['genomes'] in [True,
+                                                                    'custom']:
                 #if this population should have a custom gen_arch_file made
                 if ('custom_genomic_architecture' in [*pop_dict] and
                     pop_dict['custom_genomic_architecture']):
@@ -954,7 +972,8 @@ def make_populations_params_str(populations=1):
                     #make a tmp gen_arch_file for this pop
                     tmp_gen_arch_filename = '%i_%s.tmp' % (i,
                         str(np.random.randint(0, 10000)).zfill(5))
-                    make_custom_genomic_architecture_file(tmp_gen_arch_filename)
+                    _make_custom_genomic_architecture_file(
+                                                    tmp_gen_arch_filename)
                 else:
                     gen_arch_file_str = 'None'
                 #if this population's genomes should have traits
@@ -979,8 +998,8 @@ def make_populations_params_str(populations=1):
                 genome_params = ''
             #get the pop-change params (if either dem or param changes are
             #required
-            if (('demographic_change' in [*pop_dict] 
-                 and pop_dict['demographic_change']) 
+            if (('demographic_change' in [*pop_dict]
+                 and pop_dict['demographic_change'])
                 or ('parameter_change' in [*pop_dict]
                     and pop_dict['parameter_change'])):
                 #create an empty string to tack either/both section(s) onto
@@ -1007,21 +1026,19 @@ def make_populations_params_str(populations=1):
             else:
                 change_params = ''
             #get the overall pop params str for this pop
-            pop_params_str = POP_PARAMS % (str(i), i, i, i, move_params, 
+            pop_params_str = POP_PARAMS % (str(i), i, i, i, move_params,
                                            genome_params, change_params, i)
             #append to the pops_params_list
             pops_params_list.append(pop_params_str)
-
     #join the whole list into one str
     pops_params_str = ''.join(pops_params_list)
-
     return pops_params_str
 
 
 #function to create the data-, stats-, and seed-params sections of params file
 #TODO: Add option for the argument to make_parameters_file() to list the stats 
 #to be calculated??
-def make_model_params_strs(section, arg=None):
+def _make_model_params_strs(section, arg=None):
     #assert the value of arg is valid
     assert arg in [True, False, None], ("The value of the '%s' argument "
         "provided for the model is not valid values. Value must be either a "
@@ -1038,24 +1055,16 @@ def make_model_params_strs(section, arg=None):
 
 
 #function to create a default params file, to be filled in by the user
-def make_parameters_file(filepath=None, scapes=1, populations=1, data=None, 
+def _make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
                          stats=None, seed=None):
-
-    '''<see docstring in main.make_parameters_file>'''
-
+    '''<see docstring in gnx.make_parameters_file>'''
     scapes_params_str = make_scapes_params_str(scapes = scapes)
-
     pops_params_str= make_populations_params_str(populations = populations)
-
     data_params_str = make_model_params_strs('data', arg = data)
-
     stats_params_str = make_model_params_strs('stats', arg = stats)
-
     seed_params_str = make_model_params_strs('seed', arg = seed)
-
     #TODO DECIDE IF THIS SHOULD BE MADE OPTIONAL IN SOME WAY
     its_params_str = ITS_PARAMS
-
     #get the filepath
     if filepath is None:
         #get a string of the date and time
@@ -1084,7 +1093,8 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
             os.rename(tmp_file, gen_arch_file_prefix +
                 '_pop-%s_gen_arch.csv' % (tmp_file.split('_')[0]))
         #replace the standin pattern with the file prefix
-        file_str = re.sub('%%GEN_ARCH_FILE_STR%%', gen_arch_file_prefix, file_str)
+        file_str = re.sub('%%GEN_ARCH_FILE_STR%%', gen_arch_file_prefix,
+                                                                file_str)
 
     #write the file_str to a "GEONOMICS_params_<datetime>.py" file
     with open(filepath, 'w') as f:
@@ -1094,7 +1104,7 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
 #function to recurse over the params dictionary 
 #and return it as a Parameters_Dict object (i.e. a
 #dict with k:v pairs as dynamic attributes)
-def make_parameters_dict(params):
+def _make_parameters_dict(params):
     for k, v in params.items():
         method_names = ['clear', 'copy', 'fromkeys', 'get', 'items', 'keys',
                         'pop', 'popitem', 'setdefault', 'update', 'values']
@@ -1103,13 +1113,13 @@ def make_parameters_dict(params):
             'Please edit name.\n\tNOTE: It holds the following value:'
             '\n%s' % (str(k), str(v)))
         if isinstance(v, dict):
-            params[k] = make_parameters_dict(params[k])
+            params[k] = _make_parameters_dict(params[k])
     params = __DynAttrDict__(params)
     return(params)
 
 
 #read a params file and return a ParametersDict object
-def read(filepath):
+def _read(filepath):
     #get the filename (minus path and extension) as the model name
     name = os.path.splitext(os.path.split(filepath)[-1])[0]
     #create a namespace to read the params dict into
@@ -1128,7 +1138,7 @@ def read(filepath):
 #create a an empty custom gen-arch file for a population 
 #(will be called if 'genomes':'custom' is a k:v pair in a 
 #population dict fed into make_paramters_file's 'populations' argument
-def make_custom_genomic_architecture_file(filepath):
+def _make_custom_genomic_architecture_file(filepath):
     #create the dataframe for the CSV file
     cols = ('locus', 'p', 'dom', 'r', 'trait', 'alpha')
     row0 = ([0], [np.nan], [np.nan], [0.5], [np.nan], [np.nan])

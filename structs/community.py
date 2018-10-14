@@ -61,7 +61,7 @@ class Community(dict):
         #get a string representation of the class
         type_str = str(type(self))
         #get a string representation of the populations
-        pops_str = '\n%i Populations:\n' % len(self)
+        pops_str = '%i Population%s:\n' % (len(self), 's' * (len(self) > 1))
         pops_str = pops_str + '\n'.join(['\tpop %i: ' % k +
             "%s'%s' (%s%s inds.): " % (' ' * (max_len_pop_name - len(v.name)),
             v.name, ' ' * (max_len_pop_size - len(str(len(v)))),
@@ -84,15 +84,15 @@ class Community(dict):
 
 
     #method to increment the self.t attribute (the timestep counter)
-    def set_t(self):
+    def _set_t(self):
         self.t += 1
 
     #method to reset the self.t attribute (the timestep counter)
-    def reset_t(self):
+    def _reset_t(self):
         self.t = -1
 
     #method to check if all populations have burned in
-    def check_burned(self, burn_T):
+    def _check_burned(self, burn_T):
         #check minimum burn-in time has passed
         burnin_status = np.all([len(pop.Nt) >= burn_T for pop in self.values()])
         #if so, then check all burn-in tests for all pops
@@ -115,8 +115,8 @@ class Community(dict):
 ######################################
 
 #function for making a community using a Land object and params
-def make_community(land, params, burn=False):
-    pops = {n: population.make_population(land = land, name = name, 
+def _make_community(land, params, burn=False):
+    pops = {n: population._make_population(land = land, name = name, 
         pop_params = params.comm.pops[name], burn = burn) for n, name in
             enumerate(params.comm.pops.keys())}
     return Community(land, pops) 

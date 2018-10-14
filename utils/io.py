@@ -39,7 +39,7 @@ except Exception as e:
     warnings.warn(("Unable to import module 'osgeo.gdal'. Will not be able to "
         "use it to make read or write GIS raster files. The following error "
         "was raised:\n\t%s\n\n") % e)
-                      
+
 
 ######################################
 # -----------------------------------#
@@ -54,7 +54,7 @@ except Exception as e:
 #projection is set (because of course this makes random landscapes project as
 #rasters at lat:0, lon:0 in Web Mercator, which is at the Equator and on the
 #prime meridian (basically due west of São Tomé and due south of Accra)
-__DEFAULT_PROJ__ = '''PROJCS["WGS 84 / Pseudo-Mercator",
+_DEFAULT_PROJ = '''PROJCS["WGS 84 / Pseudo-Mercator",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -88,7 +88,7 @@ __DEFAULT_PROJ__ = '''PROJCS["WGS 84 / Pseudo-Mercator",
     # Read #
     ########
 
-def read_raster(filepath, dim=None):
+def _read_raster(filepath, dim=None):
     if os.path.splitext(filepath)[1].lower() == '.txt':
         rast = np.fromfile(filepath, sep = ' ')
         assert len(rast) == np.prod(dim), ('The raster read in from the .txt '
@@ -116,7 +116,7 @@ def read_raster(filepath, dim=None):
 
 #read a txt file containing a stack of 2d arrays (such as is created to save 
 #LD data)
-def read_array_stack(filepath):
+def _read_array_stack(filepath):
     array = np.loadtxt(filepath)
     return(array)
 
@@ -125,12 +125,12 @@ def read_array_stack(filepath):
     #########
 
 #write data (a block of text, as a string) to a file
-def write_file(filepath, data):
+def _write_file(filepath, data):
     with open(filepath, 'w') as f:
         f.write(data)
 
 #write a CSV of data from a dictionary of columns
-def write_dict_to_csv(filepath, array_1d_dict):
+def _write_dict_to_csv(filepath, array_1d_dict):
     #make a pandas DataFrame from the population's stats
     df = pd.DataFrame.from_dict(array_1d_dict)
     #add a timestep column
@@ -143,7 +143,7 @@ def write_dict_to_csv(filepath, array_1d_dict):
 
 #append a 2d array layer to an array stack (i.e. an np.txt file
 #intended to eventually be read in as a 3D array)
-def append_array2d_to_array_stack(filepath, locuswise_array2d):
+def _append_array2d_to_array_stack(filepath, locuswise_array2d):
     tmp_file_dir = os.path.split(filepath)[0]
     tmp_filename = 'tmp_%s.txt' % str(np.random.randint(0,1000)).zfill(4)
     tmp_filename = os.path.join(tmp_file_dir, tmp_filename)
@@ -155,7 +155,7 @@ def append_array2d_to_array_stack(filepath, locuswise_array2d):
     os.remove(tmp_filename)
 
 #append a row of data to a CSV file
-def append_row_to_csv(filepath, locuswise_array1d, t):
+def _append_row_to_csv(filepath, locuswise_array1d, t):
     data_dict = dict(zip(range(locuswise_array1d.size), locuswise_array1d))
     write_header = not os.path.exists(filepath)
     with open(filepath, 'a') as f:
@@ -166,7 +166,7 @@ def append_row_to_csv(filepath, locuswise_array1d, t):
 
 #write a data file from a geopandas object created from an index-keyed dict 
 #of individual.Individual objects
-def write_geopandas(filepath, individuals, driver):
+def _write_geopandas(filepath, individuals, driver):
     #get full path and filename
     attributes = ['idx', 'phenotype', 'habitat', 'age', 'sex']
     #TODO: FIXME: replace the call to str() below with something more sophisticated
@@ -188,31 +188,31 @@ def write_geopandas(filepath, individuals, driver):
 
 
 #write a shapefile from an index-keyed dict of individual.Individual objects
-def write_shapefile(filepath, individuals):
+def _write_shapefile(filepath, individuals):
     filepath = set_extension(filepath, 'shp')
     write_geopandas(filepath, individuals, driver='ESRI Shapefile')
 
 
 #write a geojson from an index-keyed dict of individual.Individual objects
-def write_geojson(filepath, individuals):
+def _write_geojson(filepath, individuals):
     filepath = set_extension(filepath, ['json', 'geojson'])
     write_geopandas(filepath, individuals, driver='GeoJSON')
 
 
 #write a csv from an index-keyed dict of individual.Individual objects
-def write_csv(filepath, individuals):
+def _write_csv(filepath, individuals):
     filepath = set_extension(filepath, 'csv')
     write_geopandas(filepath, individuals, driver = 'CSV')
 
 
 #write a txt array from a landscape.Scape object's numpy-array raster
-def write_txt_array(filepath, scape):
+def _write_txt_array(filepath, scape):
     filepath = set_extension(filepath, 'txt')
     np.savetxt(filepath, scape.rast, fmt = '%0.5f')
 
 
 #write a geotiff from a landscape.Scape object's numpy-array raster
-def write_geotiff(filepath, scape):
+def _write_geotiff(filepath, scape):
     if 'gdal' in globals():
         filepath = set_extension(filepath, ['tif', 'tiff'])
         #TODO: this is a tweak on code taken from https://gis.stackexchange.com/
@@ -232,11 +232,11 @@ def write_geotiff(filepath, scape):
         #get the WKT projection
         wkt_projection = scape.prj
         if wkt_projection is None:
-            #TODO: FOR NOW THIS DEFAULTS TO THE __DEFAULT_PROJ__
+            #TODO: FOR NOW THIS DEFAULTS TO THE _DEFAULT_PROJ
             #VARIABLE, BUT THINK ABOUT WHETHER IT MAKES ANY SENSE TO HAVE
             #SUCH A DEFAULT, AND IF SO, WHETHER OR NOT THERE'S A BETTER
             #OPTION
-            wkt_projection = __DEFAULT_PROJ__
+            wkt_projection = _DEFAULT_PROJ
         dataset = driver.Create(
            filepath,
            x_pixels,
@@ -267,7 +267,7 @@ def write_geotiff(filepath, scape):
     #########
 
 #add the correct extension to a filepath, if necessary
-def set_extension(filepath, ft_ext):
+def _set_extension(filepath, ft_ext):
     #make ft_ext iterable, if just a string is provided
     if type(ft_ext) is str:
         ft_ext = [ft_ext]

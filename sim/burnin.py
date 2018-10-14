@@ -20,13 +20,14 @@ from ops import mating
 #only on gross population size (not spatial distribution)
 
 
-def test_adf_threshold(pop, num_timesteps_back, p_val=0.05):
-    return(adf(pop.Nt[-num_timesteps_back:])[1] < p_val)
+def _test_adf_threshold(pop, num_timesteps_back, p_val=0.05):
+    return adf(pop.Nt[-num_timesteps_back:])[1] < p_val
 
 
-def test_t_threshold(pop, num_timesteps_back, p_val=0.05):
+def _test_t_threshold(pop, num_timesteps_back, p_val=0.05):
     num_timesteps_back += num_timesteps_back % 2
-    return(tt(pop.Nt[int(-num_timesteps_back): int(-num_timesteps_back/2)], pop.Nt[int(-num_timesteps_back/2):])[1] >0.05)
+    return tt(pop.Nt[int(-num_timesteps_back): int(-num_timesteps_back/2)],
+                                pop.Nt[int(-num_timesteps_back/2):])[1] >0.05
 
 
 

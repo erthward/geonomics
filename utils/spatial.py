@@ -56,7 +56,7 @@ except Exception as e:
 # -----------------------------------#
 ######################################
 
-class DensityGrid:
+class _DensityGrid:
     def __init__(self, dim, dim_om, window_width, gi, gj, cells, areas, x_edge, y_edge):
 
         #same as land.dim
@@ -91,7 +91,7 @@ class DensityGrid:
         self.grid_counter = ig(*self.cells)
 
 
-    def calc_density(self, x, y):
+    def _calc_density(self, x, y):
 
         #determine the x and y cells within which each individual's x and y coordinates fall
         #(the self.x_edge and self.y_edge corrections determine the correct cells whether the grid includes cells
@@ -114,7 +114,7 @@ class DensityGrid:
         return grid_dens
 
 
-class DensityGridStack:
+class _DensityGridStack:
     def __init__(self, land, window_width = None):
 
         #dimensions
@@ -153,7 +153,7 @@ class DensityGridStack:
         self.grids = dict([(n,g) for n,g in enumerate(make_density_grids(land, self.window_width))])
 
 
-    def calc_density(self, x, y):
+    def _calc_density(self, x, y):
         #get a concatenated list of the grid-cell center coordinates from both density grids
         pts = np.vstack([self.grids[n].grid_coords for n in range(len(self.grids))])
         #and a concatenated list of the densities calculated for both density grids
@@ -165,7 +165,7 @@ class DensityGridStack:
         return dens
 
 
-class MovementSurface:
+class _MovementSurface:
     def __init__(self, move_scape, mixture, approximation_len = 5000, vm_distr_kappa = 12, gauss_KDE_bw = 0.2):
         #dimensions
         self.dim = move_scape.dim
@@ -188,16 +188,16 @@ class MovementSurface:
 
         assert self.approximation_len == self.surf.shape[2], "MovementSurface.approximation_len not equal to MovementSurface.surf.shape[2]"
 
-    def draw_directions(self, x, y):
+    def _draw_directions(self, x, y):
         choices = r.randint(low = 0, high = self.approximation_len, size = len(x))
         return self.surf[y, x, choices]
 
 
-class KDTree:
+class _KDTree:
     def __init__(self, coords, leafsize = 100):
         self.tree = cKDTree(data = coords, leafsize = leafsize)
 
-    def query(self, coords, dist, k=2):
+    def _query(self, coords, dist, k=2):
         dists, pairs = self.tree.query(x = coords, k = k, distance_upper_bound=dist)
         return(dists, pairs)
 
@@ -209,7 +209,7 @@ class KDTree:
 ######################################
 
 #create strings from input cell coordinates
-def make_cell_strings(gi, gj, dim_om):
+def _make_cell_strings(gi, gj, dim_om):
     #get strings for both i and j cooridnates, zfilling to the correct order-of-magnitude (of the larger land dimensions)
     i_strs = [str(int(i)).zfill(dim_om) for i in gi.flatten()]
     j_strs = [str(int(j)).zfill(dim_om) for j in gj.flatten()]
@@ -223,7 +223,7 @@ def make_cell_strings(gi, gj, dim_om):
 #make a density grid, based on the Land object, the chosen window-width, 
 #and the Boolean arguments dictating whether or not the grid's x- and y-
 #dimension cells should be centered on the land edges (i.e. 0 and dim[_])
-def make_density_grid(land, ww, x_edge, y_edge):
+def _make_density_grid(land, ww, x_edge, y_edge):
 
     #half-window width
     hww = ww/2.
@@ -290,7 +290,7 @@ def make_density_grid(land, ww, x_edge, y_edge):
 
 
 #create 4 density grids, one for each offset (i.e. each combination of offset by 0 and by 0.5*window_width)
-def make_density_grids(land, ww):
+def _make_density_grids(land, ww):
     #make a grid for each combo of Booleans for x_edge and y_edge
     g1 = make_density_grid(land, ww, x_edge = True, y_edge = True)
     g2 = make_density_grid(land, ww, x_edge = False, y_edge = False)
@@ -300,7 +300,7 @@ def make_density_grids(land, ww):
 
 
 # Function to generate a simulative Von Mises mixture distribution sampler function
-def make_von_mises_mixture_sampler(neigh, dirs, vm_distr_kappa=12, approximation_len = 5000):
+def _make_von_mises_mixture_sampler(neigh, dirs, vm_distr_kappa=12, approximation_len = 5000):
     # Returns a lambda function that is a quick and reliable way to simulate draws from a Von Mises mixture distribution:
     # 1.) Chooses a direction by neighborhood-weighted probability
     # 2.) Makes a random draw from a Von Mises dist centered on the direction, with a vm_distr_kappa value set such that the net effect, 
@@ -332,7 +332,7 @@ def make_von_mises_mixture_sampler(neigh, dirs, vm_distr_kappa=12, approximation
 # or the Von Mises unimodal sampler function (make_von_mises_unimodal_sampler)
 #across the entire landscape and returns an array-like (list of lists) of the 
 #resulting lambda-function samplers
-def make_movement_surface(rast, mixture=True, approximation_len=5000, vm_distr_kappa=12, gauss_KDE_bw=0.2):
+def _make_movement_surface(rast, mixture=True, approximation_len=5000, vm_distr_kappa=12, gauss_KDE_bw=0.2):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0], [3 * pi / 4, pi / 2, pi / 4]])
 
     # grab the correct landscape raster
@@ -356,7 +356,7 @@ def make_movement_surface(rast, mixture=True, approximation_len=5000, vm_distr_k
 
 
 #coarse wrapper around the nlmpy package
-def make_nlmpy_raster(nlmpy_params):
+def _make_nlmpy_raster(nlmpy_params):
     if 'nlmpy' in globals():
         #pop out the name of the function to be called
         fn_name = nlmpy_params.pop('function')
@@ -381,14 +381,11 @@ def make_nlmpy_raster(nlmpy_params):
 
 #linearly scale a raster to 0 <= x <= 1, and return the min and max input vals
 #as well (for possible reversion)
-def scale_raster(rast, min_inval=None, max_inval=None, min_outval=0, max_outval=1):
+def _scale_raster(rast, min_inval=None, max_inval=None, min_outval=0, max_outval=1):
     if min_inval is None:
         min_inval = rast.min()
     if max_inval is None:
         max_inval = rast.max()
     scale_rast = (rast - min_inval)/(max_inval - min_inval)
     return(scale_rast, min_inval, max_inval)
-
-
-
 

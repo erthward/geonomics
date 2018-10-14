@@ -40,7 +40,7 @@ import sys
 # -----------------------------------#
 ######################################
 
-def plot_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest', cmap='terrain', plt_lims=None, vmin=0, vmax=1):
+def _plot_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest', cmap='terrain', plt_lims=None, vmin=0, vmax=1):
     #if a figure is already open, force colorbar to False
     if plt.get_fignums() and plt.gcf().get_axes():
         colorbar = False
@@ -92,7 +92,7 @@ def plot_rasters(land, scape_num=None, colorbar=True, im_interp_method='nearest'
             title.set_font_properties(font)
 
 
-def plot_points(points, scape_num=None, color='black', edge_color='face', text_color='black', linewidth=0.5,
+def _plot_points(points, scape_num=None, color='black', edge_color='face', text_color='black', linewidth=0.5,
         pt_cmap=None, size=25, text_size=9, alpha=False, text=None, plt_lims=None, vmin=None, vmax=None):
     #get the x and y coordinates from the points (and subtract 0.5 to line the points up with the plt.imshow()
     #grid of a landscape raster; imshow plots each pixel centered on its index, but the points then plot on 
@@ -145,14 +145,14 @@ def plot_points(points, scape_num=None, color='black', edge_color='face', text_c
         print("plt_lims appears not to be a valid argument (i.e. a 2-tuple of 2-tuples)")
 
 
-def get_scape_plt_lims(land):
+def _get_scape_plt_lims(land):
     xlim = (-1, land.dim[1])
     ylim = (-1, land.dim[0])
     lims = (xlim, ylim)
     return(lims)
 
 
-def get_zoom_plt_lims(x, y, zoom_width):
+def _get_zoom_plt_lims(x, y, zoom_width):
     #get zoom-half-width
     zhw = zoom_width/2
     xlim = (x- zhw, x+zhw)
@@ -161,15 +161,15 @@ def get_zoom_plt_lims(x, y, zoom_width):
     return(lims)
 
 
-def get_plt_lims(land=None, x=None, y=None, zoom_width=None):
+def _get_plt_lims(land=None, x=None, y=None, zoom_width=None):
     if zoom_width is not None and x is not None and y is not None:
-        plt_lims = get_zoom_plt_lims(x, y, zoom_width) 
-    else: 
+        plt_lims = get_zoom_plt_lims(x, y, zoom_width)
+    else:
         plt_lims = get_scape_plt_lims(land)
     return(plt_lims)
 
 
-def make_fitness_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn', max_cmap_len = 100, trait_num = None):
+def _make_fitness_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn', max_cmap_len = 100, trait_num = None):
     # define the colormap
     cmap = getattr(plt.cm, cmap)
     #extract all the colors into a list
@@ -209,7 +209,7 @@ def make_fitness_cmap_and_cbar_maker(min_val, max_val = 1, cmap = 'RdYlGn', max_
         cbar.set_ticklabels(tick_labs)
     return(cmap, make_cbar)
 
-def make_fitness_cbar(make_cbar_fn, min_fit):
+def _make_fitness_cbar(make_cbar_fn, min_fit):
     fig = plt.gcf()
     ax1 = plt.gca()
     ax2 = fig.add_axes([0.84, 0.106, 0.02, 0.7774])
@@ -217,7 +217,6 @@ def make_fitness_cbar(make_cbar_fn, min_fit):
     ax2.plot([0,1],[round(min_fit,2)]*2, c = 'black', lw = 1)
     ax2.set_title('fitness')
     title = ax2.title
-    font = mpl.font_manager.FontProperties(family='sans-serif', style='normal', size=10)                                                   
+    font = mpl.font_manager.FontProperties(family='sans-serif', style='normal', size=10)
     title.set_font_properties(font)
-    
 

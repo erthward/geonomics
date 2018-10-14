@@ -9,9 +9,10 @@ Module name:              stats
 
 Module contents:          - definition of Stats class (i.e. structured container
                             for stats calculated during model run)
-                          - definition of functions for calculating various stats,
-                            at specified frequencies and with specified arguments,
-                            according to the contents of the params.model.stats section
+                          - definition of functions for calculating various
+                            stats, at specified frequencies and with specified
+                            arguments, according to the contents of the
+                            params.model.stats section
 
 
 Author:                   Drew Ellison Hart
@@ -45,7 +46,7 @@ import os
 #a StatsCollector class, to parameterize and manage calculation
 #and collection of stats, then write them to file at the end of 
 #each model iteration
-class StatsCollector:
+class _StatsCollector:
     def __init__(self, model_name, params):
 
         #set model_name
@@ -59,18 +60,18 @@ class StatsCollector:
 
         #a dictionary to link the stats' names in the params dict 
         #to the functions to be called to calculate them 
-        self.calc_fn_dict = {'Nt': calc_Nt,
-                             'ld':  calc_ld,
-                             'het': calc_het,
-                             'maf': calc_maf,
-                             'mean_fit': calc_mean_fitness,
+        self.calc_fn_dict = {'Nt': _calc_Nt,
+                             'ld':  _calc_ld,
+                             'het': _calc_het,
+                             'maf': _calc_maf,
+                             'mean_fit': _calc_mean_fitness,
                               }
-        
+
         #a dictionary to link the stats' names in the params dict 
         #to the functions to be called to write them to disk
-        self.write_fn_dict = {'ld':  self.write_array_to_stack,
-                             'het': self.write_row_to_csv,
-                             'maf': self.write_row_to_csv,
+        self.write_fn_dict = {'ld':  self._write_array_to_stack,
+                             'het': self._write_row_to_csv,
+                             'maf': self._write_row_to_csv,
                              }
 
         #a dictionary to link stats to the file extensions that 
@@ -101,12 +102,12 @@ class StatsCollector:
                 else:
                     #each subdict gets a key for each stat to be calculated
                     if stat_params.calc:
-                        #create a subdictionary for each stat, with a list of NaNs
-                        #self.T items long, which will be filled in for each 
-                        #whenever it is sampled (NOTE: this forces all stats to 
-                        #have the same length so that they all fit into one 
-                        #pd.DataFrame at the end, and so that plots easily line 
-                        #up on the same timeframe)
+                        #create a subdictionary for each stat, with a list of
+                        #NaNs self.T items long, which will be filled in for
+                        #each whenever it is sampled (NOTE: this forces all
+                        #stats to have the same length so that they all fit
+                        #into one pd.DataFrame at the end, and so that plots
+                        #easily line up on the same timeframe)
                         self.stats[pop_name][stat]= {
                             'vals': [np.nan]*self.T,
                             'freq': stat_params.freq,
@@ -117,11 +118,11 @@ class StatsCollector:
                             #to later be unpacked as arguments to the appropriate 
                             #stat function
                             'other_params': dict([(k,v) for k,v in
-                                    stat_params.items() if k not in ['calc', 'freq']])
+                              stat_params.items() if k not in ['calc', 'freq']])
                             }
 
-                        #if the freq value is 0, change it to self.T -1, so that it
-                        #collects only on the first and last timestep
+                        #if the freq value is 0, change it to self.T -1, so
+                        #that it collects only on the first and last timestep
                         if self.stats[pop_name][stat]['freq'] == 0:
                             self.stats[pop_name][stat]['freq'] = self.T-1
 
@@ -129,11 +130,11 @@ class StatsCollector:
     #of all stats that need to be calculated that timestep (based on the 
     #calculation-frequencies provided in the params dicts), and then calls the
     #functions to calculate them all and adds the results to self.stats
-    def calc_stats(self, community, t, iteration):
+    def _calc_stats(self, community, t, iteration):
         #set the filepaths, if this is the first timestep of the model
         #iteration
         if t == 0:
-            self.set_filepaths(iteration)
+            self._set_filepaths(iteration)
         #for each population
         for pop in community.values():
             #list the stats to be calculated this timestep
@@ -161,10 +162,10 @@ class StatsCollector:
                     stats_list = self.stats[pop.name][stat]['vals']
                     stats_list.extend([np.nan] * (t-len(stats_list)) + [vals])
         #and write whichever stats are necessary to file
-        self.write_stats(t)
+        self._write_stats(t)
 
     #a method to make the filenames for all of the stats to be saved
-    def set_filepaths(self, iteration):
+    def _set_filepaths(self, iteration):
         #get the directory name for this model and iteration
         dirname = os.path.join('GEONOMICS_mod-%s' % self.model_name,
                                'it-%i' % iteration)
@@ -184,18 +185,18 @@ class StatsCollector:
  
     #wrapper around io.append_array2d_to_array_stack
     #TODO WHAT TO DO WITH t IN THIS CASE?? CAN'T ADD TO txt 3D ARRAY FILE
-    def write_array_to_stack(self, filepath, array, t):
-        io.append_array2d_to_array_stack(filepath, array)
+    def _write_array_to_stack(self, filepath, array, t):
+        io._append_array2d_to_array_stack(filepath, array)
 
     #wrapper around io.append_row_to_csv
-    def write_row_to_csv(self, filepath, array, t):
-        io.append_row_to_csv(filepath, array, t)
+    def _write_row_to_csv(self, filepath, array, t):
+        io._append_row_to_csv(filepath, array, t)
 
     #use io.write_dict_to_csv to write to disk all "other stats", i.e. 
     #all stats that collect only a single value per population per timestep
     #TODO: CHANGE THE 'OTHER STATS' NAMING CONVENTION TO SOMETING MORE
     #DESCRIPTIVE
-    def write_other_stats(self):
+    def _write_other_stats(self):
         for pop, pop_stats in self.stats.items():
             #get a dictionary of the data values for all stats that are to be
             #written just once at the end of the iteration
@@ -204,11 +205,11 @@ class StatsCollector:
             #they all have the same filepath, so just grab the first
             filepath = [*pop_stats.values()][0]['filepath']
             #write toe disk
-            io.write_dict_to_csv(filepath, data_dict)
+            io._write_dict_to_csv(filepath, data_dict)
 
     #method to write stats to files, in the appropriate directory (by model
     #and iteration number), and with the appropriate pop names in the filenames
-    def write_stats(self, t):
+    def _write_stats(self, t):
         #for each population
         for pop_name, pop_stats in self.stats.items():
             #for each stat
@@ -230,22 +231,21 @@ class StatsCollector:
                     #timestep's data with None, to free up memory but still
                     #maintain the latest data in case of plotting
                     rev_nonnull = [n for n, v in enumerate(
-                        stat_dict['vals'][::-1]) if (v is not np.nan and 
+                        stat_dict['vals'][::-1]) if (v is not np.nan and
                                                         v is not None)]
                     nonnull = [range(len(
                         stat_dict['vals']))[::-1][n] for n in rev_nonnull]
                     nonnull = [v for v in nonnull if v != t]
-                    for v in nonnull: 
+                    for v in nonnull:
                         stat_dict['vals'][v] = None
 
 
         #or write all 'other stats' to disk, if it's the last timestep
         if t == self.T-1:
-            self.write_other_stats()
-
+            self._write_other_stats()
 
     #method to plot whichever stat as a function of runtime
-    def plot_stat(self, stat, pop_name=None):
+    def _plot_stat(self, stat, pop_name=None):
         #check that the stat argument is valid
         assert type(stat) is str, "The 'stat' argument must be a string."
         assert stat in [*self.stats.values()][0].keys(), ("The 'stat' "
@@ -272,13 +272,15 @@ class StatsCollector:
                 #add axes objects horizontally across
                 ax = fig.add_subplot(1, len(pop_names), n+1)
                 #get the indices of non-NaN values to be plotted
-                indices_to_plot = np.array(np.where(np.invert(np.isnan(vals)))[0])
+                indices_to_plot = np.array(np.where(
+                                    np.invert(np.isnan(vals)))[0])
                 #get the timesteps at the non-NaN values
                 x = np.arange(0, len(vals))[indices_to_plot]
                 #get the non-NaN values
                 y = np.array(vals)[indices_to_plot]
                 #plot a dotted line (which necessarily linearly interpolates 
-                #between collected timesteps if not all timesteps were collected)
+                #between collected timesteps if not all timesteps
+                #were collected)
                 plt.plot(x, y, ':')
                 #and plot dots at each of the collected timesteps
                 plt.plot(x, y, '.')
@@ -295,7 +297,7 @@ class StatsCollector:
                 #get the reversed-list index of the last set of values 
                 #calculated
                 rev_idx_last_vals = [n for n,v in enumerate(vals[::-1]) if (
-                    v is not None and v is not np.nan)][0]
+                                    v is not None and v is not np.nan)][0]
                 #get the last set of values calculated
                 last_vals = vals[::-1][rev_idx_last_vals]
                 #get the timestep of the last set of values
@@ -326,7 +328,7 @@ class StatsCollector:
                                             interpolation = 'nearest')
                 plt.colorbar()
                 #set plot title
-                ax.set_title(("POP: '%s';   T: %i\nLocus-wise " 
+                ax.set_title(("POP: '%s';   T: %i\nLocus-wise "
                             "linkage matrix") %  (pop_name, t_last_vals))
                 #set the x- and y-labels
                 plt.xlabel('locus')
@@ -363,14 +365,14 @@ class StatsCollector:
 ######################################
 
 #method to get pop size (NOTE: not actually calculating it)
-def calc_Nt(pop):
+def _calc_Nt(pop):
     Nt = pop.Nt[-1]
     #Nt = len(pop)
     return(Nt)
 
 
-def calc_ld(pop, plot = False):
-    
+def _calc_ld(pop, plot = False):
+
     #TODO: I should also include (either as an alternative within this fn,
     #or as separate fn) the option to calculate D'
 
@@ -379,12 +381,12 @@ def calc_ld(pop, plot = False):
     #exactly what's going on and be sure everything checks out. WARNING:
     # stats.py:117: RuntimeWarning: invalid value encountered in double_scalars
 
-    populome = get_populome(pop)
+    populome = _get_populome(pop)
     n = np.shape(populome)[0] #num individs
     x = np.shape(populome)[2] #ploidy
     N = n*x
     L = pop.gen_arch.L
-    assert L == np.shape(populome)[1], ("The length of the 1th dimension "
+    assert L == np.shape(populome)[1], ("The length of the 1st dimension "
                             "of populome doesn't equal pop.genomic_arch.L")
 
     r2_mat = np.zeros([L]*2)-1 # -1 serves as a 'no data' value here
@@ -407,11 +409,11 @@ def calc_ld(pop, plot = False):
 
 #function to calculate the locus-wise (if mean == False) or mean (if
 #mean == True) heterozygosity of the population
-def calc_het(pop, mean=False):
+def _calc_het(pop, mean=False):
     #get pop size
     N = len(pop)
     #get the populome
-    populome = get_populome(pop)
+    populome = _get_populome(pop)
     #calculate the frequency of heterozygotes, locus-wise
     het = np.sum(np.mean(populome, axis = 2) == 0.5, axis = 0)/N
     #get the mean heterozygosity, if mean argument is True
@@ -420,11 +422,11 @@ def calc_het(pop, mean=False):
     return(het)
 
 #function to calculate the locus-wise minor allele frequency of the population
-def calc_maf(pop):
+def _calc_maf(pop):
     #get two times the pop size
     two_N = 2*len(pop)
     #get the populome
-    populome = get_populome(pop)
+    populome = _get_populome(pop)
     #get the frequencies of 1-alleles for all loci
     freqs_1 = np.sum(np.sum(populome, axis = 2), axis = 0)/two_N
     #find all loci where the 1-allele is the major allele
@@ -436,7 +438,7 @@ def calc_maf(pop):
 
 
 #function to calculate the mean fitness of the population
-def calc_mean_fitness(pop):
+def _calc_mean_fitness(pop):
     #calculate the mean fitness, if this population has traits
     if pop.gen_arch.traits is not None:
         mean_fit = np.mean(selection.calc_fitness(pop))
@@ -448,8 +450,7 @@ def calc_mean_fitness(pop):
 
 #helper function for creating a 3-d array of all individuals' genotypes
 #(a 'populome')
-def get_populome(pop):
+def _get_populome(pop):
     populome = np.stack([ind.genome for ind in pop.values()])
     return(populome)
-
 

@@ -7,16 +7,19 @@ Geonomics
 #########
 
 An individual-based, spatially explicit, forward-time, and highly
-customizable landscape-genomics simulator in Python. 
+customizable landscape-genomics simulator written in Python.
 
-The packages provides:
+The package provides:
 
   #. Land, GenomicArchitecture, Individual, Population, and Community
      classes
-  #. A Model class that holds contains objects of the classes and uses them 
-     organize, run, and collect data and basic statistics from numerous runs
-  #. Numerous visualization methods, for help designing, running, exploring,
-     presenting, and explaining model behavior and results
+  #. A Model class that builds these objects according to the scenario
+     stipulated in a parameters file, uses them to run numerous simulation
+     iterations, and collects data and basic statistics from each iteration
+  #. Functionality for planning arbitrarily complex landscape- and
+     demographic-change scenarios
+  #. Numerous visualization methods, to help users design, run, explore,
+     present, and explain their models' behavior and results
 
 
 *****************

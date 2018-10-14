@@ -46,6 +46,11 @@ from shapely import geometry as g
 ######################################
 
 class Scape:
+
+    #######################
+    ### SPECIAL METHODS ###
+    #######################
+
     def __init__(self, rast, scape_type, name, dim, res=(1,1), ulc = (0,0),
                  prj=None, scale_min=0, scale_max=1):
         self.idx = None
@@ -61,12 +66,30 @@ class Scape:
         self.prj = prj
         self.rast = rast
         assert type(self.rast) == np.ndarray, "rast should be a numpy.ndarray"
-        self.scale_min = scale_min
-        self.scale_max = scale_max
+        self._scale_min = scale_min
+        self._scale_max = scale_max
+
 
     #####################
     ### OTHER METHODS ###
     #####################
+
+    #################
+    #private methods#
+    #################
+
+    #method for writing the scape's raster to a geotiff raster file
+    def _write_geotiff(self, filepath):
+        io._write_geotiff(filepath, self)
+
+    #method for writing the scape's raster to a numpy txt array
+    def _write_txt_array(self, filepath):
+        io._write_txt_array(filepath, self)
+
+
+    ################
+    #public methods#
+    ################
 
     def plot(self, colorbar=True, im_interp_method='nearest', cmap = 'terrain', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
         plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
@@ -77,17 +100,9 @@ class Scape:
         assert raster_format in ['geotiff', 'txt'], ("The raster_format "
             "must be one of the following: 'geotiff', 'txt'.")
         if raster_format == 'geotiff':
-            self.write_geotiff(filepath)
+            self._write_geotiff(filepath)
         elif raster_format == 'txt':
-            self.write_txt_array(filepath)
-
-    #method for writing the scape's raster to a geotiff raster file
-    def write_geotiff(self, filepath):
-        io.write_geotiff(filepath, self)
-
-    #method for writing the scape's raster to a numpy txt array
-    def write_txt_array(self, filepath):
-        io.write_txt_array(filepath, self)
+            self._write_txt_array(filepath)
 
 
 class Land(dict):
@@ -114,7 +129,7 @@ class Land(dict):
         #then set the dim to the 0th landscape's dim 
         self.dim = list(self.values())[0].dim
         #get the order of magnitude of the larger land dimension (used when zero-padding cell-coorindate strings)
-        self.dim_om = max([len(str(d)) for d in self.dim]) 
+        self._dim_om = max([len(str(d)) for d in self.dim])
         #set the resoultion (res; i.e. cell-size), upper-left corner (ulc), and
         #projection (prj) to the provided values
         self.res = res
@@ -139,7 +154,7 @@ class Land(dict):
 
         #create a changer attribute (defaults to None, but will later be set
         #to an ops.change.LandChanger object if params call for it)
-        self.changer = None
+        self._changer = None
 
     #define the __str__ and __repr__ special methods
     #NOTE: this doesn't excellently fit the Python docs' specification for 
@@ -151,7 +166,7 @@ class Land(dict):
         #get a string representation of the class
         type_str = str(type(self))
         #get a string of all the scapes
-        scapes_str = '\n%i Scapes:\n' % self.n_scapes
+        scapes_str = '%i Scape%s:\n' % (self.n_scapes, 's' * (len(self) > 1))
         scapes_str = scapes_str + '\n'.join(['\tscape %i: ' % k +
             "%s'%s':\t" % (' ' * (max_len_scape_name - len(v.name)), v.name) +
             str(v) for k,v in self.items()])
@@ -168,23 +183,33 @@ class Land(dict):
         repr_str = self.__str__()
         return repr_str
 
+
     #####################
     ### OTHER METHODS ###
     #####################
 
+        #################
+        #private methods#
+        #################
+
     #method to set a raster
-    def set_raster(self, scape_num, rast):
+    def _set_raster(self, scape_num, rast):
         self[scape_num].rast = rast
 
     #method to res all scapes' res and ulc attributes 
-    def set_scapes_res_ulc_prj(self):
+    def _set_scapes_res_ulc_prj(self):
         [setattr(scape, 'res', self.res) for scape in self.values()]
         [setattr(scape, 'ulc', self.ulc) for scape in self.values()]
         [setattr(scape, 'prj', self.prj) for scape in self.values()]
 
     #method to make landscape changes
-    def make_change(self, t):
-        self.changer.make_change(t)
+    def _make_change(self, t):
+        self._changer._make_change(t)
+
+
+        ################
+        #public methods#
+        ################
 
     #method to plot the landscape (or just a certain scape)
     def plot(self, scape_num=None, colorbar=True, cmap='terrain', im_interp_method='nearest', x=None, y=None, zoom_width=None, vmin=None, vmax=None):
@@ -197,13 +222,14 @@ class Land(dict):
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)
 
+
 ######################################
 # -----------------------------------#
 # FUNCTIONS -------------------------#
 # -----------------------------------#
 ######################################
 
-def make_random_scape(dim, n_pts, interp_method="cubic", num_hab_types=2, dist='beta', alpha=0.05, beta=0.05):  # requires landscape to be square, such that dim = domain = range
+def _make_random_scape(dim, n_pts, interp_method="cubic", num_hab_types=2, dist='beta', alpha=0.05, beta=0.05):  # requires landscape to be square, such that dim = domain = range
     # NOTE: can use "nearest" interpolation to create random patches of habitat (by integer values); can change num_hab_types to > 2 to create a randomly multi-classed landscape
     # NOTE: I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
     # NOTE: This seems to generate decent, believable random rasters!
@@ -240,11 +266,11 @@ def make_random_scape(dim, n_pts, interp_method="cubic", num_hab_types=2, dist='
     return I
 
 
-def make_defined_scape(dim, pts, vals, interp_method="cubic", num_hab_types=2):  # pts should be provided as n-by-2 Numpy array, vals as a 1-by-n Numpy array
+def _make_defined_scape(dim, pts, vals, interp_method="cubic", num_hab_types=2):  # pts should be provided as n-by-2 Numpy array, vals as a 1-by-n Numpy array
 
     # NOTE: There seem to be some serious issues with all of this code, because the resulting landscapes are not quite symmetrical; and making small tweaks (e.g. adding 5 to all input points' coordinates) doesn't just tweak the output landscape but instead completely gets ride of it; I have an intuition that it comes from the code that coerces all raster values to 0 <= val <= 1, becuase that doesn't look it does quite what I originally intended for it to do, but I'm not really sure... anyhow, for now it works for my initial testing purposes
 
-    # NOTE: like the make_random_scape function, this also requires landscape to be square, but I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
+    # NOTE: like the _make_random_scape function, this also requires landscape to be square, but I guess this could be used for rectangular landscapes, if the square raster is generated using the larger of the two dimensions, and then the resulting array is subsetted to the landscape's dimensions
 
     # NOTE: if discrete habitat patches desired, values should still be fed in as proportions, and will then be multipled by num_hab_types to develop habitat class values
     if interp_method == 'nearest':
@@ -268,7 +294,7 @@ def make_defined_scape(dim, pts, vals, interp_method="cubic", num_hab_types=2): 
     return I
 
 
-def make_land(params, num_hab_types=2):
+def _make_land(params, num_hab_types=2):
     # NOTE: If a multi-class (rather than binary) block-habitat raster would be of interest, would need to make
     # num_hab_types customizable)
 
@@ -316,7 +342,7 @@ def make_land(params, num_hab_types=2):
         #create a random scape, if called for
         if scape_type == 'rand':
             #create the random scape and add it to the scapes dict
-            scape_rast = make_random_scape(dim, **init_params[scape_type], 
+            scape_rast = _make_random_scape(dim, **init_params[scape_type], 
                                            num_hab_types=num_hab_types)
             scapes[n] = Scape(scape_rast, scape_type = scape_type, 
                 name = scape_name, dim = dim, res = res, ulc = ulc)
@@ -324,7 +350,7 @@ def make_land(params, num_hab_types=2):
         #or else create a defined scape 
         elif scape_type == 'defined':
             #create the defined raster
-            scape_rast = make_defined_scape(dim, **init_params[scape_type],
+            scape_rast = _make_defined_scape(dim, **init_params[scape_type],
                                             num_hab_types=num_hab_types)
             scapes[n] = Scape(scape_rast, scape_type = scape_type, 
                 name = scape_name, dim = dim, res = res, ulc = ulc)
@@ -334,13 +360,13 @@ def make_land(params, num_hab_types=2):
             #get the params
             nlmpy_params = init_params[scape_type]
             #make the nlm
-            scape_rast = spt.make_nlmpy_raster(nlmpy_params)
+            scape_rast = spt._make_nlmpy_raster(nlmpy_params)
             #check that its dimensions match those of the Land
             assert scape_rast.shape == dim, ("The dimensions of the NLM created"
                 " appear to differ from the Land dims: Land has dims %s, NLM "
                 "has dims %s.\n\n") % (str(dim), str(scape_rast.shape))
             #set the nlm as the nth Scape in the Land
-            scapes[n] = Scape(scape_rast, scape_type = scape_type, 
+            scapes[n] = Scape(scape_rast, scape_type = scape_type,
                 name = scape_name, dim = dim, res = res, ulc = ulc)
 
         #or else create a scape from file
@@ -367,12 +393,12 @@ def make_land(params, num_hab_types=2):
     change_params = {k:v.change for k,v in params.land.scapes.items() if 'change' in v.keys()} 
     #and then replace the land.changer attribute with an ops.change.LandChanger object, if params call for it
     if len(change_params) > 0:
-        land.changer = change.LandChanger(land, change_params) 
+        land._changer = change._LandChanger(land, change_params)
 
     return land
 
 
-def get_file_rasters(land_dim, names, scape_nums, filepaths, scale_min_vals, scale_max_vals):
+def _get_file_rasters(land_dim, names, scape_nums, filepaths, scale_min_vals, scale_max_vals):
     assert len(scape_nums)==len(filepaths), 'Parameters provide a different number of GIS raster files to read in than of scape numbers to set them to .'
     res = []
     ulc = []
@@ -381,11 +407,11 @@ def get_file_rasters(land_dim, names, scape_nums, filepaths, scale_min_vals, sca
     scapes = []
     for n,filepath in enumerate(filepaths):
         #get the array, dim, res, upper-left corner, and projection from io.read_raster
-        rast_array, rast_dim, rast_res, rast_ulc, rast_prj = io.read_raster(filepath, dim)
+        rast_array, rast_dim, rast_res, rast_ulc, rast_prj = io._read_raster(filepath, dim)
         #check that the dimensions are right
         assert rast_dim == land_dim, 'Variable land_dim and the dimensions of the input raster %s appear to differ. Please clip %s to the correct dimensions and try again. %s has dimensions (%i, %i), but land has dimensions (%i,%i)' % (filepath, filepath, filepath, rast_dim[0], rast_dim[1], land_dim[0], land_dim[1])
         #scale the raster to 0<=x<=1
-        rast_array, scale_min, scale_max = spt.scale_raster(rast_array, min_inval = scale_min_vals[n], max_inval = scale_max_vals[n])
+        rast_array, scale_min, scale_max = spt._scale_raster(rast_array, min_inval = scale_min_vals[n], max_inval = scale_max_vals[n])
         #add the rast_array to the rast_arrays list
         rasters.append(rast_array)
         #and add the raster's ulc and res attributes to the appropriate lists

@@ -49,7 +49,7 @@ from itertools import chain
 
 #a DataCollector class, to paramtereize and manage data 
 #collection, and write data to disk
-class DataCollector:
+class _DataCollector:
     def __init__(self, model_name, params):
 
     #some lookup dicts for writing data 
@@ -65,11 +65,11 @@ class DataCollector:
                             'shapefile': io.write_shapefile,
                             'geojson': io.write_geojson,
                             }
-        
+
         #set model name and T
         self.model_name = model_name
         self.T = params.model.time.T
-        
+
         #grab the params['data'] contents into objects
         sampling_params = params.model.data.sampling
         format_params = params.model.data.format
@@ -106,15 +106,14 @@ class DataCollector:
         if sampling_params.scheme == 'transect':
             endpts = sampling_params.transect_endpoints
             n_transect_pts = sampling_params.n_transect_points
-            pts = get_transect_points(endpoints = endpts, n = n_transect_pts)
+            pts = _get_transect_points(endpoints = endpts, n = n_transect_pts)
             self.pts = pts
-            #self.pts = chain.from_iterable(pts)
 
         #create the point buffers, if either 'transect' or 'point' is the 
         #chosen sampling scheme
         self.pts_buff = None
         if sampling_params.scheme in ['transect', 'point']:
-            self.pts_buff = make_point_buffers(self.pts,
+            self.pts_buff = _make_point_buffers(self.pts,
                                         sampling_params.radius)
 
         #get the 'include_land' param (defaults False)
@@ -158,7 +157,7 @@ class DataCollector:
         #now turn the when attribute into an iterator
         self.when = iter(self.when)
         #and set next_t
-        self.set_next_t()
+        self._set_next_t()
 
         #grab the genetic data formats as a separate attribute
         self.gen_formats = format_params.gen_format
@@ -171,38 +170,36 @@ class DataCollector:
         #NOTE: added to a separate attribute because this is written per
         #timestep, not per population within timestep
         self.rast_format = None
-        if sampling_params.include_land and 'geo_rast_format' in format_params.keys():
+        if sampling_params.include_land
+            and 'geo_rast_format' in format_params.keys():
             self.rast_format = format_params.geo_rast_format
 
-
     #method to set self.next_t
-    def set_next_t(self):
+    def _set_next_t(self):
         try:
             self.next_t = next(self.when)
         #if there are no further timestep values left then this is the last
         #timestep, so set self.next_t to None
         except StopIteration:
-            assert self.next_t == self.T -1, ("Model.set_next_t() threw a "
+            assert self.next_t == self.T -1, ("Model._set_next_t() threw a "
             "StopIteration error, but the current value of Model.next_t is not "
             "the final timestep (instead, it is %i).\n\n") % self.next_t
             self.next_t = None
 
-
     #method to create filenames for genetic and geographic datafiles
-    def make_filenames(self, iteration, pop_name):
+    def _make_filenames(self, iteration, pop_name):
         filenames = []
         for att_name in ['gen_formats', 'geo_formats']:
-            filenames.append(['mod-%s_it-%i_t-%i_pop-%s.%s' % (self.model_name, iteration,
-                        self.next_t, pop_name, self.file_extension_dict[fmt])
+            filenames.append(['mod-%s_it-%i_t-%i_pop-%s.%s' % (self.model_name,
+                iteration, self.next_t, pop_name, self.file_extension_dict[fmt])
                         for fmt in getattr(self, att_name)])
         return(filenames)
-
 
     #a method to be called each timestep, which will collect needed
     #data and then write the data (if write_intermittent == True) if it's
     #the right timestep
     #TODO: CONSIDER NOMENCLATURE CHANGE HERE AND IN CLASS NAME!
-    def write_data(self, community, iteration):
+    def _write_data(self, community, iteration):
 
         #if this timestep is scheduled for sampling
         if community.t == self.next_t:
@@ -229,11 +226,11 @@ class DataCollector:
                     os.makedirs(subdirname, exist_ok = True)
 
                     #get filenames
-                    gen_files, geo_files = self.make_filenames(iteration = iteration,
-                                                            pop_name = pop.name)
+                    gen_files, geo_files = self._make_filenames(
+                                    iteration = iteration, pop_name = pop.name)
 
                     #sample individuals according to the scheme defined 
-                    sample = self.get_sample(pop)
+                    sample = self._get_sample(pop)
 
                     #write files, if sample length > 0 
                     #(NOTE: otherwise, an empty file with "ZERO_SAMPLE" in the 
@@ -246,19 +243,22 @@ class DataCollector:
                             for n, data_format in enumerate(self.gen_formats):
 
                                 #format the data accordingly
-                                data = self.format_gen_data(data_format = data_format,
-                                                sample = sample, pop = pop)
+                                data = self._format_gen_data(
+                                    data_format = data_format, sample = sample,
+                                                                    pop = pop)
 
                                 #then write it to disk
-                                gen_filepath = os.path.join(subdirname, gen_files[n])
-                                self.write_gendata(filepath = gen_filepath,
+                                gen_filepath = os.path.join(subdirname,
+                                                            gen_files[n])
+                                self._write_gendata(filepath = gen_filepath,
                                                             gen_data = data)
 
                         #also write the geodata for this pop
                         for n, data_format in enumerate(self.geo_formats):
                             #write the geodata to disk
-                            geo_filepath = os.path.join(subdirname, geo_files[n])
-                            self.write_geodata(filepath = geo_filepath,
+                            geo_filepath = os.path.join(subdirname,
+                                                            geo_files[n])
+                            self._write_geodata(filepath = geo_filepath,
                                                data_format = data_format,
                                                sample = sample)
 
@@ -267,28 +267,28 @@ class DataCollector:
                     else:
                         filenames = [gen_files, geo_files]
                         filenames = [*chain.from_iterable(filenames)]
-                        filename = os.path.splitext(filenames[0])[0] 
+                        filename = os.path.splitext(filenames[0])[0]
                         filename = filename + '_ZERO_SAMPLE'
                         filepath = os.path.join(subdirname, filename)
-                        self.write_gendata(filepath, '')
+                        self._write_gendata(filepath, '')
 
             #write the raster, if necessary
             if self.rast_format is not None:
                 #for each Scape
                 for scape in community.land.values():
                     #get the raster filename
-                    filename = 'mod-%s_it-%i_t-%i_scape-%s.%s' % (self.model_name, iteration,
-                                        self.next_t, scape.name,
-                                        self.file_extension_dict[self.rast_format])
+                    filename = 'mod-%s_it-%i_t-%i_scape-%s.%s' % (
+                        self.model_name, iteration, self.next_t, scape.name,
+                                    self.file_extension_dict[self.rast_format])
                     filepath = os.path.join(dirname, filename)
                     #and write it to disk
                     scape.write_raster(filepath, self.rast_format)
 
             #update self.next_t to the next timestep to be sampled
-            self.set_next_t()
+            self._set_next_t()
 
 
-    def get_random_sample(self, individuals):
+    def _get_random_sample(self, individuals):
         if len(individuals) > self.n:
             sample = r.choice(individuals, size = self.n, replace = False)
         else:
@@ -296,15 +296,16 @@ class DataCollector:
         return(sample)
 
 
-    def get_point_sample(self, pop):
+    def _get_point_sample(self, pop):
         #TODO: check if this should to be sped up any more
-        sample = [i for i,v in pop.items() if self.pts_buff.contains(Point(v.x, v.y))]
+        sample = [i for i,v in pop.items() if self.pts_buff.contains(
+                                                        Point(v.x, v.y))]
         if len(sample) > self.n:
-            sample = get_random_sample(individuals = sample)
+            sample = _get_random_sample(individuals = sample)
         return(sample)
 
 
-    def get_sample(self, pop):
+    def _get_sample(self, pop):
         #get a set of indices for the individuals in the sample
         sample = set()
         #take the whole population, if scheme is 'all'
@@ -312,37 +313,37 @@ class DataCollector:
             sample.update([*pop])
         #or take a random sample, if scheme is 'random'
         elif self.scheme == 'random':
-            inds = self.get_random_sample([*pop])
+            inds = self._get_random_sample([*pop])
             sample.update(inds)
         #or take individuals within a given radius of self.buffs (which could
         #have come from a set of input points or from a calculated set of
         #transect points), if scheme is 'point' or 'transect'
         elif self.scheme in ['point', 'transect']:
-            inds = self.get_point_sample(pop)
+            inds = self._get_point_sample(pop)
             sample.update(inds)
         #convert sample to a dict of individuals
         sample = {i:pop[i] for i in sample}
         return(sample)
 
 
-    def format_gen_data(self, data_format, sample, pop):
+    def _format_gen_data(self, data_format, sample, pop):
         '''<data_format> can be:
                             'fasta'
                             'vcf'
         '''
         if data_format == 'fasta':
-            formatted_data = format_fasta(sample)
+            formatted_data = _format_fasta(sample)
         elif data_format == 'vcf':
-            formatted_data = format_vcf(sample, pop.gen_arch,
-                            include_fixed_sites = self.include_fixed_sites)
+            formatted_data = _format_vcf(sample, pop.gen_arch,
+                    include_fixed_sites = self.include_fixed_sites)
         return(formatted_data)
 
 
-    def write_gendata(self, filepath, gen_data):
-        io.write_file(filepath, gen_data)
+    def _write_gendata(self, filepath, gen_data):
+        io._write_file(filepath, gen_data)
 
 
-    def write_geodata(self, filepath, data_format, sample):
+    def _write_geodata(self, filepath, data_format, sample):
         write_fn = self.write_geodata_fn_dict[data_format]
         write_fn(filepath = filepath, individuals = sample)
 
@@ -354,25 +355,26 @@ class DataCollector:
 ######################################
 
 #a function to get a set of n evenly spaced points between endpoints
-def get_transect_points(endpoints, n):
+def _get_transect_points(endpoints, n):
     x_pts = np.linspace(endpoints[0][0] , endpoints[1][0], n)
     y_pts = np.linspace(endpoints[0][1] , endpoints[1][1], n)
     return(list(zip(x_pts, y_pts)))
 
 
 #a function to make shapely geometry buffers around a set of points
-def make_point_buffers(points, radius):
+def _make_point_buffers(points, radius):
     pts = [Point(p[0], p[1]) for p in points]
     buffs = [p.buffer(radius) for p in pts]
     buff_poly = MultiPolygon(buffs)
     return(buff_poly)
 
 
-def format_fasta(sample):
+def _format_fasta(sample):
     '''
     FASTA FORMAT:
 
-    >idx:haploid_num|x_location|y_location|phenotype0;phenotype1;...;phenotypeN|env_var0;env_var1;...;env_varN|age|sex
+    >idx:haploid_num|x_location|y_location|phenotype0;phenotype1;...;
+                    phenotypeN|env_var0;env_var1;...;env_varN|age|sex
     001110101010101010010101011101010110.....01011110
 
     '''
@@ -382,36 +384,46 @@ def format_fasta(sample):
     for individ in sample.values():
         for hap in range(2):
             individ_row1 = re.sub('HAP', str(hap), row1)
-            replace = tuple(map(lambda att: re.sub(',', '|', re.sub('[\[\] ]', '', str(getattr(individ, att)))), ['idx', 'x', 'y', 'age', 'sex', 'phenotype', 'habitat']))
+            replace = tuple(map(lambda att: re.sub(',', '|', re.sub('[\[\] ]',
+                '', str(getattr(individ, att)))), ['idx', 'x', 'y', 'age',
+                                            'sex', 'phenotype', 'habitat']))
             individ_row1 = individ_row1 % replace
-            individ_row2 = ''.join([str(base) for base in individ.genome[:,hap]]) + '\n'
+            individ_row2 = ''.join([str(
+                            base) for base in individ.genome[:,hap]]) + '\n'
 
             file_text = file_text + individ_row1 + individ_row2
 
     return(file_text)
 
 
-def format_vcf(sample, gen_arch, include_fixed_sites=False):
+def _format_vcf(sample, gen_arch, include_fixed_sites=False):
 
     #create a template header
         #NOTE: has 1 string slot for a date
 
-        #TODO: DECIDE ON NECESSARY INFO AND FORMAT CONTENTS, THEN ADD METADATA ROWS HERE
+        #TODO: DECIDE ON NECESSARY INFO AND FORMAT CONTENTS,
+        #THEN ADD METADATA ROWS HERE
+
     header = '''##fileformat=VCFv4.2
 ##fileDate=%s
 ##source=Geonomics
 '''
 
     #template column-header row
-    col_header_row = '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t%s\n'
-        #NOTE: this has 1 string slot for a tab-separated list of all individ ids
+    col_header_row = ('#CHROM\tPOS\tID\tREF\tALT\tQUAL'
+                      '\tFILTER\tINFO\tFORMAT\t%s\n')
+        #NOTE: this has 1 string slot for a tab-separated
+        #list of all individ ids
 
     #template data row
-    #TODO: UPDATE/CHANGE THE INFO AND FORMAT PORTIONS OF THIS TEMPLATE, AFTER I DECIDE ON THEIR CONTENTS (above)
-    data_row = '%i\t%i\t.\tA\tT\t1000\tPASS\tMID=216754706;S=0;DOM=0.5;PO=1;GO=118200;MT=1;DP=1000\tGT\t%s\n'
+    #TODO: UPDATE/CHANGE THE INFO AND FORMAT PORTIONS OF THIS TEMPLATE,
+    #AFTER I DECIDE ON THEIR CONTENTS (above)
+    data_row = ('%i\t%i\t.\tA\tT\t1000\tPASS\t'
+        'MID=216754706;S=0;DOM=0.5;PO=1;GO=118200;MT=1;DP=1000\tGT\t%s\n')
         #NOTE: this has 2 integer slots, then 1 string slot for:
             #- chrom number (NOTE: unpythonically, starts from 1)
-            #- locus number (NOTE: reported cumulative from locus 0, not from start of each chrom)
+            #- locus number (NOTE: reported cumulative from locus 0,
+               #not from start of each chrom)
             #- a tab-separated list of individs' genotypes at this locus
 
     #create a col_header_row for this data
@@ -443,7 +455,8 @@ def format_vcf(sample, gen_arch, include_fixed_sites=False):
     rows = ''
     for n, locus in enumerate(loci):
         genotypes = samplome[:,locus,:]
-        genotypes = '\t'.join(['%i|%i' % (genotypes[i,0], genotypes[i,1]) for i in range(np.shape(genotypes)[0])])
+        genotypes = '\t'.join(['%i|%i' % (genotypes[i,0],
+                genotypes[i,1]) for i in range(np.shape(genotypes)[0])])
 
         rows = rows + data_row % (chroms[n], locus, genotypes)
 

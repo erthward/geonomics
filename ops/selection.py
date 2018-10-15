@@ -58,7 +58,7 @@ def _calc_phenotype(ind, gen_arch, trait):
 
 
 def _calc_fitness_one_trait(t, e, z, pop):
-    fit = 1 - t._get_phi(pop)*(abs((e[:,t.scape_num]**(not t.univ_advant)) - z[:,t.idx])**t.gamma)
+    fit = 1 - t._get_phi(pop)*(abs((e[:,t.scape_num]**(not t.univ_adv)) - z[:,t.idx])**t.gamma)
     return(fit)
 
 
@@ -68,9 +68,9 @@ def _calc_fitness_traits(pop, trait_num = None):
     if trait_num is not None:
         traits = [list(traits)[trait_num]]
     #get all individuals' environmental values
-    e = pop._get_habitat()
+    e = pop._get_e()
     #get all individuals' phenotypes
-    z = pop._get_phenotype()
+    z = pop._get_z()
     #create lambda function with current e, z, and pop objects
     calc_fitness_lambda = lambda t: _calc_fitness_one_trait(t, e, z, pop)
     #map the calc_sngl_trait_fitness function to all traits, then calculate overall fitness as product of

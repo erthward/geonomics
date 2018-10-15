@@ -50,6 +50,23 @@ import sys
 # -----------------------------------#
 ######################################
 
+
+#a simple little class into which params-file parameters and their values will
+#be dumped (as attributes). This class will be added as a hidden attribute to
+#the Population. Can do this so that these parameters' values can still be 
+#accessed by Geonomics functions easily (in fact, the same as if they were
+#Population attributes because of how the Population's __getattr__ method is
+#altered below), but they will be hidden to the regular user (so that they
+#don't appear as though they could be just be changed in a custom model script
+#to change model behavior (since some of them are used to instantiate objects
+#at the time the model is made, so are 'baked in', such that those objects
+#would need to be reinstantiated each time the params concerned were changed).
+class _ParamsVals:
+    def __init__(self, pop_name):
+        self.pop_name = pop_name
+
+
+#the Population class
 class Population(OD):
 
     #######################
@@ -71,7 +88,7 @@ class Population(OD):
         self.land = land
         self._it = None  # attribute to keep track of iteration number this pop is being used for
             # (optional; will be set by the iteration.py module if called)
-        self.T = None #attribute to track total number of timesteps to be run (will be set by the Model object)
+        #self.T = None #attribute to track total number of timesteps to be run (will be set by the Model object)
         self.t = -1  # attribute to keep of track of number of timesteps the population has evolved (starts at -1, 
                      #to indicate unrun, and so that first timestep will be set to 0 at beginning of timestep)
             # NOTE: This way, if model is stopped, changes are made, then it is run further,
@@ -106,7 +123,11 @@ class Population(OD):
         #set the sex_ratio to 0.5 default (but this will be changed if a
         #non-1/1 sex ratio is provided in the params)
         self.sex_ratio = 0.5
-        #grab all of the mating, mortality, and movement parameters as Population attributes
+
+        #create a private _ParamsVals object as the _pv attribute
+        self._pv = _ParamsVals(self.name)
+        #then grab all of the mating, mortality, and movement parameters as attributes
+        #of that _ParamsVals object
         for section in ['mating', 'mortality', 'movement']:
             if section in [*pop_params]:
                 for att,val in pop_params[section].items():
@@ -115,7 +136,8 @@ class Population(OD):
                         #convert sex ratio to the probabilty of drawing a male
                         if att == 'sex_ratio':
                             val = val / (val + 1)
-                        setattr(self, att, val)
+                        #add as an attribute of the _ParamsVals object (_pv)
+                        setattr(self._pv, att, val)
 
         #if sex is True and repro_age is an int or float, coerce to a tuple
         #(one val for each sex)
@@ -189,6 +211,16 @@ class Population(OD):
     def __repr__(self):
         repr_str = self.__str__()
         return repr_str
+
+    #customize the __getattr__ special method, so that attributes inside the
+    #private _ParamsVals attribute (_pv) also behave as though their attributes
+    #of the Population
+    def __getattr__(self, attr):
+        try:
+            val = self._pv.__getattribute__(attr)
+            return val
+        except Exception:
+            raise AttributeError("The Population has no attribute %s" % attr)
 
 
     #####################
@@ -366,8 +398,8 @@ class Population(OD):
         else:
             return dens
 
-    #method to set the individuals' habitat attributes
-    def _set_habitat(self, individs = None):
+    #method to set the individuals' environment values 
+    def _set_e(self, individs = None):
         if individs is None:
             inds_to_set = self.values()
         else:
@@ -375,15 +407,15 @@ class Population(OD):
             inds_to_set = ig(self)
             if type(inds_to_set) is individual.Individual:
                 inds_to_set = (inds_to_set,)
-        hab = [ind._set_habitat([scape.rast[int(ind.y), int(ind.x)] for scape in self.land.values()]) for ind in inds_to_set]
+        hab = [ind._set_e([scape.rast[int(ind.y), int(ind.x)] for scape in self.land.values()]) for ind in inds_to_set]
 
     #method to set the individuals' phenotype attributes 
-    def _set_phenotype(self):
-        [ind._set_phenotype(self.gen_arch) for ind in self.values()];
+    def _set_z(self):
+        [ind._set_z(self.gen_arch) for ind in self.values()];
 
     #method to set the individuals' fitness attributes
-    def _set_fitness(self, fit):
-        [ind._set_fitness(f) for ind, f in zip(self.values(), fit)];
+    def _set_fit(self, fit):
+        [ind._set_fit(f) for ind, f in zip(self.values(), fit)];
         
 
     #method to set population's coords and cells arrays
@@ -402,22 +434,22 @@ class Population(OD):
         self._dens_grids = spt.DensityGridStack(land = self.land, window_width = self.dens_grid_window_width)
 
 
-    # method to get individs' habitat values
-    def _get_habitat(self, scape_num=None, individs=None):
+    # method to get individs' environment values
+    def _get_e(self, scape_num=None, individs=None):
         if individs is None:
             if scape_num is None:
-                habs = np.array([ind.habitat for ind in self.values()])
+                e = np.array([ind.e for ind in self.values()])
             else:
-                habs = np.array([ind.habitat[scape_num] for ind in self.values()])
+                e = np.array([ind.e[scape_num] for ind in self.values()])
         else:
             ig = itemgetter(*individs)
             if scape_num is None:
-                habs = {i:ind.habitat for i, ind in self.items()}
-                habs = np.array(ig(habs))
+                e = {i:ind.e for i, ind in self.items()}
+                e = np.array(ig(e))
             else:
-                habs = {i:ind.habitat[scape_num] for i, ind in self.items()}
-                habs = np.array(ig(habs))
-        return habs
+                e = {i:ind.e[scape_num] for i, ind in self.items()}
+                e = np.array(ig(e))
+        return e
 
     def _get_genotype(self, locus, biallelic=False, individs=None,
                                                         by_dominance=True):
@@ -455,20 +487,20 @@ class Population(OD):
         return ages
 
     # convenience method for getting whole population's phenotype
-    def _get_phenotype(self, individs=None):
-        zs = self._get_scalar_attr('phenotype', individs = individs)
+    def _get_z(self, individs=None):
+        zs = self._get_scalar_attr('z', individs = individs)
         return zs
 
     #convenience method for getting whole population's fitnesses
-    def _get_fitness(self, individs = None):
-        fits = self._get_scalar_attr('fitness', individs = individs)
+    def _get_fit(self, individs = None):
+        fits = self._get_scalar_attr('fit', individs = individs)
         return fits
 
     def _calc_fitness(self, trait_num = None, set_fit = True):
         fit = selection._calc_fitness(self, trait_num = trait_num)
         #set individuals' fitness attributes, if indicated
         if set_fit:
-            self._set_fitness(fit)
+            self._set_fit(fit)
         return fit
 
     def _get_dom(self, locus):

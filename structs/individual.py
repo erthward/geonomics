@@ -40,43 +40,28 @@ import numpy.random as r
 
 class Individual:
     def __init__(self, idx, x, y, age=0, new_genome=None, sex=None):
-
         self.idx = idx
-
         self.genome = new_genome             #individual's x-ploid genome
-
         self.x = float(x)           #x coord
         self.y = float(y)           #y coord
-
         if sex:
             self.sex = sex          #set individual's sex to that supplied, if supplied
         else:
             self.sex = r.binomial(1, 0.5) #else, set it to a bernoulli r.v., p = 0.5;  0 --> female)
-
         self.age = age              #age
+        self.e = None
+        self.z = []
+        self.fit = None
 
-        self.habitat = None
-
-        self.phenotype = []
-
-        self.fitness = None
-
-
-
-        #assert type(self.genome) == np.ndarray or self.genome is None, "An individual's genome must either be None or an instance of numpy.ndarray."
         assert type(self.x) == float and self.x >= 0, "invalid value for x: %s, %s" % (str(self.x), type(self.x))
         assert type(self.y) == float and self.y >= 0, "invalid value for y: %s, %s" % (str(self.y), type(self.y))
         assert self.sex == None or self.sex in [0,1]
         assert type(self.age) == int
 
 
-
-
-
     #####################
     ### OTHER METHODS ###
     #####################
-
 
     #function to increment age by one
     def _set_age_stage(self):
@@ -87,18 +72,18 @@ class Individual:
         self.x = x_pos
         self.y = y_pos
 
-    #set the individual's habitat
-    def _set_habitat(self, hab):
-        self.habitat = hab
+    #set the individual's current environmental values (attribute e)
+    def _set_e(self, e):
+        self.e = e
 
-    #set the individual's phenotype for all traits
-    def _set_phenotype(self, genomic_architecture):
-        self.phenotype = [selection._calc_phenotype(self, genomic_architecture,
+    #set the individual's phenotype (attribute z) for all traits
+    def _set_z(self, genomic_architecture):
+        self.z = [selection._calc_phenotype(self, genomic_architecture,
             trait) for trait in genomic_architecture.traits.values()]
 
     #set the individual's fitness
-    def _set_fitness(self, fit):
-        self.fitness = fit
+    def _set_fit(self, fit):
+        self.fit = fit
 
     #set the individual's genome
     def _set_genome(self, genome):

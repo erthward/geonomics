@@ -1,9 +1,16 @@
 - knock out these secondary to-do items
 
+        5 I think I should rename Land and Scape to Landscape and Layer respectively (pain in the ass, but that seems to map onto GIS/geographic terminology better,
+          and can be shortened to the two nice acronyms 'scp' and 'lyr' for attributes, etc)        
+
         5 finish making all appropriate functions, methods, attributes, and classes private (by adding _ at front), while also reading through the code line by line
           - and do I need to make all the attributes of private classes (e.g. _DensityGridStack) also private?
 
         5 make all lines <= 80 length!
+
+        3 write a Land.plot_land_changes method (akin to Population.plot_demographic_changes)??
+
+        5 write `Model.plot` methods to wrap around all the pop and land plotting methods (where they just take a required first arg, either the pop number or name or the scape number or name
 
         5 pick through all the notes in demography.py and decide which are taken care of, which need to stay, which I still need to take care of, etc. 
 

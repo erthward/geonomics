@@ -350,7 +350,7 @@ POP_PARAMS = '''
                             #dimension to 1/10th of that dimension)
                             #NOTE: will eventually default to an approximation of Wright's genetic neighborhood
                             #distance, based on the population's movement/dispersal parameters
-                   'd_min':                     0.01,
+                    'd_min':                     0.01,
                         #minimum neutral (i.e. non-selection driven) probability of death
                     'd_max':                    0.90,
                         #maximum neutral probability of death
@@ -530,8 +530,8 @@ TRAIT_PARAMS = '''
                                 #gamma exponent for the trait's fitness function (determines the shape of the
                                 #curve of fitness as a function of absolute difference between an individual's
                                 #phenotype and its environment; <1 = concave up, 1 = linear, >1 = convex up)
-                            'univ_advant':      False
-                                #is the trait unviersally advantageous? if so, phenotypes closer to 1 will
+                            'univ_adv':      False
+                                #is the trait universally advantageous? if so, phenotypes closer to 1 will
                                     #have higher fitness at all locations on the land
                             }, # <END> trait %i
 '''

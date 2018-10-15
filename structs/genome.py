@@ -48,7 +48,8 @@ class _RecombinationPaths:
         return(random.sample(self.recomb_paths, n))
 
 class Trait:
-    def __init__(self, idx, name, phi, n_loci, mu, scape_num, alpha_distr_mu, alpha_distr_sigma, gamma, univ_advant):
+    def __init__(self, idx, name, phi, n_loci, mu, scape_num, alpha_distr_mu,
+                 alpha_distr_sigma, gamma, univ_adv):
         self.idx = idx
         self.name = name
         self.phi = phi
@@ -60,7 +61,7 @@ class Trait:
         self.alpha_distr_mu = alpha_distr_mu
         self.alpha_distr_sigma = alpha_distr_sigma
         self.gamma = gamma
-        self.univ_advant = univ_advant
+        self.univ_adv = univ_adv
 
         self.loci = np.int64([])
         self.alpha = np.array([])

@@ -104,7 +104,10 @@ def _disperse(land, parent_centroid_x, parent_centroid_y, dispersal_distr_mu,
         #but I would love to operationalize an environmental layer that can be 
         #used here just like it is used in movement (for e.g. wind dispersal)
         direction = r_vonmises(mu_dir, kappa_dir)
-        distance = lognormal(dispersal_distr_mu, dispersal_distr_sigma)
+        distance = wald(dispersal_distr_mu, dispersal_distr_sigma,
+                                                    size = len(old_x))
+        #distance = lognormal(dispersal_distr_mu, dispersal_distr_sigma)
+
 
         offspring_x = parent_centroid_x + np.cos(direction)*distance
         offspring_y = parent_centroid_y + np.sin(direction)*distance

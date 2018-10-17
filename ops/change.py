@@ -141,9 +141,9 @@ class _LandChanger(_Changer):
                         land[scape_num].rast, **self.change_params[scape_num])
             assert dim == land.dim, ('Dimensionality of scape_series fed into '
                 'LandChanger does not match that of the land to be changed.')
-            assert res == land.res or res is None, ('Resolution of scape_series'
-                'fed into LandChanger does not match that of the land to be '
-                'changed.')
+            assert res == land.res or res is None, ('Resolution of '
+                'scape_series fed into LandChanger does not match that of the '
+                'land to be changed.')
             assert ulc == land.ulc or ulc is None, ('Upper-left corner of '
                 'scape_series fed into LandChanger does not match that of '
                 'the land to be changed.')
@@ -200,7 +200,7 @@ class _PopulationChanger(_Changer):
         except Exception:
             dem_change_params = None
         try:
-            parameter_change_params = self.change_params.parameters
+            parameter_change_params = self.change_params.life_hist
         except Exception:
             parameter_change_params = None
         #check if this pop has a move_surf, and if there are land-changes
@@ -208,12 +208,12 @@ class _PopulationChanger(_Changer):
         move_surf_change_fns = []
         if (pop.move_surf is not None
             and land is not None
-            and pop._move_surf.scape_num in land._changer.change_info.keys():
+            and pop._move_surf.scape_num in land._changer.change_info.keys()):
             #if so, grab that scape's land change params and create a
             #move_surf_series with them, to be 
             #added to this pop's change fns
-            lc_move_surf_params =
-                        land._changer.change_info[pop._move_surf.scape_num]
+            lc_move_surf_params = land._changer.change_info[
+                                                    pop._move_surf.scape_num]
             #create a time-series of movement surfaces 
             surf_series = _make_movement_surface_series(
                 start_scape = land[pop._move_surf.scape_num],
@@ -241,8 +241,7 @@ class _PopulationChanger(_Changer):
         #put all the changes in chronological order
         if (len(dem_change_fns) + len(
             parameter_change_fns) + len(move_surf_change_fns) > 0):
-            change_fns = dem_change_fns + parameter_change_fns +
-                                                move_surf_change_fns
+            change_fns=dem_change_fns+parameter_change_fns+move_surf_change_fns
             change_fns = sorted(change_fns, key = lambda x: x[0])
 
             #make self.changes an iterator over that list
@@ -318,9 +317,9 @@ def _make_linear_scape_series(start_rast, end_rast, start_t, end_t, n_steps):
     end = end_rast.flatten()
     #get a column of values for each grid cell on the landscape, linearly
     #spaced between that cell's start and end values
-    #NOTE: linspace(..., ..., n+1)[1:] gives us the changed rasters for n steps,
-    #leaving off the starting scape value because that's already the existing
-    #scape so we don't want that added into our changes
+    #NOTE: linspace(..., ..., n+1)[1:] gives us the changed rasters
+    #for n steps, leaving off the starting scape value because that's
+    #already the existing scape so we don't want that added into our changes
     rast_series = np.vstack([np.linspace(start[i],
                             end[i], n_steps+1)[1:] for i in range(len(start))])
     #then reshape each timeslice into the dimensions of start_rast
@@ -369,7 +368,7 @@ def make_movement_surface_series(start_scape, end_rast, start_t,
     dummy_scape = deepcopy(start_scape)
     for t, rast in scape_series:
         #change the scape's raster
-        dummy_scape.rast = rast 
+        dummy_scape.rast = rast
         #then create a Movement_Surface using the copied Landscape_Stack
         #TODO: At the moment this doesn't have access to the move_surf
         #params set in the params file!  Should probably unpack those
@@ -394,16 +393,16 @@ def _get_move_surf_change_fns(pop, surf_series):
         ###############
 
 def _get_dem_change_fns(pop, kind, start=None, end=None, rate=None,
-    interval=None, size_target=None, n_cycles=None, size_range=None,
-    dist='uniform', min_size=None, max_size=None, timesteps=None,
+    interval=None, n_cycles=None, size_range=None,
+    distr='uniform', min_size=None, max_size=None, timesteps=None,
                                     sizes=None, increase_first=True):
     if kind == 'monotonic':
         fns = _get_monotonic_dem_change_fns(pop = pop, rate = rate,
-                    start = start, end = end, size_target = size_target)
+                    start = start, end = end)
     elif kind == 'stochastic':
         fns = _get_stochastic_dem_change_fns(pop = pop, start = start,
             end = end, interval = interval, size_range = size_range,
-                                                            dist = dist)
+                                                            distr = distr)
     elif kind == 'cyclical':
         fns = _get_cyclical_dem_change_fns(pop = pop, start = start,
             end = end, n_cycles = n_cycles, size_range = size_range,
@@ -434,40 +433,38 @@ def _make_dem_change_fns(pop, sizes, timesteps, K_mode='base'):
     return(change_fns)
 
 
-#NOTE: I haven't implemented the size_target argument yet!
-
 #will generate exponential change in the population by iteratively
 #multiplying a carrying-capacity (K) raster
-def _get_monotonic_dem_change_fns(pop, rate, start, end, size_target=None):
+def _get_monotonic_dem_change_fns(pop, rate, start, end):
     #get the timesteps for the demogprahic changes (subtract 1 from start
     #to set Python's 0th timestep as 1)
     #NOTE: setting start and end to the same value will create a
     #single-timestep change (e.g. a sudden bottleneck or rapid expansion)
-    timesteps = range(start, end) 
+    timesteps = range(start, end)
     sizes = [rate]*len(timesteps)
     change_fns = _make_dem_change_fns(pop, sizes, timesteps, K_mode='current')
     return(change_fns)
 
 
 #NOTE: should I provide an option for linear monotonic change (because I can
-#set pc.base_K and then multiply it by rate *t at each t of a period of change)?
+#set pc.base_K and then multiply it by rate*t at each t of a period of change)?
 
 
 #will create stochastic changes around a baseline carrying-capacity (K) raster
 def _get_stochastic_dem_change_fns(pop, size_range, start, end, interval,
-                                                        dist = 'uniform'):
+                                                        distr = 'uniform'):
     start_K = pop.K
     if interval is None:
         interval = 1
     timesteps = range(start, end, interval)
-    if dist == 'uniform':
+    if distr == 'uniform':
         sizes = r.uniform(*size_range, len(timesteps))
-    elif dist == 'normal':
+    elif distr == 'normal':
         mean = np.mean(size_range)
         sd = (size_range[1] - size_range[0])/6
         sizes = r.normal(loc = mean, scale = sd, size = len(timesteps))
     else:
-        raise ValueError(("Argument 'dist' must be a value among "
+        raise ValueError(("Argument 'distr' must be a value among "
                                             "['uniform', 'normal']"))
     #make size return to starting size
     sizes[-1] = 1
@@ -525,9 +522,9 @@ def _get_custom_dem_change_fns(pop, timesteps, sizes):
     return(change_fns)
 
 
-        ##################
-        #   parameters   #
-        ##################
+        #################
+        #   life_hist   #
+        #################
 
 def _make_parameter_change_fns(pop, parameter, timesteps, vals):
     fns = []
@@ -541,7 +538,7 @@ def _make_parameter_change_fns(pop, parameter, timesteps, vals):
 
 def _get_parameter_change_fns(pop, parameter, timesteps, vals):
     assert len(timesteps) == len(vals), ("For custom changes of the '%s' "
-      "paramter, timesteps and vals must be iterables of equal length.") % param
+     "paramter, timesteps and vals must be iterables of equal length.") % param
     change_fns = _make_parameter_change_fns(pop, param, timesteps, vals)
     return(change_fns)
 

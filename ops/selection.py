@@ -10,7 +10,7 @@ Module name:          ops.selection
 
 Module contains:
                       - Functions to implement fitness and selection
- 
+
 
 Author:               Drew Ellison Hart
 Email:                drew.hart@berkeley.edu
@@ -58,7 +58,8 @@ def _calc_phenotype(ind, gen_arch, trait):
 
 
 def _calc_fitness_one_trait(t, e, z, pop):
-    fit = 1 - t._get_phi(pop)*(abs((e[:,t.scape_num]**(not t.univ_adv)) - z[:,t.idx])**t.gamma)
+    fit = 1 - t._get_phi(pop)*(abs((
+                e[:,t.scape_num]**(not t.univ_adv)) - z[:,t.idx])**t.gamma)
     return(fit)
 
 
@@ -73,20 +74,25 @@ def _calc_fitness_traits(pop, trait_num = None):
     z = pop._get_z()
     #create lambda function with current e, z, and pop objects
     calc_fitness_lambda = lambda t: _calc_fitness_one_trait(t, e, z, pop)
-    #map the calc_sngl_trait_fitness function to all traits, then calculate overall fitness as product of
+    #map the calc_sngl_trait_fitness function to all traits, then
+    #calculate overall fitness as product of
     #fitness for each trait
     fit = np.stack(list(map(calc_fitness_lambda, traits))).prod(axis = 0)
-    #for polygenic traits, loci with very large effect sizes can generate fitnesses less than 0; correct for this
+    #for polygenic traits, loci with very large effect sizes can 
+    #generate fitnesses less than 0; correct for this
     fit = np.clip(fit, a_min = 0.001, a_max = None)
     return(fit)
 
 
 def _calc_fitness_deleterious_mutations(pop):
-    #create an np.array that has individuals in rows and their diploid genotypes for each of
-    #the deleterious loci in the cols (0, 1, or 2, to facilitate the fitness math, because s values
+    #create an np.array that has individuals in rows and their
+    #diploid genotypes for each of the deleterious loci in the cols
+    #(0, 1, or 2, to facilitate the fitness math, because s values
     #(i.e. selection coefficients) are expressed per allele)
-    deletome = np.sum(np.stack([ind.genome[[*pop.gen_arch.delet_loci.keys()],:] for ind in pop.values()]), axis = 2)
-    fit = 1 - np.multiply(deletome, np.array([*pop.gen_arch.delet_loci.values()]))
+    deletome = np.sum(np.stack([ind.genome[[*pop.gen_arch.delet_loci.keys(
+                                    )],:] for ind in pop.values()]), axis = 2)
+    fit = 1 - np.multiply(deletome, np.array(
+                                        [*pop.gen_arch.delet_loci.values()]))
     fit = fit.prod(axis = 1)
     return(fit)
 
@@ -96,35 +102,29 @@ def _calc_fitness_deleterious_mutations(pop):
 def _calc_fitness(pop, trait_num=None):
     #set a default w array
     w = np.array([1]*len(pop))
-
     #get trait-related fitness, if traits
     if (pop.gen_arch.traits is not None
         and len(pop.gen_arch.traits) > 0):
         w = w * _calc_fitness_traits(pop, trait_num = trait_num)
-
     #if fitness is not supposed to be calculated for a specific trait, and if 
     #population has deleterious mutations, then get the fitnesses related to 
     #the deleterious traits (i.e. operationalize background selection)
     if (trait_num is None and
         len(pop.gen_arch.delet_loci) > 0):
             w = w * _calc_fitness_deleterious_mutations(pop)
-
     return w
 
 
-#Get the vector of mortalities (probabilies of death) for a given density-dependent Pr(death) at a cell, the
-#environmental value(s) at that cell, the phenotype(s) of the trait(s) for the individuals found there, and the selection
-#coefficient(s) on the trait(s)
-def _calc_prob_death(pop, d)
-
+#Get the vector of mortalities (probabilies of death) for a 
+#given density-dependent Pr(death) at a cell, the environmental value(s)
+#at that cell, the phenotype(s) of the trait(s) for the individuals found
+#there, and the selection coefficient(s) on the trait(s)
+def _calc_prob_death(pop, d):
     #get the fitness values
     w = _calc_fitness(pop)
-
     #[death_probs.update({i: 1-(1-d[i])*w}) for i, w in W.items()];
     death_probs = 1-(1-d)*w
-
-    assert (death_probs > 0).all() and (death_probs < 1).all(), 'Some fitness values outside the 0-to-1 range.'
-
-    #return
+    assert (death_probs > 0).all() and (death_probs < 1).all(), ("Some "
+                                "fitness values outside the 0-to-1 range.")
     return(death_probs)
 

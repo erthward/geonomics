@@ -1,7 +1,0 @@
-- how to create internal cross-referncing between sections?
-
-- how to embed references to papers?
-
-- change Land and Scape to Landscape and Layer, if I change that in the package
-
-- should "2d Numpy array" instead by "2d `numpy.ndarray`"?

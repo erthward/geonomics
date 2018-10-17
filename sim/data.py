@@ -7,11 +7,12 @@
 
 Module name:              sim/data
 
-Module contents:          - definition of the DataCollector class (which gathers
-                            and organizes the parameters for how and when to sample data,
-                            and does the sampling)
+Module contents:          - definition of the DataCollector class (which
+                            gathers and organizes the parameters for how
+                            and when to sample data, and does the sampling)
                           - definition of functions for sampling individuals
-                            according to the contents of the params['model']['data'] section
+                            according to the contents of the
+                            params['model']['data'] section
                           - definition of data formatting functions
 
 
@@ -170,8 +171,8 @@ class _DataCollector:
         #NOTE: added to a separate attribute because this is written per
         #timestep, not per population within timestep
         self.rast_format = None
-        if sampling_params.include_land
-            and 'geo_rast_format' in format_params.keys():
+        if (sampling_params.include_land
+            and 'geo_rast_format' in format_params.keys()):
             self.rast_format = format_params.geo_rast_format
 
     #method to set self.next_t
@@ -182,8 +183,8 @@ class _DataCollector:
         #timestep, so set self.next_t to None
         except StopIteration:
             assert self.next_t == self.T -1, ("Model._set_next_t() threw a "
-            "StopIteration error, but the current value of Model.next_t is not "
-            "the final timestep (instead, it is %i).\n\n") % self.next_t
+            "StopIteration error, but the current value of Model.next_t is "
+            "not the final timestep (instead, it is %i).\n\n") % self.next_t
             self.next_t = None
 
     #method to create filenames for genetic and geographic datafiles
@@ -191,7 +192,7 @@ class _DataCollector:
         filenames = []
         for att_name in ['gen_formats', 'geo_formats']:
             filenames.append(['mod-%s_it-%i_t-%i_pop-%s.%s' % (self.model_name,
-                iteration, self.next_t, pop_name, self.file_extension_dict[fmt])
+              iteration, self.next_t, pop_name, self.file_extension_dict[fmt])
                         for fmt in getattr(self, att_name)])
         return(filenames)
 
@@ -237,7 +238,8 @@ class _DataCollector:
                     #name will be written, below)
                     if len(sample) > 0:
 
-                        #save genetic data, if the pop has a genomic architeecture
+                        #save genetic data, if the pop has a
+                        #genomic architeecture
                         if pop.gen_arch is not None:
                             #for each genetic data format to be written
                             for n, data_format in enumerate(self.gen_formats):

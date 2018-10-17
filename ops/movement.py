@@ -8,7 +8,7 @@
 Module name:                movement
 
 Module contains:
-                            - function for simulating the movement of an 
+                            - function for simulating the movement of an
                               individual, according to input parameters
                             - associated functions
 
@@ -100,9 +100,10 @@ def _disperse(land, parent_centroid_x, parent_centroid_y, dispersal_distr_mu,
     within_landscape = False
     while within_landscape == False:
 
-        #NOTE: For now, dispersal random and equally probable in all directions,
-        #but I would love to operationalize an environmental layer that can be 
-        #used here just like it is used in movement (for e.g. wind dispersal)
+        #NOTE: For now, dispersal random and equally probable in
+        #all directions, but I would love to operationalize an 
+        #environmental layer that can be used here just like it
+        #is used in movement (for e.g. wind dispersal)
         direction = r_vonmises(mu_dir, kappa_dir)
         distance = wald(dispersal_distr_mu, dispersal_distr_sigma,
                                                     size = len(old_x))
@@ -111,8 +112,8 @@ def _disperse(land, parent_centroid_x, parent_centroid_y, dispersal_distr_mu,
 
         offspring_x = parent_centroid_x + np.cos(direction)*distance
         offspring_y = parent_centroid_y + np.sin(direction)*distance
-        offspring_x = np.clip(offspring_x, a_min = 0, a_max = land.dim[1]-0.001)
-        offspring_y = np.clip(offspring_y, a_min = 0, a_max = land.dim[1]-0.001)
+        offspring_x = np.clip(offspring_x, a_min =0, a_max = land.dim[1]-0.001)
+        offspring_y = np.clip(offspring_y, a_min =0, a_max = land.dim[1]-0.001)
         within_landscape = (offspring_x > 0
                             and offspring_x < land.dim[0]) and (offspring_y > 0
                                                 and offspring_y < land.dim[1])

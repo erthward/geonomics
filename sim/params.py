@@ -75,6 +75,7 @@ PARAMS = '''#%s
 
 
 params = {
+###############################################################################
 
 ##############
 #### LAND ####
@@ -85,18 +86,14 @@ params = {
     #### main ####
     ##############
         'main': {
+            #dimensions of the Landscape
             'dim':                      (20,20),
-                #x- and y-dimensionality of landscape
+            #resolution of the Landscape
             'res':                      (1,1),
-                #landscape resolution in x and y dimensions (for crosswalking with real-world
-                #distances; defaults to meaningless (1,1), will be reset if GIS rasters are read in
+            #upper-left corner of the Landscape
             'ulc':                      (0,0),
-                #upper-left corner of the landscape; defaults to meaningless (0,0), can be set
-                #to alternative values for crosswalking with real-world data, and will be
-                #reset if GIS rasters are read in
+            #projection of the Landscape
             'prj':                      None,
-                #projection of the landscape; only applicable if layers are to
-                #be read in from a raster file; defaults to None
             }, # <END> 'main'
 
     ################
@@ -113,6 +110,9 @@ params = {
             } # <END> 'scapes'
 
         }, # <END> 'land'
+
+
+###############################################################################
 
 ###################
 #### COMMUNITY ####
@@ -131,19 +131,18 @@ params = {
 
         }, # <END> 'comm'
 
+
+###############################################################################
+
 ###############
 #### MODEL ####
 ###############
     'model': {
         'time': {
-            #parameters to control the number of burn-in and main timesteps to
-            #run for each iterations
+            #total Model runtime (in timesteps)
             'T':            100,
-                #total model runtime (in timesteps)
+            #min burn-in runtime (in timesteps)
             'burn_T':       30
-                #minimum burn-in runtime (in timesteps; this is a mininimum because
-                    #burn-in will run for at least this long but until
-                    #stationarity detected, which will likely be longer)
             }, # <END> 'timesteps'
 %s
 %s
@@ -162,113 +161,97 @@ params = {
     #%s = scape_change_params,
     #%i = scape_num,
 SCAPE_PARAMS = '''
+            #scape name (SCAPE NAMES MUST BE UNIQUE!)
             %s: {
-                #scape name; each scape must be give a unique string or numeric
-                #(e.g. 0, 0.1, 'scape0', '1994', 'mean_T'); default to serial
-                #integers from 0
 
-        ############################
-        #### scape num. %i: init ####
-        ############################
+        #######################################
+        #### scape num. %i: init parameters ####
+        #######################################
 
+                #initiating parameters for this scape
                 'init': {
-                    #initiating parameters for this scape
 %s
-                    } # <END> 'init'
+                    }, # <END> 'init'
 %s
                 }, # <END> scape num. %i
 '''
 
 #the block of random-scape parameters
 RAND_SCAPE_PARAMS = '''
-                    'rand': {
-                        #parameters for making a random scape (interpolated
-                        #from randomly located random values)
+                    #parameters for a 'random'-type Scape
+                    'random': {
+                        #number of random points
                         'n_pts':                        500,
-                            #number of random coordinates to be used in generating random landscapes
-                                #(only needed if rand == True)
-                        'interp_method':                'cubic'
-                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
-                        },
+                        #interpolation method {'linear', 'cubic', 'nearest'}
+                        'interp_method':                'cubic',
+
+                        }, # <END> 'random'
 '''
 
 #the block of defined-scape parameters
 DEFINED_SCAPE_PARAMS = '''
+                    #parameters for a 'defined'-type Scape
                     'defined': {
-                        #parameters for making a defined scape (interpolated
-                        #from a provided set of valued points)
+                        #point coordinates
                         'pts':                    None,
-                            #coords of points to use to interpolate defined scape (provided as
-                                #a nx2 Numpy array, where n matches the number of points in
-                                #the scape_pt_vals array, to be used as the points
-                                #to be interpolated; only needed if rand == False)
-                        'vals':                      None,
-                            #point values to use to interpolate defined landscape layers (a 1xn Numpy array,
-                                #where n matches the number of points in scape_pt_coords arrays;
-                                #only needed if rand == False)
-                        'interp_method':                None
-                            # interpolation method (valid: 'linear', 'cubic', 'nearest')
-                        },
+                        #point values
+                        'vals':                   None,
+                        #interpolation method ('linear', 'cubic', or 'nearest')
+                        'interp_method':          'cubic',
+
+                        }, # <END> 'defined'
 '''
 
 #the block of file-scape parameters
 FILE_SCAPE_PARAMS = '''
+                    #parameters for a 'file'-type Scape
                     'file': {
-                        #parameters for making a scape from a file (read in
-                        #from a GIS raster file or a numpy txt array file)
+                        #</path/to/file>.<ext>
                         'filepath':                     '/PATH/TO/FILE.EXT',
-                            #filepath to read into this scape
-                        'scale_min_val':                -1.37,
-                            #minimum values to use for rescaling the raster (will be
-                                #rescaled to 0<=x<=1); NOTE: this may be different than the actual minimum
-                                #value in the raster, especially if raster will be changing to a future raster
-                                #with values outside the range of this one
-                        'scale_max_val':                19.11
-                            #maxmimum input value against to which to rescale the raster (will be rescaled to 0<=x<=1)
-                        },
+                        #minimum value to use to rescale the Scape to [0,1]
+                        'scale_min_val':                None,
+                        #maximum value to use to rescale the Scape to [0,1]
+                        'scale_max_val':                None,
+
+                        }, # <END> 'file'
 '''
 
 #the block of nlmpy-scape parameters
 NLMPY_SCAPE_PARAMS = '''
+                    #parameters for an 'nlmpy'-type Scape
                     'nlmpy': {
-                        #parameters for making an nlmpy scape (using any nlmpy
-                        #function for which valid arguments are provided)
-                        #NOTE: all other parameters in this dictionary will be
-                        #unpacked as arguments to the nlmpy function chosen;
-                        #thus, all necessary and only valid arguments must be
-                        #provided or a general error will be thrown
+                        #nlmpy function to use the create this Scape
                         'function':                 'mpd',
-                            #filepath to read into this scape
+                        #number of rows (MUST EQUAL LAND DIMENSION y!)
                         'nRow':                     20,
-                            #number of rows (must agree with land dimensions)
+                        #number of cols (MUST EQUAL LAND DIMENSION x!)
                         'nCol':                     20,
-                            #number of columns (must agree with land
-                            #dimensions)
+                        #level of spatial autocorrelation in element values
                         'h':                        1,
-                            #"controls the level of spatial autocorrelation
-                            #in element values"
-                        },
+
+                        }, # <END> 'nlmpy'
 '''
 
 #the block of scape-change parameters
 #STRING SLOTS:
     #%i = scape_num,
 SCAPE_CHANGE_PARAMS = '''
-        ##############################
-        #### scape num. %i: change ####
-        ##############################
+            #########################################
+            #### scape num. %i: change parameters ####
+            #########################################
 
+                #land-change event for this Scape
                 'change': {
-                    #land-change events for this scape
+                    #end raster for event (DIM MUST EQUAL DIM OF LAND!)
                     'end_rast':         np.zeros((20,20)),
-                        #scape to be set as the endpoint of the land-change event
+                    #starting timestep of event
                     'start_t':          1500,
-                        #timestep on which to start the land-change event
+                    #ending timestep of event
                     'end_t':            2000,
-                        #timestep on which to end the land-change event
+                    #number of stepwise changes in event
                     'n_steps':          10
-                        #number of stepwise changes to make between t_start and t_end
-                        },
+
+                }, # <END> 'change'
 '''
 
 #block of population params
@@ -282,78 +265,56 @@ SCAPE_CHANGE_PARAMS = '''
     #%s = change_params,
     #%i = pop_num,
 POP_PARAMS = '''
+            #pop name (POP NAMES MUST BE UNIQUE!)
             %s  :   {
-                #pop name; each pop must get a unique numeric or string name
-                #(e.g. 0, 0.1, 'pop0', 'south', 'C_fasciata'); default to
-                #serial integers from 0
 
-            ##########################
-            #### pop num. %i: init ####
-            ##########################
+            #####################################
+            #### pop num. %i: init parameters ####
+            #####################################
 
                 'init': {
+                    #starting population size
                     'N':                200,
-                        #starting population size
-                    'K_scape_num':      0,
-                        #the scape_num of the raster to use as the carrying-capacity raster (K)
-                    'K_fact':           2
-                        #the factor to multiply the K raster by in order to generate pop.K
+                    #carrying-capacity Scape name
+                    'K_scape':          'scape_0',
                     }, # <END> 'init'
 
-            ############################
-            #### pop num. %i: mating ####
-            ############################
+            #######################################
+            #### pop num. %i: mating parameters ####
+            #######################################
 
                 'mating'    : {
-                    'repro_age':            0,
-                        #age at sexual maturity (int or float for non-sexual species, tuple or list
-                            #of two ints/floats for sexual species; set to 'None' to not make this
-                            #an age-structured species
-                    'max_age':              5,
-                        #age beyond which all individuals will automatically die; default to None
-                    'sex':                  False,
-                        #is this a sexual species?
-                    'sex_ratio':            1/1,
-                        #ratio of males to females
-                    #NOTE: I CAN PROBABLY GET RID OF THIS PARAMETER...
-                    'distweighted_birth':  False,
-                        #should the probability of birth be weighted by the distance between
-                            #individuals in a pair?
-                    'R':                    0.5,
-                        #pop intrinsic growth rate
-                    'b':                    0.2,
-                        #population intrinsic birth rate (implemented as the probability
-                            #that an identified potential mating pair successfully mates);
-                            #NOTE: this may later need to be re-implemented to allow for spatial
-                            #variation in intrinsic rate (e.g. expression as a raster) and/or for
-                            #density-dependent births as well as deaths
-                    'n_births_distr_lambda':      4,
-                        #expected value of offspring for a successful mating pair (used as the lambda value in a Poisson distribution)
-                    'mating_radius':        1
-                        #radius of mate-searching area
+                    #age(s) at sexual maturity (if tuple, female first)
+                    'repro_age':                0,
+                    #maximum age
+                    'max_age':                  2,
+                    #whether to assign sexes
+                    'sex':                      False,
+                    #ratio of males to females
+                    'sex_ratio':                1/1,
+                    #whether P(birth) should be weighted by parental dist
+                    'distweighted_birth':       False,
+                    #pop intrinsic growth rate
+                    'R':                        0.5,
+                    #pop intrinsic birth rate (MUST BE 0<=b<=1)
+                    'b':                        0.2,
+                    #expectation of distr of n offspring per mating pair
+                    'n_births_distr_lambda':    1,
+                    #radius of mate-search area
+                    'mating_radius':            1
                     }, # <END> 'mating'
 
-            ###############################
-            #### pop num. %i: mortality ####
-            ###############################
+            ##########################################
+            #### pop num. %i: mortality parameters ####
+            ##########################################
 
                 'mortality'     : {
-                    'n_deaths_distr_sigma':           0.2,
-                        #std for the normal distribution used to choose the r.v. of deaths
-                            #per timestep (mean of this distribution is the overshoot,
-                            #as calculated from pop.size and pop.census())
-                    'dens_dependent_fitness':   True,
-                        #should fitness be density dependent? (note: helps to avoid subpopulation 'clumping')
-                    'dens_grid_window_width':   None,
-                        #with window-width used for the Density_Grid_Stack that calculates pop density
-                            #(if set to None, defaults to the closest factor of the larger landscape
-                            #dimension to 1/10th of that dimension)
-                            #NOTE: will eventually default to an approximation of Wright's genetic neighborhood
-                            #distance, based on the population's movement/dispersal parameters
+                    #min P(death) (MUST BE 0<=d_min<=1)
                     'd_min':                     0.01,
-                        #minimum neutral (i.e. non-selection driven) probability of death
-                    'd_max':                    0.90,
-                        #maximum neutral probability of death
+                    #max P(death) (MUST BE 0<=d_max<=1)
+                    'd_max':                    0.99,
+                    #width of window used to estimate local pop density
+                    'density_grid_window_width':   None,
                     }, # <END> 'mortality'
 %s
 %s
@@ -366,25 +327,23 @@ POP_PARAMS = '''
     #%i = pop_num,
     #%s = move_surf_params,
 MOVE_PARAMS = '''
-            ##############################
-            #### pop num. %i: movement ####
-            ##############################
+            #########################################
+            #### pop num. %i: movement parameters ####
+            #########################################
 
                 'movement': {
-                   'move':          True,
-                        #is this a mobile species?
-                    'direction_distr_mu':     0,
-                        #mu for von mises distribution defining movement directions
+                    #mode of distr of movement direction
+                    'direction_distr_mu':     1,
+                    #concentration of distr of movement direction
                     'direction_distr_kappa':  0,
-                        #kappa for von mises distribution
+                    #mean of distr of movement distance
                     'distance_distr_mu':      0.5,
-                        #mean movement-distance (lognormal distribution)
+                    #variance of distr of movement distance
                     'distance_distr_sigma':   0.5,
-                        #sd of movement distance
+                    #mean of distr of dispersal distance
                     'dispersal_distr_mu':     0.5,
-                        #mean dispersal distance (lognormal distribution)
+                    #variance of distr of dispersal distance
                     'dispersal_distr_sigma':  0.5,
-                        #sd of dispersal distance
 %s
                     },    # <END> 'movement'
 '''
@@ -392,29 +351,14 @@ MOVE_PARAMS = '''
 #block for movement-surface params
 MOVE_SURF_PARAMS = '''
                     'move_surf'     : {
-                        'scape_num':                    0,
-                            #scape number to use as the movement surface
-                        'mixture':                      True,
-                            #should this MovementSurface be composed of
-                            #VonMises mixture distribution approximations (i.e.
-                            #True) or of unimodal VonMises distribution
-                            #approximations (i.e. False); the latter is better
-                            #for landscapes characterized by gradual gradients
-                            #(i.e. where many cells' neighborhoods have very
-                            #little variation between the highest- and lowest
-                            #permeability values, so that mixture distributions
-                            #would be largely uniform in all directions);
-                            #defaults to True
-                        'approximation_len':            7500,
-                            #length of the lookup vectors (numpy arrays) used to approximate
-                                #the VonMises mixture distributions at each cell
-                        'vm_distr_kappa':                     None,
-                            #kappa value to use in the von Mises mixture distributions (KDEs)
-                                #underlying resistance surface movement
-                        'gauss_KDE_bw':                 None
-                            #bandwidth value to use in the Gaussian KDEs that are created to
-                                #approximate the von Mises mixture distributions (KDEs)
-                                #underlying resistance surface movement
+                        #move-surf Scape name
+                        'scape':                0,
+                        #whether to use mixture distrs
+                        'mixture':              True,
+                        #number of draws to use to approximate distrs
+                        'approximation_len':    7500,
+                        #concentration of distrs
+                        'vm_distr_kappa':       12,
                         } # <END> 'move_surf'
 '''
 
@@ -424,62 +368,41 @@ MOVE_SURF_PARAMS = '''
     #%s = gen_arch_file_string
     #%s = traits_params,
 GENOME_PARAMS = '''
-            ##############################
-            #### pop num. %i: gen_arch ####
-            ##############################
+            #########################################
+            #### pop num. %i: gen_arch parameters ####
+            #########################################
 
                 'gen_arch': {
-                    'L':                        10,
-                        #total number of loci
-                    'l_c':                      [10],
-                        #chromosome lengths [sum(l_c) == L is enforced]
+                    #num of loci in genome
+                    'L':                        1000,
+                    #num of chromosomes in genome
+                    'l_c':                      [250, 750],
+                    #/path/to/file.csv defining custom genomic arch
                     'gen_arch_file':            %s,
-                        #if not None, should point to a file stipulating a
-                            #custom genomic architecture (i.e. a CSV with loci
-                            #as rows and 'locus_num', 'p', 'dom', 'r', 'trait',
-                            #and 'alpha' as columns, such as is created by
-                            #main.make_params_file, when the custom_gen_arch
-                            #arugment is True)
+                    #genome-wide per-base neutral mut rate (0 to disable)
                     'mu_neut':                  1e-9,
-                        #genome-wide neutral mutation rate, per base per generation
-                            #(set to 0 to disable neutral mutation)
+                    #genome-wide per-base deleterious mut rate (0 to disable)
                     'mu_delet':                 0,
-                        #genome-wide deleterious mutation rate, per base per generation
-                            #(set to 0 to disable deleterious mutation)
-                            #NOTE: these mutations will fall outside the loci involved in any traits
-                            #being simulated, and are simply treated as universally deleterious, with the same
-                            #negative influence on fitness regardless of spatial context
+                    #whether to save mutation logs
                     'mut_log':                  False,
-                        #whether or not to store a mutation log; if true, will be saved as mut_log.txt
-                        #within each iteration's subdirectory
+                    #shape of distr of deleterious effect sizes
                     'delet_s_distr_shape':      0.2,
+                    #scale of distr of deleterious effect sizes
                     'delet_s_distr_scale':      0.2,
-                        #mean and standard deviation of the gamma distribution
-                        #parameterizig the per-allele effect size of 
-                        #deleterious mutations (std = 0 will fix all mutations
-                        #for the mean value)
+                    #alpha of distr of recomb rates
                     'r_distr_alpha':            0.5,
-                        #alpha for beta distribution of linkage values
-                            #NOTE: alpha = 14.999e9, beta = 15e9 has a VERY sharp peak on D = 0.4998333,
-                            #with no values exceeding equalling or exceeding 0.5 in 10e6 draws in R
+                    #beta of distr of recomb rates
                     'r_distr_beta':             15e9,
-                        #beta for beta distribution of linkage values
+                    #whether loci should be dominant (for allele '1')
                     'dom':                      False,
-                        #whether or not loci should be dominant 
-                        #(if True, the 1 allele will be dominant at each locus;
-                        #if False, all loci will be codominant; defaults to False)
-                    'pleiotropy':               True,
-                        #allow pleiotropy? (i.e. allow same locus to affect value of more than one trait?) false
+                    #whether to allow pleiotropy
+                    'pleiotropy':               False,
+                    #custom fn for drawing recomb rates
                     'recomb_rate_custom_fn':    None,
-                        #if provided, must be a function that returns a single recombination rate value (r) when called
+                    #number of recomb paths to hold in memory
                     'recomb_lookup_array_size': int(1e3),
-                        #the size of the recombination-path lookup array to have
-                            #read in at one time (needs to be comfortably larger than the anticipated totaly number of
-                            #recombination paths to be drawn at once, i.e. than 2 times the anticipated most number of births at once)
+                    #total number of recomb paths to simulate
                     'n_recomb_paths':           int(1e4),
-                        #the total number of distinct recombination paths to
-                            #generate at the outset, to approximate truly free recombination at the recombination rates specified
-                            #by the genomic architecture (hence the larger the value the less the likelihood of mis-approximation artifacts)
 %s
                     }, # <END> 'gen_arch'
 '''
@@ -501,38 +424,30 @@ TRAITS_PARAMS = '''
 #block for trait params
 #STRING SLOTS:
     #%i = trait_num,
-    #%i = trait_num,
+    #%s = trait_num,
     #%i = trait_num,
 TRAIT_PARAMS = '''
-                        %i: {
-                            #an arbitrary number of traits can be provided for a genomic_architecture object
-                            'name':             'trait%i',
-                                #each trait must be a given a string name (e.g. 'trait0', 'scape0_trait', 'min_temp_trait', 'bill_length')
-                            'scape_num':        0,
-                                #the landscape numbers to be used for selection on this trait
-                            'phi':              0.1,
-                                #phenotypic selection coefficient for this trait; can either be a
-                                    #numeric value, or can be an array of spatialized selection
-                                    #values (with dimensions equal to land.dims)
-                            'n_loci':           1,
-                                #number of loci to be assigned to this trait
-                            'mu':      1e-9,
-                                #mutation rate for this trait (if set to 0, or if genome['mutation'] == False, no mutation will occur)
-                                    #(set to 0 to disable mutation for this trait)
-                            'alpha_distr_mu' : 0,
-                            'alpha_distr_sigma' : 0.5,
-                                #the mean and standard deviation of the normal distribution used to choose effect size
-                                    #(alpha) for this trait's loci
-                                    #NOTE: for mean = 0, std = 0.5, one average locus is enough to generate both optimum
-                                    #genotypes; for mean = 0, std = 0.025, 10 loci should generate both (on average, but depends of course on
-                                    #the random sample of alphas drawn); and so on linearly
-                            'gamma':            1,
-                                #gamma exponent for the trait's fitness function (determines the shape of the
-                                #curve of fitness as a function of absolute difference between an individual's
-                                #phenotype and its environment; <1 = concave up, 1 = linear, >1 = convex up)
-                            'univ_adv':      False
-                                #is the trait universally advantageous? if so, phenotypes closer to 1 will
-                                    #have higher fitness at all locations on the land
+                        ###########################
+                        ####trait %i parameters ####
+                        ###########################
+                        #trait name (TRAIT NAMES MUST BE UNIQUE!)
+                        %s: {
+                            #trait-selection Scape name
+                            'scape':                'scape_0',
+                            #polygenic selection coefficient
+                            'phi':                  0.05,
+                            #number of loci underlying trait
+                            'n_loci':               10,
+                            #mutation rate at loci underlying trait
+                            'mu':                   1e-9,
+                            #mean of distr of effect sizes
+                            'alpha_distr_mu' :      0,
+                            #variance of distr of effect size
+                            'alpha_distr_sigma':    0.5,
+                            #curvature of fitness function
+                            'gamma':                1,
+                            #whether the trait is universally advantageous
+                            'univ_adv':             False
                             }, # <END> trait %i
 '''
 
@@ -541,9 +456,9 @@ TRAIT_PARAMS = '''
     #%i = pop_num,
     #%s = dem_and-or_param_change_params_str,
 POP_CHANGE_PARAMS = '''
-            ############################
-            #### pop num. %i: change ####
-            ############################
+            #######################################
+            #### pop num. %i: change parameters ####
+            #######################################
 
                 'change': {
 %s
@@ -554,15 +469,10 @@ POP_CHANGE_PARAMS = '''
 #STRING SLOTS:
     #%s = multi_dem_change_event_params,
 POP_DEM_CHANGE_EVENTS_PARAMS = '''
+                    #################################
+                    # demographic change parameters #
+                    #################################
                     'dem': {
-                        #(all population sizes are expressed relative to the carrying-capacity
-                            #raster at the time that the demographic change event begins (i.e. as
-                            #factors by which pop.K will be multiplied; thus they can also be thought
-                            #of as multipliers of the expected total population size (i.e. pop.K.sum())
-                            #and they will generally change the average population size by that multiple,
-                            #but of course not precisely, because population size is stochastic. If you
-                            #seek exact control of total population size, please seek a simpler simulation
-                            #model, perhaps a coalescent one.
 %s
 
 
@@ -580,46 +490,43 @@ POP_DEM_CHANGE_EVENTS_PARAMS = '''
     #%i = dem_change_event_num,
 POP_DEM_CHANGE_EVENT_PARAMS = '''
                         %i: {
-                            #can add an arbitrary number of demographic change events for
-                                #each population, each event identified by a distinct integer
-                            'kind':             'custom',
-                                #what kind of change event? ('monotonic', 'stochastic', 'cyclical', 'custom')
-                            'start':            200,
-                                #at which timestep should the event start?
-                            'end':              1200,
-                                #at which timestep should the event end?
-                            'rate':             .98,
-                                #at what rate should the population change each timestep
-                                    #(positive for growth, negative for reduction)
-                            'interval':         11,
-                                #at what interval should stochastic change take place (None defaults to every timestep)
-                            'dist':             'uniform',
-                                #what distribution to draw stochastic population sizes from (valid values: 'uniform', 'normal')
-                            'size_target':      None,
-                                #what is the target size of the demographic change event (defaults to None)
+                            #kind of event {'monotonic', 'stochastic',
+                                                #'cyclical', 'custom'}
+                            'kind':             'monotonic',
+                            #starting timestep
+                            'start':            50,
+                            #ending timestep
+                            'end':              100,
+                            #rate, for monotonic change
+                            'rate':             1.02,
+                            #interval of changes, for stochastic change
+                            'interval':         1,
+                            #distr, for stochastic change {'uniform', 'normal'}
+                            'distr':            'uniform',
+                            #num cycles, for cyclical change
                             'n_cycles':         20,
-                                #how many cycles of cyclical change should occur during the event?
-                            'size_range':       (0.5, 1.5), 
-                                #an iterable of the min and max population sizes to be used in stochastic or cyclical changes
-                            'timesteps':        [6,8],
-                                #at which timesteps should custom changes take place?
-                            'sizes':            [2,0.25],
-                                #what custom size-changes should occur at the above-stipulated timesteps?
+                            #min & max sizes, for stochastic & cyclical change
+                            'size_range':       (0.5, 1.5),
+                            #list of timesteps, for custom change
+                            'timesteps':        [],
+                            #list of sizes, for custom change
+                            'sizes':            [],
                             } # <END> event %i
- 
+
 '''
 
 #block for a series of life-history parameter-change events
 POP_PARAM_CHANGE_PARAMS = '''
-                    'parameters': {
-                        #other (i.e. non-demographic) population change events
+                    ##################################
+                    # life-history change parameters #
+                    ##################################
+                    'life_hist': {
+                        #life-history parameter to change
                         'b': {
-                            #the life-history parameters to be changed should be the keys in this dict,
-                                #and values are dictionaries containing a list of timesteps
-                                #at which to changed those parameters and a list of values
-                                #to which to change them
-                            'timesteps':        None,
-                            'vals':           None
+                            #list of timesteps
+                            'timesteps':        [],
+                            #list of values
+                            'vals':             [],
                                 }
 
 
@@ -628,123 +535,117 @@ POP_PARAM_CHANGE_PARAMS = '''
     #### additional events.
 
 
-                            }, # <END> 'parameters'
+                            }, # <END> 'life_hist'
 '''
 
 #block for model ranom-number-generator seed params
 SEED_PARAMS = '''
+        ###########################
+        # seed-setting parameters #
+        ###########################
         'seed': {
-            #parameters to control whether and how to set the seed
-            'set':          True,
-                #set the seed? (for reproducibility)
-            'num':          94618
-                #value used to seed random number generators
+            #seed number
+            'num':          94720
             }, # <END> 'seed'
 '''
 
 #block for model iterations params
 ITS_PARAMS = '''
+        ###############################
+        #### iterations parameters ####
+        ###############################
         'its': {
-            #parameters to control how many iterations of the model to run,
-            #and whether or not to randomize the land and/or community
-            #objects in each model iteration
-            'n_its': 1,
-                #how many iterations of the model should be run?
+            #num iterations
+            'n_its': 3,
+            #whether to randomize land each iteration
             'rand_land':    False,
-                #randomize the land for each new iteration?
+            #whether to randomize community each iteration
             'rand_comm':    False,
-                #randomize the community for each new iteration?
-            'rand_burn':  False,
-                #randomize the burn-in for each new iteration? (i.e. burn in
-                #each time, or burn in once at creation and then use the same
-                #burnt-in population for each iteration?)
+            #whether to burn in each iteration
+            'repeat_burn':  False,
             }, # <END> 'iterations'
 '''
 
 #block for model data-collection params
 DATA_PARAMS = '''
+        ####################################
+        #### data-collection parameters ####
+        ####################################
         'data': {
-            #dictionary defining the data to be collected, the sampling
-            #strategy to use, the timesteps for collection, and other parameters
             'sampling': {
-                #args to be unpacked into sampling function (see docstring
-                    #of sample_data function in data module for details)
+                #sampling scheme {'all', 'random', 'point', 'transect'}
                 'scheme':               'random',
-                    #valid: 'all', 'random', 'point', or 'transect'
-                'n':                    50,
-                    #size of samples to be collected (in number of individuals)
+                #sample size at each point, for point & transect sampling
+                'n':                    250,
+                #coords of collection points, for point sampling
                 'points':               None,
-                    #the x,y points at which data should be sampled (expressed
-                        #as a list or tuple of length-2 lists or 2-tuples)
+                #coords of transect endpoints, for transect sampling
                 'transect_endpoints':   None,
-                    #endpoints of the transect to be sampled (only needed if
-                        #scheme is 'transect), expressed as a pair of
-                        #ordered x,y pairs (in tuples or lists)
+                #num points along transect, for transect sampling
                 'n_transect_points':    None,
-                    #the number of evenly spaced points along the transect
-                    #at which to sample (only needed if scheme is 'transect')
+                #collection radius around points, for point & transect sampling
                 'radius':               None,
-                    #radius around sampling points within which to sample
-                    #individuals (only needed is scheme is 'point' or
-                    #'transect')
+                #when to collect data
                 'when':                 None,
-                    #can be an integer (in which case data will be collected every
-                    #that many timesteps, plus at the end) or a list of specific
-                    #timesteps; a value of 0 or None will default to a single
-                    #data-collection step after the model has run
+                #whether to save current Scapes when data is collected
                 'include_land':         False,
-                    #if True, will save the Land object each time other data is saved
-                    #(probably only useful if land is changing in some way not manually coded by the user)
+                #whether to include fixed loci in VCF files
                 'include_fixed_sites':  False,
-                    #if True, and if genetic data is to be formatted as VCFs,
-                        #the VCFs will contain fixed sites, not just variants
-                        #(defaults to False)
                 },
             'format': {
+                #format for genetic data {'vcf', 'fasta'}
                 'gen_format':           ['vcf', 'fasta'],
-                    #format to use for saving genetic data;
-                        #currently valid values: 'vcf', 'fasta',
-                        #or a list containing both, if both
-                        #should be written
+                #format for vector geodata {'csv', 'shapefile', 'geojson'}
                 'geo_vect_format':      'csv',
-                    #format to use for saving geographic points;
-                        #currently valid values: 'csv', 'shapefile', 'geojson'
+                #format for raster geodata {'geotiff', 'txt'}
                 'geo_rast_format':      'geotiff',
-                    #format to use for saving landscape rasters (which will
-                        #only be saved if the 'include_land' parameter in the
-                        #sampling subdict is True);
-                        #currently valid values: 'geotiff', 'txt'
                 },
             }, #<END> 'data'
 '''
 
 #block for model stats-calculation params
 STATS_PARAMS = '''
+        #####################################
+        #### stats-collection parameters ####
+        #####################################
         'stats': {
-            #dictionary defining which stats to be calculated, and parameters for
-                #their calculation (including frequency, in timesteps, of collection)
-                #valid stats include:
-                    # 'Nt'  : population census size
-                    # 'het' : heterozygosity
-                    # 'maf' : minor allele frequency
-                    # 'ld'  : linkage disequilibrium
-                    # 'mean_fit' : mean fitness
-            'Nt':       {'calc': True,
-                         'freq': 2,
-                        },
-            'het':      {'calc': True,
-                         'freq': 1,
-                         'mean': False,
-                        },
-            'maf':      {'calc': True,
-                         'freq': 5,
-                        },
-            'ld':       {'calc': True,
-                         'freq': 10,
-                        },
-            'mean_fit': {'calc': True,
-                         'freq': 3,
-                        },
+            #pop size at time t
+            'Nt': {
+                #whether to calculate
+                'calc':     True,
+                #calculation frequency (in timesteps)
+                'freq':     1,
+                },
+            #heterozgosity
+            'het': {
+                #whether to calculate
+                'calc':     True,
+                #calculation frequency (in timesteps)
+                'freq':     5,
+                #whether to calculate as pop mean
+                'mean': False,
+                },
+            #minor allele freq
+            'maf': {
+                #whether to calculate
+                'calc':     True,
+                #calculation frequency (in timesteps)
+                'freq':     5,
+                },
+            #mean fitness
+            'mean_fit': {
+                #whether to calculate
+                'calc':     True,
+                #calculation frequency (in timesteps)
+                'freq':     5,
+                },
+            #linkage disequilibirum
+            'ld': {
+                #whether to calculate
+                'calc':     False,
+                #calculation frequency (in timesteps)
+                'freq':     100,
+                },
             }, # <END> 'stats'
 '''
 
@@ -798,7 +699,7 @@ class ParametersDict(_DynAttrDict):
 ######################################
 
 #function to create the scapes-params section of a params file
-def make_scapes_params_str(scapes=1):
+def _make_scapes_params_str(scapes=1):
     #create an empty list, to be filled with one params string per scape
     scapes_params_list = []
     #if scapes is an integer, create a string of identical parameter sections
@@ -813,8 +714,8 @@ def make_scapes_params_str(scapes=1):
             #add no change params (i.e. a zero-length string)
             change_params = ''
             #create the scape_params str
-            scape_params_str = SCAPE_PARAMS % (str(i), i, type_params,
-                                                change_params, i)
+            scape_params_str = SCAPE_PARAMS % ('scape_' + str(i), i,
+                                               type_params, change_params, i)
             #append it to the list
             scapes_params_list.append(scape_params_str)
 
@@ -863,8 +764,8 @@ def make_scapes_params_str(scapes=1):
             if change_params != '':
                 change_params = change_params % i
             #create the scape_params str for this Scape
-            scape_params_str = SCAPE_PARAMS % (str(i), i, type_params,
-                                                change_params, i)
+            scape_params_str = SCAPE_PARAMS % ('scape_' + str(i), i,
+                                               type_params, change_params, i)
             #append it to the list
             scapes_params_list.append(scape_params_str)
 
@@ -893,8 +794,8 @@ def _make_populations_params_str(populations=1):
             #add no change params
             change_params = ''
             #create the pop_params str
-            pop_params_str = POP_PARAMS % (str(i), i, i, i, move_params,
-                                           genome_params, change_params, i)
+            pop_params_str = POP_PARAMS % ('pop_' + str(i), i, i, i,
+                            move_params, genome_params, change_params, i)
             #append to the pops_params_list
             pops_params_list.append(pop_params_str)
 
@@ -904,8 +805,8 @@ def _make_populations_params_str(populations=1):
         #create an empty list, to which any populations who should have custom
         #gen-arch files created will be appended
         #assert that each item in the list is a dict
-        assert False not in [type(item) is dict for item in populations], ("If "
-            "the 'populations' argument is a list then it must contain only "
+        assert False not in [type(item) is dict for item in populations], ("If"
+            " the 'populations' argument is a list then it must contain only "
             "objects of type dict.")
         #create a lookup dict for the params strings for different pop params
         #sections
@@ -927,10 +828,11 @@ def _make_populations_params_str(populations=1):
             int_args = ['n_traits', 'demographic_change']
             for arg in bool_args:
                 if arg in [*pop_dict]:
-                    assert type(pop_dict[arg]) is bool, ("The '%s' key in each "
-                        "Population's dictionary must contain a boolean value. "
-                        "But dict number %i in the 'population' argument "
-                        "contains a non-boolean value.") % (arg, i)
+                    assert type(pop_dict[arg]) is bool, ("The '%s' key in "
+                        "each Population's dictionary must contain a "
+                        "boolean value. But dict number %i in the "
+                        "'population' argument contains a non-boolean "
+                                                        "value.") % (arg, i)
             for arg in int_args:
                 if arg in [*pop_dict]:
                     assert type(pop_dict[arg]) is int, ("The '%s' "
@@ -946,9 +848,9 @@ def _make_populations_params_str(populations=1):
                                     "integer.") % (int_arg_str_fmt_dict[arg])
             #get the movement surf and movement params, if required
             #NOTE: check if pop_dict['movement'] is True, so that poorly
-            #entered arguments (i.e. 'movement': False, 'movement_surface':True)
-            #don't inadvertently try to format a zero-length string with the
-            #movement-surface params str
+            #entered arguments (i.e. 'movement': False,
+            #'movement_surface':True) don't inadvertently try to format 
+            #a zero-length string with the movement-surface params str
             if 'movement' in [*pop_dict] and pop_dict['movement']:
                 if 'movement_surface' in [*pop_dict]:
                     ms_arg = pop_dict['movement_surface']
@@ -982,7 +884,8 @@ def _make_populations_params_str(populations=1):
                     #to the number of traits it should have
                     trait_params_list = []
                     for trt in range(pop_dict['n_traits']):
-                        trait_params = TRAIT_PARAMS % (trt, trt, trt)
+                        trait_params = TRAIT_PARAMS % (trt,
+                                                    'trait_' + str(trt), trt)
                         trait_params_list.append(trait_params)
                     #get the traits_params_str
                     traits_params = TRAITS_PARAMS
@@ -992,7 +895,8 @@ def _make_populations_params_str(populations=1):
                 else:
                     traits_params = ''
                 genome_params = params_str_dict['genome'][pop_dict['genomes']]
-                genome_params = genome_params % (i, gen_arch_file_str, traits_params)
+                genome_params = genome_params % (i, gen_arch_file_str,
+                                                                traits_params)
             #or get empty str
             else:
                 genome_params = ''
@@ -1009,7 +913,8 @@ def _make_populations_params_str(populations=1):
                     dem_change_event_params_list = []
                     for n in range(pop_dict['demographic_change']):
                         params_str = params_str_dict['dem_change'][True]
-                        dem_change_event_params_list.append(params_str % (n, n))
+                        dem_change_event_params_list.append(
+                                                        params_str % (n, n))
                     events_series = ''.join(dem_change_event_params_list)
                     events_params_str = params_str_dict['dem_events'][True]
                     events_params_str = events_params_str % events_series
@@ -1019,15 +924,15 @@ def _make_populations_params_str(populations=1):
                     param_change_arg = pop_dict['parameter_change']
                     param_change_params_str = (
                     params_str_dict['param_change'][param_change_arg])
-                    events_params_str=events_params_str+ param_change_params_str
+                    events_params_str=events_params_str+param_change_params_str
                 change_params = params_str_dict['change'][True]
                 change_params = change_params % (i, events_params_str)
             #or get empty str
             else:
                 change_params = ''
             #get the overall pop params str for this pop
-            pop_params_str = POP_PARAMS % (str(i), i, i, i, move_params,
-                                           genome_params, change_params, i)
+            pop_params_str = POP_PARAMS % ('pop_' + str(i), i, i, i,
+                            move_params, genome_params, change_params, i)
             #append to the pops_params_list
             pops_params_list.append(pop_params_str)
     #join the whole list into one str
@@ -1036,7 +941,7 @@ def _make_populations_params_str(populations=1):
 
 
 #function to create the data-, stats-, and seed-params sections of params file
-#TODO: Add option for the argument to make_parameters_file() to list the stats 
+#TODO: Add option for the argument to _make_parameters_file() to list the stats 
 #to be calculated??
 def _make_model_params_strs(section, arg=None):
     #assert the value of arg is valid
@@ -1058,11 +963,11 @@ def _make_model_params_strs(section, arg=None):
 def _make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
                          stats=None, seed=None):
     '''<see docstring in gnx.make_parameters_file>'''
-    scapes_params_str = make_scapes_params_str(scapes = scapes)
-    pops_params_str= make_populations_params_str(populations = populations)
-    data_params_str = make_model_params_strs('data', arg = data)
-    stats_params_str = make_model_params_strs('stats', arg = stats)
-    seed_params_str = make_model_params_strs('seed', arg = seed)
+    scapes_params_str = _make_scapes_params_str(scapes = scapes)
+    pops_params_str= _make_populations_params_str(populations = populations)
+    data_params_str = _make_model_params_strs('data', arg = data)
+    stats_params_str = _make_model_params_strs('stats', arg = stats)
+    seed_params_str = _make_model_params_strs('seed', arg = seed)
     #TODO DECIDE IF THIS SHOULD BE MADE OPTIONAL IN SOME WAY
     its_params_str = ITS_PARAMS
     #get the filepath
@@ -1137,7 +1042,7 @@ def _read(filepath):
 
 #create a an empty custom gen-arch file for a population 
 #(will be called if 'genomes':'custom' is a k:v pair in a 
-#population dict fed into make_paramters_file's 'populations' argument
+#population dict fed into _make_paramters_file's 'populations' argument
 def _make_custom_genomic_architecture_file(filepath):
     #create the dataframe for the CSV file
     cols = ('locus', 'p', 'dom', 'r', 'trait', 'alpha')

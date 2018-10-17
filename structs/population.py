@@ -431,7 +431,8 @@ class Population(OD):
 
     #method to set the population's spatial.DensityGridStack attribute
     def _set_dens_grids(self, widow_width = None):
-        self._dens_grids = spt.DensityGridStack(land = self.land, window_width = self.dens_grid_window_width)
+        self._dens_grids = spt.DensityGridStack(land = self.land,
+                                window_width = self.density_grid_window_width)
 
 
     # method to get individs' environment values
@@ -727,19 +728,19 @@ class Population(OD):
     #method for plotting the movement surface (in various formats)
     def plot_movement_surface(self, style, x, y, zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
         """
-        The 'style' argument can take the following values: 
-            'hist': 
-                Plot a classic histogram approximating the Von Mises 
+        The 'style' argument can take the following values:
+            'hist':
+                Plot a classic histogram approximating the Von Mises
                 distribution at the cell indicated by position x,y.
             'circle_hist':
                 Plot a circular histogram approximating the Von Mises
                 distribution at the cell indicated by position x,y;
-                plot will be drawn inside the chosen cell on the 
+                plot will be drawn inside the chosen cell on the
                 MovementSurface raster.
             'circle_draws':
-                Plot points on the unit circle, whose locations were 
-                drawn from the Von Mises distribution at the cell indicated 
-                by position x,y; plot will be drawn inside the chosen cell 
+                Plot points on the unit circle, whose locations were
+                drawn from the Von Mises distribution at the cell indicated
+                by position x,y; plot will be drawn inside the chosen cell
                 on the MovementSurface raster.
             'vect':
                 Inside each cell of the MovementSurface raster, plot the mean
@@ -782,14 +783,18 @@ class Population(OD):
                     # create lists of the x and y (i.e. cos and sin) components of each angle in the sample
                     x_vects = np.cos(samp)
                     y_vects = np.sin(samp)
-                    # define the dx and dy distances used to the position the arrowhead
-                    # (divide by sqrt(2)/2, to scale to the size of half of the diagonal of a cell)
+                    # define the dx and dy distances used to the
+                    #position the arrowhead (divide by sqrt(2)/2, to 
+                    #scale to the size of half of the diagonal of a cell)
                     dx = np.mean(x_vects) / np.sqrt(2)
                     dy = np.mean(y_vects) / np.sqrt(2)
                     # now plot the arrow
-                    plt.arrow(x, y, dx, dy, alpha=0.75, color='black', head_width=0.24, head_length=0.32)
+                    plt.arrow(x, y, dx, dy, alpha=0.75, color='black',
+                                            head_width=0.24, head_length=0.32)
 
-                # call the internally defined function as a nested list comprehension for all raster cells, which I believe should do its best to vectorize the whole operation
+                # call the internally defined function as a nested list
+                #comprehension for all raster cells, which I believe
+                #should do its best to vectorize the whole operation
                 [[plot_one_cell(j, i) for i in range(
                     self._move_surf.surf.shape[0])] for j in range(
                                     self._move_surf.surf.shape[1])]
@@ -806,10 +811,12 @@ class Population(OD):
         #for each sex
         for sex_val in [*col_dict]:
             #get a counter
-            counts = C([ind.age for ind in self.values() if ind.sex == int(sex_val < 0)])
+            counts = C([ind.age for ind in self.values(
+                                            ) if ind.sex == int(sex_val < 0)])
             #grab the ages from it
             ages = [*counts]
-            #and grab the counts from it (multiplying by -1 for females, to set one sex on either side of x=0, for the pyramid)
+            #and grab the counts from it (multiplying by -1 for females,
+            #to set one sex on either side of x=0, for the pyramid)
             counts = [sex_val*count for count in counts.values()]
             #update the max_count var
             max_count = max(max(counts), max_count)
@@ -824,14 +831,16 @@ class Population(OD):
         locs, labels = plt.xticks()
         plt.xticks(locs, [str(int(loc)) for loc in np.abs(locs)])
         #add sex symbols as title
-        plt.suptitle('\u2642%s\u2640' % ''.join([' ' for _ in range(20)]), size = 30)
+        plt.suptitle('\u2642%s\u2640' % ''.join([' ' for _ in range(20)]),
+                                                                    size = 30)
         #show it
         plt.show()
 
     def plot_pop_growth(self):
         T = range(len(self.Nt))
         x0 = self.Nt[0] / self.K.sum()
-        plt.plot(T, [demography._calc_logistic_soln(x0, self.R, t) * self.K.sum() for t in T], color='red')
+        plt.plot(T, [demography._calc_logistic_soln(x0, self.R,
+                                t) * self.K.sum() for t in T], color='red')
         plt.plot(T, self.Nt, color='blue')
         plt.xlabel('t')
         plt.ylabel('N(t)')
@@ -865,8 +874,11 @@ class Population(OD):
 
 #function that uses the params.pops[<pop_num>].init.['K_<>'] parameters 
 #to make the initial carrying-capacity raster
-def _make_K(pop, land, K_scape_num, K_fact):
-    K_rast = land[K_scape_num].rast * K_fact
+def _make_K(pop, land, K_scape_num):
+    K_scape = [rast for rast in land.values() if scape.name == K_scape]
+    assert len(K_scape) == 1, ("The K_scape parameter should point to"
+        "a single Scape, but instead %i Scapes were found.") % len(K_scape)
+    K_rast = K_scape[0].rast
     return K_rast
 
 
@@ -878,7 +890,8 @@ def _make_population(land, name, pop_params, burn=False):
     if 'gen_arch' in pop_params.keys():
         g_params = pop_params.gen_arch
         #make genomic_architecture
-        gen_arch = genome._make_genomic_architecture(pop_params = pop_params)
+        gen_arch = genome._make_genomic_architecture(pop_params = pop_params,
+                                                                land = land)
     else:
         gen_arch = None
 
@@ -887,15 +900,18 @@ def _make_population(land, name, pop_params, burn=False):
     #create an ordered dictionary to hold the individuals, and fill it up
     inds = OD()
     for idx in range(N):
-        # use individual.create_individual to simulate individuals and add them to the population
-        ind = individual._make_individual(idx = idx, offspring = False, dim = land.dim, genomic_architecture = gen_arch, burn = burn)
+        # use individual.create_individual to simulate individuals
+        #and add them to the population
+        ind = individual._make_individual(idx = idx, offspring = False,
+                dim = land.dim, genomic_architecture = gen_arch, burn = burn)
         inds[idx] = ind
 
     #create the population from those individuals
-    pop = Population(name = name, inds = inds, land = land, pop_params = pop_params, genomic_architecture=gen_arch)
+    pop = Population(name = name, inds = inds, land = land,
+                     pop_params = pop_params, genomic_architecture=gen_arch)
 
     #use the remaining init_params to set the carrying-capacity raster (K)
-    pop._set_K(make_K(pop, land, **init_params))
+    pop._set_K(_make_K(pop, land, **init_params))
     #set initial habitat values
     pop._set_habitat()
     #set initial coords and cells
@@ -914,22 +930,30 @@ def _make_population(land, name, pop_params, burn=False):
     if 'movement' in [*pop_params] and pop_params.movement.move:
         if 'move_surf' in pop_params.movement.keys():
             ms_params = deepcopy(pop_params.movement.move_surf)
-            #grab the scape number for the scape that the movement surface is to be based on
-            move_surf_scape_num = ms_params.pop('scape_num')
-            #then grab the move_surf scape's raster
-            move_rast = land[move_surf_scape_num].rast
-            #make the movement surface and set it as the pop's move_surf attribute
-            pop._move_surf = spt.MovementSurface(land[move_surf_scape_num], **ms_params)
+            #grab the scape number for the scape that the 
+            #movement surface is to be based on
+            move_surf_scape = ms_params.pop('scape_num')
+            move_surf_scape_num = [k for k,v in land.items(
+                                            ) if v.name == move_surf_scape]
+            assert len(move_surf_scape_num) == 1, ("Expected to find only a "
+                "single Scape with the name provided for the _MovementSurf, "
+                "but instead found %i") % len(move_surf_scape_num)
+            move_surf_scape_num = move_surf_scape_num[0]
+            #make the movement surface and set it as the pop's
+            #move_surf attribute
+            pop._move_surf = spt.MovementSurface(land[move_surf_scape_num],
+                                                                **ms_params)
 
-    #if this population has changes parameterized, create a PopulationChanger object for it
+    #if this population has changes parameterized, create a
+    #PopulationChanger object for it
     if 'change' in pop_params.keys():
         #grab the change params
         ch_params = pop_params.change
         #make PopulationChanger and set it to the pop's changer attribute
         if land._changer is not None:
-            pop._changer = change.PopulationChanger(pop, ch_params, land = land)
+            pop._changer = change.PopulationChanger(pop, ch_params, land= land)
         else:
-            pop._changer = change.PopulationChanger(pop, ch_params, land = None)
+            pop._changer = change.PopulationChanger(pop, ch_params, land= None)
 
     return pop
 

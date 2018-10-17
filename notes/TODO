@@ -1,4 +1,10 @@
 - knock out these secondary to-do items
+        
+        *** DEBUG MODEL AFTER MAKING MANY THINGS PRIVATE, AND OTHER MINOR CHANGES
+
+        5 I say that a Scape can have any number of change events, but the make_parameters_file only takes a bool argument for 'change', not an integer; decide and make
+          this consistent
+                - the 'end_rast' parameter also should be able to take a filepath, not just a numpy array (which seems almost useless)
 
         5 I think I should rename Land and Scape to Landscape and Layer respectively (pain in the ass, but that seems to map onto GIS/geographic terminology better,
           and can be shortened to the two nice acronyms 'scp' and 'lyr' for attributes, etc)        
@@ -14,17 +20,14 @@
 
         5 pick through all the notes in demography.py and decide which are taken care of, which need to stay, which I still need to take care of, etc. 
 
-        5 finish draft docs:
-          - typing up the Data Structures and Operations sections of the draft docs.txt
-          - toy around with Sphinx and ReST, to make sure that my docs work for that (or adjust formatting if not)
-          - fix comments for all of the params file, then figure out best way to copy/paste the full params file into the docs draft
-          - then added longer-form version where the comment next to each parameter is explained in detail
-          - write docstrings for all the key classes
-          - add the docstrings to the docs draft (maybe write a Py script to do this, so that I can rerun it to recompile the docs whenever the docstrings are updated?)
-          - make some simple flow diagram for now
+        5 get rid of the whole separate seed-params thing; just make 'seed' an additional param in the MODEL section, after T, burn_T, and if it is not None then seeds will be set!
 
-        3 make trait names also their dict-entry keys, rather than values inside their dicts (like pop and scape), then add the check of
-          of trait-name uniqueness for each pop to gnx.read_params()
+        5 for draft docs:
+          - write docstrings for remaining key classes
+          - make some simple flow diagram/schematic
+          - add images
+          - explain dist-parameters' name format somewhere
+          - need to explain that scapes/pops/traits have names, but are actually number-ordered in dicts? or can this just stay private to the model?
 
         5 decide what to do if someone instantiates a model that has no neutral loci (line 126 in genome.py currently throws an error)
 

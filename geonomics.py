@@ -241,7 +241,7 @@ def make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
 
     """
 
-    par.make_parameters_file(filepath = filepath, scapes = scapes,
+    par._make_parameters_file(filepath = filepath, scapes = scapes,
                                 populations = populations, data = data,
                                 stats = stats, seed = seed)
 
@@ -301,10 +301,11 @@ def read_parameters_file(filepath):
     scape_name_cts = C(scape_names)
     pop_name_cts = C(pop_names)
     #assert that each name is used only once
-    assert set([*scape_name_cts.values()]) == {1}, ("At least one of the Scape "
-        "names provided in the parameters file appears to be used more than "
-        "once. Violating names include: %s") % (';'.join([("'%s', used %i "
-            "times.") % (str(k), v) for k, v in scape_name_cts.items() if v>1]))
+    assert set([*scape_name_cts.values()]) == {1}, ("At least one of the "
+        "Scape names provided in the parameters file appears to be used more "
+        "than once. Violating names include: %s") % (';'.join([( "'%s', "
+        "used %i times.") % (str(k),
+                            v) for k, v in scape_name_cts.items() if v>1]))
     assert set([*pop_name_cts.values()]) == {1}, ("At least one of the "
         "Population names provided in the parameters file appears to be used "
         "more than once. Violating names include: %s") % (';'.join([("'%s', "
@@ -405,24 +406,24 @@ def make_model(parameters=None):
             params_files = [f for f in os.listdir('.') if (
                 f.startswith('GEONOMICS_params_')
                 and os.path.splitext(f)[1] == '.py')]
-            assert len(params_files) == 1, ("The 'parameters' argument was not "
-                "provided, and it appears that the current working directory "
+            assert len(params_files) == 1, ("The 'parameters' argument was not"
+                " provided, and it appears that the current working directory "
                 "contains more than one 'GEONOMICS_params_<...>.py' file. "
-                "Please run again, providing a valid value for the 'parameters'"
-                " argument.")
+                "Please run again, providing a valid value for the "
+                "'parameters' argument.")
             parameters = params_files[0]
             print(("\n\nUsing the following file, in the current working "
-                "directory to create the Model object:\n\t%s\n\n") % parameters)
+              "directory to create the Model object:\n\t%s\n\n") % parameters)
         except Exception as e:
-            raise ValueError(("The 'parameters' argument was not provided, and "
-                "Geonomics could not identify a single "
+            raise ValueError(("The 'parameters' argument was not provided, "
+                "and Geonomics could not identify a single "
                 "'GEONOMICS_params_<...>.py' file in the current working "
                 "directory from which to create the Model object. The "
                 "following error was thrown: %s") % e)
 
     assert ( (type(parameters) is str and os.path.isfile(parameters))
-        or str(type(parameters)) is "<class 'sim.params.ParametersDict'>"),("If"
-        " the 'parameters' argument is provided, its value must be either a "
+        or str(type(parameters)) is "<class 'sim.params.ParametersDict'>"),(
+        "If the 'parameters' argument is provided, its value must be either a "
         "string pointing to a valid Geonomics parameters file or an object of "
         "the ParametersDict class. If it is not provided, the current working "
         "directory must contain a single 'GEONOMICS_params_<...>.py' file "
@@ -472,8 +473,8 @@ def make_land(params):
 
 
 #wrapper around genome.make_genomic_architecture
-def make_genomic_architecture(params):
-    gen_arch = genome.make_genomic_architecture(params)
+def make_genomic_architecture(params, land):
+    gen_arch = genome.make_genomic_architecture(params, land)
     return gen_arch
 
 
@@ -486,10 +487,10 @@ def make_genomic_architecture(params):
 def make_individual(idx, genomic_architecture=None, new_genome=None, dim=None,
     parental_centerpoint=None, sex=None, age=0, burn=False):
     assert (genomic_architecture is not None
-            or new_genome is not None), ("Either a new genome must be provided "
-    "(i.e. 'new_genome' must not be None) or a genomic architecture from which "
-    "to draw a new genome must be provided (i.e. 'genomic_architecture' must "
-    "not be None.")
+        or new_genome is not None), ("Either a new genome must be provided "
+        "(i.e. 'new_genome' must not be None) or a genomic architecture from "
+        "which to draw a new genome must be provided (i.e. "
+        "'genomic_architecture' must not be None.")
     assert (parental_centerpoint is not None
             or dim is not None), ("Either a landscape-dimension tuple must be "
             "provided (i.e. 'dim' must not be None) or a parental centerpoint "

@@ -8,8 +8,9 @@ Module name:          sim.model
 
 
 Module contains:
-                      - classes and functions to facilitate building a Geonomics model and
-                      running multiple iterations of it, including across multiple cores
+                      - classes and functions to facilitate building a
+                        Geonomics model and running multiple iterations
+                        of it, including across multiple cores
 
 
 Author:               Drew Ellison Hart
@@ -69,8 +70,7 @@ class Model:
         #set the seed, if required
         self.seed = None
         if 'seed' in [*m_params]:
-            if m_params.seed.set:
-                self.seed = m_params.seed.num
+            self.seed = m_params.seed.num
             self._set_seeds()
 
         #get minimum burn-in runtime (in timesteps)
@@ -119,7 +119,8 @@ class Model:
         #reset to False as soon as the genomes are reassigned
         self.reassign_genomes = None
 
-        #and set the orig_land and orig_comm objects, if rand_land and rand_comm are False
+        #and set the orig_land and orig_comm objects, if rand_land and
+        #rand_comm are False
         self.rand_land = m_params.its.rand_land
         self.rand_comm = m_params.its.rand_comm
         self.orig_land = None
@@ -128,15 +129,16 @@ class Model:
             self.orig_land = deepcopy(self.land)
         if not self.rand_comm:
             self.orig_comm = deepcopy(self.comm)
-        #and set the self.rand_burn attribute (if this is False and
+        #and set the self.repeat_burn attribute (if this is False and
         #self.rand_comm is False, self.orig_comm will be replaced with the
         #first iteration's community as soon as it has exited burn-in and had
         #its genomes reassigned)
-        self.rand_burn = m_params.its.rand_burn
+        self.repeat_burn = m_params.its.repeat_burn
 
         #set the function queues to None (they will be reset later if self.run 
         #is called, but if self.walk is called then the burn_fn_queue's None
-        #status will be checked to determine whether or not to run self._reset()
+        #status will be checked to determine whether
+        #or not to run self._reset()
         self.burn_fn_queue = None
         self.main_fn_queue = None
 
@@ -156,23 +158,23 @@ class Model:
         main_t_str = main_t_str % (_sr_.get_spacing(main_t_str), self.T)
         #get strings for land and comm
         comm_str = "Populations:"
-        pop_strs = ["%s %i: '%s'" % (_sr_.get_spacing(""), 
+        pop_strs = ["%s %i: '%s'" % (_sr_.get_spacing(""),
             i, pop.name) for i, pop in self.comm.items()]
         pop_strs[0] = comm_str + pop_strs[0][len(comm_str):]
         comm_str = '\n'.join(pop_strs)
         land_str = "Scapes:"
-        scape_strs = ["%s %i: '%s'" % (_sr_.get_spacing(""), 
+        scape_strs = ["%s %i: '%s'" % (_sr_.get_spacing(""),
             i, scape.name) for i, scape in self.land.items()]
         scape_strs[0] = land_str + scape_strs[0][len(land_str):]
         land_str = '\n'.join(scape_strs)
         #get string for the stats to be collected
         if self.stats_collector is not None:
             st = self.stats_collector.stats
-            stat_strs= [*set([str(s) for k in st.keys() for s in st[k].keys()])]
+            stat_strs=[*set([str(s) for k in st.keys() for s in st[k].keys()])]
         else:
             stat_strs = [""]
         stats_str = "Stats collected:%s{%s}"
-        stats_str = stats_str % (_sr_.get_spacing(stats_str), 
+        stats_str = stats_str % (_sr_.get_spacing(stats_str),
                                                     ', '.join(stat_strs))
         #get strings for the geo and gen data to be collected
         if self.data_collector is not None:
@@ -185,21 +187,21 @@ class Model:
             geo_data_strs = [""]
             gen_data_strs = [""]
         geo_data_str = "Geo-data collected:%s{%s}"
-        geo_data_str = geo_data_str % (_sr_.get_spacing(geo_data_str), 
+        geo_data_str = geo_data_str % (_sr_.get_spacing(geo_data_str),
                                         ', '.join(geo_data_strs))
         gen_data_str = "Gen-data collected:%s{%s}"
-        gen_data_str = gen_data_str % (_sr_.get_spacing(gen_data_str), 
+        gen_data_str = gen_data_str % (_sr_.get_spacing(gen_data_str),
                                         ', '.join(gen_data_strs))
         #join all the strings together
-        tot_str = '\n'.join([type_str, name_str, land_str, comm_str, 
-            n_its_str, burn_t_str, main_t_str, geo_data_str, gen_data_str, 
+        tot_str = '\n'.join([type_str, name_str, land_str, comm_str,
+            n_its_str, burn_t_str, main_t_str, geo_data_str, gen_data_str,
                                                             stats_str])
         return tot_str
 
     def __repr__(self):
         repr_str = self.__str__()
         return repr_str
-        
+
 
     #####################
     ### OTHER METHODS ###
@@ -209,7 +211,8 @@ class Model:
         #private methods#
         #################
 
-    #private method for determining the width of the terminal on the current system
+    #private method for determining the width of
+    #the terminal on the current system
     def _set_term_width(self):
         self.__term_width__ = int(os.popen('stty size', 'r').read().split()[1])
 
@@ -239,7 +242,8 @@ class Model:
 
     #method to set the self.reassign_genomes attribute 
     def _set_reassign_genomes(self):
-        self.reassign_genomes = np.any([pop.gen_arch is not None for pop in self.comm.values()])
+        self.reassign_genomes = np.any(
+                    [pop.gen_arch is not None for pop in self.comm.values()])
 
     #method to set seed (will be run when Model object is first created, if
     #called for in params)
@@ -252,13 +256,16 @@ class Model:
         land = landscape._make_land(self.params)
         return(land)
 
-    #a method to reset the land as necessary (recopying or regeneratiing as necessary)
+    #a method to reset the land as necessary
+    #(recopying or regeneratiing as necessary)
     def _reset_land(self, rand_land=True):
-        #deepcopy the original land if necessary (else randomly generate new land)
+        #deepcopy the original land if necessary 
+        #(else randomly generate new land)
         if not rand_land:
             #verbose output
             if self._verbose:
-                print('Copying the original land for iteration %i...\n\n' % self.it)
+                print(('Copying the original land '
+                       'for iteration %i...\n\n') % self.it)
             #deepcopy the original land
             self.land = deepcopy(self.orig_land)
             #and reset the land.changer.changes, if needed (so that they
@@ -287,21 +294,24 @@ class Model:
         if not rand_comm:
             #verbose output
             if self._verbose:
-                print('Copying the original community for iteration %i...\n\n' % self.it)
+                print(('Copying the original community for '
+                                    'iteration %i...\n\n') % self.it)
             self.comm = deepcopy(self.orig_comm)
-            #and reset the pop.changer.changes objects for each pop, if needed (so that they
-            #point to the current populations, not previous ones with
-            #updated attribute values)
+            #and reset the pop.changer.changes objects for each pop,
+            #if needed (so that they point to the current populations,
+            #not previous ones with updated attribute values)
             for pop in self.comm.values():
                 if pop.changer is not None:
                     #verbose output
                     if self._verbose:
-                        print('Resetting the pop.changer.changes object for population " %s"...\n\n' % pop.name)
+                        print(('Resetting the pop.changer.changes '
+                            'object for population " %s"...\n\n') % pop.name)
                     pop.changer.set_changes(pop)
         else:
             #verbose ouput
             if self._verbose:
-                print('Creating new community for iteration %i...\n\n' % self.it)
+                print(('Creating new community for '
+                                    'iteration %i...\n\n') % self.it)
             self.comm = self._make_community()
 
 
@@ -329,18 +339,20 @@ class Model:
         self.stats_collector = self._make_stats_collector()
 
 
-    #method to reset all the model's objects (land, community, and associated) and attributes
-    def _reset(self, rand_land=None, rand_comm=None, rand_burn=None):
+    #method to reset all the model's objects
+    #(land, community, and associated) and attributes
+    def _reset(self, rand_land=None, rand_comm=None, repeat_burn=None):
         #default to the self.rand_<_> attributes, if not otherwise provided
         if rand_land is None:
             rand_land = self.rand_land
         if rand_comm is None:
             rand_comm = self.rand_comm
-        if rand_burn is None:
-            rand_burn = self.rand_burn
+        if repeat_burn is None:
+            repeat_burn = self.repeat_burn
 
-        #deepcopy the original land and comm if necessary (if told not to randomize
-        #land and not at the beginning of the initial iteration), else randomly generate new
+        #deepcopy the original land and comm if necessary
+        #(if told not to randomize land and not at the beginning
+        #of the initial iteration), else randomly generate new
         if not self.__never_run__:
             self._reset_land(rand_land)
             self._reset_community(rand_comm)
@@ -349,7 +361,7 @@ class Model:
 
         #reset the self.burn_t and self.t attributes to -1
         self._reset_t()
-        if rand_burn:
+        if repeat_burn:
             self._reset_burn_t()
 
         #reset the community and population t attributes
@@ -371,7 +383,7 @@ class Model:
             self._reset_stats_collector()
 
         #create new main fn queue (and burn fn queue, if needed)
-        if rand_burn or self.it <= 0:
+        if repeat_burn or self.it <= 0:
             #verbose output
             if self._verbose:
                 print('Creating the burn-in function queue...\n\n')
@@ -384,13 +396,16 @@ class Model:
 
     #method to create the simulation functionality, as a function queue 
     #NOTE: (creates the list of functions that will be run by
-    #self.run_burn_timestep or self.run_main_timestep, depending on burn argument)
-    #NOTE: because the queue is a list of functions, the user could add, remove, 
-    #change the order, or repeat functions within the list as desired
+    #self.run_burn_timestep or self.run_main_timestep,
+    #depending on burn argument)
+    #NOTE: because the queue is a list of functions,
+    #the user could add, remove, change the order, or repeat
+    #functions within the list as desired
     def _make_fn_queue(self, burn=False):
         queue = []
 
-        #append the methods to increment the timestep attributes (i.e. the timestep counters)
+        #append the methods to increment the timestep
+        #attributes (i.e. the timestep counters)
         if burn:
             queue.append(self._set_burn_t)
         if not burn:
@@ -411,7 +426,8 @@ class Model:
                 queue.append(pop.do_movement)
         #append the do_pop_dynamics methods
         #FIXME: Consider whether the order of these needs to be specified, or
-        #randomized, should people want to eventually simulate multiple, interacting populations
+        #randomized, should people want to eventually simulate
+        #multiple, interacting populations
         for pop in self.comm.values():
             queue.append(pop.do_pop_dynamics)
 
@@ -450,19 +466,21 @@ class Model:
 
     #method to generate timestep_verbose_output
     def _print_timestep_info(self, mode):
-        verbose_msg = '%s:\t%i:%i\n' % (mode, self.it, [self.burn_t if mode == 'burn' else self.t][0])
+        verbose_msg = '%s:\t%i:%i\n' % (mode, self.it,
+                                [self.burn_t if mode == 'burn' else self.t][0])
         pops_submsgs = ''.join(['\tPOP: %s%sN=%i\t(births=%i\tdeaths=%i)\n' %
-                                    (pop.name,
-                                     ' ' * (30 - len(pop.name)),
-                                     pop.Nt[:].pop(),
-                                     pop.n_births[:].pop(),
-                                     pop.n_deaths[:].pop()) for pop in self.comm.values()])
+                        (pop.name,
+                        ' ' * (30 - len(pop.name)),
+                        pop.Nt[:].pop(),
+                        pop.n_births[:].pop(),
+                        pop.n_deaths[:].pop()) for pop in self.comm.values()])
         verbose_msg = verbose_msg + pops_submsgs
         print(verbose_msg)
         print('\t' + '.' * (self.__term_width__ - self.__tab_len__))
 
 
-    #method to run the burn-in or main function queue (as indicated by mode argument)
+    #method to run the burn-in or main function
+    #queue (as indicated by mode argument)
     def _do_timestep(self, mode):
         #do a burn-in step
         if mode == 'burn':
@@ -481,7 +499,8 @@ class Model:
                         if pop.gen_arch is not None:
                             #verbose output
                             if self._verbose:
-                                print('Assigning genomes for population "%s"...\n\n' % pop.name)
+                                print(('Assigning genomes for '
+                                    'population "%s"...\n\n') % pop.name)
                             genome.set_genomes(pop, self.burn_T, self.T)
                     #and then set the reassign_genomes attribute to False, so
                     #that they won'r get reassigned again during this iteration
@@ -501,11 +520,15 @@ class Model:
             if self._verbose:
                 self._print_timestep_info(mode)
 
-        #then check if any populations are extinct and return the correpsonding boolean
+        #then check if any populations are extinct and
+        #return the correpsonding boolean
         extinct = np.any([pop.extinct for pop in self.comm.values()])
         #verbose output
         if extinct and self._verbose:
-            print('XXXX     Population %s went extinct. Iteration %i aborting.\n\n' % (' & '.join(['"' + pop.name + '"' for pop in self.comm.values() if pop.extinct]), self.it))
+            print(('XXXX     Population %s went extinct. '
+                'Iteration %i aborting.\n\n') % (' & '.join(
+                ['"' + pop.name + '"' for pop in self.comm.values(
+                                                ) if pop.extinct]), self.it))
         return(extinct)
 
 
@@ -518,10 +541,11 @@ class Model:
             print('~' * self.__term_width__ + '\n\n')
             print('Setting up iteration %i...\n\n' % self.it)
 
-        #reset the model (including the burn-in, if self.rand_burn or if this is the first iteration) 
+        #reset the model (including the burn-in,
+        #if self.repeat_burn or if this is the first iteration) 
         self._reset(rand_land = self.rand_land,
                          rand_comm = self.rand_comm,
-                         rand_burn = self.rand_burn)
+                         repeat_burn = self.repeat_burn)
 
 
     #method for running the model's next iteration
@@ -530,8 +554,11 @@ class Model:
         #set the next iteration to be run
         self._set_next_iteration()
 
-        #loop over the burn-in timesteps running the burn-in queue (if copied pop isn't already burned in)
-        if self.rand_comm or (not self.rand_comm and self.rand_burn) or self.it == 0:
+        #loop over the burn-in timesteps running the burn-in
+        #queue (if copied pop isn't already burned in)
+        if (self.rand_comm
+            or (not self.rand_comm and self.repeat_burn)
+            or self.it == 0):
             #verbose output
             if self._verbose:
                 print('Running burn-in, iteration %i...\n\n' % self.it)
@@ -543,8 +570,9 @@ class Model:
                 if extinct:
                     break
 
-            #overwrite self.orig_comm with the burned-in community, if necessary
-            if not self.rand_comm and not self.rand_burn:
+            #overwrite self.orig_comm with the burned-in community,
+            #if necessary
+            if not self.rand_comm and not self.repeat_burn:
                 #verbose output
                 if self._verbose:
                     print('Saving burned-in community...\n\n')
@@ -607,7 +635,8 @@ class Model:
 
         """
 
-        #TODO: Add some handler for farming instances out to different nodes, if available?
+        #TODO: Add some handler for farming instances out to 
+        #different nodes, if available?
 
         #set the self._verbose flag
         self._verbose = verbose
@@ -699,8 +728,8 @@ class Model:
             If the user attempts to run the Model in 'main' mode before it has
             been burned in.
 
-    TODO: DOUBLE CHECK THAT IT STILL WRITE ALL DATA AND STATISTICS THAT WOULD  
-BE EXPECTED WHEN RUN WITH Model.walk.                                         
+    TODO: DOUBLE CHECK THAT IT STILL WRITE ALL DATA AND STATISTICS THAT WOULD
+BE EXPECTED WHEN RUN WITH Model.walk.
 
         Examples
         --------
@@ -741,7 +770,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                 if self._verbose:
                     print('Burn-in complete.\n\n')
                 break
-            #reset the mode, if mode is 'burn' and there is no mod.burn_fn_queue
+            #reset mode, if mode is 'burn' and there is no mod.burn_fn_queue
             if mode == 'burn' and self.burn_fn_queue is None:
                 #verbose output
                 if self._verbose:

@@ -41,7 +41,7 @@ def _calc_phenotype(ind, gen_arch, trait):
     #get the mean genotype array
     genotype = np.mean(ind.genome[trait.loci], axis = 1)
     #use dominance, if required (to save considerable compute time otherwise)
-    if gen_arch.use_dom:
+    if gen_arch._use_dom:
         #get the dominance values
         dom = gen_arch.dom[trait.loci]
         #update the genotype array by accounting for dominance at each locus
@@ -59,7 +59,7 @@ def _calc_phenotype(ind, gen_arch, trait):
 
 def _calc_fitness_one_trait(t, e, z, pop):
     fit = 1 - t._get_phi(pop)*(abs((
-                e[:,t.scape_num]**(not t.univ_adv)) - z[:,t.idx])**t.gamma)
+                e[:,t.lyr_num]**(not t.univ_adv)) - z[:,t.idx])**t.gamma)
     return(fit)
 
 

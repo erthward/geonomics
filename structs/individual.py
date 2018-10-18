@@ -41,20 +41,26 @@ import numpy.random as r
 class Individual:
     def __init__(self, idx, x, y, age=0, new_genome=None, sex=None):
         self.idx = idx
-        self.genome = new_genome             #individual's x-ploid genome
-        self.x = float(x)           #x coord
-        self.y = float(y)           #y coord
+        #individual's x-ploid genome
+        self.genome = new_genome
+        #x and y coords
+        self.x = float(x)
+        self.y = float(y)
+        #set individual's sex to that supplied, if supplied
         if sex:
-            self.sex = sex          #set individual's sex to that supplied, if supplied
+            self.sex = sex
+        #else, set it to a bernoulli r.v., p = 0.5;  0 --> female)
         else:
-            self.sex = r.binomial(1, 0.5) #else, set it to a bernoulli r.v., p = 0.5;  0 --> female)
-        self.age = age              #age
+            self.sex = r.binomial(1, 0.5)
+        self.age = age
         self.e = None
         self.z = []
         self.fit = None
 
-        assert type(self.x) == float and self.x >= 0, "invalid value for x: %s, %s" % (str(self.x), type(self.x))
-        assert type(self.y) == float and self.y >= 0, "invalid value for y: %s, %s" % (str(self.y), type(self.y))
+        assert type(self.x) == float and self.x >= 0, ("invalid value "
+                                "for x: %s, %s") % (str(self.x), type(self.x))
+        assert type(self.y) == float and self.y >= 0, ("invalid value "
+                                "for y: %s, %s") % (str(self.y), type(self.y))
         assert self.sex == None or self.sex in [0,1]
         assert type(self.age) == int
 
@@ -96,18 +102,20 @@ class Individual:
 # -----------------------------------#
 ######################################
 
-def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None, new_genome = None, sex=None, parental_centerpoint = None, age=0, burn=False):
+def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
+        new_genome = None, sex=None, parental_centerpoint = None,
+        age=0, burn=False):
 
     """Create a new individual.
 
-        If it is to have a genome, that can be created from either an instance of
-        genome.Genomic_Architecture (i.e. for a newly simulated individual) or
-        both the genomic architecture and a numpy.ndarray genome (e.g. for a new
-        offspring).
+        If it is to have a genome, that can be created from either
+        an instance of genome.Genomic_Architecture (i.e. for
+        a newly simulated individual) or both the genomic architecture
+        and a numpy.ndarray genome (e.g. for a new offspring).
 
-        It will be assigned x- and y-coordinates, using the dim argument (i.e. the
-        landscape dimensionality) if it is a newly simulated individual rather
-        than offspring.
+        It will be assigned x- and y-coordinates, using the
+        dim argument (i.e. the landscape dimensionality)
+        if it is a newly simulated individual rather than offspring.
 
         It will be assigned a random sex, unless sex is provided.
 
@@ -115,19 +123,15 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None, n
         """
     #set the x,y location of the individual
     if offspring:
-        #TODO: probably remove these assert statements; don't see any reason I need to keep running them, so it's just unnecessary comuptation during the model
-        #assert parental_centerpoint != None, "parental_centerpoint needed to create new offspring"
-        #assert parental_centerpoint.__class__.__name__ in ['tuple', 'list'], "parental_centerpoint should be a tuple or a list"
-        #assert parental_centerpoint[0] >= 0 and parental_centerpoint[1] >= 0, "parental_centerpoint coordinates must be within landscape, but %s was provided" % str(parental_centerpoint)
         #get a starting position from the parental_centerpoint
         x,y = movement._disperse(parental_centerpoint)
     else:
         #randomly assign individual a valid starting location
         x,y = r.rand(2)*dim
         #clip to 0.01 under the dimensions, so that for landscapes even up to
-        #~10000 on a side (this is bigger than I expect most usres would want to run)
-        #np.float32 can't return a number round up to the dimension itself if
-        #an extremely high value is drawn
+        #~10000 on a side (this is bigger than I expect most usres would
+        #want to run) np.float32 can't return a number round up to
+        #the dimension itself if an extremely high value is drawn
         x = np.clip(x, 0, dim[0]-0.001)
         y = np.clip(y, 0, dim[0]-0.001)
 
@@ -144,8 +148,10 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None, n
 
     #set the sex, if necessary
     if sex is None:
-        #NOTE: For now sex randomly chosen at 50/50. Change if decide to implement sex chroms, or pop.sex_ratio
+        #NOTE: For now sex randomly chosen at 50/50. Change if
+        #decide to implement sex chroms, or pop.sex_ratio
         sex = r.binomial(1,0.5)
 
-    return Individual(idx = idx, x = x, y = y, age = age, new_genome = new_genome, sex = sex)
+    return Individual(idx = idx, x = x, y = y, age = age,
+                                        new_genome = new_genome, sex = sex)
 

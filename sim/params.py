@@ -44,7 +44,7 @@ import re
 
 #main text-block
 #STRING SLOTS:
-    #%s = scapes_params,
+    #%s = layers_params,
     #%s = pops_params,
     #%s = its_params,
     #%s = data_params,
@@ -77,10 +77,10 @@ PARAMS = '''#%s
 params = {
 ###############################################################################
 
-##############
-#### LAND ####
-##############
-    'land': {
+###################
+#### LANDSCAPE ####
+###################
+    'landscape': {
 
     ##############
     #### main ####
@@ -97,19 +97,19 @@ params = {
             }, # <END> 'main'
 
     ################
-    #### scapes ####
+    #### layers ####
     ################
-        'scapes': {
+        'layers': {
 %s
 
 
-    #### NOTE: Individual Scapes' sections can be copy-and-pasted (and
-    #### assigned distinct keys and names), to create additional Scapes.
+    #### NOTE: Individual Layers' sections can be copy-and-pasted (and
+    #### assigned distinct keys and names), to create additional Layers.
 
 
-            } # <END> 'scapes'
+            } # <END> 'layers'
 
-        }, # <END> 'land'
+        }, # <END> 'landscape'
 
 
 ###############################################################################
@@ -153,32 +153,32 @@ params = {
     } # <END> params
 '''
 
-#block for scape params
+#block for lyr params
 #STRING SLOTS: 
-    #%s = scape_name,
-    #%i = scape_num,
-    #%s = scape_type_params,
-    #%s = scape_change_params,
-    #%i = scape_num,
-SCAPE_PARAMS = '''
-            #scape name (SCAPE NAMES MUST BE UNIQUE!)
+    #%s = lyr_name,
+    #%i = lyr_num,
+    #%s = lyr_type_params,
+    #%s = lyr_change_params,
+    #%i = lyr_num,
+LYR_PARAMS = '''
+            #layer name (LAYER NAMES MUST BE UNIQUE!)
             %s: {
 
         #######################################
-        #### scape num. %i: init parameters ####
+        #### layer num. %i: init parameters ####
         #######################################
 
-                #initiating parameters for this scape
+                #initiating parameters for this layer
                 'init': {
 %s
                     }, # <END> 'init'
 %s
-                }, # <END> scape num. %i
+                }, # <END> layer num. %i
 '''
 
-#the block of random-scape parameters
-RAND_SCAPE_PARAMS = '''
-                    #parameters for a 'random'-type Scape
+#the block of random-layer parameters
+RAND_LYR_PARAMS = '''
+                    #parameters for a 'random'-type Layer
                     'random': {
                         #number of random points
                         'n_pts':                        500,
@@ -188,9 +188,9 @@ RAND_SCAPE_PARAMS = '''
                         }, # <END> 'random'
 '''
 
-#the block of defined-scape parameters
-DEFINED_SCAPE_PARAMS = '''
-                    #parameters for a 'defined'-type Scape
+#the block of defined-layer parameters
+DEFINED_LYR_PARAMS = '''
+                    #parameters for a 'defined'-type Layer
                     'defined': {
                         #point coordinates
                         'pts':                    None,
@@ -202,29 +202,29 @@ DEFINED_SCAPE_PARAMS = '''
                         }, # <END> 'defined'
 '''
 
-#the block of file-scape parameters
-FILE_SCAPE_PARAMS = '''
-                    #parameters for a 'file'-type Scape
+#the block of file-layer parameters
+FILE_LYR_PARAMS = '''
+                    #parameters for a 'file'-type Layer
                     'file': {
                         #</path/to/file>.<ext>
                         'filepath':                     '/PATH/TO/FILE.EXT',
-                        #minimum value to use to rescale the Scape to [0,1]
+                        #minimum value to use to rescale the Layer to [0,1]
                         'scale_min_val':                None,
-                        #maximum value to use to rescale the Scape to [0,1]
+                        #maximum value to use to rescale the Layer to [0,1]
                         'scale_max_val':                None,
 
                         }, # <END> 'file'
 '''
 
-#the block of nlmpy-scape parameters
-NLMPY_SCAPE_PARAMS = '''
-                    #parameters for an 'nlmpy'-type Scape
+#the block of nlmpy-layer parameters
+NLMPY_LYR_PARAMS = '''
+                    #parameters for an 'nlmpy'-type Layer
                     'nlmpy': {
-                        #nlmpy function to use the create this Scape
+                        #nlmpy function to use the create this Layer
                         'function':                 'mpd',
-                        #number of rows (MUST EQUAL LAND DIMENSION y!)
+                        #number of rows (MUST EQUAL LANDSCAPE DIMENSION y!)
                         'nRow':                     20,
-                        #number of cols (MUST EQUAL LAND DIMENSION x!)
+                        #number of cols (MUST EQUAL LANDSCAPE DIMENSION x!)
                         'nCol':                     20,
                         #level of spatial autocorrelation in element values
                         'h':                        1,
@@ -232,17 +232,17 @@ NLMPY_SCAPE_PARAMS = '''
                         }, # <END> 'nlmpy'
 '''
 
-#the block of scape-change parameters
+#the block of layer-change parameters
 #STRING SLOTS:
-    #%i = scape_num,
-SCAPE_CHANGE_PARAMS = '''
+    #%i = lyr_num,
+LYR_CHANGE_PARAMS = '''
             #########################################
-            #### scape num. %i: change parameters ####
+            #### layer num. %i: change parameters ####
             #########################################
 
-                #land-change event for this Scape
+                #landscape-change event for this Layer
                 'change': {
-                    #end raster for event (DIM MUST EQUAL DIM OF LAND!)
+                    #end raster for event (DIM MUST EQUAL DIM OF LANDSCAPE!)
                     'end_rast':         np.zeros((20,20)),
                     #starting timestep of event
                     'start_t':          1500,
@@ -266,7 +266,7 @@ SCAPE_CHANGE_PARAMS = '''
     #%i = pop_num,
 POP_PARAMS = '''
             #pop name (POP NAMES MUST BE UNIQUE!)
-            %s  :   {
+            %s: {
 
             #####################################
             #### pop num. %i: init parameters ####
@@ -275,8 +275,8 @@ POP_PARAMS = '''
                 'init': {
                     #starting population size
                     'N':                200,
-                    #carrying-capacity Scape name
-                    'K_scape':          'scape_0',
+                    #carrying-capacity Layer name
+                    'K_layer':          'layer_0',
                     }, # <END> 'init'
 
             #######################################
@@ -287,7 +287,7 @@ POP_PARAMS = '''
                     #age(s) at sexual maturity (if tuple, female first)
                     'repro_age':                0,
                     #maximum age
-                    'max_age':                  2,
+                    'max_age':                  1,
                     #whether to assign sexes
                     'sex':                      False,
                     #ratio of males to females
@@ -301,7 +301,7 @@ POP_PARAMS = '''
                     #expectation of distr of n offspring per mating pair
                     'n_births_distr_lambda':    1,
                     #radius of mate-search area
-                    'mating_radius':            1
+                    'mating_radius':            10,
                     }, # <END> 'mating'
 
             ##########################################
@@ -351,8 +351,8 @@ MOVE_PARAMS = '''
 #block for movement-surface params
 MOVE_SURF_PARAMS = '''
                     'move_surf'     : {
-                        #move-surf Scape name
-                        'scape':                0,
+                        #move-surf Layer name
+                        'layer':                'layer_0',
                         #whether to use mixture distrs
                         'mixture':              True,
                         #number of draws to use to approximate distrs
@@ -410,7 +410,7 @@ GENOME_PARAMS = '''
 #block for traits params
 #STRING SLOTS:
     #%s = multi_trait_params,
-TRAITS_PARAMS = '''
+TRTS_PARAMS = '''
                     'traits': {
 %s
 
@@ -426,14 +426,14 @@ TRAITS_PARAMS = '''
     #%i = trait_num,
     #%s = trait_num,
     #%i = trait_num,
-TRAIT_PARAMS = '''
+TRT_PARAMS = '''
                         ###########################
                         ####trait %i parameters ####
                         ###########################
                         #trait name (TRAIT NAMES MUST BE UNIQUE!)
                         %s: {
-                            #trait-selection Scape name
-                            'scape':                'scape_0',
+                            #trait-selection Layer name
+                            'layer':                'layer_0',
                             #polygenic selection coefficient
                             'phi':                  0.05,
                             #number of loci underlying trait
@@ -557,8 +557,8 @@ ITS_PARAMS = '''
         'its': {
             #num iterations
             'n_its': 3,
-            #whether to randomize land each iteration
-            'rand_land':    False,
+            #whether to randomize landscape each iteration
+            'rand_landscape':    False,
             #whether to randomize community each iteration
             'rand_comm':    False,
             #whether to burn in each iteration
@@ -587,8 +587,8 @@ DATA_PARAMS = '''
                 'radius':               None,
                 #when to collect data
                 'when':                 None,
-                #whether to save current Scapes when data is collected
-                'include_land':         False,
+                #whether to save current Layers when data is collected
+                'include_landscape':         False,
                 #whether to include fixed loci in VCF files
                 'include_fixed_sites':  False,
                 },
@@ -664,7 +664,7 @@ class _DynAttrDict(dict):
     def __deepcopy__(self, memo):
         return _DynAttrDict(copy.deepcopy(dict(self)))
 
-#a ParametersDict class (which is just a recursion the __DynAttrDict__ over the
+#a ParametersDict class (which is just a recursion the _DynAttrDict over the
 #whole params dict, to make all its levels dicts with dynamic attributes, 
 #i.e indexable by dot notation and responsive to tab completion)
 class ParametersDict(_DynAttrDict):
@@ -682,7 +682,7 @@ class ParametersDict(_DynAttrDict):
         type_str = str(type(self))
         #get the model name str
         name_str = "Model name:%s%s"
-        name_str = name_str % (_sr_.get_spacing(name_str), self.model.name)
+        name_str = name_str % (_sr_._get_spacing(name_str), self.model.name)
         #concatenate the strings
         tot_str = '\n'.join([type_str, name_str])
         return tot_str
@@ -698,80 +698,80 @@ class ParametersDict(_DynAttrDict):
 # -----------------------------------#
 ######################################
 
-#function to create the scapes-params section of a params file
-def _make_scapes_params_str(scapes=1):
-    #create an empty list, to be filled with one params string per scape
-    scapes_params_list = []
-    #if scapes is an integer, create a string of identical parameter sections
-    if type(scapes) is int:
+#function to create the lyrs-params section of a params file
+def _make_lyrs_params_str(lyrs=1):
+    #create an empty list, to be filled with one params string per lyr
+    lyrs_params_list = []
+    #if lyrs is an integer, create a string of identical parameter sections
+    if type(lyrs) is int:
         #assert that it's an integer greater than 0
-        assert scapes > 0, ("The number of Scapes to be created must be a "
+        assert lyrs > 0, ("The number of Layers to be created must be a "
         "positive integer.")
-        #for each scape
-        for i in range(scapes):
-            #use scape-type 'random'
-            type_params = RAND_SCAPE_PARAMS
+        #for each lyr
+        for i in range(lyrs):
+            #use lyr-type 'random'
+            type_params = RAND_LYR_PARAMS
             #add no change params (i.e. a zero-length string)
             change_params = ''
-            #create the scape_params str
-            scape_params_str = SCAPE_PARAMS % ('scape_' + str(i), i,
+            #create the lyr_params str
+            lyr_params_str = LYR_PARAMS % ("'layer_%i'" % i, i,
                                                type_params, change_params, i)
             #append it to the list
-            scapes_params_list.append(scape_params_str)
+            lyrs_params_list.append(lyr_params_str)
 
-    #or if scapes is a list of dicts, then create individually customized
-    #params sections for each Scape
-    elif type(scapes) is list:
+    #or if lyrs is a list of dicts, then create individually customized
+    #params sections for each Layer
+    elif type(lyrs) is list:
         #assert that each item in the list is a dict
-        assert False not in [type(item) is dict for item in scapes], ("All "
-            "items in the argument 'scapes' must be of type dict if it is "
+        assert False not in [type(item) is dict for item in lyrs], ("All "
+            "items in the argument 'layers' must be of type dict if it is "
             "provided as a list.")
-        assert False not in [type(item) is dict for item in scapes], ("If the "
-            "'scapes' argument is a list then it must contain only "
+        assert False not in [type(item) is dict for item in lyrs], ("If the "
+            "'layers' argument is a list then it must contain only "
             "objects of type dict.")
-        #create lookup dicts for the params strings for different scape params
+        #create lookup dicts for the params strings for different lyr params
         #sections
-        scape_type_params_str_dict = {'random': RAND_SCAPE_PARAMS,
-                                      'defined': DEFINED_SCAPE_PARAMS,
-                                      'file': FILE_SCAPE_PARAMS,
-                                      'nlmpy': NLMPY_SCAPE_PARAMS,
+        lyr_type_params_str_dict = {'random': RAND_LYR_PARAMS,
+                                      'defined': DEFINED_LYR_PARAMS,
+                                      'file': FILE_LYR_PARAMS,
+                                      'nlmpy': NLMPY_LYR_PARAMS,
                                      }
-        scape_change_params_str_dict = {True: SCAPE_CHANGE_PARAMS,
+        lyr_change_params_str_dict = {True: LYR_CHANGE_PARAMS,
                                         False: ''}
-        #for each scape
-        for i, scape_dict in enumerate(scapes):
+        #for each lyr
+        for i, lyr_dict in enumerate(lyrs):
             #assert that the 'type' value is valid
-            if 'type' in [*scape_dict]:
-                assert scape_dict['type'] in ['random', 'defined', 'file',
-                    'nlmpy'], ("The value provided for the 'type' of Scape "
+            if 'type' in [*lyr_dict]:
+                assert lyr_dict['type'] in ['random', 'defined', 'file',
+                    'nlmpy'], ("The value provided for the 'type' of Layer "
                     "%i is invalid. Valid values include: ['random', "
                     "'defined', 'file', 'nlmpy'].") % i
-                #get the type params for this scape
-                scape_type = scape_dict['type']
+                #get the type params for this lyr
+                lyr_type = lyr_dict['type']
             else:
-                scape_type = 'random'
-            type_params = scape_type_params_str_dict[scape_type]
+                lyr_type = 'random'
+            type_params = lyr_type_params_str_dict[lyr_type]
             #assert that the 'change' value is valid
-            if 'change' in [*scape_dict]:
-                assert type(scape_dict['change']) is bool, ("The value "
-                    "provided for the 'change' value of Scape %i is invalid. "
+            if 'change' in [*lyr_dict]:
+                assert type(lyr_dict['change']) is bool, ("The value "
+                    "provided for the 'change' value of Layer %i is invalid. "
                     "Value must be a boolean.") % i
-                #get the change params for this scape
-                scape_change = scape_dict['change']
+                #get the change params for this lyr
+                lyr_change = lyr_dict['change']
             else:
-                scape_change = False
-            change_params = scape_change_params_str_dict[scape_change]
+                lyr_change = False
+            change_params = lyr_change_params_str_dict[lyr_change]
             if change_params != '':
                 change_params = change_params % i
-            #create the scape_params str for this Scape
-            scape_params_str = SCAPE_PARAMS % ('scape_' + str(i), i,
+            #create the lyr_params str for this Layer
+            lyr_params_str = LYR_PARAMS % ("'layer_%i'" % i, i,
                                                type_params, change_params, i)
             #append it to the list
-            scapes_params_list.append(scape_params_str)
+            lyrs_params_list.append(lyr_params_str)
 
     #join the whole list into one str
-    scapes_params_str = '\n'.join(scapes_params_list)
-    return scapes_params_str
+    lyrs_params_str = '\n'.join(lyrs_params_list)
+    return lyrs_params_str
 
 
 #function to create the pops-params section of a params file
@@ -794,7 +794,7 @@ def _make_populations_params_str(populations=1):
             #add no change params
             change_params = ''
             #create the pop_params str
-            pop_params_str = POP_PARAMS % ('pop_' + str(i), i, i, i,
+            pop_params_str = POP_PARAMS % ("'pop_%i'" % i, i, i, i,
                             move_params, genome_params, change_params, i)
             #append to the pops_params_list
             pops_params_list.append(pop_params_str)
@@ -884,11 +884,11 @@ def _make_populations_params_str(populations=1):
                     #to the number of traits it should have
                     trait_params_list = []
                     for trt in range(pop_dict['n_traits']):
-                        trait_params = TRAIT_PARAMS % (trt,
-                                                    'trait_' + str(trt), trt)
+                        trait_params = TRT_PARAMS % (trt,
+                                                "'trait_%i'" % trt, trt)
                         trait_params_list.append(trait_params)
                     #get the traits_params_str
-                    traits_params = TRAITS_PARAMS
+                    traits_params = TRTS_PARAMS
                     #join the list into a single str and insert it into the
                     #traits_params_str
                     traits_params = traits_params % ''.join(trait_params_list)
@@ -931,7 +931,7 @@ def _make_populations_params_str(populations=1):
             else:
                 change_params = ''
             #get the overall pop params str for this pop
-            pop_params_str = POP_PARAMS % ('pop_' + str(i), i, i, i,
+            pop_params_str = POP_PARAMS % ("'pop_%i'" % i, i, i, i,
                             move_params, genome_params, change_params, i)
             #append to the pops_params_list
             pops_params_list.append(pop_params_str)
@@ -960,10 +960,10 @@ def _make_model_params_strs(section, arg=None):
 
 
 #function to create a default params file, to be filled in by the user
-def _make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
+def _make_parameters_file(filepath=None, layers=1, populations=1, data=None,
                          stats=None, seed=None):
     '''<see docstring in gnx.make_parameters_file>'''
-    scapes_params_str = _make_scapes_params_str(scapes = scapes)
+    lyrs_params_str = _make_lyrs_params_str(lyrs = layers)
     pops_params_str= _make_populations_params_str(populations = populations)
     data_params_str = _make_model_params_strs('data', arg = data)
     stats_params_str = _make_model_params_strs('stats', arg = stats)
@@ -983,7 +983,7 @@ def _make_parameters_file(filepath=None, scapes=1, populations=1, data=None,
     #coerce the file to a .py extension if it is not already provided
     filepath = os.path.splitext(filepath)[0] + '.py'
     #create the full params-file string
-    file_str = PARAMS % (os.path.split(filepath)[1], scapes_params_str,
+    file_str = PARAMS % (os.path.split(filepath)[1], lyrs_params_str,
         pops_params_str, its_params_str, data_params_str, stats_params_str,
         seed_params_str)
 
@@ -1019,7 +1019,7 @@ def _make_parameters_dict(params):
             '\n%s' % (str(k), str(v)))
         if isinstance(v, dict):
             params[k] = _make_parameters_dict(params[k])
-    params = __DynAttrDict__(params)
+    params = _DynAttrDict(params)
     return(params)
 
 

@@ -7,8 +7,8 @@
 
 Module name:              stats
 
-Module contents:          - definition of Stats class (i.e. structured container
-                            for stats calculated during model run)
+Module contents:          - definition of Stats class (i.e. structured
+                            container for stats calculated during model run)
                           - definition of functions for calculating various
                             stats, at specified frequencies and with specified
                             arguments, according to the contents of the
@@ -95,7 +95,7 @@ class _StatsCollector:
         for pop_name, genome in pops_with_wout_genomes.items():
             self.stats[pop_name] = {}
             for stat, stat_params in stats_params.items():
-                #skip populations without genomes for stats that require genomes
+                #skip populations without genomes for stats that need genomes
                 if not genome and stat in stats_invalid_wout_genomes:
                     break
                 #each pop gets a subdict
@@ -115,10 +115,11 @@ class _StatsCollector:
                             #to contain to correct filepaths for each stat
                             'filepath': None,
                             #create tuple of other, stat-specific parameters, 
-                            #to later be unpacked as arguments to the appropriate 
-                            #stat function
+                            #to later be unpacked as arguments to
+                            #the appropriate stat function
                             'other_params': dict([(k,v) for k,v in
-                              stat_params.items() if k not in ['calc', 'freq']])
+                              stat_params.items() if k not in ['calc',
+                                                                    'freq']])
                             }
 
                         #if the freq value is 0, change it to self.T -1, so
@@ -182,7 +183,7 @@ class _StatsCollector:
                 filepath = os.path.join(subdirname, filename)
                 #add the filepath for this stat to self.stats
                 self.stats[pop_name][stat]['filepath'] = filepath
- 
+
     #wrapper around io.append_array2d_to_array_stack
     #TODO WHAT TO DO WITH t IN THIS CASE?? CAN'T ADD TO txt 3D ARRAY FILE
     def _write_array_to_stack(self, filepath, array, t):
@@ -192,7 +193,7 @@ class _StatsCollector:
     def _write_row_to_csv(self, filepath, array, t):
         io._append_row_to_csv(filepath, array, t)
 
-    #use io.write_dict_to_csv to write to disk all "other stats", i.e. 
+    #use io._write_dict_to_csv to write to disk all "other stats", i.e. 
     #all stats that collect only a single value per population per timestep
     #TODO: CHANGE THE 'OTHER STATS' NAMING CONVENTION TO SOMETING MORE
     #DESCRIPTIVE
@@ -204,7 +205,7 @@ class _StatsCollector:
                               'OTHER_STATS' in v['filepath']}
             #they all have the same filepath, so just grab the first
             filepath = [*pop_stats.values()][0]['filepath']
-            #write toe disk
+            #write to disk
             io._write_dict_to_csv(filepath, data_dict)
 
     #method to write stats to files, in the appropriate directory (by model

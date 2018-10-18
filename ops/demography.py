@@ -34,7 +34,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy import random as r
 from scipy import interpolate
-from scipy.spatial import cKDTree
 from sklearn.preprocessing import normalize
 from collections import OrderedDict as OD
 from operator import itemgetter
@@ -88,7 +87,7 @@ def _calc_n_pairs(pairs, pop):
         p_x = pairs_coords[:,0].reshape(pairs.shape).mean(axis = 1)
         p_y = pairs_coords[:,1].reshape(pairs.shape).mean(axis = 1)
 
-        #use the pop.dens_grids to calculate a raster of the expected number
+        #use the pop._dens_grids to calculate a raster of the expected number
         #of pairs
         #NOTE: because the window_width of that object is much wider than 
         #dispersal_mu in the parameterizations I've typically been running, 
@@ -105,7 +104,7 @@ def _calc_n_pairs(pairs, pop):
 
     #otherwise just return a 0 raster
     else:
-        n_pairs = np.zeros(pop.land_dim)
+        n_pairs = np.zeros(pop._land_dim)
 
     return n_pairs
 
@@ -368,7 +367,7 @@ def _do_pop_dynamics(land, pop, with_selection = True, burn = False,
     #kill (and track kills) based on max_age
     num_killed_age = 0
     if pop.max_age is not None:
-        death_probs[pop.get_age() > pop.max_age] = 1
+        death_probs[pop._get_age() > pop.max_age] = 1
         num_killed_age = np.sum(death_probs == 1)
 
     #Use the per-individual death probabilities to carry out mortality 

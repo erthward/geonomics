@@ -51,7 +51,7 @@ except Exception as e:
 #TODO: For now, defining a default projection to use for saving geotiff rasters
 #if no projection is set, but I need to decide if it even makes sense to do
 #this, rather than just disallowing geotiff as a raster-saving format if no
-#projection is set (because of course this makes random landscapes project as
+#projection is set (because of course this makes random layers project as
 #rasters at lat:0, lon:0 in Web Mercator, which is at the Equator and on the
 #prime meridian (basically due west of São Tomé and due south of Accra)
 _DEFAULT_PROJ = '''PROJCS["WGS 84 / Pseudo-Mercator",
@@ -105,8 +105,10 @@ def _read_raster(filepath, dim=None):
             rast_file = gdal.Open(filepath)
             rast = rast_file.ReadAsArray()
             dim = rast.shape
-            res = [i for n,i in enumerate(rast_file.GetGeoTransform()) if n in [1,5]]
-            ulc = [i for n,i in enumerate(rast_file.GetGeoTransform()) if n in [0,3]]
+            res = [i for n,i in enumerate(rast_file.GetGeoTransform(
+                                                            )) if n in [1,5]]
+            ulc = [i for n,i in enumerate(rast_file.GetGeoTransform(
+                                                            )) if n in [0,3]]
             #get the projection as WKT
             prj = rast_file.GetProjection()
         else:
@@ -169,11 +171,12 @@ def _append_row_to_csv(filepath, locuswise_array1d, t):
 def _write_geopandas(filepath, individuals, driver):
     #get full path and filename
     attributes = ['idx', 'phenotype', 'habitat', 'age', 'sex']
-    #TODO: FIXME: replace the call to str() below with something more sophisticated
-    #that will actually separate distinct phenotype and habitat values into
-    #separate, labeled columns
+    #TODO: FIXME: replace the call to str() below with something more
+    #sophisticated that will actually separate distinct phenotype
+    #and habitat values into separate, labeled columns
     #TODO: also round numbers to 5 decimals or so?
-    df_dict = {att: [str(getattr(ind, att)) for ind in individuals.values()] for att in attributes}
+    df_dict = {att: [str(getattr(ind,
+                att)) for ind in individuals.values()] for att in attributes}
     pts = [Point(ind.x, ind.y) for ind in individuals.values()]
     df_dict['pt'] = pts
     df = pd.DataFrame.from_dict(df_dict)
@@ -189,48 +192,48 @@ def _write_geopandas(filepath, individuals, driver):
 
 #write a shapefile from an index-keyed dict of individual.Individual objects
 def _write_shapefile(filepath, individuals):
-    filepath = set_extension(filepath, 'shp')
-    write_geopandas(filepath, individuals, driver='ESRI Shapefile')
+    filepath = _set_extension(filepath, 'shp')
+    _write_geopandas(filepath, individuals, driver='ESRI Shapefile')
 
 
 #write a geojson from an index-keyed dict of individual.Individual objects
 def _write_geojson(filepath, individuals):
-    filepath = set_extension(filepath, ['json', 'geojson'])
-    write_geopandas(filepath, individuals, driver='GeoJSON')
+    filepath = _set_extension(filepath, ['json', 'geojson'])
+    _write_geopandas(filepath, individuals, driver='GeoJSON')
 
 
 #write a csv from an index-keyed dict of individual.Individual objects
 def _write_csv(filepath, individuals):
-    filepath = set_extension(filepath, 'csv')
-    write_geopandas(filepath, individuals, driver = 'CSV')
+    filepath = _set_extension(filepath, 'csv')
+    _write_geopandas(filepath, individuals, driver = 'CSV')
 
 
-#write a txt array from a landscape.Scape object's numpy-array raster
-def _write_txt_array(filepath, scape):
-    filepath = set_extension(filepath, 'txt')
-    np.savetxt(filepath, scape.rast, fmt = '%0.5f')
+#write a txt array from a landscape.Layer object's numpy-array raster
+def _write_txt_array(filepath, lyr):
+    filepath = _set_extension(filepath, 'txt')
+    np.savetxt(filepath, lyr.rast, fmt = '%0.5f')
 
 
-#write a geotiff from a landscape.Scape object's numpy-array raster
-def _write_geotiff(filepath, scape):
+#write a geotiff from a landscape.Layer object's numpy-array raster
+def _write_geotiff(filepath, lyr):
     if 'gdal' in globals():
-        filepath = set_extension(filepath, ['tif', 'tiff'])
-        #TODO: this is a tweak on code taken from https://gis.stackexchange.com/
+        filepath = _set_extension(filepath, ['tif', 'tiff'])
+        #TODO: this is a tweak on code from https://gis.stackexchange.com/
         #questions/58517/python-gdal-save-array-as-raster-with-projection-from-
         #other-file
         #get the driver
         driver = gdal.GetDriverByName('GTiff')
         #get values
         #number of pixels in x and y
-        x_pixels = scape.dim[0]
-        y_pixels = scape.dim[1]
+        x_pixels = lyr.dim[0]
+        y_pixels = lyr.dim[1]
         #resolution
-        PIXEL_SIZE = scape.res[0]
+        PIXEL_SIZE = lyr.res[0]
         #x_min & y_max are the "top-left corner"
-        x_min = scape.ulc[0]
-        y_max = scape.ulc[1] + (scape.dim[1]*scape.res[1])
+        x_min = lyr.ulc[0]
+        y_max = lyr.ulc[1] + (lyr.dim[1]*lyr.res[1])
         #get the WKT projection
-        wkt_projection = scape.prj
+        wkt_projection = lyr.prj
         if wkt_projection is None:
             #TODO: FOR NOW THIS DEFAULTS TO THE _DEFAULT_PROJ
             #VARIABLE, BUT THINK ABOUT WHETHER IT MAKES ANY SENSE TO HAVE
@@ -253,7 +256,7 @@ def _write_geotiff(filepath, scape):
         #set the projection
         dataset.SetProjection(wkt_projection)
         #and write to disk
-        dataset.GetRasterBand(1).WriteArray(scape.rast)
+        dataset.GetRasterBand(1).WriteArray(lyr.rast)
         dataset.FlushCache()
     else:
         raise ModuleNotFoundError(("It appears that 'osgeo.gdal' was not "

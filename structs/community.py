@@ -114,7 +114,7 @@ class Community(dict):
 # -----------------------------------#
 ######################################
 
-#function for making a community using a Land object and params
+#function for making a community using a Landscape object and params
 def _make_community(land, params, burn=False):
     pops = {n: population._make_population(land = land, name = name, 
         pop_params = params.comm.pops[name], burn = burn) for n, name in

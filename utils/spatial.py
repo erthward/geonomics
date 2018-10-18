@@ -110,7 +110,7 @@ class _DensityGrid:
                                             )//self.window_width + self.y_edge
 
         #get cell strings from indivudals' cells
-        cells = make_cell_strings(y_cells, x_cells, self.dim_om)
+        cells = _make_cell_strings(y_cells, x_cells, self.dim_om)
         #and get Counter dict of the cell strings
         counts = C(cells)
 
@@ -160,7 +160,7 @@ class _DensityGridStack:
 
         #get the order of magnitude of the larger of the two land
         #dimensions (used to zero-pad the cell-coordinate strings)
-        self.dim_om = land.dim_om
+        self.dim_om = land._dim_om
 
         #get meshgrids of the i and j cell-center coordinates of the
         #landscape-raster cells (to be interpolated to for density calculation)
@@ -168,7 +168,7 @@ class _DensityGridStack:
                             self.dim[0])+0.5, np.arange(0, self.dim[1])+0.5)
 
         #create inner and outer density grids from the land and window-width
-        self.grids = dict([(n,g) for n,g in enumerate(make_density_grids(land,
+        self.grids = dict([(n,g) for n,g in enumerate(_make_density_grids(land,
                                                         self.window_width))])
 
 
@@ -179,7 +179,7 @@ class _DensityGridStack:
                                                                 self.grids))])
         #and a concatenated list of the densities calculated for
         #both density grids
-        vals = np.hstack([self.grids[n].calc_density(x,
+        vals = np.hstack([self.grids[n]._calc_density(x,
                                 y).flatten() for n in range(len(self.grids))])
 
         #then interpolate from those points and values to the centerpoints
@@ -191,12 +191,12 @@ class _DensityGridStack:
 
 
 class _MovementSurface:
-    def __init__(self, move_scape, mixture, approximation_len = 5000,
+    def __init__(self, move_lyr, mixture, approximation_len = 5000,
                                                     vm_distr_kappa = 12):
         #dimensions
-        self.dim = move_scape.dim
+        self.dim = move_lyr.dim
         #resolution (i.e. cell-size); defaults to 1
-        self.res = move_scape.res
+        self.res = move_lyr.res
 
         #set the default values, in case they're accidentally fed in
         #as None values in the params
@@ -208,9 +208,9 @@ class _MovementSurface:
             #(to make shallow gradients work better),
             #should probably set this to a lower value if mix == False
 
-        self.scape_num = move_scape.idx
+        self.lyr_num = move_lyr.idx
         self.approximation_len = approximation_len
-        self.surf = _make_movement_surface(move_scape.rast, mixture = mixture,
+        self.surf = _make_movement_surface(move_lyr.rast, mixture = mixture,
             approximation_len = self.approximation_len,
             vm_distr_kappa = vm_distr_kappa)
 
@@ -252,7 +252,7 @@ def _make_cell_strings(gi, gj, dim_om):
     return cells
 
 
-#make a density grid, based on the Land object, the chosen window-width, 
+#make a density grid, based on the Landscape object, the chosen window-width, 
 #and the Boolean arguments dictating whether or not the grid's x- and y-
 #dimension cells should be centered on the land edges (i.e. 0 and dim[_])
 def _make_density_grid(land, ww, x_edge, y_edge):
@@ -262,7 +262,7 @@ def _make_density_grid(land, ww, x_edge, y_edge):
 
     #get land dimensions
     dim = land.dim
-    dim_om = land.dim_om
+    dim_om = land._dim_om
 
     #create a dictionary of cell ranges, one for when cells center
     #on edge values (i.e. 0 and dim[n] for either dimension), 
@@ -273,7 +273,7 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     #create the meshgrid of the centerpoints of neighborhoods (or cells)
     #within which population will be counted
     #(x_edge and y_edge arguments determine whether this grid's 
-    #x and y cells are centered on the lanscape edges or not)
+    #x and y cells are centered on the landscape edges or not)
     #NOTE: these are expressed as points in continuous space from 0 to
     #each land dimension, NOT as cell
     #numbers (which will be calculated below)
@@ -323,11 +323,11 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     #of individuals within each density-grid cell,
     #obviating the need to loop across grid dimensions.
     #This performs better and scales much better.
-    cells = make_cell_strings(i_cells, j_cells, dim_om)
+    cells = _make_cell_strings(i_cells, j_cells, dim_om)
 
     #use the above-created data structures to create two DensityGrid objects
-    #(which will inhere to the Land object as attributes)
-    grid = DensityGrid(dim, dim_om, ww, gi, gj, cells, areas,
+    #(which will inhere to the Landscape object as attributes)
+    grid = _DensityGrid(dim, dim_om, ww, gi, gj, cells, areas,
                                             x_edge= x_edge, y_edge = y_edge)
     return grid
 
@@ -336,10 +336,10 @@ def _make_density_grid(land, ww, x_edge, y_edge):
 #combination of offset by 0 and by 0.5*window_width)
 def _make_density_grids(land, ww):
     #make a grid for each combo of Booleans for x_edge and y_edge
-    g1 = make_density_grid(land, ww, x_edge = True, y_edge = True)
-    g2 = make_density_grid(land, ww, x_edge = False, y_edge = False)
-    g3 = make_density_grid(land, ww, x_edge = True, y_edge = False)
-    g4 = make_density_grid(land, ww, x_edge = False, y_edge = True)
+    g1 = _make_density_grid(land, ww, x_edge = True, y_edge = True)
+    g2 = _make_density_grid(land, ww, x_edge = False, y_edge = False)
+    g3 = _make_density_grid(land, ww, x_edge = True, y_edge = False)
+    g4 = _make_density_grid(land, ww, x_edge = False, y_edge = True)
     return(g1, g2, g3, g4)
 
 
@@ -382,7 +382,7 @@ def _make_von_mises_mixture_sampler(neigh, dirs, vm_distr_kappa=12,
     return approx
 
 
-# Runs the Von Mises mixture sampler function (make_von_mises_mixture_sampler)
+# Runs the Von Mises mixture sampler function (_make_von_mises_mixture_sampler)
 # or the Von Mises unimodal sampler function (make_von_mises_unimodal_sampler)
 #across the entire landscape and returns an array-like (list of lists) of the 
 #resulting lambda-function samplers
@@ -391,7 +391,7 @@ def _make_movement_surface(rast, mixture=True, approximation_len=5000,
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0],
                                             [3 * pi / 4, pi / 2, pi / 4]])
 
-    # grab the correct landscape raster
+    #copy the landscape raster
     rast = deepcopy(rast)
 
     # create embedded raster (so that the edge probabilities are
@@ -435,7 +435,7 @@ def _make_nlmpy_raster(nlmpy_params):
         #if the nlm generated is not constrained between 0 and 1, rescale
         #to that range
         if nlm.min() < 0 or nlm.max() > 1:
-            nlm, min_inval, max_inval = scale_raster(nlm)
+            nlm, min_inval, max_inval = _scale_raster(nlm)
         return nlm
     else:
         raise ModuleNotFounderror(("It appears that 'nlmpy.nlmpy' was not "

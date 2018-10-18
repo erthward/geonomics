@@ -55,7 +55,7 @@ def _find_mates(pop, land=None, sex=False, repro_age=None,
         # if sexual_selection:
             # (product of?) selection coefficients
     ######################################################
-    # First, query the scipy.spatial.cKDTree (i.e. pop.kd_tree) for
+    # First, query the scipy.spatial.cKDTree (i.e. pop._kd_tree) for
     #nearest-neigh pairs
     dists, pairs = pop._find_neighbors(dist = mating_radius)
     ####################################################
@@ -105,8 +105,8 @@ def _find_mates(pop, land=None, sex=False, repro_age=None,
             assert repro_age.__class__.__name__ in ('ndarray', 'list',
                 'tuple'), ("For a sexual and age-structured species, "
                 "age at sexual maturity, 'repro_age', must be expressed as an "
-                "iterable of numerics (i.e. a list, tuple, or numpy.ndarray of "
-                "floats or integers); you have provided a:\n\t"
+                "iterable of numerics (i.e. a list, tuple, or numpy.ndarray "
+                "of floats or integers); you have provided a:\n\t"
                 "%s") % repro_age.__class__.__name__
             yes_f = np.array(ages[available_pairs[:, 0]] >= repro_age[0])
             yes_m = np.array(ages[available_pairs[:, 1]] >= repro_age[1])

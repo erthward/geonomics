@@ -7,7 +7,7 @@
 
 Module name:              sim/data
 
-Module contents:          - definition of the DataCollector class (which
+Module contents:          - definition of the _DataCollector class (which
                             gathers and organizes the parameters for how
                             and when to sample data, and does the sampling)
                           - definition of functions for sampling individuals
@@ -62,9 +62,9 @@ class _DataCollector:
                             'geotiff': 'tif'
                             }
 
-        self.write_geodata_fn_dict = {'csv': io.write_csv,
-                            'shapefile': io.write_shapefile,
-                            'geojson': io.write_geojson,
+        self.write_geodata_fn_dict = {'csv': io._write_csv,
+                            'shapefile': io._write_shapefile,
+                            'geojson': io._write_geojson,
                             }
 
         #set model name and T
@@ -117,16 +117,16 @@ class _DataCollector:
             self.pts_buff = _make_point_buffers(self.pts,
                                         sampling_params.radius)
 
-        #get the 'include_land' param (defaults False)
-        self.include_land = False
-        if ('include_land' in sampling_params.keys() and
-            type(sampling_params.include_land) is bool):
-            self.include_land = sampling_params.include_land
+        #get the 'include_landscape' param (defaults False)
+        self.include_landscape = False
+        if ('include_landscape' in sampling_params.keys() and
+            type(sampling_params.include_landscape) is bool):
+            self.include_landscape = sampling_params.include_landscape
 
         #get the 'include_fixed_sites' param (defaults False)
         self.include_fixed_sites = False
         if ('include_fixed_sites' in sampling_params.keys() and
-            type(sampling_params.include_land) is bool):
+            type(sampling_params.include_landscape) is bool):
             self.include_fixed_sites = sampling_params.include_fixed_sites
 
         #set the when attribute to the 'when' parameter
@@ -171,7 +171,7 @@ class _DataCollector:
         #NOTE: added to a separate attribute because this is written per
         #timestep, not per population within timestep
         self.rast_format = None
-        if (sampling_params.include_land
+        if (sampling_params.include_landscape
             and 'geo_rast_format' in format_params.keys()):
             self.rast_format = format_params.geo_rast_format
 
@@ -276,15 +276,15 @@ class _DataCollector:
 
             #write the raster, if necessary
             if self.rast_format is not None:
-                #for each Scape
-                for scape in community.land.values():
+                #for each Layer
+                for lyr in community.land.values():
                     #get the raster filename
-                    filename = 'mod-%s_it-%i_t-%i_scape-%s.%s' % (
-                        self.model_name, iteration, self.next_t, scape.name,
+                    filename = 'mod-%s_it-%i_t-%i_lyr-%s.%s' % (
+                        self.model_name, iteration, self.next_t, lyr.name,
                                     self.file_extension_dict[self.rast_format])
                     filepath = os.path.join(dirname, filename)
                     #and write it to disk
-                    scape.write_raster(filepath, self.rast_format)
+                    lyr._write_raster(filepath, self.rast_format)
 
             #update self.next_t to the next timestep to be sampled
             self._set_next_t()
@@ -346,7 +346,7 @@ class _DataCollector:
 
 
     def _write_geodata(self, filepath, data_format, sample):
-        write_fn = self.write_geodata_fn_dict[data_format]
+        write_fn = self._write_geodata_fn_dict[data_format]
         write_fn(filepath = filepath, individuals = sample)
 
 

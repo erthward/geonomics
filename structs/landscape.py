@@ -8,7 +8,7 @@ Module name:          landscape
 
 
 Module contains:
-                      - definition of the Scape and Land classes
+                      - definition of the Landscape and Layer classes
                       - function for creating a random landscape,
                         based on input parameters
                       - associated functions
@@ -46,22 +46,22 @@ from shapely import geometry as g
 # -----------------------------------#
 ######################################
 
-class Scape:
+class Layer:
 
     #######################
     ### SPECIAL METHODS ###
     #######################
 
-    def __init__(self, rast, scape_type, name, dim, res=(1,1), ulc = (0,0),
+    def __init__(self, rast, lyr_type, name, dim, res=(1,1), ulc = (0,0),
                  prj=None, scale_min=0, scale_max=1):
         self.idx = None
-        self.type = scape_type
+        self.type = lyr_type
         self.name = str(name)
         self.dim = dim
         assert type(self.dim) in [tuple, list], ("dim must be expressed "
                                                  "on a tuple or a list")
         #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc)
-        #to defaults; will be reset if landscape read in from a GIS raster or
+        #to defaults; will be reset if layer read in from a GIS raster or
         #numpy txt array file
         self.res = res
         self.ulc = ulc
@@ -80,11 +80,11 @@ class Scape:
     #private methods#
     #################
 
-    #method for writing the scape's raster to a geotiff raster file
+    #method for writing the layer's raster to a geotiff raster file
     def _write_geotiff(self, filepath):
         io._write_geotiff(filepath, self)
 
-    #method for writing the scape's raster to a numpy txt array
+    #method for writing the layer's raster to a numpy txt array
     def _write_txt_array(self, filepath):
         io._write_txt_array(filepath, self)
 
@@ -96,12 +96,12 @@ class Scape:
     def plot(self, colorbar=True, im_interp_method='nearest',
             cmap = 'terrain', x=None, y=None, zoom_width=None,
             vmin=None, vmax=None):
-        plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
-        viz.plot_rasters(self, colorbar = colorbar,
+        plt_lims = viz._get_plt_lims(self, x, y, zoom_width)
+        viz._plot_rasters(self, colorbar = colorbar,
             im_interp_method = im_interp_method, cmap = cmap,
             plt_lims = plt_lims, vmin = vmin, vmax = vmax)
 
-    #method for writing the scape's raster to a file of the specified format
+    #method for writing the lyr's raster to a file of the specified format
     def write_raster(self, filepath, raster_format):
         assert raster_format in ['geotiff', 'txt'], ("The raster_format "
             "must be one of the following: 'geotiff', 'txt'.")
@@ -111,35 +111,35 @@ class Scape:
             self._write_txt_array(filepath)
 
 
-class Land(dict):
+class Landscape(dict):
 
     #######################
     ### SPECIAL METHODS ###
     #######################
 
-    def __init__(self, scapes, res=(1,1), ulc=(0,0), prj=None):
-        #check the scapes dict is correct, then update the Land with it
+    def __init__(self, lyrs, res=(1,1), ulc=(0,0), prj=None):
+        #check the lyrs dict is correct, then update the Landscape with it
         assert False not in [
-            scape.__class__.__name__ == 'Scape' for scape in scapes.values(
-            )], ('All landscapes supplied in scapes must be of type '
-            'landscape.Scape.')
-        self.update(scapes)
-        #set the scapes attribute to the dict values (it still changes
+            lyr.__class__.__name__ == 'Layer' for lyr in lyrs.values(
+            )], ('All layers supplied in lyrs must be of type '
+            'landscape.Layer.')
+        self.update(lyrs)
+        #set the lyrs attribute to the dict values (it still changes
         #dynamically as things update, it runs
         #3x faster than calling values() during the model, and it makes
         #code nicer looking
         #FIXME: I had been using the following lines, but deepcopy breaks
         #because it cannot pickle dict.values() objects
-        #self.scapes = self.values()
-        #set the number of scapes in the stack
-        self.n_scapes = len(self)
-        #set the idx attributes on the scapes
+        #self.lyrs = self.values()
+        #set the number of lyrs in the stack
+        self.n_lyrs = len(self)
+        #set the idx attributes on the lyrs
         [setattr(v, 'idx', k) for k, v in self.items()]
 
-        #check that scapes' dimensions are all the same
+        #check that lyrs' dimensions are all the same
         assert len(set([land.dim for land in list(self.values(
-            ))])) == 1, 'Dimensions of all landscapes must be equal.'
-        #then set the dim to the 0th landscape's dim 
+            ))])) == 1, 'Dimensions of all layers must be equal.'
+        #then set the dim to the 0th layer's dim 
         self.dim = list(self.values())[0].dim
         #get the order of magnitude of the larger land dimension
         #(used when zero-padding cell-coorindate strings)
@@ -150,39 +150,39 @@ class Land(dict):
         self.ulc = ulc
         self.prj = prj
         #TODO: DO I ACTUALLY HAVE TO RUN THIS LINE?
-        #self.set_scapes_res_ulc_prj()
-        #And check that the Scapes' res, ulc, and prj values are equal to 
-        #the Land's values
-        assert np.all([scape.res == self.res for scape in self.values(
-            )]), ("Not all Scapes have the same resolution value "
+        #self.set_lyrs_res_ulc_prj()
+        #And check that the Layers' res, ulc, and prj values are equal to 
+        #the Landscape's values
+        assert np.all([lyr.res == self.res for lyr in self.values(
+            )]), ("Not all Layers have the same resolution value "
             "(attribute 'res') as the 'res' value being used to create "
-            "the Land object that should contain them.")
-        assert np.all([scape.ulc == self.ulc for scape in self.values(
-            )]), ("Not all Scapes have the same upper-left corner value "
+            "the Landscape object that should contain them.")
+        assert np.all([lyr.ulc == self.ulc for lyr in self.values(
+            )]), ("Not all Layers have the same upper-left corner value "
             "(attribute 'ulc') as the 'ulc' value being used to create "
-            "the Land object that should contain them.")
-        assert np.all([scape.prj == self.prj for scape in self.values(
-            )]), ("Not all Scapes have the same projection (attribute 'prj') "
-            "as the 'prj' value being used to create the Land object that "
-            "should contain them.")
+            "the Landscape object that should contain them.")
+        assert np.all([lyr.prj == self.prj for lyr in self.values(
+            )]), ("Not all Layers have the same projection (attribute 'prj') "
+            "as the 'prj' value being used to create the Landscape "
+            "object that should contain them.")
 
         #create a changer attribute (defaults to None, but will later be set
-        #to an ops.change.LandChanger object if params call for it)
+        #to an ops.change.LandscapeChanger object if params call for it)
         self._changer = None
 
     #define the __str__ and __repr__ special methods
     #NOTE: this doesn't excellently fit the Python docs' specification for 
     #__repr__; I should massage this some more when done writing the codebase
     def __str__(self):
-        #get the longest scape name, to be used to horizontally rectify 
-        #all the lines for each of the scapes
-        max_len_scape_name = max([len(scape.name) for scape in self.values()])
+        #get the longest lyr name, to be used to horizontally rectify 
+        #all the lines for each of the lyrs
+        max_len_lyr_name = max([len(lyr.name) for lyr in self.values()])
         #get a string representation of the class
         type_str = str(type(self))
-        #get a string of all the scapes
-        scapes_str = '%i Scape%s:\n' % (self.n_scapes, 's' * (len(self) > 1))
-        scapes_str = scapes_str + '\n'.join(['\tscape %i: ' % k +
-            "%s'%s':\t" % (' ' * (max_len_scape_name - len(v.name)), v.name) +
+        #get a string of all the lyrs
+        lyrs_str = '%i Layer%s:\n' % (self.n_lyrs, 's' * (len(self) > 1))
+        lyrs_str = lyrs_str + '\n'.join(['\tlyr %i: ' % k +
+            "%s'%s':\t" % (' ' * (max_len_lyr_name - len(v.name)), v.name) +
             str(v) for k,v in self.items()])
         #get a string representation of the first two and last two parameters
         params_str = "\nParameters:\n\t" + ',\n\t'.join(sorted([str(k) +
@@ -191,7 +191,7 @@ class Land(dict):
         params_str = params_str + ',\n\t'.join(sorted([str(k) +
             ': ' + str(v) for k,v in vars(self).items()][-2:]))
 
-        return '\n'.join([type_str, scapes_str, params_str])
+        return '\n'.join([type_str, lyrs_str, params_str])
 
     def __repr__(self):
         repr_str = self.__str__()
@@ -207,14 +207,14 @@ class Land(dict):
         #################
 
     #method to set a raster
-    def _set_raster(self, scape_num, rast):
-        self[scape_num].rast = rast
+    def _set_raster(self, lyr_num, rast):
+        self[lyr_num].rast = rast
 
-    #method to res all scapes' res and ulc attributes 
-    def _set_scapes_res_ulc_prj(self):
-        [setattr(scape, 'res', self.res) for scape in self.values()]
-        [setattr(scape, 'ulc', self.ulc) for scape in self.values()]
-        [setattr(scape, 'prj', self.prj) for scape in self.values()]
+    #method to set all lyrs' res and ulc attributes 
+    def _set_lyrs_res_ulc_prj(self):
+        [setattr(lyr, 'res', self.res) for lyr in self.values()]
+        [setattr(lyr, 'ulc', self.ulc) for lyr in self.values()]
+        [setattr(lyr, 'prj', self.prj) for lyr in self.values()]
 
     #method to make landscape changes
     def _make_change(self, t):
@@ -225,16 +225,16 @@ class Land(dict):
         #public methods#
         ################
 
-    #method to plot the landscape (or just a certain scape)
-    def plot(self, scape_num=None, colorbar=True, cmap='terrain',
+    #method to plot the landscape (or just a certain lyr)
+    def plot(self, lyr_num=None, colorbar=True, cmap='terrain',
             im_interp_method='nearest', x=None, y=None,
             zoom_width=None, vmin=None, vmax=None):
-        plt_lims = viz.get_plt_lims(self, x, y, zoom_width)
-        viz.plot_rasters(self, scape_num = scape_num, colorbar = colorbar,
+        plt_lims = viz._get_plt_lims(self, x, y, zoom_width)
+        viz._plot_rasters(self, lyr_num = lyr_num, colorbar = colorbar,
             im_interp_method = im_interp_method, cmap = cmap,
             plt_lims = plt_lims, vmin = vmin, vmax = vmax)
 
-    # method for pickling a landscape stack
+    # method for pickling a landscape
     def write_pickle(self, filename):
         import cPickle
         with open(filename, 'wb') as f:
@@ -247,21 +247,21 @@ class Land(dict):
 # -----------------------------------#
 ######################################
 
-def _make_random_scape(dim, n_pts, interp_method="cubic", num_hab_types=2,
+def _make_random_lyr(dim, n_pts, interp_method="cubic", num_hab_types=2,
                        dist='beta', alpha=0.05, beta=0.05):
-    # requires landscape to be square, such that dim = domain = range
+    # requires layer to be square, such that dim = domain = range
 
     # NOTE: can use "nearest" interpolation to create random patches of
     #habitat (by integer values); can change num_hab_types to > 2
-    #to create a randomly multi-classed landscape
-    # NOTE: I guess this could be used for rectangular landscapes, if the
+    #to create a randomly multi-classed layer
+    # NOTE: I guess this could be used for rectangular layers, if the
     #square raster is generated using the larger of the two dimensions,
-    #and then the resulting array is subsetted to the landscape's dimensions
+    #and then the resulting array is subsetted to the layer's dimensions
     # n_pts/dim ratio:
     # ~0.01-0.05 --> broad, simple gradients
-    # ~0.05-0.10 --> slightly more complex, occasionally landscape of
+    # ~0.05-0.10 --> slightly more complex, occasionally layer of
     #low regions divided by a major high region (or vice versa)
-    # ~0.10-0.50 --> landscape can be broken up into numerous fragmented
+    # ~0.10-0.50 --> layer can be broken up into numerous fragmented
     #patches (though sometimes still relatively homogeneous, with
     #one or two small, extremely different patches
     # ~0.50-1.00 --> more highly fragmented version of above
@@ -276,7 +276,7 @@ def _make_random_scape(dim, n_pts, interp_method="cubic", num_hab_types=2,
             vals = r.rand(n_pts)
         elif dist == 'beta':
             vals = r.beta(alpha, beta, n_pts)
-    # select seed points from well outside the eventaul landscape, to ensure
+    # select seed points from well outside the eventaul layer, to ensure
     #interpolation across area of interest
     pts = r.normal(max_dim / 2, max_dim * 2, [n_pts,
                                               2])
@@ -303,25 +303,25 @@ def _make_random_scape(dim, n_pts, interp_method="cubic", num_hab_types=2,
     return I
 
 
-def _make_defined_scape(dim, pts, vals, interp_method="cubic",
+def _make_defined_lyr(dim, pts, vals, interp_method="cubic",
                                                     num_hab_types=2):
     # pts should be provided as n-by-2 Numpy array, vals as a 1-by-n Numpy array
 
     # NOTE: There seem to be some serious issues with all of this code,
-    #because the resulting landscapes are not quite symmetrical;
+    #because the resulting layers are not quite symmetrical;
     #and making small tweaks (e.g. adding 5 to all input points'
-    #coordinates) doesn't just tweak the output landscape but instead
+    #coordinates) doesn't just tweak the output layer but instead
     #completely gets ride of it; I have an intuition that it comes
     #from the code that coerces all raster values to 0 <= val <= 1,
     #becuase that doesn't look it does quite what I originally intended for
     #it to do, but I'm not really sure... anyhow, for now it works for
     #my initial testing purposes
 
-    # NOTE: like the _make_random_scape function, this also 
-    #requires landscape to be square, but I guess this could be
-    #used for rectangular landscapes, if the square raster is
+    # NOTE: like the _make_random_lyr function, this also 
+    #requires layer to be square, but I guess this could be
+    #used for rectangular layers, if the square raster is
     #generated using the larger of the two dimensions, and
-    #then the resulting array is subsetted to the landscape's dimensions
+    #then the resulting array is subsetted to the layer's dimensions
 
     # NOTE: if discrete habitat patches desired, values should still
     #be fed in as proportions, and will then be multipled by
@@ -351,15 +351,15 @@ def _make_defined_scape(dim, pts, vals, interp_method="cubic",
     return I
 
 
-def _make_land(params, num_hab_types=2):
+def _make_landscape(params, num_hab_types=2):
     # NOTE: If a multi-class (rather than binary) block-habitat raster
     #would be of interest, would need to make
     # num_hab_types customizable)
 
-    dim = params.land.main.dim
-    res = params.land.main.res
-    ulc = params.land.main.ulc
-    prj = params.land.main.prj
+    dim = params.landscape.main.dim
+    res = params.landscape.main.res
+    ulc = params.landscape.main.ulc
+    prj = params.landscape.main.prj
     if res is None:
         res = (1,1)
     if ulc is None:
@@ -368,114 +368,125 @@ def _make_land(params, num_hab_types=2):
     if prj is None:
         prj = None
 
-    #create a dictionary to hold all the scapes to be created
-    scapes = {}
+    #create a dictionary to hold all the lyrs to be created
+    lyrs = {}
 
     #create a list to hold the information for any rasters to be created from
-    #file (because they will all be created after the loop over the scapes, so
+    #file (because they will all be created after the loop over the lyrs, so
     #that it's simpler to check agreement among raster resolutions and 
     #registrations
-    file_scape_params = {'names': [], 'scape_nums':[], 'filepaths':[],
+    file_lyr_params = {'names': [], 'lyr_nums':[], 'filepaths':[],
                                 'scale_min_vals':[], 'scale_max_vals':[]}
 
-    #then loop over the scapes in params.land.scapes and create each one
-    for n, (scape_name, scape_params) in enumerate(params.land.scapes.items()):
+    #then loop over the lyrs in params.landscape.lyrs and create each one
+    for n, (lyr_name, lyr_params) in enumerate(
+                                        params.landscape.layers.items()):
 
         #get the init parameters
-        init_params = deepcopy(scape_params.init)
+        init_params = deepcopy(lyr_params.init)
 
-        #determine which type of scape this is to be
+        #determine which type of lyr this is to be
         #(valid: 'random', 'defined', 'file')
         init_keys = [*init_params]
         if len(init_keys) > 1:
-            raise ValueError(("The %ith scape (params['land']['scapes'] "
-                "key '%s') appears to have parameters for more than one scape "
-                "type.  Choose a single scape type (valid values: 'random', "
+            raise ValueError(("The %ith layer (params['land']['layers'] "
+                "key '%s') appears to have parameters for more than one layer "
+                "type.  Choose a single layer type (valid values: 'random', "
                 "'defined', 'file', 'nlmpy') and provide a sub-dictionary "
                 "of parameters for only that type.") % (n, str(k)))
-        scape_type = init_keys[0]
-        assert scape_type in ['random', 'defined', 'file', 'nlmpy'], ("The "
-            "parameters sub-dictionary for the %ith scape (params['land']"
-            "['scapes'] key '%s') has an invalid key value. Valid keys are: "
+        lyr_type = init_keys[0]
+        assert lyr_type in ['random', 'defined', 'file', 'nlmpy'], ("The "
+            "parameters sub-dictionary for the %ith layer (params['land']"
+            "['layers'] key '%s') has an invalid key value. Valid keys are: "
             "'random', 'defined', 'file'.") % (n, str(k))
 
-        #create a random scape, if called for
-        if scape_type == 'random':
-            #create the random scape and add it to the scapes dict
-            scape_rast = _make_random_scape(dim, **init_params[scape_type],
+        #create a random lyr, if called for
+        if lyr_type == 'random':
+            #create the random lyr and add it to the lyrs dict
+            lyr_rast = _make_random_lyr(dim, **init_params[lyr_type],
                                            num_hab_types=num_hab_types)
-            scapes[n] = Scape(scape_rast, scape_type = scape_type,
-                name = scape_name, dim = dim, res = res, ulc = ulc)
+            lyrs[n] = Layer(lyr_rast, lyr_type = lyr_type,
+                name = lyr_name, dim = dim, res = res, ulc = ulc)
 
-        #or else create a defined scape 
-        elif scape_type == 'defined':
+        #or else create a defined lyr 
+        elif lyr_type == 'defined':
             #create the defined raster
-            scape_rast = _make_defined_scape(dim, **init_params[scape_type],
+            lyr_rast = _make_defined_lyr(dim, **init_params[lyr_type],
                                             num_hab_types=num_hab_types)
-            scapes[n] = Scape(scape_rast, scape_type = scape_type,
-                name = scape_name, dim = dim, res = res, ulc = ulc)
+            lyrs[n] = Layer(lyr_rast, lyr_type = lyr_type,
+                name = lyr_name, dim = dim, res = res, ulc = ulc)
 
-        #or else create an nlmpy scape
-        elif scape_type == 'nlmpy':
+        #or else create an nlmpy lyr
+        elif lyr_type == 'nlmpy':
             #get the params
-            nlmpy_params = init_params[scape_type]
+            nlmpy_params = init_params[lyr_type]
             #make the nlm
-            scape_rast = spt._make_nlmpy_raster(nlmpy_params)
-            #check that its dimensions match those of the Land
-            assert scape_rast.shape == dim, ("The dimensions of the NLM "
-                "created appear to differ from the Land dims: Land has dims "
-                "%s, NLM has dims %s.\n\n") % (str(dim), str(scape_rast.shape))
-            #set the nlm as the nth Scape in the Land
-            scapes[n] = Scape(scape_rast, scape_type = scape_type,
-                name = scape_name, dim = dim, res = res, ulc = ulc)
+            lyr_rast = spt._make_nlmpy_raster(nlmpy_params)
+            #check that its dimensions match those of the Landscape
+            assert lyr_rast.shape == dim, ("The dimensions of the NLM "
+                "created appear to differ from the Landscape dims: "
+                "Landscape has dims %s, "
+                "NLM has dims %s.\n\n") % (str(dim), str(lyr_rast.shape))
+            #set the nlm as the nth Layer in the Landscape
+            lyrs[n] = Layer(lyr_rast, lyr_type = lyr_type,
+                name = lyr_name, dim = dim, res = res, ulc = ulc)
 
-        #or else create a scape from file
-        elif scape_type == 'file':
-            #set this scape to None, temporarily
-            scapes[n] = None
-            #then store the relevant info for this scape in the 
-            #file_scape_params dict; this scape's raster
-            #will be replaced with a GIS or numpy raster after the Land is 
+        #or else create a lyr from file
+        elif lyr_type == 'file':
+            #set this lyr to None, temporarily
+            lyrs[n] = None
+            #then store the relevant info for this lyr in the 
+            #file_lyr_params dict; this lyr's raster
+            #will be replaced with a GIS or numpy raster after the Landscape is 
             #created (NOTE: easier to do this all at 
             #once afterward, to check that the resolution and registration
             #of the rasters all agree)
-            file_scape_params['scape_nums'].append(n)
-            file_scape_params['names'].append(scape_name)
-            [file_scape_params[k+'s'].append(v) for k,v in init_params[
-                                                        scape_type].items()]
+            file_lyr_params['lyr_nums'].append(n)
+            file_lyr_params['names'].append(lyr_name)
+            [file_lyr_params[k+'s'].append(v) for k,v in init_params[
+                                                        lyr_type].items()]
 
     #now set the necessary layers to their file rasters, if applicable
-    if True in [len(v) > 0 for v in file_scape_params.values()]:
-        file_scapes, res, ulc, prj = _get_file_rasters(land_dim = dim,
-                                                      **file_scape_params)
-        for n in file_scape_params['scape_nums']:
-            scapes[n] = file_scapes[n]
+    if True in [len(v) > 0 for v in file_lyr_params.values()]:
+        file_lyrs, res, ulc, prj = _get_file_rasters(land_dim = dim,
+                                                      **file_lyr_params)
+        for n in file_lyr_params['lyr_nums']:
+            lyrs[n] = file_lyrs[n]
 
     #create the land object
-    land = Land(scapes, res=res, ulc=ulc, prj=prj)
+    land = Landscape(lyrs, res=res, ulc=ulc, prj=prj)
 
     #grab the change parameters into a dictionary of
-    #scape_num:events:events_params hierarchical
-    change_params = {k:v.change for k,v in params.land.scapes.items(
+    #lyr_num:events:events_params hierarchical
+    change_params = {k:v.change for k,v in params.landscape.layers.items(
                                                 ) if 'change' in v.keys()}
-    #and then replace the land.changer attribute with an ops.change.LandChanger
-    #object, if params call for it
+    #and then replace the land._changer attribute with
+    #an ops.change.LandscapeChanger object, if params call for it
     if len(change_params) > 0:
-        land._changer = change._LandChanger(land, change_params)
+        #replace the keys, which are layer names, with layer numbers
+        lyr_num_change_params = {}
+        for k,v in change_params.items():
+            lyr_num = [num for num, lyr in land.items() if lyr.name == k]
+            assert len(lyr_num) == 1, ("Expected to find a single Layer "
+                "matching the layer names for each Landscape-change event, "
+                "but found %i Layers matching Layer name "
+                "'%s'.") % (len(lyr_num), k)
+            lyr_num_change_params[lyr_num[0]] = v
+        land._changer = change._LandscapeChanger(land, lyr_num_change_params)
 
     return land
 
 
-def _get_file_rasters(land_dim, names, scape_nums, filepaths,
+def _get_file_rasters(land_dim, names, lyr_nums, filepaths,
                                             scale_min_vals, scale_max_vals):
-    assert len(scape_nums)==len(filepaths), ('Parameters provide a '
-        'different number of GIS raster files to read in than of scape '
+    assert len(lyr_nums)==len(filepaths), ('Parameters provide a '
+        'different number of GIS raster files to read in than of layer '
                                                 'numbers to set them to .')
     res = []
     ulc = []
     prj = []
     rasters = []
-    scapes = []
+    lyrs = []
     for n,filepath in enumerate(filepaths):
         #get the array, dim, res, upper-left corner, and projection from
         #io.read_raster
@@ -488,8 +499,8 @@ def _get_file_rasters(land_dim, names, scape_nums, filepaths,
             '(%i, %i), but land has dimensions (%i,%i)') % (filepath,
             filepath, filepath, rast_dim[0], rast_dim[1], land_dim[0],
                                                             land_dim[1])
-        #if either the scale_min_val or scale_max_val for this Scape is None,
-        #set it to the min or max value of this Scape's array
+        #if either the scale_min_val or scale_max_val for this Layer is None,
+        #set it to the min or max value of this Layer's array
         if scale_min_vals[n] is None:
             scale_min_vals[n] == rast_array.min()
         if scale_max_vals[n] is None:
@@ -527,13 +538,13 @@ def _get_file_rasters(land_dim, names, scape_nums, filepaths,
     res = res[0]
     ulc = ulc[0]
     prj = prj[0]
-    #create scapes from the rasters
-    scapes = [Scape(rast, scape_type = 'file', name = name, dim = land_dim,
+    #create lyrs from the rasters
+    lyrs = [Layer(rast, lyr_type = 'file', name = name, dim = land_dim,
             res = res, ulc = ulc, prj = prj, scale_min=scale_min,
-            scale_max=scale_max) for scape_num, name, rast, scale_min,
-            scale_max in zip(scape_nums, names, rasters, scale_min_vals,
+            scale_max=scale_max) for lyr_num, name, rast, scale_min,
+            scale_max in zip(lyr_nums, names, rasters, scale_min_vals,
                                                             scale_max_vals)]
-    return(scapes, res, ulc, prj)
+    return(lyrs, res, ulc, prj)
 
 
 # function for reading in a pickled landscape stack

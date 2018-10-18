@@ -51,7 +51,7 @@ class _RecombinationPaths:
         return(random.sample(self.recomb_paths, n))
 
 class Trait:
-    def __init__(self, idx, name, phi, n_loci, mu, scape, alpha_distr_mu,
+    def __init__(self, idx, name, phi, n_loci, mu, layer, alpha_distr_mu,
                  alpha_distr_sigma, gamma, univ_adv):
         self.idx = idx
         self.name = name
@@ -60,7 +60,7 @@ class Trait:
         if mu is None:
             mu = 0
         self.mu = mu
-        self.scape = scape
+        self.lyr = layer
         self.alpha_distr_mu = alpha_distr_mu
         self.alpha_distr_sigma = alpha_distr_sigma
         self.gamma = gamma
@@ -149,17 +149,17 @@ class GenomicArchitecture:
     def _make_mut_fns_dict(self):
         mut_fns = {}
         if self.mu_neut > 0:
-            fn = lambda pop,offspring: mutation.do_neutral_mutation(pop,
+            fn = lambda pop,offspring: mutation._do_neutral_mutation(pop,
                                                                     offspring)
             mut_fns.update({'neut': fn})
         if self.mu_delet > 0:
-            fn = lambda pop,offspring: mutation.do_deleterious_mutation(pop,
+            fn = lambda pop,offspring: mutation._do_deleterious_mutation(pop,
                                                                     offspring)
             mut_fns.update({'delet': fn})
         if self.traits is not None:
             for trait_num in self.traits:
                 if self.traits[trait_num].mu > 0:
-                    fn = lambda pop,offspring: mutation.do_trait_mutation(pop,
+                    fn = lambda pop,offspring: mutation._do_trait_mutation(pop,
                                                         offspring, trait_num)
                     mut_fns.update({'t%i' % trait_num: fn})
         return mut_fns
@@ -255,7 +255,7 @@ class GenomicArchitecture:
 
     #method for creating and assigning the r_lookup attribute
     def _make_recomb_paths(self):
-        self.recomb_paths = _RecombinationPaths(make_recomb_paths_bitarrays(
+        self._recomb_paths = _RecombinationPaths(_make_recomb_paths_bitarrays(
                                                                         self))
 
 
@@ -298,17 +298,18 @@ def _make_traits(traits_params, land):
     params_copy = {**traits_params}
     #get the number of traits to create
     num_traits = len(params_copy)
-    #and set each Scape number using Scape names
+    #and set each Layer number using Layer names
     for k, v in params_copy.items():
-        scape_num = [num for num, scape in land.items(
-                                                ) if scape.name == v.scape]
-        assert len(scape_num) == 1, ("Expected to find a single Scape with "
-            "the Scape name indicated for Trait %s, but instead found "
-            "%i.") % (k, len(scape_num))
-        v['scape'] = scape_num[0]
+        lyr_num = [num for num, lyr in land.items(
+                                                ) if lyr.name == v.layer]
+        assert len(lyr_num) == 1, ("Expected to find a single Layer with "
+            "the Layer name indicated for Trait %s, but instead found "
+            "%i.") % (k, len(lyr_num))
+        v['layer'] = lyr_num[0]
     #then for each of i traits, unpack the ith components of the remaining
     #params to create the trait dict
-    traits = {n: Trait(n, k, **v) for n, k,v in enumerate(params_copy.items())}
+    traits = {n: Trait(n, k_v[0], **k_v[1]) for n, k_v in enumerate(
+                                                        params_copy.items())}
     return(traits)
 
 
@@ -395,18 +396,18 @@ def _make_recomb_array(g_params, recomb_values):
                 assert callable(recomb_rate_fn), ("The 'recomb_rate_custom_fn'"
                     " provided in the parameters appears not to be defined "
                     "properly as a callable function.")
-                #then call the draw_r() function for each locus,
+                #then call the _draw_r() function for each locus,
                 #using custom recomb_fn
                 recomb_array = _draw_r(g_params, recomb_fn = recomb_rate_fn)
 
-        #otherwise, use the default draw_r function to draw recomb rates
+        #otherwise, use the default _draw_r function to draw recomb rates
         else:
             recomb_array = _draw_r(g_params)
 
     #if more than one chromosome (i.e. if l_c provided in g_params dict and of
     #length >1), set recomb rate at the appropriate chrom breakpoints to 0.5
     if len(l_c) >1:
-        bps = get_chrom_breakpoints(l_c, L)
+        bps = _get_chrom_breakpoints(l_c, L)
         recomb_array[bps] = 0.5
     #NOTE: Always set the first locus r = 0.5, to ensure independent 
     #assortment of homologous chromosomes
@@ -422,11 +423,11 @@ def _make_recomb_array(g_params, recomb_values):
 def _make_recomb_paths_bitarrays(genomic_architecture,
                     lookup_array_size = 10000, n_recomb_paths = 100000):
 
-    if genomic_architecture.recomb_lookup_array_size is not None:
-        lookup_array_size = genomic_architecture.recomb_lookup_array_size
+    if genomic_architecture._recomb_lookup_array_size is not None:
+        lookup_array_size = genomic_architecture._recomb_lookup_array_size
 
-    if genomic_architecture.n_recomb_paths is not None:
-        n_recomb_paths = genomic_architecture.n_recomb_paths
+    if genomic_architecture._n_recomb_paths is not None:
+        n_recomb_paths = genomic_architecture._n_recomb_paths
 
     lookup_array = np.zeros((len(genomic_architecture.r),lookup_array_size),
                                                             dtype = np.int8)

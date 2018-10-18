@@ -59,7 +59,7 @@ def _do_neutral_mutation(pop, offspring, locus=None, individ=None):
         locus = r.choice([*pop.gen_arch._mutable_loci])
     else:
         assert locus in pop.gen_arch._mutable_loci, ('The locus provided '
-                            'is not in the pop.gen_arch.mutable_loci set.')
+                            'is not in the pop.gen_arch._mutable_loci set.')
     #remove the locus from the mutable_loci set
     pop.gen_arch._mutable_loci.remove(locus)
     #randomly choose a chromosome on which to place the mutation
@@ -135,13 +135,13 @@ def _do_mutation(offspring, pop, log=None):
     #draw number of mutations from a binomial trial with number of trials equal
     #to len(offspring)*pop.gen_arch.L and prob = sum(all mutation rates)
     n_muts = r.binomial(n = len(offspring) * pop.gen_arch.L,
-                                    p = pop.gen_arch.mu_tot)
+                                    p = pop.gen_arch._mu_tot)
     #TODO: ADD A PRINT STATEMENT FOR 'verbose' MODE INSTEAD
     #if n_muts > 0:
     #   print('\t**** %i mutations occurred\n\n' % n_muts)
 
-    #if n_muts >0, draw which type of mutation each resulting mutation should be
-    #(weighted by relative mutation rates)
+    #if n_muts >0, draw which type of mutation
+    #each resulting mutation should be (weighted by relative mutation rates)
     if n_muts > 0:
         muts = pop.gen_arch._draw_mut_types(num = n_muts)
 
@@ -153,10 +153,10 @@ def _do_mutation(offspring, pop, log=None):
             mut_queue.append(mut_fn)
 
         #add to the queue any planned mutations, if necessary
-        if pop.gen_arch.planned_muts:
-            if pop.gen_arch.planned_muts.next[0] <= pop.t:
-                mut_queue.append(planned_muts.next[1])
-                pop.gen_arch.planned_muts.set_next()
+        if pop.gen_arch._planned_muts:
+            if pop.gen_arch._planned_muts.next[0] <= pop.t:
+                mut_queue.append(pop.gen_arch._planned_muts.next[1])
+                pop.gen_arch._planned_muts._set_next()
 
         #execute all functions in the queue
         for fn in mut_queue:

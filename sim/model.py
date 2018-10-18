@@ -93,25 +93,25 @@ class Model:
         self.it = -1
 
         #make the land and community objects
-        self.land = self._make_land()
+        self.land = self._make_landscape()
         self.comm = self._make_community()
 
-        #and make the self.__never_run__ attribute to False,
+        #and make the self._never_run attribute False,
         #to prevent the land and community from being reset
         #on the very first iteration
-        self.__never_run__ = True
+        self._never_run = True
 
-        #make a data.DataCollector object for the self.collecter attribute
+        #make a data._DataCollector object for the self.collecter attribute
         #if necessary
-        self.data_collector = None
+        self._data_collector = None
         if 'data' in [*m_params]:
-            self.data_collector = self._make_data_collector()
+            self._data_collector = self._make_data_collector()
 
-        #make a stats.StatsCollector object for the self.collecter attribute
+        #make a stats._StatsCollector object for the self.collecter attribute
         #if necessary
-        self.stats_collector = None
+        self._stats_collector = None
         if 'stats' in [*m_params]:
-            self.stats_collector = self._make_stats_collector()
+            self._stats_collector = self._make_stats_collector()
 
         #create a self.reassign_genomes attribute, which defaults to False,
         #unless any population has a genomic architecture, indicating that its
@@ -119,13 +119,13 @@ class Model:
         #reset to False as soon as the genomes are reassigned
         self.reassign_genomes = None
 
-        #and set the orig_land and orig_comm objects, if rand_land and
+        #and set the orig_land and orig_comm objects, if rand_landscape and
         #rand_comm are False
-        self.rand_land = m_params.its.rand_land
+        self.rand_landscape = m_params.its.rand_landscape
         self.rand_comm = m_params.its.rand_comm
         self.orig_land = None
         self.orig_comm = None
-        if not self.rand_land:
+        if not self.rand_landscape:
             self.orig_land = deepcopy(self.land)
         if not self.rand_comm:
             self.orig_comm = deepcopy(self.comm)
@@ -148,49 +148,49 @@ class Model:
         type_str = str(type(self))
         #get model name string
         name_str = "Model name:%s%s"
-        name_str = name_str % (_sr_.get_spacing(name_str), self.name)
+        name_str = name_str % (_sr_._get_spacing(name_str), self.name)
         #get strings for the numbers of its, burn-in timesteps, main timesteps
         n_its_str = "Number of iterations:%s%i"
-        n_its_str = n_its_str % (_sr_.get_spacing(n_its_str), self.n_its)
+        n_its_str = n_its_str % (_sr_._get_spacing(n_its_str), self.n_its)
         burn_t_str= "Number of burn-in timesteps (minimum):%s%i"
-        burn_t_str = burn_t_str % (_sr_.get_spacing(burn_t_str), self.burn_T)
+        burn_t_str = burn_t_str % (_sr_._get_spacing(burn_t_str), self.burn_T)
         main_t_str = "Number of main timesteps:%s%i"
-        main_t_str = main_t_str % (_sr_.get_spacing(main_t_str), self.T)
+        main_t_str = main_t_str % (_sr_._get_spacing(main_t_str), self.T)
         #get strings for land and comm
         comm_str = "Populations:"
-        pop_strs = ["%s %i: '%s'" % (_sr_.get_spacing(""),
+        pop_strs = ["%s %i: '%s'" % (_sr_._get_spacing(""),
             i, pop.name) for i, pop in self.comm.items()]
         pop_strs[0] = comm_str + pop_strs[0][len(comm_str):]
         comm_str = '\n'.join(pop_strs)
-        land_str = "Scapes:"
-        scape_strs = ["%s %i: '%s'" % (_sr_.get_spacing(""),
-            i, scape.name) for i, scape in self.land.items()]
-        scape_strs[0] = land_str + scape_strs[0][len(land_str):]
-        land_str = '\n'.join(scape_strs)
+        land_str = "Layers:"
+        lyr_strs = ["%s %i: '%s'" % (_sr_._get_spacing(""),
+            i, lyr.name) for i, lyr in self.land.items()]
+        lyr_strs[0] = land_str + lyr_strs[0][len(land_str):]
+        land_str = '\n'.join(lyr_strs)
         #get string for the stats to be collected
-        if self.stats_collector is not None:
-            st = self.stats_collector.stats
+        if self._stats_collector is not None:
+            st = self._stats_collector.stats
             stat_strs=[*set([str(s) for k in st.keys() for s in st[k].keys()])]
         else:
             stat_strs = [""]
         stats_str = "Stats collected:%s{%s}"
-        stats_str = stats_str % (_sr_.get_spacing(stats_str),
+        stats_str = stats_str % (_sr_._get_spacing(stats_str),
                                                     ', '.join(stat_strs))
         #get strings for the geo and gen data to be collected
-        if self.data_collector is not None:
-            dc = self.data_collector
+        if self._data_collector is not None:
+            dc = self._data_collector
             geo_data_strs = dc.geo_formats
-            if dc.include_land:
+            if dc.include_landscape:
                 geo_data_strs.append(dc.rast_format)
             gen_data_strs = dc.gen_formats
         else:
             geo_data_strs = [""]
             gen_data_strs = [""]
         geo_data_str = "Geo-data collected:%s{%s}"
-        geo_data_str = geo_data_str % (_sr_.get_spacing(geo_data_str),
+        geo_data_str = geo_data_str % (_sr_._get_spacing(geo_data_str),
                                         ', '.join(geo_data_strs))
         gen_data_str = "Gen-data collected:%s{%s}"
-        gen_data_str = gen_data_str % (_sr_.get_spacing(gen_data_str),
+        gen_data_str = gen_data_str % (_sr_._get_spacing(gen_data_str),
                                         ', '.join(gen_data_strs))
         #join all the strings together
         tot_str = '\n'.join([type_str, name_str, land_str, comm_str,
@@ -251,36 +251,38 @@ class Model:
         random.seed(self.seed)
         r.seed(self.seed)
 
-    #method to wrap around landscape._make_land
-    def _make_land(self):
-        land = landscape._make_land(self.params)
+    #method to wrap around landscape._make_landscape
+    def _make_landscape(self):
+        land = landscape._make_landscape(self.params)
         return(land)
 
     #a method to reset the land as necessary
     #(recopying or regeneratiing as necessary)
-    def _reset_land(self, rand_land=True):
+    def _reset_landscape(self, rand_landscape=True):
         #deepcopy the original land if necessary 
         #(else randomly generate new land)
-        if not rand_land:
+        if not rand_landscape:
             #verbose output
             if self._verbose:
-                print(('Copying the original land '
+                print(('Copying the original Lanscape '
                        'for iteration %i...\n\n') % self.it)
             #deepcopy the original land
             self.land = deepcopy(self.orig_land)
-            #and reset the land.changer.changes, if needed (so that they
+            #and reset the land._changer.changes, if needed (so that they
             #point to the current land, not previous objects with possibly
             #updated attribute values)
-            if self.land.changer is not None:
+            if self.land._changer is not None:
                 #verbose output
                 if self._verbose:
-                    print('Resetting the land.changer.changes object...\n\n')
-                self.land.changer.set_changes(self.land)
+                    print(('Resetting the _LandscapeChanger.changes '
+                                                        'object...\n\n'))
+                self.land._changer._set_changes(self.land)
         else:
             #verbose output
             if self._verbose:
-                print('Creating new land for iteration %i...\n\n' % self.it)
-            self.land = self._make_land()
+                print(('Creating new Landscape for '
+                                    'iteration %i...\n\n') % self.it)
+            self.land = self._make_landscape()
 
 
     #method to wrap around community._make_community
@@ -297,16 +299,16 @@ class Model:
                 print(('Copying the original community for '
                                     'iteration %i...\n\n') % self.it)
             self.comm = deepcopy(self.orig_comm)
-            #and reset the pop.changer.changes objects for each pop,
+            #and reset the pop._changer.changes objects for each pop,
             #if needed (so that they point to the current populations,
             #not previous ones with updated attribute values)
             for pop in self.comm.values():
-                if pop.changer is not None:
+                if pop._changer is not None:
                     #verbose output
                     if self._verbose:
-                        print(('Resetting the pop.changer.changes '
+                        print(('Resetting the pop._changer.changes '
                             'object for population " %s"...\n\n') % pop.name)
-                    pop.changer.set_changes(pop)
+                    pop._changer._set_changes(pop)
         else:
             #verbose ouput
             if self._verbose:
@@ -315,49 +317,49 @@ class Model:
             self.comm = self._make_community()
 
 
-    #method to make a data.DataCollector object for this model
+    #method to make a data._DataCollector object for this model
     def _make_data_collector(self):
-        data_collector = data.DataCollector(self.name, self.params)
+        data_collector = data._DataCollector(self.name, self.params)
         return data_collector
 
 
-    #method to reset the self.data_collector attribute 
-    #(a data.DataCollector object)
+    #method to reset the self._data_collector attribute 
+    #(a data._DataCollector object)
     def _reset_data_collector(self):
-        self.data_collector = self._make_data_collector()
+        self._data_collector = self._make_data_collector()
 
 
-    #method to make a stats.StatsCollector object for this model
+    #method to make a stats._StatsCollector object for this model
     def _make_stats_collector(self):
-        stats_collector = stats.StatsCollector(self.name, self.params)
+        stats_collector = stats._StatsCollector(self.name, self.params)
         return stats_collector
 
 
-    #method to reset the self.stats_collector attribute 
-    #(a stats.StatsCollector object)
+    #method to reset the self._stats_collector attribute 
+    #(a stats._StatsCollector object)
     def _reset_stats_collector(self):
-        self.stats_collector = self._make_stats_collector()
+        self._stats_collector = self._make_stats_collector()
 
 
     #method to reset all the model's objects
     #(land, community, and associated) and attributes
-    def _reset(self, rand_land=None, rand_comm=None, repeat_burn=None):
+    def _reset(self, rand_landscape=None, rand_comm=None, repeat_burn=None):
         #default to the self.rand_<_> attributes, if not otherwise provided
-        if rand_land is None:
-            rand_land = self.rand_land
+        if rand_landscape is None:
+            rand_landscape = self.rand_landscape
         if rand_comm is None:
             rand_comm = self.rand_comm
         if repeat_burn is None:
             repeat_burn = self.repeat_burn
 
-        #deepcopy the original land and comm if necessary
-        #(if told not to randomize land and not at the beginning
+        #deepcopy the original landscape and comm if necessary
+        #(if told not to randomize landscape and not at the beginning
         #of the initial iteration), else randomly generate new
-        if not self.__never_run__:
-            self._reset_land(rand_land)
+        if not self._never_run:
+            self._reset_landscape(rand_landscape)
             self._reset_community(rand_comm)
         else:
-            self.__never_run__ = False
+            self._never_run = False
 
         #reset the self.burn_t and self.t attributes to -1
         self._reset_t()
@@ -372,14 +374,14 @@ class Model:
         #set the self.reassign_genomes attribute
         self._set_reassign_genomes()
 
-        #reset the self.data_collector attribute (the data.DataCollector
+        #reset the self._data_collector attribute (the data._DataCollector
         #object) if necessary
-        if self.data_collector is not None:
+        if self._data_collector is not None:
             self._reset_data_collector()
 
-        #reset the self.stats_collector attribute (the stats.StatsCollector
+        #reset the self._stats_collector attribute (the stats._StatsCollector
         #object) if necessary
-        if self.stats_collector is not None:
+        if self._stats_collector is not None:
             self._reset_stats_collector()
 
         #create new main fn queue (and burn fn queue, if needed)
@@ -416,40 +418,40 @@ class Model:
 
         #append the set_age_stage methods to the queue
         for pop in self.comm.values():
-            queue.append(pop.set_age_stage)
+            queue.append(pop._set_age_stage)
         #append the set_Nt methods
         for pop in self.comm.values():
-            queue.append(pop.set_Nt)
-        #append the do_movement_methods, if pop.move
+            queue.append(pop._set_Nt)
+        #append the do_movement_methods, if pop._move
         for pop in self.comm.values():
-            if pop.move:
-                queue.append(pop.do_movement)
+            if pop._move:
+                queue.append(pop._do_movement)
         #append the do_pop_dynamics methods
         #FIXME: Consider whether the order of these needs to be specified, or
         #randomized, should people want to eventually simulate
         #multiple, interacting populations
         for pop in self.comm.values():
-            queue.append(pop.do_pop_dynamics)
+            queue.append(pop._do_pop_dynamics)
 
-        #add the Changer.make_change, data.DataCollector._write_data, and 
-        #stats.StatsCollector.write_stats methods, if this is not the burn-in
+        #add the Changer.make_change, data._DataCollector._write_data, and 
+        #stats._StatsCollector._write_stats methods, if this is not the burn-in
         #and if pop and/or land have Changer objects, or if the model has 
-        #DataCollector or StatsCollector objects (in the self.data_collector 
-        #and self.stats_collector attributes)
+        #_DataCollector or _StatsCollector objects (in the self._data_collector 
+        #and self._stats_collector attributes)
         if not burn:
-            #add land.make_change method
-            if self.land.changer is not None:
-                queue.append(lambda: self.land.make_change(self.t))
-            #add pop.make_change methods
+            #add land._make_change method
+            if self.land._changer is not None:
+                queue.append(lambda: self.land._make_change(self.t))
+            #add pop._make_change methods
             for pop in self.comm.values():
-                if pop.changer is not None:
-                    queue.append(pop.make_change)
+                if pop._changer is not None:
+                    queue.append(pop._make_change)
             #add self.write_data method
-            if self.data_collector is not None:
+            if self._data_collector is not None:
                 queue.append(self.write_data)
-            #add self._calc_stats method
-            if self.stats_collector is not None:
-                queue.append(self._calc_stats)
+            #add self.calc_stats method
+            if self._stats_collector is not None:
+                queue.append(self.calc_stats)
 
             #TODO depending how I integrate the Stats module, 
             #add stats functions to this queue too
@@ -460,7 +462,7 @@ class Model:
         if burn:
             #for pop in self.comm.values():
                 #queue.append(lambda: pop.check_burned(self.burn_T))
-            queue.append(lambda: self.comm.check_burned(burn_T = self.burn_T))
+            queue.append(lambda: self.comm._check_burned(burn_T = self.burn_T))
         return(queue)
 
 
@@ -501,7 +503,7 @@ class Model:
                             if self._verbose:
                                 print(('Assigning genomes for '
                                     'population "%s"...\n\n') % pop.name)
-                            genome.set_genomes(pop, self.burn_T, self.T)
+                            genome._set_genomes(pop, self.burn_T, self.T)
                     #and then set the reassign_genomes attribute to False, so
                     #that they won'r get reassigned again during this iteration
                     self.reassign_genomes = False
@@ -543,7 +545,7 @@ class Model:
 
         #reset the model (including the burn-in,
         #if self.repeat_burn or if this is the first iteration) 
-        self._reset(rand_land = self.rand_land,
+        self._reset(rand_landscape = self.rand_landscape,
                          rand_comm = self.rand_comm,
                          repeat_burn = self.repeat_burn)
 
@@ -784,12 +786,12 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #reset self._verbose to False
         self._verbose = False
 
-    #method to use the self.data_collector object to sample and write data
+    #method to use the self._data_collector object to sample and write data
     def write_data(self):
-        self.data_collector._write_data(self.comm, self.it)
+        self._data_collector._write_data(self.comm, self.it)
 
-    #method to use the self.stats_collector object to sample and write data
+    #method to use the self._stats_collector object to sample and write data
     def calc_stats(self):
-        self.stats_collector._calc_stats(self.comm, self.t, self.it)
+        self._stats_collector._calc_stats(self.comm, self.t, self.it)
 
 

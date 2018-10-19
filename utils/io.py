@@ -170,10 +170,10 @@ def _append_row_to_csv(filepath, locuswise_array1d, t):
 #of individual.Individual objects
 def _write_geopandas(filepath, individuals, driver):
     #get full path and filename
-    attributes = ['idx', 'phenotype', 'habitat', 'age', 'sex']
+    attributes = ['idx', 'z', 'e', 'age', 'sex']
     #TODO: FIXME: replace the call to str() below with something more
     #sophisticated that will actually separate distinct phenotype
-    #and habitat values into separate, labeled columns
+    #and environment values into separate, labeled columns
     #TODO: also round numbers to 5 decimals or so?
     df_dict = {att: [str(getattr(ind,
                 att)) for ind in individuals.values()] for att in attributes}

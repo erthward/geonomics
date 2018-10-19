@@ -60,7 +60,7 @@ class Trait:
         if mu is None:
             mu = 0
         self.mu = mu
-        self.lyr = layer
+        self.lyr_num = layer
         self.alpha_distr_mu = alpha_distr_mu
         self.alpha_distr_sigma = alpha_distr_sigma
         self.gamma = gamma
@@ -143,6 +143,9 @@ class GenomicArchitecture:
             mus = mus + [trt.mu for trt in self.traits.values()]
         self._mu_tot = sum(mus)
         self._mut_fns = self._make_mut_fns_dict()
+        #set ._planned_muts to None, for now (this is not yet implemented,
+        #but thinking about it
+        self._planned_muts = None
 
     #method to make a _mut_fns dict, containing a function 
     #for each type of mutation for this population
@@ -513,11 +516,19 @@ def _make_genomic_architecture(pop_params, land):
     #set the loci and effect sizes for each trait, using the custom gen-arch
     #file, if provided
     if gen_arch_file is not None:
+        #convert the trait names in the 'trait' column of the file into 
+        #their trait numbers (i.e. their keys in the gen_arch traits dict
+        trait_names_nums = {
+            trt.name: num for num, trt in gen_arch.traits.items()}
+            gen_arch_file['trait'] = [trait_names_nums[
+                val] for val in gen_arch_file['trait']]
+        #get the loci and effect sizes for each trait
         trait_effects = {trait_num:
           {int(k): v for k,v in gen_arch_file[gen_arch_file['trait'] ==
                                         trait_num][['locus','alpha']].values()}
             for trait_num in gen_arch.traits.keys()}
-        #add the loci and effect sizes for each of the traits
+        #add the loci and effect sizes for each of the traits to the
+        #Trait object in the GenomicArchitecture
         for trait_num in gen_arch.traits.keys():
             gen_arch._set_trait_loci(trait_num, mutational = False,
                                 loci = trait_effects[trait_num].keys(),
@@ -576,7 +587,7 @@ def _set_genomes(pop, burn_T, T):
     [ind._set_genome(_draw_genome(pop.gen_arch)) for ind in pop.values()]
     #and then reset the individuals' phenotypes
     if pop.gen_arch.traits is not None:
-        [ind._set_phenotype(pop.gen_arch) for ind in pop.values()];
+        [ind._set_z(pop.gen_arch) for ind in pop.values()];
 
 
 #method for loading a pickled genomic architecture

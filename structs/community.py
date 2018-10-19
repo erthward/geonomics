@@ -97,9 +97,9 @@ class Community(dict):
         burnin_status = np.all([len(pop.Nt) >= burn_T for pop in self.values()])
         #if so, then check all burn-in tests for all pops
         if burnin_status:
-            adf_tests = np.all([burnin.test_adf_threshold(pop, burn_T) for 
+            adf_tests = np.all([burnin._test_adf_threshold(pop, burn_T) for
                                 pop in self.values()])
-            t_tests = np.all([burnin.test_t_threshold(pop, burn_T) for 
+            t_tests = np.all([burnin._test_t_threshold(pop, burn_T) for
                                 pop in self.values()])
             burnin_status = adf_tests and t_tests
         #set the community burn-in tracker

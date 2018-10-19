@@ -185,13 +185,13 @@ class Landscape(dict):
             "%s'%s':\t" % (' ' * (max_len_lyr_name - len(v.name)), v.name) +
             str(v) for k,v in self.items()])
         #get a string representation of the first two and last two parameters
-        params_str = "\nParameters:\n\t" + ',\n\t'.join(sorted([str(k) +
-            ': ' + str(v) for k,v in vars(self).items()][:2])) + ','
-        params_str = params_str + '\n\t...\n\t'
-        params_str = params_str + ',\n\t'.join(sorted([str(k) +
-            ': ' + str(v) for k,v in vars(self).items()][-2:]))
-
-        return '\n'.join([type_str, lyrs_str, params_str])
+        #params_str = "\nParameters:\n\t" + ',\n\t'.join(sorted([str(k) +
+        #    ': ' + str(v) for k,v in vars(self).items()][:2])) + ','
+        #params_str = params_str + '\n\t...\n\t'
+        #params_str = params_str + ',\n\t'.join(sorted([str(k) +
+        #    ': ' + str(v) for k,v in vars(self).items()][-2:]))
+        #return '\n'.join([type_str, lyrs_str, params_str])
+        return '\n'.join([type_str, lyrs_str])
 
     def __repr__(self):
         repr_str = self.__str__()

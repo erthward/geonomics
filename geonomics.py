@@ -50,7 +50,7 @@ import pandas as pd
 #wrapper around params.make_parameters_file
 #TODO
 def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
-                         stats=None, seed=None):
+        stats=None):
     """
     Create a new parameters file.
 
@@ -144,19 +144,6 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
             statistics will be calculated during the model runs, and when.
             (This will be managed by the model's _StatsCollector object.)
 
-    seed : bool, optional
-        Whether to include a seed-parameter section in the parameters file that
-        is generated. Defaults to None. Valid values and their associated
-        behaviors are:
-
-        None, False:
-            Will not add a section for parameterizing how the random number
-            generators are seeded, hence generators will be seeded at
-            random and results will be unreproducible.
-        True:
-            Will add a section for parameterizing how the random number
-            generators are seeded, so that results will be reproducible.
-
     Returns
     -------
     out : None
@@ -210,7 +197,6 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
           demographic change)
         - data-collection;
         - stats-collection;
-        - a section for setting the seed for the random-number generators.
     We can save this to a file named "2-pop_2-trait_model.py" in our current
     working directory.
 
@@ -234,8 +220,8 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
     >>>          'movement_surface': True,
     >>>          'demographic_change': True}
     >>>         ],
-    >>>     #arguments to the data, stats,and seed parameters
-    >>>     data = True, stats = True, seed = True,
+    >>>     #arguments to the data and stats parameters
+    >>>     data = True, stats = True,
     >>>     #destination to which to write the resulting parameter file
     >>>     filepath = '2-pop_2-trait_model.py')
 
@@ -243,7 +229,7 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
 
     par._make_parameters_file(filepath = filepath, layers = layers,
                                 populations = populations, data = data,
-                                stats = stats, seed = seed)
+                                stats = stats)
 
 
 #wrapper around params.read

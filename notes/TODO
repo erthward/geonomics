@@ -1,18 +1,11 @@
 - knock out these secondary to-do items
-        
-        *** DEBUG MODEL AFTER MAKING MANY THINGS PRIVATE, AND OTHER MINOR CHANGES
 
-        5 I say that a Scape can have any number of change events, but the make_parameters_file only takes a bool argument for 'change', not an integer; decide and make
+        5 replace all "if str(type(whatever))" statements with proper "isinstance(whatever, classname)" calls as soon as I know how my finalized class names are going to
+          look to geonomics when it's properly set up as a package
+        
+        5 I say that a Layer can have any number of change events, but the make_parameters_file only takes a bool argument for 'change', not an integer; decide and make
           this consistent
                 - the 'end_rast' parameter also should be able to take a filepath, not just a numpy array (which seems almost useless)
-
-        5 I think I should rename Land and Scape to Landscape and Layer respectively (pain in the ass, but that seems to map onto GIS/geographic terminology better,
-          and can be shortened to the two nice acronyms 'scp' and 'lyr' for attributes, etc)        
-
-        5 finish making all appropriate functions, methods, attributes, and classes private (by adding _ at front), while also reading through the code line by line
-          - and do I need to make all the attributes of private classes (e.g. _DensityGridStack) also private?
-
-        5 make all lines <= 80 length!
 
         3 write a Land.plot_land_changes method (akin to Population.plot_demographic_changes)??
 
@@ -20,14 +13,11 @@
 
         5 pick through all the notes in demography.py and decide which are taken care of, which need to stay, which I still need to take care of, etc. 
 
-        5 get rid of the whole separate seed-params thing; just make 'seed' an additional param in the MODEL section, after T, burn_T, and if it is not None then seeds will be set!
-
         5 for draft docs:
           - write docstrings for remaining key classes
           - make some simple flow diagram/schematic
           - add images
           - explain dist-parameters' name format somewhere
-          - need to explain that scapes/pops/traits have names, but are actually number-ordered in dicts? or can this just stay private to the model?
 
         5 decide what to do if someone instantiates a model that has no neutral loci (line 126 in genome.py currently throws an error)
 
@@ -106,6 +96,10 @@ Traceback (most recent call last):
 IndexError: tuple index out of range
 
 <><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+
+
+
+
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 

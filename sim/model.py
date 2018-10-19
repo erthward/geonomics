@@ -74,12 +74,12 @@ class Model:
             self._set_seeds()
 
         #get minimum burn-in runtime (in timesteps)
-        self.burn_T = m_params.time.burn_T
+        self.burn_T = m_params.burn_T
         #and set the burn-timestep counter (burn_t) to -1 (for same reason
         #as explained for self.t)
         self.burn_t = -1
         #get main runtime (in timesteps)
-        self.T = m_params.time.T
+        self.T = m_params.T
         #and set the timestep counter (t) to -1 (to indicate that the model
         #is unrun, and so that the first timestep will default to 0 at the 
         #beginning of the timestep

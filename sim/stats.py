@@ -53,7 +53,7 @@ class _StatsCollector:
         self.model_name = model_name
 
         #set total model time
-        self.T = params.model.time.T
+        self.T = params.model.T
 
         #grab the stats parameters
         stats_params = params.model.stats
@@ -442,7 +442,7 @@ def _calc_maf(pop):
 def _calc_mean_fitness(pop):
     #calculate the mean fitness, if this population has traits
     if pop.gen_arch.traits is not None:
-        mean_fit = np.mean(selection.calc_fitness(pop))
+        mean_fit = np.mean(selection._calc_fitness(pop))
     #or else return NaN
     else:
         mean_fit = np.nan

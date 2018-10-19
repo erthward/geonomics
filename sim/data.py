@@ -69,7 +69,7 @@ class _DataCollector:
 
         #set model name and T
         self.model_name = model_name
-        self.T = params.model.time.T
+        self.T = params.model.T
 
         #grab the params['data'] contents into objects
         sampling_params = params.model.data.sampling
@@ -346,7 +346,7 @@ class _DataCollector:
 
 
     def _write_geodata(self, filepath, data_format, sample):
-        write_fn = self._write_geodata_fn_dict[data_format]
+        write_fn = self.write_geodata_fn_dict[data_format]
         write_fn(filepath = filepath, individuals = sample)
 
 
@@ -388,7 +388,7 @@ def _format_fasta(sample):
             individ_row1 = re.sub('HAP', str(hap), row1)
             replace = tuple(map(lambda att: re.sub(',', '|', re.sub('[\[\] ]',
                 '', str(getattr(individ, att)))), ['idx', 'x', 'y', 'age',
-                                            'sex', 'phenotype', 'habitat']))
+                                            'sex', 'z', 'e']))
             individ_row1 = individ_row1 % replace
             individ_row2 = ''.join([str(
                             base) for base in individ.genome[:,hap]]) + '\n'

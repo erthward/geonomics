@@ -248,13 +248,14 @@ class Population(OD):
         last_ind_str = ', '.join(self.items().__str__().split(', ')[-2:])
         inds_str = inds_str + first_ind_str + last_ind_str + '\n'
         #get a string representation of the first two and last two parameters
-        params = sorted([str(k) + ': ' +str(v) for k,v in vars(
-            self).items() if type(v) in (str, int, bool,
-                                        float)], key = lambda x: x.lower())
-        params_str = "Parameters:\n\t" + ',\n\t'.join(params[:2]) + ','
-        params_str = params_str + '\n\t...\n\t'
-        params_str = params_str + ',\n\t'.join(params[-2:])
-        return '\n'.join([type_str, inds_str, params_str])
+        #params = sorted([str(k) + ': ' +str(v) for k,v in vars(
+        #   self).items() if type(v) in (str, int, bool,
+        #                               float)], key = lambda x: x.lower())
+        #params_str = "Parameters:\n\t" + ',\n\t'.join(params[:2]) + ','
+        #params_str = params_str + '\n\t...\n\t'
+        #params_str = params_str + ',\n\t'.join(params[-2:])
+        #return '\n'.join([type_str, inds_str, params_str])
+        return '\n'.join([type_str, inds_str])
 
     def __repr__(self):
         repr_str = self.__str__()
@@ -306,7 +307,7 @@ class Population(OD):
         [ind._set_age_stage() for ind in self.values()];
 
     #method to move all individuals simultaneously, and sample
-    #their new habitats
+    #their new locations' environment
     def _do_movement(self):
         movement._move(self)
         self._set_e()
@@ -390,7 +391,7 @@ class Population(OD):
                     and not burn):
                     self[offspring_key]._set_z(self.gen_arch)
 
-        # sample all individuals' habitat values, to initiate for offspring
+        # sample all individuals' environment values, to initiate for offspring
         self._set_e()
         self._set_coords_and_cells()
 
@@ -742,7 +743,7 @@ class Population(OD):
             colorbar=True, im_interp_method='nearest', alpha=1,
                        zoom_width=None, x=None, y=None):
 
-        z = OD(zip([*self], self._get_phenotype()[:,trait]))
+        z = OD(zip([*self], self._get_z()[:,trait]))
         if individs is not None:
             z = {i:v for i,v in z.items() if i in individs}
 
@@ -1041,7 +1042,7 @@ def _make_population(land, name, pop_params, burn=False):
 
     #use the remaining init_params to set the carrying-capacity raster (K)
     pop._set_K(_make_K(pop, land, **init_params))
-    #set initial habitat values
+    #set initial environment values
     pop._set_e()
     #set initial coords and cells
     pop._set_coords_and_cells()

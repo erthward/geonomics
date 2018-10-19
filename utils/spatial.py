@@ -191,7 +191,7 @@ class _DensityGridStack:
 
 
 class _MovementSurface:
-    def __init__(self, move_lyr, mixture, approximation_len = 5000,
+    def __init__(self, move_lyr, mixture, approximation_len = 7500,
                                                     vm_distr_kappa = 12):
         #dimensions
         self.dim = move_lyr.dim
@@ -201,7 +201,7 @@ class _MovementSurface:
         #set the default values, in case they're accidentally fed in
         #as None values in the params
         if approximation_len is None:
-            approximation_len = 5000
+            approximation_len = 7500
         if vm_distr_kappa is None:
             vm_distr_kappa = 12
             #NOTE: when I eventually have a mix = True/False argument

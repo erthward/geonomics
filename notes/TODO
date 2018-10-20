@@ -1,5 +1,10 @@
 - knock out these secondary to-do items
 
+        5 draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
+          should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!
+
+        5 not at all sure that a gamma is the right distribution for drawing the deleterious mutations' effects
+
         5 replace all "if str(type(whatever))" statements with proper "isinstance(whatever, classname)" calls as soon as I know how my finalized class names are going to
           look to geonomics when it's properly set up as a package
         

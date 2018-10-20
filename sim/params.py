@@ -362,7 +362,7 @@ MOVE_SURF_PARAMS = '''
 #block for genome params
 #STRING SLOTS:
     #%i = pop_num,
-    #%s = gen_arch_file_string
+    #
     #%s = traits_params,
 GENOME_PARAMS = '''
             #####################################################
@@ -380,12 +380,10 @@ GENOME_PARAMS = '''
                     'mu_neut':                  1e-9,
                     #genome-wide per-base deleterious mut rate (0 to disable)
                     'mu_delet':                 0,
-                    #whether to save mutation logs
-                    'mut_log':                  False,
                     #shape of distr of deleterious effect sizes
-                    'delet_s_distr_shape':      0.2,
+                    'delet_alpha_distr_shape':      0.2,
                     #scale of distr of deleterious effect sizes
-                    'delet_s_distr_scale':      0.2,
+                    'delet_alpha_distr_scale':      0.2,
                     #alpha of distr of recomb rates
                     'r_distr_alpha':            0.5,
                     #beta of distr of recomb rates
@@ -397,9 +395,11 @@ GENOME_PARAMS = '''
                     #custom fn for drawing recomb rates
                     'recomb_rate_custom_fn':    None,
                     #number of recomb paths to hold in memory
-                    'recomb_lookup_array_size': int(1e3),
+                    'n_recomb_paths_mem': int(1e4),
                     #total number of recomb paths to simulate
-                    'n_recomb_paths':           int(1e4),
+                    'n_recomb_paths_tot':           int(1e5),
+                    #whether to save mutation logs
+                    'mut_log':                  False,
 %s
                     }, # <END> 'gen_arch'
 '''
@@ -491,9 +491,9 @@ POP_DEM_CHANGE_EVENT_PARAMS = '''
                                                 #'cyclical', 'custom'}
                             'kind':             'monotonic',
                             #starting timestep
-                            'start':            50,
+                            'start':            49,
                             #ending timestep
-                            'end':              100,
+                            'end':              99,
                             #rate, for monotonic change
                             'rate':             1.02,
                             #interval of changes, for stochastic change
@@ -501,13 +501,13 @@ POP_DEM_CHANGE_EVENT_PARAMS = '''
                             #distr, for stochastic change {'uniform', 'normal'}
                             'distr':            'uniform',
                             #num cycles, for cyclical change
-                            'n_cycles':         20,
+                            'n_cycles':         10,
                             #min & max sizes, for stochastic & cyclical change
                             'size_range':       (0.5, 1.5),
                             #list of timesteps, for custom change
-                            'timesteps':        [],
+                            'timesteps':        [50, 90, 95],
                             #list of sizes, for custom change
-                            'sizes':            [],
+                            'sizes':            [2, 5, 0.5],
                             } # <END> event %i
 
 '''
@@ -519,7 +519,7 @@ POP_PARAM_CHANGE_PARAMS = '''
                     ##################################
                     'life_hist': {
                         #life-history parameter to change
-                        'b': {
+                        '<life_hist_param>': {
                             #list of timesteps
                             'timesteps':        [],
                             #list of values
@@ -543,9 +543,9 @@ ITS_PARAMS = '''
         'its': {
             #num iterations
             'n_its': 3,
-            #whether to randomize landscape each iteration
+            #whether to randomize Landscape each iteration
             'rand_landscape':    False,
-            #whether to randomize community each iteration
+            #whether to randomize Community each iteration
             'rand_comm':    False,
             #whether to burn in each iteration
             'repeat_burn':  False,

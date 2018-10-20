@@ -108,8 +108,8 @@ class GenomicArchitecture:
         #segregation of chroms, after which recomb occurs as a
         #crossing-over path down the chroms
         self.r = r
-        self._recomb_lookup_array_size = g_params.recomb_lookup_array_size
-        self._n_recomb_paths = g_params.n_recomb_paths
+        self._n_recomb_paths_mem = g_params.n_recomb_paths_mem
+        self._n_recomb_paths_tot = g_params.n_recomb_paths_tot
 
         #The recombination-paths object will be assigned here; used to
         #speed up large quantities of binomial draws needed for recombination
@@ -126,8 +126,8 @@ class GenomicArchitecture:
         #genome-wide deleterious mutation rate
         self.mu_delet = g_params.mu_delet
         self.delet_loci = OD()
-        self.delet_s_distr_shape = g_params.delet_s_distr_shape
-        self.delet_s_distr_scale = g_params.delet_s_distr_scale
+        self.delet_alpha_distr_shape = g_params.delet_alpha_distr_shape
+        self.delet_alpha_distr_scale = g_params.delet_alpha_distr_scale
 
         #add a dict of Trait objects, if necessary
         self.traits = None
@@ -208,7 +208,7 @@ class GenomicArchitecture:
 
     #method for drawing new deleterious mutational fitness effects
     def _draw_delet_s(self):
-        s = r.gamma(self.delet_s_distr_shape, self.delet_s_distr_scale)
+        s = r.gamma(self.delet_alpha_distr_shape, self.delet_alpha_distr_scale)
         s = min(s, 1)
         return(s)
 
@@ -424,13 +424,13 @@ def _make_recomb_array(g_params, recomb_values):
 #NOTE: size argument ultimately determines the minimum distance between
 #probabilities (i.e. recombination rates) that can be modeled this way
 def _make_recomb_paths_bitarrays(genomic_architecture,
-                    lookup_array_size = 10000, n_recomb_paths = 100000):
+                    lookup_array_size = 10000, n_recomb_paths_tot = 100000):
 
-    if genomic_architecture._recomb_lookup_array_size is not None:
-        lookup_array_size = genomic_architecture._recomb_lookup_array_size
+    if genomic_architecture._n_recomb_paths_mem is not None:
+        lookup_array_size = genomic_architecture._n_recomb_paths_mem
 
-    if genomic_architecture._n_recomb_paths is not None:
-        n_recomb_paths = genomic_architecture._n_recomb_paths
+    if genomic_architecture._n_recomb_paths_tot is not None:
+        n_recomb_paths_tot = genomic_architecture._n_recomb_paths_tot
 
     lookup_array = np.zeros((len(genomic_architecture.r),lookup_array_size),
                                                             dtype = np.int8)
@@ -438,7 +438,7 @@ def _make_recomb_paths_bitarrays(genomic_architecture,
     for i, rate in enumerate(genomic_architecture.r):
         lookup_array[i,0:int(round(lookup_array_size*rate))] = 1
 
-    recomb_paths = _make_recombinants(lookup_array, n_recomb_paths).T
+    recomb_paths = _make_recombinants(lookup_array, n_recomb_paths_tot).T
     bitarrays= tuple([_make_bitarray_recomb_subsetter(
                                                     p) for p in recomb_paths])
 

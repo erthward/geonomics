@@ -1,14 +1,13 @@
 import unittest
 from structs import community
 from structs import landscape
-from test import autotest 
-import params
+
 
 class CommunityTestCases(unittest.TestCase):
     def testMakeCommunity(self):
         params = exec(open('./params.py', 'r').read())
-        land = landscape.make_land(params)
-        com = community.make_community(land, params)
+        land = landscape._make_landscape(params)
+        com = community._make_community(land, params)
         self.assertEqual(com.n_pops, len(params.comm.pops))
         self.assertEqual(com.t, -1)
         self.assertIsInstance(com, community.Community)

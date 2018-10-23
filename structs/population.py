@@ -640,18 +640,13 @@ class Population(OD):
                                                         dist = dist, k = k)
         return(dists, pairs)
 
-
-        ################
-        #public methods#
-        ################
-
     #method for plotting the population (or a subset of its individuals, by ID)
     #on top of a layer (or landscape)
-    def plot(self, lyr_num=None, hide_land=False, individs=None, text=False,
+    def _plot(self, lyr_num=None, hide_land=False, individs=None, text=False,
             color='black', edge_color='face', text_color='black',
             colorbar=True, size=25, text_size=9, im_interp_method='nearest',
             land_cmap='terrain', pt_cmap=None, alpha=False,
-             zoom_width=None, x=None, y=None, vmin = None, vmax = None):
+            zoom_width=None, x=None, y=None, vmin = None, vmax = None):
         #convert individs to a list (in case comes in as a numpy array)
         if individs is not None and not isinstance(individs, list):
             individs = list(individs)
@@ -685,7 +680,7 @@ class Population(OD):
 
     #method for plotting the population on top of its estimated
     #population-density raster
-    def plot_density(self, normalize=False, individs=None,
+    def _plot_density(self, normalize=False, individs=None,
             text=False, color='black', edge_color='face',
             text_color='black', size=25, text_size = 9,
             alpha=0.5, zoom_width=None, x=None, y=None):
@@ -704,7 +699,7 @@ class Population(OD):
 
 
     # method for plotting individuals colored by their genotype at a locus
-    def plot_genotype(self, locus, lyr_num=None, individs=None,
+    def _plot_genotype(self, locus, lyr_num=None, individs=None,
             text=False, size=25, text_size = 9, edge_color='black',
             text_color='black', colorbar=True, im_interp_method='nearest',
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
@@ -738,7 +733,7 @@ class Population(OD):
 
     # method for plotting individuals colored by their phenotypes
     #for a given trait
-    def plot_phenotype(self, trait, lyr_num=None, individs=None, text=False,
+    def _plot_phenotype(self, trait, lyr_num=None, individs=None, text=False,
             size=25, text_size = 9, edge_color='black', text_color='black',
             colorbar=True, im_interp_method='nearest', alpha=1,
                        zoom_width=None, x=None, y=None):
@@ -757,7 +752,7 @@ class Population(OD):
 
     # method for plotting individuals colored by their overall fitnesses,
     #or by their fitnesses for a single trait (if trait is not None)
-    def plot_fitness(self, lyr_num=None, trait_num=None, individs=None,
+    def _plot_fitness(self, lyr_num=None, trt_num=None, individs=None,
             text=False, size=100, text_size = 9, edge_color='black',
             text_color='black', fit_cmap = 'RdYlGn', colorbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None,
@@ -774,10 +769,10 @@ class Population(OD):
             return
 
         # get all individs' fitness values
-        if trait_num is None:
+        if trt_num is None:
             w = self._calc_fitness()
         else:
-            w = self._calc_fitness(trait_num = trait_num)
+            w = self._calc_fitness(trait_num = trt_num)
 
         #filter out unwanted individs, if necessary
         w = OD(zip([*self], w))
@@ -789,12 +784,12 @@ class Population(OD):
         #this will also be constrained to the minimum-value color for plotting)
         #NOTE: the np.atleast_2d(...).min() construct makes this
         #work both for fixed and spatially varying phi
-        if trait_num is None:
+        if trt_num is None:
             min_fit = np.product([1 - np.atleast_2d(t.phi).min(
                             ) for t in list(self.gen_arch.traits.values())])
         else:
             min_fit = 1 - np.atleast_2d(self.gen_arch.traits[
-                                                        trait_num].phi).min()
+                                                        trt_num].phi).min()
 
         #then get uneven cmap and cbar-maker (needs to be uneven to
         #give color-resolution to values varying
@@ -804,12 +799,12 @@ class Population(OD):
         #than that minimum value), using the min_fit val
         cmap, make_cbar_fn = viz._make_fitness_cmap_and_cbar_maker(
             min_val = min_fit, max_val = 1, cmap = fit_cmap,
-                                                trait_num = trait_num)
+                                                trt_num = trt_num)
 
         #plot the trait phenotype in larger circles first, if trait is not None
-        if trait_num is not None:
+        if trt_num is not None:
             #plot the outer (phenotype) circles
-            self.plot_phenotype(trait = trait_num, lyr_num = lyr_num,
+            self.plot_phenotype(trait = trt_num, lyr_num = lyr_num,
                 individs = individs, text = False, size = size,
                 text_size = text_size, edge_color=edge_color,
                 text_color = text_color, colorbar = colorbar,
@@ -829,7 +824,7 @@ class Population(OD):
         viz._make_fitness_cbar(make_cbar_fn, min_fit)
 
     #method to plot a population's allele frequencies
-    def plot_allele_frequencies(self):
+    def _plot_allele_frequencies(self):
         if self.gen_arch is None:
             print(("Population.plot_allele_frequencies is not valid for "
                 "populations without genomes.\n"))
@@ -837,36 +832,15 @@ class Population(OD):
             self.gen_arch._plot_allele_frequencies(self)
 
 
-    def plot_hist_fitness(self):
+    def _plot_hist_fitness(self):
         plt.hist(list(self._calc_fitness()))
         plt.xlabel('Fitness')
         plt.ylabel('Count')
 
 
     #method for plotting the movement surface (in various formats)
-    def plot_movement_surface(self, style, x, y, zoom_width=8,
+    def _plot_movement_surface(self, style, x, y, zoom_width=8,
                             scale_fact=4.5, color='black', colorbar = True):
-        """
-        The 'style' argument can take the following values:
-            'hist':
-                Plot a classic histogram approximating the Von Mises
-                distribution at the cell indicated by position x,y.
-            'circle_hist':
-                Plot a circular histogram approximating the Von Mises
-                distribution at the cell indicated by position x,y;
-                plot will be drawn inside the chosen cell on the
-                _MovementSurface raster.
-            'circle_draws':
-                Plot points on the unit circle, whose locations were
-                drawn from the Von Mises distribution at the cell indicated
-                by position x,y; plot will be drawn inside the chosen cell
-                on the _MovementSurface raster.
-            'vect':
-                Inside each cell of the _MovementSurface raster, plot the mean
-                direction vector of directions drawn from that cell's Von Mises
-                distribution.
-
-        """
         if self._move_surf is None:
             print(('This Population appears to have no _MovementSurface. '
                                                 'Function not valid.'))
@@ -931,7 +905,7 @@ class Population(OD):
 
 
     # method for plotting a population pyramid
-    def plot_demographic_pyramid(self):
+    def _plot_demographic_pyramid(self):
         #make dict of female and male colors
         col_dict = {-1: 'cyan', 1: 'pink'}
         #create a figure
@@ -966,7 +940,7 @@ class Population(OD):
         #show it
         plt.show()
 
-    def plot_pop_growth(self):
+    def _plot_pop_growth(self):
         T = range(len(self.Nt))
         x0 = self.Nt[0] / self.K.sum()
         plt.plot(T, [demography._calc_logistic_soln(x0, self.R,
@@ -975,20 +949,25 @@ class Population(OD):
         plt.xlabel('t')
         plt.ylabel('N(t)')
 
-    def plot_demographic_changes(self):
+    def _plot_demographic_changes(self):
         if self._changer is None:
             print(("Population.plot_demographic_changes is not valid "
                 "for populations with no _PopulationChanger object.\n"))
         else:
             self._changer._plot_dem_changes(self)
 
-    def plot_stat(self, stat):
+    def _plot_stat(self, stat):
         if self._stats_collector is None:
             print(("Population.plot_stat is not valid "
                 "for populations with no _StatsCollector object.\n"))
 
         else:
             self._stats_collector._plot_stat(stat, pop_name = self.name)
+
+
+        ################
+        #public methods#
+        ################
 
     def write_pickle(self, filename):
         import cPickle

@@ -88,18 +88,19 @@ class Layer:
     def _write_txt_array(self, filepath):
         io._write_txt_array(filepath, self)
 
-
-    ################
-    #public methods#
-    ################
-
-    def plot(self, colorbar=True, im_interp_method='nearest',
+    #method for plotting the layer
+    def _plot(self, colorbar=True, im_interp_method='nearest',
             cmap = 'terrain', x=None, y=None, zoom_width=None,
             vmin=None, vmax=None):
         plt_lims = viz._get_plt_lims(self, x, y, zoom_width)
         viz._plot_rasters(self, colorbar = colorbar,
             im_interp_method = im_interp_method, cmap = cmap,
             plt_lims = plt_lims, vmin = vmin, vmax = vmax)
+
+
+    ################
+    #public methods#
+    ################
 
     #method for writing the lyr's raster to a file of the specified format
     def write_raster(self, filepath, raster_format):
@@ -220,19 +221,19 @@ class Landscape(dict):
     def _make_change(self, t):
         self._changer._make_change(t)
 
-
-        ################
-        #public methods#
-        ################
-
     #method to plot the landscape (or just a certain lyr)
-    def plot(self, lyr_num=None, colorbar=True, cmap='terrain',
+    def _plot(self, lyr_num=None, colorbar=True, cmap='terrain',
             im_interp_method='nearest', x=None, y=None,
             zoom_width=None, vmin=None, vmax=None):
         plt_lims = viz._get_plt_lims(self, x, y, zoom_width)
         viz._plot_rasters(self, lyr_num = lyr_num, colorbar = colorbar,
             im_interp_method = im_interp_method, cmap = cmap,
             plt_lims = plt_lims, vmin = vmin, vmax = vmax)
+
+
+        ################
+        #public methods#
+        ################
 
     # method for pickling a landscape
     def write_pickle(self, filename):

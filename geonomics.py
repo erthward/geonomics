@@ -421,8 +421,8 @@ def make_model(parameters=None):
                 "Please run again, providing a valid value for the "
                 "'parameters' argument.")
             parameters = params_files[0]
-            print(("\n\nUsing the following file, in the current working "
-              "directory to create the Model object:\n\t%s\n\n") % parameters)
+            print(("\n\nNOTE: Using the following file, in the current working"
+              " directory to create the Model object:\n\t%s\n\n") % parameters)
         except Exception as e:
             raise ValueError(("The 'parameters' argument was not provided, "
                 "and Geonomics could not identify a single "

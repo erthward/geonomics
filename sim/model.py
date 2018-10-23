@@ -211,6 +211,65 @@ class Model:
         #private methods#
         #################
 
+    #method for getting a layer's number, given a name (str) or number
+    def _get_lyr_num(self, lyr_id):
+        if isinstance(lyr_id, int) or lyr_id is None:
+            return(lyr_id)
+        elif isinstance(lyr_id, str):
+            #get nums for all lyrs with matching names
+            lyr_nums = [k for k, lyr  in self.land.items(
+                                                    ) if lyr.name == lyr_id]
+            assert len(lyr_nums) == 1, ("Expected to find a single Layer "
+                "with a name matching the name provided (%s). Instead "
+                "found %i.") % (lyr_id, len(lyr_nums))
+            lyr_num = lyr_nums[0]
+            return lyr_num
+        else:
+            raise ValueError(("The Layer identifier must be either a str "
+                "(indicating the Layer's name) or an int (indicating "
+                "its key in the Landscape dict). Instead, a %s was "
+                "provided.") % str(type(lyr_id)))
+
+
+    #method for getting a population's number, given a name (str) or number
+    def _get_pop_num(self, pop_id):
+        if isinstance(pop_id, int):
+            return(pop_id)
+        elif isinstance(pop_id, str):
+            #get nums for all pops with  matching names
+            pop_nums = [k for k, pop in self.comm.items(
+                                                    ) if pop.name == pop_id]
+            assert len(pop_nums) == 1, ("Expected to find a single Population "
+                "with a name matching the name provided (%s). Instead "
+                "found %i.") % (pop_id, len(nums))
+            pop_num = pop_nums[0]
+            return pop_num
+        else:
+            raise ValueError(("The Population identifier must be either a str "
+                "(indicating the Population's name) or an int (indicating "
+                "its key in the Community dict). Instead, a %s was "
+                "provided.") % str(type(pop_id)))
+
+    #method for getting a Trait's number, give a name (str) or number
+    def _get_trt_num(self, pop, trt_id):
+        if isinstance(trt_id, int) or trt_id is None:
+            return(trt_id)
+        elif isinstance(trt, str):
+            #get nums for all traits with matching names
+            trt_nums = [k for k, trt in pop.gen_arch.traits.items(
+                                                    ) if trt.name == trt_id]
+            assert len(trt_nums) == 1, ("Expected to find a single Trait in "
+                "Population '%s' with a name matching the name provided (%s). "
+                "Instead found %i.") % (pop.name, trt_id, len(trt_nums))
+            trt_num = trt_nums[0]
+            return trt_num
+        else:
+            raise ValueError(("The Trait identifier must be either a str "
+                "(indicating the Trait's name) or an int (indicating "
+                "its key in the Population.gen_arch.traits dict). Instead, "
+                "a %s was provided.") % str(type(trt_id)))
+
+
     #private method for determining the width of
     #the terminal on the current system
     def _set_term_width(self):
@@ -794,4 +853,208 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     def calc_stats(self):
         self._stats_collector._calc_stats(self.comm, self.t, self.it)
 
+
+    ##########
+    #plotting#
+    ##########
+
+    #wrapper around Population._plot and Landscape._plot
+    #TODO: allow pop_id to be a list of pop ids, to plot each pop in a
+    #different color with a legend!
+    def plot(self, pop=None, lyr=None, hide_land=False, individs=None,
+            text=False, color='black', edge_color='face', text_color='black',
+            colorbar=True, size=25, text_size=9, im_interp_method='nearest',
+            land_cmap='terrain', pt_cmap=None, alpha=False,
+             zoom_width=None, x=None, y=None, vmin=None, vmax=None):
+        #get the lyr num
+        lyr_num = self._get_lyr_num(layer)
+        #if no pop_id, then call Landscape._plot
+        if pop_id is None:
+            self.land._plot(lyr_num=lyr_num, colorbar=colorbar, cmap=land_cmap,
+                im_interp_method=im_interp_method, x=x, y=y,
+                zoom_width=zoom_width, vmin=vmin, vmax=vmax)
+        #or else plot the pop
+        else:
+            #get the pop
+            pop = self.comm[self._get_pop_num(pop)]
+            #feed args into pop._plot
+            pop._plot(lyr_num=lyr_num, hide_land=hide_land,
+                individs=individs, text=text, color=color, edge_color=edge_color, 
+                text_color=text_color, colorbar=colorbar, size=size,
+                text_size=text_size, im_interp_method=im_interp_method,
+                land_cmap=land_cmap, pt_cmap=pt_cmap, alpha=alpha,
+                zoom_width=zoom_width, x=x, y=y, vmin=vmin, vmax=vmax)
+            #add pop name
+            plt.suptitle(pop.name)
+
+    #wrapper around Population._plot_density
+    def plot_density(self, pop, normalize=False, individs=None,
+            text=False, color='black', edge_color='face',
+            text_color='black', size=25, text_size = 9,
+            alpha=0.5, zoom_width=None, x=None, y=None):
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #feed args into pop._plot_density
+        pop._plot_density(normalize=normalize, individs=individs, text=text,
+            color=color, edge_color=edge_color, text_color=text_color,
+            size=size, text_size=text_size, alpha=alpha,
+            zoom_width=zoom_width, x=x, y=y)
+        #add pop name
+        plt.suptitle(pop.name)
+
+    #wrapper around Population._plot_genotype
+    def plot_genotype(self, pop, locus, lyr=None, by_dominance=False,
+            individs=None, text=False, size=25, text_size = 9,
+            edge_color='black', text_color='black', colorbar=True,
+            im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
+            y=None):
+        #get the lyr num
+        lyr_num = self._get_lyr_num(layer)
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #feed args into pop._plot_genotype
+        pop._plot_genotype(locus=locus, lyr_num=lyr_num, individs=individs, 
+            text=text, size=size, text_size=text_size, edge_color=edge_color,
+            text_color=text_color, colorbar=colorbar,
+            im_interp_method=im_interp_method, alpha=alpha,
+            by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y)
+        #add pop name
+        plt.suptitle(pop.name)
+
+    #wrapper around Population._plot_phenotype
+    #for a given trait
+    def plot_phenotype(self, pop, trait, layer=None, individs=None, 
+            text=False, size=25, text_size = 9, edge_color='black',
+            text_color='black', colorbar=True, im_interp_method='nearest',
+            alpha=1, zoom_width=None, x=None, y=None):
+        #get the lyr num
+        lyr_num = self._get_lyr_num(layer)       
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #return messages if population does not have genomes or traits
+        if pop.gen_arch is None:
+            print(("Model.plot_phenotype is not valid for populations "
+                "without genomes.\n"))
+            return
+        elif pop.gen_arch.traits is None:
+            print(("Model.plot_phenotype is not valid for populations "
+                "without traits.\n"))
+            return
+        #get the trt_num
+        trt_num = self._get_trt_num(pop, trait)
+        #trt_num can't be None for plot_phenotype
+        assert trt_num is not None, ("None is not a valid value for the "
+            "'trait' arguemnt.")
+        #feed args into pop._plot_phenotype
+        pop._plot_phenotype(trait=trait, lyr_num=lyr_num, individs=individs, 
+            text=text, size=size, text_size=text_size, edge_color=edge_color,
+            text_color=text_color, colorbar=colorbar,
+            im_interp_method=im_interp_method, alpha=alpha,
+            zoom_width=zoom_width, x=x, y=y)
+        #add pop name
+        plt.suptitle(pop.name)
+
+    #wrapper around Population._plot_fitness
+    def plot_fitness(self, pop, trait=None, layer=None, individs=None, 
+            text=False, size=25, text_size = 9, edge_color='black',
+            text_color='black', fit_cmap='RdYlGn', colorbar=True,
+            im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
+            y=None):
+        #get the lyr num
+        lyr_num = self._get_lyr_num(layer)       
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #return messages if population does not have genomes or traits
+        if pop.gen_arch is None:
+            print(("Model.plot_fitness is not valid for populations "
+                "without genomes.\n"))
+            return
+        elif pop.gen_arch.traits is None:
+            print(("Model.plot_fitness is not valid for populations "
+                "without traits.\n"))
+            return
+        #get the trt_num, which CAN be None for plot_fitness
+        trt_num = self._get_trt_num(pop, trait)
+        #feed args into pop._plot_fitness
+        pop._plot_fitness(trt_num=trt_num, lyr_num=lyr_num, individs=individs, 
+            text=text, size=size, text_size=text_size, edge_color=edge_color,
+            text_color=text_color, fit_cmap=fit_cmap, colorbar=colorbar,
+            im_interp_method=im_interp_method, alpha=alpha,
+            zoom_width=zoom_width, x=x, y=y)
+        #add pop name
+        plt.suptitle(pop.name)
+
+    #wrapper around pop._plot_allele_frequencies
+    def plot_allele_frequencies(self, pop):
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #call the fn
+        pop._plot_allele_frequencies()
+
+    #wrapper around pop._plot_hist_fitness
+    def plot_hist_fitness(self, pop):
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #call the fn
+        pop._plot_hist_fitness()
+
+    #wrapper around pop._plot_movement_surface
+    def plot_movement_surface(self, pop, style, x, y, zoom_width=8,
+                            scale_fact=4.5, color='black', colorbar = True):
+        """
+        The 'style' argument can take the following values:
+            'hist':
+                Plot a classic histogram approximating the Von Mises
+                distribution at the cell indicated by position x,y.
+            'circle_hist':
+                Plot a circular histogram approximating the Von Mises
+                distribution at the cell indicated by position x,y;
+                plot will be drawn inside the chosen cell on the
+                _MovementSurface raster.
+            'circle_draws':
+                Plot points on the unit circle, whose locations were
+                drawn from the Von Mises distribution at the cell indicated
+                by position x,y; plot will be drawn inside the chosen cell
+                on the _MovementSurface raster.
+            'vect':
+                Inside each cell of the _MovementSurface raster, plot the mean
+                direction vector of directions drawn from that cell's Von Mises
+                distribution.
+
+        """
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #call the fn
+        pop._plot_movement_surface(style=style, x=x, y=y,
+            zoom_width=zoom_width, scale_fact=scale_fact, color=color,
+            colorbar=colorbar)
+
+
+    #wrapper around pop._plot_demographic_pyramid
+    def plot_demographic_pyramid(self, pop):
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #call the fn
+        pop._plot_demographic_pyramid()
+    
+    #wrapper around pop._plot_pop_growth
+    def plot_pop_growth(self):
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #call the fn
+        pop._plot_pop_growth()
+
+    #wrapper around pop._plot_demographic_changes
+    def plot_demographic_changes(self):
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #call the fn
+        pop._plot_demographic_changes()
+
+    #wrapper around pop._plot_stat
+    def plot_stat(self, stat):
+        #get the pop
+        pop = self.comm[self._get_pop_num(pop)]
+        #call the fn
+        pop._plot_stat(stat)
 

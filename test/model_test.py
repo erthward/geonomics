@@ -1,19 +1,15 @@
-#TODO: make integration test here 
-# import unittest
-# from sim import model
-# from structs import landscape
-# from structs import population
-# import copy
+import unittest
+from sim import model
+from structs import landscape
+from structs import population
+import copy
 
-# class populationTestCases(unittest.TestCase):
-    
-#     def test_make_population(self): 
-#         params = exec(open('./params.py', 'r').read())
-#         land = landscape.make_land(params)
-#         pop = population.make_population(land, params)
-#         self.assertIsInstance(pop, population.Population)
+class modelTestCases(unittest.TestCase):    
+    def test_run(self):
+        model.Model.run(self)
+        return 
 
-
-
-# if __name__ == '__main__':
-#     unittest.main()
+    def test_walk(self):
+        model.Model.walk(self)
+if __name__ == '__main__':
+    unittest.main()

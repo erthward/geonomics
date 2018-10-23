@@ -8,8 +8,8 @@ class PopulationTestCases(unittest.TestCase):
     
     def test_make_population(self): 
         params = exec(open('./params.py', 'r').read())
-        land = landscape.make_land(params)
-        pop = population.make_population(land, params)
+        land = landscape._make_landscape(params)
+        pop = population._make_population(land, params)
         self.assertIsInstance(pop, population.Population)
 
 

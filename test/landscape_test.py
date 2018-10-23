@@ -9,7 +9,7 @@ class LandscapeTestCases(unittest.TestCase):
         params = exec(open('./params.py', 'r').read())
         dim = params.land.main.dim 
         try:
-            random_scape = landscape.make_random_scape(dim, 10)
+            random_scape = landscape._make_random_lyr(dim, 10)
         except:
             print("Can not make the random scape")
 
@@ -26,8 +26,8 @@ class LandscapeTestCases(unittest.TestCase):
         dim = params.land.main.dim
         res = params.land.main.res
         ulc = params.land.main.ulc
-        land = landscape.make_land(params, 2)
-        self.assertIsInstance(land, landscape.Land)
+        land = landscape._make_landscape(params, 2)
+        self.assertIsInstance(land, landscape.Landscape)
     
         
     def test_get_gis_rasters(self):

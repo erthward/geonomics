@@ -25,7 +25,7 @@ Documentation:              URL
 
 
 #TODO:
-#   - vectorize dispersal (i.e. create all offspring and parent centroids,
+#   - vectorize dispersal (i.e. create all offspring and parent midpoints,
 #     then draw new locations for all offspring simultaneously)
 #   - create simpler (private?) methods for making directional and distance
 #     draws, then call those within move, disperse, etc
@@ -95,7 +95,7 @@ def _move(pop):
     [ind._set_pos(x, y) for ind, x, y in zip(pop.values(), new_x, new_y)];
 
 
-def _disperse(land, parent_centroid_x, parent_centroid_y, dispersal_distr_mu,
+def _disperse(land, parent_midpoint_x, parent_midpoint_y, dispersal_distr_mu,
                             dispersal_distr_sigma, mu_dir = 0, kappa_dir = 0):
     within_landscape = False
     while within_landscape == False:
@@ -109,8 +109,8 @@ def _disperse(land, parent_centroid_x, parent_centroid_y, dispersal_distr_mu,
         #distance = lognormal(dispersal_distr_mu, dispersal_distr_sigma)
 
 
-        offspring_x = parent_centroid_x + np.cos(direction)*distance
-        offspring_y = parent_centroid_y + np.sin(direction)*distance
+        offspring_x = parent_midpoint_x + np.cos(direction)*distance
+        offspring_y = parent_midpoint_y + np.sin(direction)*distance
         offspring_x = np.clip(offspring_x, a_min =0, a_max = land.dim[1]-0.001)
         offspring_y = np.clip(offspring_y, a_min =0, a_max = land.dim[1]-0.001)
         within_landscape = (offspring_x > 0

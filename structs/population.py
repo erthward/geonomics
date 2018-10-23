@@ -343,8 +343,8 @@ class Population(OD):
 
         for n_pair, pair in enumerate(mating_pairs):
 
-            parent_centroid_x = (self[pair[0]].x + self[pair[1]].x)/2
-            parent_centroid_y = (self[pair[0]].y + self[pair[1]].y)/2
+            parent_midpoint_x = (self[pair[0]].x + self[pair[1]].x)/2
+            parent_midpoint_y = (self[pair[0]].y + self[pair[1]].y)/2
 
             n_offspring = n_births[n_pair]
             n_gametes = 2 * n_offspring
@@ -355,7 +355,7 @@ class Population(OD):
                 offspring_key = offspring_keys.pop()
 
                 offspring_x, offspring_y = movement._disperse(self.land,
-                        parent_centroid_x, parent_centroid_y,
+                        parent_midpoint_x, parent_midpoint_y,
                         self.dispersal_distr_mu, self.dispersal_distr_sigma)
 
                 #set the age to 0

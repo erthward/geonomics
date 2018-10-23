@@ -82,7 +82,7 @@ def _calc_n_pairs(pairs, pop):
         pairs_coords = pop._get_coords(individs = pairs.flatten())
         #take just the x and y coordinates from pairs_coords, reshape them to
         #match pairs.shape (i.e.nx2, where n = len(pop)), and then mean across
-        #axis 1 (to get the pair's centroid
+        #axis 1 (to get the pair's midpoint
         #x and y coordinates)
         p_x = pairs_coords[:,0].reshape(pairs.shape).mean(axis = 1)
         p_y = pairs_coords[:,1].reshape(pairs.shape).mean(axis = 1)
@@ -225,7 +225,7 @@ def _do_pop_dynamics(land, pop, with_selection = True, burn = False,
     pairs = pop._find_mating_pairs()
 
     #calc num_pairs raster (use the calc_pop_density function on the
-    #centroids of the mating pairs)
+    #midpoints of the mating pairs)
     n_pairs = _calc_n_pairs(pairs = pairs, pop = pop)
     #run checks on n_pairs
     if asserts:

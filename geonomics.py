@@ -477,7 +477,7 @@ def run_default_model():
     #wasn't already a params file in this directory
     filename = [*new_filenames - filenames][0]
     #create the default model
-    mod = make_model(params = filename)
+    mod = make_model(parameters = filename)
     #run the default model in verbose mode
     mod.run(verbose = True)
 

@@ -1,7 +1,25 @@
 - knock out these secondary to-do items
 
+        5 change Population to Species (or Group?)
+
         5 draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
           should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!
+
+        5 create Model.plot methods to wrap around Population mtehods (and allow them to take population NAMES or NUMBERS)
+
+        5 "layers" and "population" argument in make_parameters_file both have "change" arugments, which should be able to take int as a value too, and then add that umber of events
+                - and/or a change events params section should be able to take either a file or a directory of files (in which case those will change at the set timesteps)
+
+        3 make "run_default_model" into more of a vignette (which stops and plots things along the way; and possible which takes different arguments to demonstrate a simple model, a model with selection,
+          a model with landscape change, etc)
+
+        5 maybe change _MovementSurface to _ConductanceSurface, then allow it to be used as _MovementSurface and/or _DispersalSurface??
+
+                - and add a params switch for Movement and Dispersal surfaces to be equal??
+
+        5 consider adding a generalized function for making some distribution's draw be a function of phenotype, then apply that to movement, dispersal, fecundity, etc?
+
+        5 make clearer that "dispersal" means "offspring" and is differentiated from "movement"
 
         5 not at all sure that a gamma is the right distribution for drawing the deleterious mutations' effects
 
@@ -18,11 +36,15 @@
 
         5 pick through all the notes in demography.py and decide which are taken care of, which need to stay, which I still need to take care of, etc. 
 
-        5 for draft docs:
-          - write docstrings for remaining key classes
-          - make some simple flow diagram/schematic
+        5 DOCS:
+          - write docstrings for remaining classes
           - add images
           - explain dist-parameters' name format somewhere
+          - put together some examples (from simplest upward), in a Cookbook section of the docs
+                - and use one of them as an off-the-bat example that can serve as a vehicle for continuing to discuss all the additional possible parts of a model?
+          - add to the Intro (or somewhere near there) in the docs a list of the sorts of questions the package could answer???
+          - add mention of "geonomics" the philosophical movememnt (and disambiguation)
+          - add a graphical representation of the model components to the docs (Species composed of Individuals, possibly with genomes, on a Landscape with multiple Layers)
 
         5 decide what to do if someone instantiates a model that has no neutral loci (line 126 in genome.py currently throws an error)
 
@@ -115,15 +137,11 @@ IndexError: tuple index out of range
 
 - add docstrings to all functions (look up current standards first)
 
-- pull docstrings into a single LaTeX file, then add title, intro, TOC, and general info sections, and figures, to create V0.0 of the docs
-
 - add an ./ex directory, which will contain a Yosemite simulation
 
 - finalize pkg structure
 
 - prep for PyPi release
-
-- prep for Oct 22 lab meeting
 
 - script and run sims for the first study
         - genomic conflict and adaptation to climate change (2 traits, 2 environmental gradients, 1 static, 1 dynamic)

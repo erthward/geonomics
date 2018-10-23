@@ -520,7 +520,7 @@ def _make_genomic_architecture(pop_params, land):
         #their trait numbers (i.e. their keys in the gen_arch traits dict
         trait_names_nums = {
             trt.name: num for num, trt in gen_arch.traits.items()}
-            gen_arch_file['trait'] = [trait_names_nums[
+        gen_arch_file['trait'] = [trait_names_nums[
                 val] for val in gen_arch_file['trait']]
         #get the loci and effect sizes for each trait
         trait_effects = {trait_num:

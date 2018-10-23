@@ -73,6 +73,9 @@ PARAMS = '''#%s
                       ##                         ##
 
 
+#NOTE: GET RID OF THIS SOON!
+import numpy as np
+
 params = {
 ###############################################################################
 
@@ -143,7 +146,6 @@ params = {
         'burn_T':       30,
         #seed number
         'num':          None,
-%s
 %s
 %s
 %s
@@ -373,9 +375,9 @@ GENOME_PARAMS = '''
                     #/path/to/file.csv defining custom genomic arch
                     'gen_arch_file':            %s,
                     #num of loci
-                    'L':                        1000,
+                    'L':                        100,
                     #num of chromosomes
-                    'l_c':                      [750, 250],
+                    'l_c':                      [75, 25],
                     #genome-wide per-base neutral mut rate (0 to disable)
                     'mu_neut':                  1e-9,
                     #genome-wide per-base deleterious mut rate (0 to disable)

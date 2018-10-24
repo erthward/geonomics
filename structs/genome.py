@@ -522,17 +522,41 @@ def _make_genomic_architecture(pop_params, land):
             trt.name: num for num, trt in gen_arch.traits.items()}
         gen_arch_file['trait'] = [trait_names_nums[
                 val] for val in gen_arch_file['trait']]
+        #turn the values in the 'trait' and 'alpha' columns into lists of
+        #values, by splitting on commas
+        #(this will allow people to assign a single locus
+        #to more than one trait, i.e. to model pleiotropy
+        gen_arch_file['trait'] = [
+            [*map(int, row.split(','))] for row in gen_arch_file['trait']]
+        gen_arch_file['alpha'] = [
+            [*map(float, row.split(','))] for row in gen_arch_file['alpha']]
+        #get the loci for each trait
+        loci = {trt_num: np.array(range(len(gen_arch_file)))[
+            [n in row for row in gen_arch_file[
+            'trait']]] for n in gen_arch.traits.keys()} 
+        #get the effect size for each locus
+        alphas = {trt_num: np.concatenate([np.array(row[1]['alpha'])[
+            [n == trt_num for n in row[1][
+            'trait']]] for row in gen_arch_file.iterrows(
+            )]) for trt_num in gen_arch.traits.keys()}
+        #check that we got the same length of loci and effects for each trait
+        for trt_num in loci.keys():
+            assert len(loci[trt_num]) == len(alphas[trt_num]), ("Expected to "
+                "receive the same number of loci and alphas (i.e. effect "
+                "sizes) for trait number %i, but instead got %i loci and %i "
+                "alphas.") % (trt_num, len(loci[trt_num]),
+                len(alphas[trt_num]))
         #get the loci and effect sizes for each trait
-        trait_effects = {trait_num:
-          {int(k): v for k,v in gen_arch_file[gen_arch_file['trait'] ==
-                                        trait_num][['locus','alpha']].values()}
-            for trait_num in gen_arch.traits.keys()}
+        #trait_effects = {trait_num:
+        #  {int(k): v for k,v in gen_arch_file[gen_arch_file['trait'] ==
+        #                                trait_num][['locus','alpha']].values()}
+        #    for trait_num in gen_arch.traits.keys()}
         #add the loci and effect sizes for each of the traits to the
         #Trait object in the GenomicArchitecture
         for trait_num in gen_arch.traits.keys():
             gen_arch._set_trait_loci(trait_num, mutational = False,
-                                loci = trait_effects[trait_num].keys(),
-                                alpha = trait_effects[trait_num].values())
+                                loci = loci[trait_num],
+                                alpha = alphas[trait_num])
     #or else randomly set the loci and effect sizes for each trait
     else:
         if gen_arch.traits is not None:

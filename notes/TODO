@@ -11,7 +11,7 @@
         3 make "run_default_model" into more of a vignette (which stops and plots things along the way; and possible which takes different arguments to demonstrate a simple model, a model with selection,
           a model with landscape change, etc)
 
-        5 maybe change _MovementSurface to _ConductanceSurface, then allow it to be used as _MovementSurface and/or _DispersalSurface??
+        6 maybe change _MovementSurface to _ConductanceSurface, then allow it to be used as _MovementSurface and/or _DispersalSurface??
 
                 - and add a params switch for Movement and Dispersal surfaces to be equal??
 

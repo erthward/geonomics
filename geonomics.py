@@ -33,7 +33,6 @@ import os, sys, traceback
 from collections import Counter as C
 import numpy as np
 import pandas as pd
-import warnings
 
 ######################################
 # -----------------------------------#
@@ -236,17 +235,22 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
     if isinstance(layers, list):
         for n, lyr_dict in enumerate(layers):
             if False in [k in valid_l_keys for k in lyr_dict.keys()]:
-                warnings.warn(("One or more of the keys in dict number %i in "
+                invalid_keys = ', '.join([k for k in lyr_dict.keys(
+                    ) if k not in valid_l_keys])
+                err_msg = ("One or more of the keys in dict number %i of "
                     "the 'layers' argument is not valid. Invalid values: "
-                    "%s.") % (n, ', '.join([k for k in lyr_dict.keys(
-                    ) if k not in valid_l_keys])))
+                    "%s.") % (n, invalid_keys)
+                print('')
+                raise ValueError(err_msg)
     if isinstance(populations, list):
         for n, pop_dict in enumerate(populations):
             if False in [k in valid_p_keys for k in pop_dict.keys()]:
-                warnings.warn(("One or more of the keys in dict number %i in "
+                invalid_keys = ', '.join([k for k in pop_dict.keys(
+                    ) if k not in valid_p_keys])
+                err_msg = ("One or more of the keys in dict number %i of "
                     "the 'populations' argument is not valid. Invalid values: "
-                    "%s.") % (n, ', '.join([k for k in pop_dict.keys(
-                    ) if k not in valid_p_keys])))
+                    "%s.") % (n, invalid_keys)
+                raise ValueError(err_msg)
 
     par._make_parameters_file(filepath = filepath, layers = layers,
                                 populations = populations, data = data,

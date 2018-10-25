@@ -383,9 +383,9 @@ GENOME_PARAMS = '''
                     #genome-wide per-base deleterious mut rate (0 to disable)
                     'mu_delet':                 0,
                     #shape of distr of deleterious effect sizes
-                    'delet_alpha_distr_shape':      0.2,
+                    'delet_alpha_distr_shape':  0.2,
                     #scale of distr of deleterious effect sizes
-                    'delet_alpha_distr_scale':      0.2,
+                    'delet_alpha_distr_scale':  0.2,
                     #alpha of distr of recomb rates
                     'r_distr_alpha':            0.5,
                     #beta of distr of recomb rates
@@ -397,9 +397,9 @@ GENOME_PARAMS = '''
                     #custom fn for drawing recomb rates
                     'recomb_rate_custom_fn':    None,
                     #number of recomb paths to hold in memory
-                    'n_recomb_paths_mem': int(1e4),
+                    'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
-                    'n_recomb_paths_tot':           int(1e5),
+                    'n_recomb_paths_tot':       int(1e5),
                     #whether to save mutation logs
                     'mut_log':                  False,
 %s

@@ -33,6 +33,7 @@ import os, sys, traceback
 from collections import Counter as C
 import numpy as np
 import pandas as pd
+import warnings
 
 ######################################
 # -----------------------------------#
@@ -226,6 +227,26 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
     >>>     filepath = '2-pop_2-trait_model.py')
 
     """
+    #check if any keys in the layers or populations dicts are abnormal, and
+    #provide warning if so
+    valid_l_keys = ['type', 'change']
+    valid_p_keys = ['movement', 'movement_surface', 'genomes',
+        'n_traits', 'custom_genomic_architecture', 'demographic_change',
+        'parameter_change']
+    if isinstance(layers, list):
+        for n, lyr_dict in enumerate(layers):
+            if False in [k in valid_l_keys for k in lyr_dict.keys()]:
+                warnings.warn(("One or more of the keys in dict number %i in "
+                    "the 'layers' argument is not valid. Invalid values: "
+                    "%s.") % (n, ', '.join([k for k in lyr_dict.keys(
+                    ) if k not in valid_l_keys])))
+    if isinstance(populations, list):
+        for n, pop_dict in enumerate(populations):
+            if False in [k in valid_p_keys for k in pop_dict.keys()]:
+                warnings.warn(("One or more of the keys in dict number %i in "
+                    "the 'populations' argument is not valid. Invalid values: "
+                    "%s.") % (n, ', '.join([k for k in pop_dict.keys(
+                    ) if k not in valid_p_keys])))
 
     par._make_parameters_file(filepath = filepath, layers = layers,
                                 populations = populations, data = data,

@@ -226,7 +226,8 @@ class GenomicArchitecture:
         if loci is not None:
             if not np.iterable(loci):
                 loci = [loci]
-            loci = set([*loci])
+            assert len(set([*loci])) == len(loci), ("Some of the trait "
+                "loci provided appear to be repeated.")
         #else, draw loci randomly, either allowing pleiotropy or not
         elif not self.pleiotropy:
             loci = set(r.choice([*self.neut_loci], size = n, replace = False))
@@ -266,9 +267,6 @@ class GenomicArchitecture:
     def _plot_allele_frequencies(self, pop):
         populome = np.stack([ind.genome for ind in pop.values()])
         freqs = populome.sum(axis = 2).sum(axis = 0)/(2*populome.shape[0])
-        print(self.p.shape)
-        print(freqs.shape)
-        print(freqs)
         plt.plot(range(self.L), self.p, ':r')
         plt.plot(range(self.L), freqs, '-b')
         plt.show()
@@ -517,28 +515,27 @@ def _make_genomic_architecture(pop_params, land):
     #file, if provided
     if gen_arch_file is not None:
         #convert the trait names in the 'trait' column of the file into 
-        #their trait numbers (i.e. their keys in the gen_arch traits dict
+        #lists of their trait numbers (i.e. their keys in the gen_arch
+        #traits dict)
         trait_names_nums = {
             trt.name: num for num, trt in gen_arch.traits.items()}
-        gen_arch_file['trait'] = [trait_names_nums[
-                val] for val in gen_arch_file['trait']]
-        #turn the values in the 'trait' and 'alpha' columns into lists of
+        gen_arch_file['trait'] = [[trait_names_nums[
+            val] for val in row.split(',')] for row in gen_arch_file['trait']]
+        #turn the values in the 'alpha' column into lists of
         #values, by splitting on commas
         #(this will allow people to assign a single locus
-        #to more than one trait, i.e. to model pleiotropy
-        gen_arch_file['trait'] = [
-            [*map(int, row.split(','))] for row in gen_arch_file['trait']]
+        #to more than one trait, i.e. to model pleiotropy)
         gen_arch_file['alpha'] = [
             [*map(float, row.split(','))] for row in gen_arch_file['alpha']]
-        #get the loci for each trait
-        loci = {trt_num: np.array(range(len(gen_arch_file)))[
-            [n in row for row in gen_arch_file[
-            'trait']]] for n in gen_arch.traits.keys()} 
-        #get the effect size for each locus
-        alphas = {trt_num: np.concatenate([np.array(row[1]['alpha'])[
-            [n == trt_num for n in row[1][
-            'trait']]] for row in gen_arch_file.iterrows(
-            )]) for trt_num in gen_arch.traits.keys()}
+        #get the loci and effect sizes for each trait
+        loci = {}
+        alphas = {}
+        for trt_num in gen_arch.traits.keys():
+            loci[trt_num] = np.array([*gen_arch_file['locus']])[
+                [trt_num in row for row in gen_arch_file['trait']]]
+            alphas[trt_num] = np.concatenate([np.array(row['alpha'])[
+                [n == trt_num for n in row[
+                'trait']]] for i, row in gen_arch_file.iterrows()])
         #check that we got the same length of loci and effects for each trait
         for trt_num in loci.keys():
             assert len(loci[trt_num]) == len(alphas[trt_num]), ("Expected to "
@@ -546,11 +543,6 @@ def _make_genomic_architecture(pop_params, land):
                 "sizes) for trait number %i, but instead got %i loci and %i "
                 "alphas.") % (trt_num, len(loci[trt_num]),
                 len(alphas[trt_num]))
-        #get the loci and effect sizes for each trait
-        #trait_effects = {trait_num:
-        #  {int(k): v for k,v in gen_arch_file[gen_arch_file['trait'] ==
-        #                                trait_num][['locus','alpha']].values()}
-        #    for trait_num in gen_arch.traits.keys()}
         #add the loci and effect sizes for each of the traits to the
         #Trait object in the GenomicArchitecture
         for trait_num in gen_arch.traits.keys():

@@ -99,16 +99,14 @@ def _disperse(land, parent_midpoint_x, parent_midpoint_y, dispersal_distr_mu,
                             dispersal_distr_sigma, mu_dir = 0, kappa_dir = 0):
     within_landscape = False
     while within_landscape == False:
-
-        #NOTE: For now, dispersal random and equally probable in
-        #all directions, but I would love to operationalize an 
-        #environmental layer that can be used here just like it
-        #is used in movement (for e.g. wind dispersal)
-        direction = r_vonmises(mu_dir, kappa_dir)
+        # choose direction using movement surface, if applicable
+        if pop._disp_surf:
+            #and use those choices to draw movement directions
+            direction = pop._disp_surf._draw_directions(old_y_cells, old_x_cells)
+        # else, choose direction using a random walk with a uniform vonmises
+        elif not pop._disp_surf:
+            direction = r_vonmises(mu_dir, kappa_dir)
         distance = wald(dispersal_distr_mu, dispersal_distr_sigma)
-        #distance = lognormal(dispersal_distr_mu, dispersal_distr_sigma)
-
-
         offspring_x = parent_midpoint_x + np.cos(direction)*distance
         offspring_y = parent_midpoint_y + np.sin(direction)*distance
         offspring_x = np.clip(offspring_x, a_min =0, a_max = land.dim[1]-0.001)
@@ -116,6 +114,5 @@ def _disperse(land, parent_midpoint_x, parent_midpoint_y, dispersal_distr_mu,
         within_landscape = (offspring_x > 0
                             and offspring_x < land.dim[0]) and (offspring_y > 0
                                                 and offspring_y < land.dim[1])
-
     return (offspring_x, offspring_y)
 

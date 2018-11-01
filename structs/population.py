@@ -143,9 +143,11 @@ class Population(OD):
         #will have movement; set to False now but will be updated
         #below if a 'movement' section is encountered in the params
         self._move = False
-        #create empty attribute for a spatial._MovementSurface
-        #which may be created, depending on paramters
+        #create empty attributes for spatial._DirectionalitySurface objects
+        #that could be used for movement and/or dispersal
+        #(may be created, depending on paramters)
         self._move_surf = None
+        self._disp_surf = None
         #create an empty changer attribute, which will
         #be reset if the parameters define changes for this pop
         self._changer = None
@@ -159,7 +161,7 @@ class Population(OD):
         for section in ['mating', 'mortality', 'movement']:
             if section in [*pop_params]:
                 for att,val in pop_params[section].items():
-                    #leave out the move_surf components,
+                    #leave out the move_surf and disp_surf components,
                     #which will be handled separately
                     if not isinstance(val, dict):
                         #convert sex ratio to the probabilty of drawing a male
@@ -839,11 +841,18 @@ class Population(OD):
 
 
     #method for plotting the movement surface (in various formats)
-    def _plot_movement_surface(self, style, x, y, zoom_width=8,
+    def _plot_direction_surface(self, surf_type, style, x, y, zoom_width=8,
                             scale_fact=4.5, color='black', colorbar = True):
-        if self._move_surf is None:
-            print(('This Population appears to have no _MovementSurface. '
-                                                'Function not valid.'))
+        #get the correct surface
+        if surf_type == 'move':
+            surf = self._move_surf
+        elif surf_type == 'disp':
+            surf == self._disp_surf
+        #check if the surface is none
+        if surf is None:
+            print(('This Population appears to have no _%sSurface. '
+                'Function not valid.') % ({
+                'move': 'Movement', 'disp': 'Dispersal'}[surf_type]))
             return
         elif style not in ['hist', 'circ_hist', 'vect', 'circ_draws']:
             print(("The 'style' argument must take one of the "
@@ -851,16 +860,16 @@ class Population(OD):
                    "'vect', 'circ_draws'"))
             return
         elif style == 'hist':
-            plt.hist(r.choice(self._move_surf.surf[y,x,:], size = 10000,
+            plt.hist(r.choice(surf.surf[y,x,:], size = 10000,
                         replace = True), bins=100, density=True, alpha=0.5)
 
         else:
             #display the movement-surface raster
-            lyr_num = self._move_surf.lyr_num
+            lyr_num = surf.lyr_num
             self.land[lyr_num].plot(zoom_width = zoom_width, x = x, y = y)
 
             if style == 'circ_hist':
-                v, a = np.histogram(r.choice(self._move_surf.surf[y,
+                v, a = np.histogram(r.choice(surf.surf[y,
                                 x,:], replace = True, size = 7500), bins=15)
                 v = v / float(v.sum())
                 a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
@@ -873,7 +882,7 @@ class Population(OD):
 
             elif style == 'circ_draws':
                 pts = [(np.cos(a), np.sin(a)) for a in r.choice(
-                    self._move_surf.surf[y,x,:], size = 1000, replace = True)]
+                    surf.surf[y,x,:], size = 1000, replace = True)]
                 plt.scatter([pt[0] * 0.5 + x for pt in pts], [pt[
                     1] * 0.5 + y for pt in pts], color='red',
                     alpha=0.1, marker = '.')
@@ -882,7 +891,7 @@ class Population(OD):
                 def plot_one_cell(x, y):
                     # draw sample of angles from the Gaussian KDE
                     #representing the von mises mixture distribution (KDE)
-                    samp = self._move_surf.surf[y,x,:]
+                    samp = surf.surf[y,x,:]
                     # create lists of the x and y (i.e. cos and sin)
                     #components of each angle in the sample
                     x_vects = np.cos(samp)
@@ -900,8 +909,8 @@ class Population(OD):
                 #comprehension for all raster cells, which I believe
                 #should do its best to vectorize the whole operation
                 [[plot_one_cell(j, i) for i in range(
-                    self._move_surf.surf.shape[0])] for j in range(
-                                    self._move_surf.surf.shape[1])]
+                    surf.surf.shape[0])] for j in range(
+                                    surf.surf.shape[1])]
 
 
     # method for plotting a population pyramid
@@ -1035,7 +1044,7 @@ def _make_population(land, name, pop_params, burn=False):
     #make density_grid
     pop._set_dens_grids()
 
-    #if movement and movement_surf
+    #make movement surface, if needed
     if pop._move:
         if 'move_surf' in pop_params.movement.keys():
             ms_params = deepcopy(pop_params.movement.move_surf)
@@ -1045,12 +1054,30 @@ def _make_population(land, name, pop_params, burn=False):
             move_surf_lyr_num = [k for k,v in land.items(
                                             ) if v.name == move_surf_lyr]
             assert len(move_surf_lyr_num) == 1, ("Expected to find only a "
-                "single Layer with the name provided for the _MovementSurf, "
-                "but instead found %i") % len(move_surf_lyr_num)
+                "single Layer with the name provided for the "
+                "_DirectionalitySurface,"
+                " but instead found %i") % len(move_surf_lyr_num)
             move_surf_lyr_num = move_surf_lyr_num[0]
             #make the movement surface and set it as the pop's
             #move_surf attribute
-            pop._move_surf = spt._MovementSurface(land[move_surf_lyr_num],
+            pop._move_surf= spt._DirectionalitySurface(land[move_surf_lyr_num],
+                                                                **ms_params)
+    #make dispersal surface, if needed
+    if 'disp_surf' in pop_params.movement.keys():
+        ds_params = deepcopy(pop_params.movement.disp_surf)
+        #grab the lyr number for the lyr that the 
+        #dispersal surface is to be based on
+        disp_surf_lyr = ds_params.pop('layer')
+        disp_surf_lyr_num = [k for k,v in land.items(
+                                        ) if v.name == disp_surf_lyr]
+        assert len(disp_surf_lyr_num) == 1, ("Expected to find only a "
+            "single Layer with the name provided for the "
+            "_DirectionalitySurface, "
+            "but instead found %i") % len(disp_surf_lyr_num)
+        disp_surf_lyr_num = disp_surf_lyr_num[0]
+        #make the dispersal surface and set it as the pop's
+        #disp_surf attribute
+        pop._disp_surf = spt._DirectionalitySurface(land[disp_surf_lyr_num],
                                                                 **ms_params)
 
     #if this population has changes parameterized, create a

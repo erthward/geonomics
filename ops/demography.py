@@ -129,15 +129,10 @@ def _calc_dNdt(land, R, N, K, pop_growth_eq = 'logistic'):
             #use logistic eqxn, with pop intrinsic growth rate (pop.R)
             #to generate current growth-rate raster
             dNdt = _calc_logistic_growth(R, N, K)
-    #NOTE: The next line used to replace each cell in dNdt where K<1
-    #with that cell's -N value. But it was really slow to run, and at those
-    #cells where K ~= 0 it really won't make a difference how negative the
-    #dNdt values there are, so the following line just makes this much simpler.
+    #coerce extreme negative values, NaNs, and infs to a reasonable value
+    #(extreme negative values are produced in areas where the K raster
+    #has extremely small values)
     dNdt = np.clip(dNdt, a_min = -1*N.max(), a_max = None)
-    #NOTE: DEH 06-07-18: I haven't thought it through well enough to guarantee
-    #that this is the best way to handle NaNs and infs, but they at least result
-    #from division by 0 zero cells in the pop.K raster, so for now
-    #correcting them to the minimum val
     dNdt[np.isnan(dNdt)] = -1*N.max()
     dNdt[np.isinf(dNdt)] = -1*N.max()
     return dNdt
@@ -180,7 +175,7 @@ def _calc_d(N_d, N, d_min, d_max):
     #numerical artefacts that an inappropriate
     d = N_d/N
     #fix infinties and NaNs and negatives if they arise
-    #(NOTE: infinity occurs where N == 0)
+    #(they occur where N ==0)
     d[np.isinf(d)] = 0
     d[np.isnan(d)] = 0
     d[d<0] = 0
@@ -230,8 +225,8 @@ def _do_pop_dynamics(land, pop, with_selection = True, burn = False,
     #run checks on n_pairs
     if asserts:
         assert n_pairs.min() >= 0, 'n_pairs.min() == %0.2f' %(n_pairs.min())
-        assert True not in np.isnan(n_pairs)
-        assert True not in np.isinf(n_pairs)
+        assert not np.any(np.isnan(n_pairs))
+        assert not np.any(np.isinf(n_pairs))
     #add debug plot
     if debug:
         dp._next_plot('n_pairs', n_pairs)
@@ -249,8 +244,8 @@ def _do_pop_dynamics(land, pop, with_selection = True, burn = False,
     #run checks on N
     if asserts:
         assert N.min() >= 0
-        assert True not in np.isnan(N)
-        assert True not in np.isinf(N)
+        assert not np.any(np.isnan(N))
+        assert not np.any(np.isinf(N))
     #add debug plot
     if debug:
         dp._next_plot('N', N)
@@ -260,27 +255,19 @@ def _do_pop_dynamics(land, pop, with_selection = True, burn = False,
     #run checks on K
     if asserts:
         assert K.min() >= 0
-        assert True not in np.isnan(K)
-        assert True not in np.isinf(K)
+        assert not np.any(np.isnan(K))
+        assert not np.any(np.isinf(K))
     #add debug plot
     if debug:
         dp._next_plot('K', K)
-    #NOTE: SMALL VALUES ON THE K RASTER TOTALLY SCREW UP DENSITY-DEPENDENCE
-    #BECAUSE THEY GENERATE HUGE NEGATIVE dN/dt VALUES BY DIVISION; BRAINSTORM
-    #SOME MORE SOPHISTICATED, REALISTIC WAY TO HANDLE!
-    #Perhaps there can be a separate step after calculating dNdt where any
-    #0-cells are converted from the extremely negative numbers calcuated
-    #there to simply the negative of the number of individuals currently found
-    #there (n) minus n*cell value, so that the probability of individuals
-    #there dying winds up approaching 1?... something like that
-
+    
     #calc dNdt
     dNdt = _calc_dNdt(land = land, R = pop.R, N = N, K = K,
                                     pop_growth_eq = 'logistic')
     #run checks on dNdt
     if asserts:
-        assert True not in np.isnan(dNdt)
-        assert True not in np.isinf(dNdt), ('The following cells are '
+        assert not np.any(np.isnan(dNdt))
+        assert not np.any(np.isinf(dNdt)), ('The following cells are '
             'infinite: \n\t%s') % str([i for i, n in enumerate(
                                         dNdt.ravel()) if np.isinf(n)])
     #add debug plot
@@ -293,8 +280,8 @@ def _do_pop_dynamics(land, pop, with_selection = True, burn = False,
     #run checks on N_b
     if asserts:
         assert N_b.min() >= 0
-        assert True not in np.isnan(N_b)
-        assert True not in np.isinf(N_b)
+        assert not np.any(np.isnan(N_b))
+        assert not np.any(np.isinf(N_b))
     #add debug plot
     if debug:
         dp._next_plot('N_b', N_b)
@@ -303,8 +290,8 @@ def _do_pop_dynamics(land, pop, with_selection = True, burn = False,
     N_d = _calc_Nd(N_b = N_b, dNdt = dNdt)
     #run checks on N_d
     if asserts:
-        assert True not in np.isnan(N_d)
-        assert True not in np.isinf(N_d)
+        assert not np.any(np.isnan(N_d))
+        assert not np.any(np.isinf(N_d))
     #add debug plot
     if debug:
         dp._next_plot('N_d', N_d)
@@ -316,8 +303,8 @@ def _do_pop_dynamics(land, pop, with_selection = True, burn = False,
         assert d.min() >= 0, 'd.min() is %0.2f, at %s' % (d.min(),
                                                         str(d.argmin()))
         assert d.max() <= 1, 'd.max() is %0.2f' % d.max()
-        assert True not in np.isnan(d)
-        assert True not in np.isinf(d)
+        assert not np.any(np.isnan(d))
+        assert not np.any(np.isinf(d))
     #add debug plot
     if debug:
         dp._next_plot('d', d)
@@ -326,16 +313,6 @@ def _do_pop_dynamics(land, pop, with_selection = True, burn = False,
     #calculation of) deaths, then instead of having mated and dispersed
     #babies up above, do it now (i.e. now that the d raster has been 
     #calculated)
-    #(see following 2 NOTE)
-    #NOTE: 04/28/17: LEAVING THE FOLLOWING NOTE FOR NOW, BUT I ADDED
-    #THIS EARLIER, BEFORE TODAY ADDING THE births_before_deaths ARGUMENT 
-    #THAT DEFAULTS TO False. The problem I overlooked in the steps that I
-    #laid out in the following NOTE is that I failed to realize that the
-    #probability of a baby's death
-    #would be based on the density of parents before it was born, such
-    #that deaths of babies would actually be artificially low, and I believe
-    #this is what was leading to my constant, inevitable exponential population
-    #dynamics
     #NOTE: The way I'm looking at it now, calculating likely births from number
     #of existing pairs, then calculating death raster, then having births take
     #place, then having per-individual death probabilies determined and having

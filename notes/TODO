@@ -5,9 +5,6 @@
         IAN draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
           should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!
 
-        5 "layers" and "population" argument in make_parameters_file both have "change" arugments, which should be able to take int as a value too, and then add that umber of events
-                - and/or a change events params section should be able to take either a file or a directory of files (in which case those will change at the set timesteps)
-
         3 make "run_default_model" into more of a vignette (which stops and plots things along the way; and possible which takes different arguments to demonstrate a simple model, a model with selection,
           a model with landscape change, etc)
 
@@ -15,26 +12,26 @@
 
                 - and add a params switch for Movement and Dispersal surfaces to be equal??
 
-        5 consider adding a generalized function for making some distribution's draw be a function of phenotype, then apply that to movement, dispersal, fecundity, etc?
+        5 consider adding a generalized function for making a distribution's draw be a function of phenotype, then apply that to movement, dispersal, fecundity, etc?
 
-        5 make clearer that "dispersal" means "offspring" and is differentiated from "movement"
+        5 consider adding ability for life-history parameters to be determined by a trait's phenotype
 
         5 not at all sure that a gamma is the right distribution for drawing the deleterious mutations' effects
 
         5 replace all "if str(type(whatever))" statements with proper "isinstance(whatever, classname)" calls as soon as I know how my finalized class names are going to
           look to geonomics when it's properly set up as a package
-        
-        5 I say that a Layer can have any number of change events, but the make_parameters_file only takes a bool argument for 'change', not an integer; decide and make
-          this consistent
-                - the 'end_rast' parameter also should be able to take a filepath, not just a numpy array (which seems almost useless)
+
+   |||| 5 "layers" and "population" argument in make_parameters_file both have "change" arugments, which should be able to take int as a value too, and then add that umber of events
+   ||||         - and/or a change events params section should be able to take either a file or a directory of files (in which case those will change at the set timesteps)
+
+   |||| 5 I say that a Layer can have any number of change events, but the make_parameters_file only takes a bool argument for 'change', not an integer; decide and make
+   ||||   this consistent
+   ||||         - the 'end_rast' parameter also should be able to take a filepath, not just a numpy array (which seems almost useless)
 
         3 write a Land.plot_land_changes method (akin to Population.plot_demographic_changes)??
 
-        5 write `Model.plot` methods to wrap around all the pop and land plotting methods (where they just take a required first arg, either the pop number or name or the scape number or name
-
-        5 pick through all the notes in demography.py and decide which are taken care of, which need to stay, which I still need to take care of, etc. 
-
         5 DOCS:
+          - make clearer that "dispersal" means "offspring" and is differentiated from "movement"
           - write docstrings for remaining classes
           - add images
           - explain dist-parameters' name format somewhere

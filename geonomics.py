@@ -94,7 +94,8 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
         int:
             Add sections for the stipulated number of Populations, each with
             default settings:
-                - parameters for movement without a MovementSurface
+                - parameters for movement and dispersal without 
+                  _DirectionalitySurfaces
                 - parameters for a GenomicArchitecture with 0 Traits (i.e. with
                   only neutral loci)
                 - no _PopulationChanger parameters
@@ -103,6 +104,7 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
             following:
                 {'movement':                       bool,
                 'movement_surface':                bool,
+                'dispersal_surface':               bool,
                 'genomes':                         bool,
                 'n_traits':                        int,
                 'custom_genomic_architecture':     bool,
@@ -192,8 +194,9 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
           time, the other being a raster read in from a GIS file and being
           subject to change over model time);
         - 2 Populations (the first having genomes, 2 Traits, and movement
-          that is dictated by a MovementSurface; the second not having
-          genomes but having a MovementSurface as well, and undergoing
+          that is dictated by a _DirectionalitySurface; the second not having
+          genomes but having dispersal determined by a 
+          _DirectionalitySurface, and undergoing
           demographic change)
         - data-collection;
         - stats-collection;
@@ -217,7 +220,7 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
     >>>          'movement_surface': True},
     >>>         {'genomes': False,                              #pop 2
     >>>          'movement': True,
-    >>>          'movement_surface': True,
+    >>>          'dispersal_surface': True,
     >>>          'demographic_change': True}
     >>>         ],
     >>>     #arguments to the data and stats parameters

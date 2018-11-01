@@ -327,6 +327,7 @@ POP_PARAMS = '''
 #STRING SLOTS:
     #%i = pop_num,
     #%s = move_surf_params,
+    #%s = disp_surf_params,
 MOVE_PARAMS = '''
             #########################################
             #### pop num. %i: movement parameters ####
@@ -346,6 +347,7 @@ MOVE_PARAMS = '''
                     #variance of distr of dispersal distance
                     'dispersal_distr_sigma':  0.5,
 %s
+%s
                     },    # <END> 'movement'
 '''
 
@@ -353,6 +355,18 @@ MOVE_PARAMS = '''
 MOVE_SURF_PARAMS = '''
                     'move_surf'     : {
                         #move-surf Layer name
+                        'layer':                'layer_0',
+                        #whether to use mixture distrs
+                        'mixture':              True,
+                        #concentration of distrs
+                        'vm_distr_kappa':       12,
+                        } # <END> 'move_surf'
+'''
+
+#block for dispersal-surface params
+DISP_SURF_PARAMS = '''
+                    'disp_surf'     : {
+                        #disp-surf Layer name
                         'layer':                'layer_0',
                         #whether to use mixture distrs
                         'mixture':              True,
@@ -800,6 +814,7 @@ def _make_populations_params_str(populations=1):
         #sections
         params_str_dict = {'move': {True: MOVE_PARAMS},
                         'move_surf': {True: MOVE_SURF_PARAMS},
+                        'disp_surf': {True: DISP_SURF_PARAMS},
                         'genome': {True: GENOME_PARAMS},
                         'change': {True: POP_CHANGE_PARAMS},
                         'dem_change': {True: POP_DEM_CHANGE_EVENT_PARAMS},
@@ -845,8 +860,14 @@ def _make_populations_params_str(populations=1):
                     move_surf_params = params_str_dict['move_surf'][ms_arg]
                 else:
                     move_surf_params = ''
+                if 'dispersal_surface' in [*pop_dict]:
+                    ds_arg = pop_dict['dispersal_surface']
+                    disp_surf_params = params_str_dict['disp_surf'][ds_arg]
+                else:
+                    disp_surf_params = ''
                 move_params = params_str_dict['move'][pop_dict['movement']]
-                move_params = move_params % (i, move_surf_params)
+                move_params = move_params % (i, move_surf_params,
+                                                            disp_surf_params)
             #or get empty str
             else:
                 move_params = ''

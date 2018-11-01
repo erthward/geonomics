@@ -13,3 +13,5 @@
           pop.get_fitness should get it obviously)
 - change Population back from a class that inherits from an OrderedDict to one that inherits from a 
   plain old dict (since dicts are now ordered, as of Py 3.6 [reliable starting Py 3.7])                                                                                                                   
+- pick through all the notes in demography.py and decide which are taken care of, which need to stay, which I still need to take care of, etc. 
+

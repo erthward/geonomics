@@ -998,9 +998,24 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #call the fn
         pop._plot_hist_fitness()
 
-    #wrapper around pop._plot_movement_surface
+    #wrapper around pop._plot_direction_surface for _move_surf
     def plot_movement_surface(self, pop, style, x, y, zoom_width=8,
                             scale_fact=4.5, color='black', colorbar = True):
+        self._plot_direction_surface(surf_type='move', pop=pop, style=style,
+            x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
+            color=color, colorbar=colorbar)
+
+    #wrapper around pop._plot_direciton_surface for _disp_surf
+    def plot_dispersal_surface(self, pop, style, x, y, zoom_width=8,
+                            scale_fact=4.5, color='black', colorbar = True):
+        self._plot_direction_surface(surf_type='move', pop=pop, style=style,
+            x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
+            color=color, colorbar=colorbar)
+
+    #wrapper around pop._plot_direction_surface
+    def _plot_direction_surface(self, surf_type, pop, style, x, y, 
+        zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
+
         """
         The 'style' argument can take the following values:
             'hist':
@@ -1010,14 +1025,14 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                 Plot a circular histogram approximating the Von Mises
                 distribution at the cell indicated by position x,y;
                 plot will be drawn inside the chosen cell on the
-                _MovementSurface raster.
+                _DirectionalitySurface raster.
             'circle_draws':
                 Plot points on the unit circle, whose locations were
                 drawn from the Von Mises distribution at the cell indicated
                 by position x,y; plot will be drawn inside the chosen cell
-                on the _MovementSurface raster.
+                on the _DirectionalitySurface raster.
             'vect':
-                Inside each cell of the _MovementSurface raster, plot the mean
+                Inside each cell of the _DirectionalitySurface raster, plot the mean
                 direction vector of directions drawn from that cell's Von Mises
                 distribution.
 
@@ -1025,10 +1040,9 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #get the pop
         pop = self.comm[self._get_pop_num(pop)]
         #call the fn
-        pop._plot_movement_surface(style=style, x=x, y=y,
+        pop._plot_direction_surface(surf_type=surf_type, style=style, x=x, y=y,
             zoom_width=zoom_width, scale_fact=scale_fact, color=color,
             colorbar=colorbar)
-
 
     #wrapper around pop._plot_demographic_pyramid
     def plot_demographic_pyramid(self, pop):

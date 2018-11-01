@@ -190,13 +190,13 @@ class _DensityGridStack:
         return dens
 
 
-class _MovementSurface:
-    def __init__(self, move_lyr, mixture, approximation_len = 7500,
+class _DirectionalitySurface:
+    def __init__(self, dir_lyr, mixture, approximation_len = 7500,
                                                     vm_distr_kappa = 12):
         #dimensions
-        self.dim = move_lyr.dim
+        self.dim = dir_lyr.dim
         #resolution (i.e. cell-size); defaults to 1
-        self.res = move_lyr.res
+        self.res = dir_lyr.res
 
         #set the default values, in case they're accidentally fed in
         #as None values in the params
@@ -208,14 +208,15 @@ class _MovementSurface:
             #(to make shallow gradients work better),
             #should probably set this to a lower value if mix == False
 
-        self.lyr_num = move_lyr.idx
+        self.lyr_num = dir_lyr.idx
         self.approximation_len = approximation_len
-        self.surf = _make_movement_surface(move_lyr.rast, mixture = mixture,
-            approximation_len = self.approximation_len,
+        self.surf = _make_directionality_surface(dir_lyr.rast, 
+            mixture = mixture, approximation_len = self.approximation_len,
             vm_distr_kappa = vm_distr_kappa)
 
-        assert self.approximation_len == self.surf.shape[2], ("MovementSurface"
-            ".approximation_len not equal to MovementSurface.surf.shape[2]")
+        assert self.approximation_len == self.surf.shape[2], ("_"
+            "DirectionalitySurface.approximation_len not equal to "
+            "DirectionalitySurface.surf.shape[2]")
 
     def _draw_directions(self, x, y):
         choices = r.randint(low = 0, high = self.approximation_len,
@@ -386,7 +387,7 @@ def _make_von_mises_mixture_sampler(neigh, dirs, vm_distr_kappa=12,
 # or the Von Mises unimodal sampler function (make_von_mises_unimodal_sampler)
 #across the entire landscape and returns an array-like (list of lists) of the 
 #resulting lambda-function samplers
-def _make_movement_surface(rast, mixture=True, approximation_len=5000,
+def _make_directionality_surface(rast, mixture=True, approximation_len=5000,
                                                         vm_distr_kappa=12):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0],
                                             [3 * pi / 4, pi / 2, pi / 4]])
@@ -401,21 +402,21 @@ def _make_movement_surface(rast, mixture=True, approximation_len=5000,
                                     ] - 1, 1:embedded_rast.shape[1] - 1] = rast
 
     #create a numpy array and store vectors approximating the functions!
-    move_surf = np.float16(np.zeros((rast.shape[0],
+    dir_surf = np.float16(np.zeros((rast.shape[0],
                                         rast.shape[1], approximation_len)))
 
     for i in range(rast.shape[0]):
         for j in range(rast.shape[1]):
             neigh = embedded_rast[i:i + 3, j:j + 3].copy()
             if mixture:
-                move_surf[i, j, :] = _make_von_mises_mixture_sampler(neigh,
+                dir_surf[i, j, :] = _make_von_mises_mixture_sampler(neigh,
                     queen_dirs, vm_distr_kappa = vm_distr_kappa,
                     approximation_len= approximation_len)
             else:
-                move_surf[i, j, :] = _make_von_mises_unimodal_sampler(neigh,
+                dir_surf[i, j, :] = _make_von_mises_unimodal_sampler(neigh,
                     queen_dirs, vm_distr_kappa = vm_distr_kappa,
                     approximation_len= approximation_len)
-    return move_surf
+    return dir_surf
 
 
 #coarse wrapper around the nlmpy package

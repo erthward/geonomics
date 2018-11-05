@@ -791,7 +791,7 @@ def _make_populations_params_str(populations=1):
         for i in range(populations):
             #use movement params, but with no movement surface (i.e.
             #string-format with a zero-length str)
-            move_params = MOVE_PARAMS % (i, '')
+            move_params = MOVE_PARAMS % (i, '', '')
             #use genome params, but with no traits (i.e. string-format with a
             #zero-length str)
             genome_params = GENOME_PARAMS % (i, 'None', '')

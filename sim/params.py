@@ -309,13 +309,13 @@ POP_PARAMS = '''
 
                 'mortality'     : {
                     #maximum age
-                    'max_age':                  1,
+                    'max_age':                      1,
                     #min P(death) (MUST BE 0<=d_min<=1)
-                    'd_min':                     0.01,
+                    'd_min':                        0.01,
                     #max P(death) (MUST BE 0<=d_max<=1)
-                    'd_max':                    0.99,
+                    'd_max':                        0.99,
                     #width of window used to estimate local pop density
-                    'density_grid_window_width':   None,
+                    'density_grid_window_width':    None,
                     }, # <END> 'mortality'
 %s
 %s
@@ -345,9 +345,7 @@ MOVE_PARAMS = '''
                     #mean of distr of dispersal distance
                     'dispersal_distr_mu':     0.5,
                     #variance of distr of dispersal distance
-                    'dispersal_distr_sigma':  0.5,
-%s
-%s
+                    'dispersal_distr_sigma':  0.5,%s%s
                     },    # <END> 'movement'
 '''
 
@@ -360,7 +358,9 @@ MOVE_SURF_PARAMS = '''
                         'mixture':              True,
                         #concentration of distrs
                         'vm_distr_kappa':       12,
-                        } # <END> 'move_surf'
+                        #length of approximation vectors for distrs
+                        'approx_len':           5000,
+                        }, # <END> 'move_surf'
 '''
 
 #block for dispersal-surface params
@@ -372,7 +372,9 @@ DISP_SURF_PARAMS = '''
                         'mixture':              True,
                         #concentration of distrs
                         'vm_distr_kappa':       12,
-                        } # <END> 'move_surf'
+                        #length of approximation vectors for distrs
+                        'approx_len':           5000,
+                        }, # <END> 'disp_surf'
 '''
 
 #block for genome params

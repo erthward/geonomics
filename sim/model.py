@@ -859,7 +859,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     ##########
 
     #wrapper around Population._plot and Landscape._plot
-    #TODO: allow pop_id to be a list of pop ids, to plot each pop in a
+    #TODO: allow pop to be a list of pop ids, to plot each pop in a
     #different color with a legend!
     def plot(self, pop=None, lyr=None, hide_land=False, individs=None,
             text=False, color='black', edge_color='face', text_color='black',
@@ -867,9 +867,9 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             land_cmap='terrain', pt_cmap=None, alpha=False,
              zoom_width=None, x=None, y=None, vmin=None, vmax=None):
         #get the lyr num
-        lyr_num = self._get_lyr_num(layer)
-        #if no pop_id, then call Landscape._plot
-        if pop_id is None:
+        lyr_num = self._get_lyr_num(lyr)
+        #if no pop provided, then call Landscape._plot
+        if pop is None:
             self.land._plot(lyr_num=lyr_num, colorbar=colorbar, cmap=land_cmap,
                 im_interp_method=im_interp_method, x=x, y=y,
                 zoom_width=zoom_width, vmin=vmin, vmax=vmax)
@@ -909,7 +909,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
             y=None):
         #get the lyr num
-        lyr_num = self._get_lyr_num(layer)
+        lyr_num = self._get_lyr_num(lyr)
         #get the pop
         pop = self.comm[self._get_pop_num(pop)]
         #feed args into pop._plot_genotype
@@ -923,12 +923,12 @@ BE EXPECTED WHEN RUN WITH Model.walk.
 
     #wrapper around Population._plot_phenotype
     #for a given trait
-    def plot_phenotype(self, pop, trait, layer=None, individs=None, 
+    def plot_phenotype(self, pop, trait, lyr=None, individs=None, 
             text=False, size=25, text_size = 9, edge_color='black',
             text_color='black', colorbar=True, im_interp_method='nearest',
             alpha=1, zoom_width=None, x=None, y=None):
         #get the lyr num
-        lyr_num = self._get_lyr_num(layer)       
+        lyr_num = self._get_lyr_num(lyr)       
         #get the pop
         pop = self.comm[self._get_pop_num(pop)]
         #return messages if population does not have genomes or traits
@@ -955,13 +955,13 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         plt.suptitle(pop.name)
 
     #wrapper around Population._plot_fitness
-    def plot_fitness(self, pop, trait=None, layer=None, individs=None, 
+    def plot_fitness(self, pop, trait=None, lyr=None, individs=None, 
             text=False, size=25, text_size = 9, edge_color='black',
             text_color='black', fit_cmap='RdYlGn', colorbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
             y=None):
         #get the lyr num
-        lyr_num = self._get_lyr_num(layer)       
+        lyr_num = self._get_lyr_num(lyr)       
         #get the pop
         pop = self.comm[self._get_pop_num(pop)]
         #return messages if population does not have genomes or traits
@@ -1025,14 +1025,14 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                 Plot a circular histogram approximating the Von Mises
                 distribution at the cell indicated by position x,y;
                 plot will be drawn inside the chosen cell on the
-                _DirectionalitySurface raster.
+                _ConductanceSurface raster.
             'circle_draws':
                 Plot points on the unit circle, whose locations were
                 drawn from the Von Mises distribution at the cell indicated
                 by position x,y; plot will be drawn inside the chosen cell
-                on the _DirectionalitySurface raster.
+                on the _ConductanceSurface raster.
             'vect':
-                Inside each cell of the _DirectionalitySurface raster, plot the mean
+                Inside each cell of the _ConductanceSurface raster, plot the mean
                 direction vector of directions drawn from that cell's Von Mises
                 distribution.
 

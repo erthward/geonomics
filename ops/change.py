@@ -155,7 +155,8 @@ class _LandscapeChanger(_Changer):
             lyrs[lyr_num] = lyr_series
 
             #set the _LandscapeChanger.change_info attribute, so that it can be
-            #grabbed later for building move_surf and other objects
+            #grabbed later for building _move_surf,
+            #_disp_surf, and other objects
             self.change_info[lyr_num] = {**self.change_params[lyr_num]}
             self.change_info[lyr_num]['end_rast'] = lyr_series[-1][1]
 
@@ -205,7 +206,7 @@ class _PopulationChanger(_Changer):
             parameter_change_params = self.change_params.life_hist
         except Exception:
             parameter_change_params = None
-        #check if this pop has a move_surf, and if there are land-changes
+        #check if this pop has a _move_surf, and if there are land-changes
         #that affect its lyr
         move_surf_change_fns = []
         if (pop._move_surf is not None
@@ -217,12 +218,36 @@ class _PopulationChanger(_Changer):
             lc_move_surf_params = land._changer.change_info[
                                                     pop._move_surf.lyr_num]
             #create a time-series of movement surfaces 
-            surf_series = _make_movement_surface_series(
-                start_lyr = land[pop._move_surf.lyr_num],
-                                        **lc_move_surf_params)
+            surf = pop._move_surf
+            surf_series = _make_conductance_surface_series(
+                start_lyr = land[surf.lyr_num], mixture = surf.mix,
+                kappa = surf.kappa, approx_len = surf.approx_len,
+                **lc_move_surf_params)
             #and create change fns from them
-            move_surf_change_fns.extend(_get_move_surf_change_fns(
+            move_surf_change_fns.extend(_get_conductance_surface_change_fns(
                                                         pop, surf_series))
+
+        #check if this pop has a _disp_surf, and if there are land-changes
+        #that affect its lyr
+        disp_surf_change_fns = []
+        if (pop._disp_surf is not None
+            and land is not None
+            and pop._disp_surf.lyr_num in land._changer.change_info.keys()):
+            #if so, grab that lyr's land change params and create a
+            #disp_surf_series with them, to be 
+            #added to this pop's change fns
+            lc_disp_surf_params = land._changer.change_info[
+                                                    pop._disp_surf.lyr_num]
+            #create a time-series of movement surfaces 
+            surf = pop._disp_surf
+            surf_series = _make_conductance_surface_series(
+                start_lyr = land[surf.lyr_num], mixture = surf.mix,
+                kappa = surf.kappa, approx_len = surf.approx_len,
+                **lc_disp_surf_params)
+            #and create change fns from them
+            disp_surf_change_fns.extend(_get_conductance_surface_change_fns(
+                                                        pop, surf_series))
+
 
         #set the demographic changes, if applicable
         dem_change_fns = []
@@ -241,9 +266,11 @@ class _PopulationChanger(_Changer):
                                         parameter, **parameter_change_params))
 
         #put all the changes in chronological order
-        if (len(dem_change_fns) + len(
-            parameter_change_fns) + len(move_surf_change_fns) > 0):
-            change_fns=dem_change_fns+parameter_change_fns+move_surf_change_fns
+        if (len(dem_change_fns) + len( parameter_change_fns) + len(
+            move_surf_change_fns) + len(disp_surf_change_fns) > 0):
+            change_fns = dem_change_fns + parameter_change_fns
+            change_fns = change_fns + move_surf_change_fns
+            change_fns = change_fns + disp_surf_change_fns
             change_fns = sorted(change_fns, key = lambda x: x[0])
 
             #make self.changes an iterator over that list
@@ -355,31 +382,30 @@ def _get_lyr_change_fn(land, lyr_num, new_lyr):
     # for _PopulationChanger #
     ##########################
 
-def _make_movement_surface_series(start_lyr, end_rast, start_t,
-                                 end_t, n_steps, t_res_reduct_factor=1):
+def _make_conductance_surface_series(start_lyr, mixture, kappa,
+        approx_len, end_rast, start_t, end_t, n_steps,
+        t_res_reduct_factor=1):
     #get the time-series of lyrs across the land-change event (can
     #be at a reduced temporal resolution determined by t_res_reduct_factor,
-    #because probably unnecessary to change the move_surf every time the
-    #land changes, and the move_surf can be a fairly large object to hold
-    #in memory; but t_res_reduct_factor defaults to 1)
+    #because probably unnecessary to change the move_surf or disp_surf every
+    #time the land changes, and they could be a fairly large objects to
+    #hold in memory anyhow; but t_res_reduct_factor defaults to 1)
     lyr_series, dim, res, ulc, prj = _make_linear_lyr_series(
         start_lyr.rast, end_rast, start_t, end_t, int(
                                     n_steps*t_res_reduct_factor))
-    #then get the series of move_surf objects
+    #then get the series of _ConductanceSurface objects
     surf_series = []
     dummy_lyr = deepcopy(start_lyr)
     for t, rast in lyr_series:
         #change the lyr's raster
         dummy_lyr.rast = rast
         #then create a Movement_Surface using the copied Landscape
-        #TODO: At the moment this doesn't have access to the move_surf
-        #params set in the params file!  Should probably unpack those
-        #into a pop._move_surf_params attribute, then feed them thru to here
-        surf_series.append((t, spt._Movement_Surface(dummy_lyr)))
+        surf_series.append((t, spt._ConductanceSurface(dummy_lyr, mixture,
+            approx_len = approx_len, vm_distr_kappa = kappa)))
     return(surf_series)
 
 
-def _get_move_surf_change_fns(pop, surf_series):
+def _get_conductance_surface_change_fns(pop, surf_series):
     timesteps = []
     fns = []
     for t, new_surf in surf_series:

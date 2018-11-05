@@ -95,7 +95,7 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
             Add sections for the stipulated number of Populations, each with
             default settings:
                 - parameters for movement and dispersal without 
-                  _DirectionalitySurfaces
+                  _ConductanceSurfaces
                 - parameters for a GenomicArchitecture with 0 Traits (i.e. with
                   only neutral loci)
                 - no _PopulationChanger parameters
@@ -194,9 +194,9 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
           time, the other being a raster read in from a GIS file and being
           subject to change over model time);
         - 2 Populations (the first having genomes, 2 Traits, and movement
-          that is dictated by a _DirectionalitySurface; the second not having
+          that is dictated by a _ConductanceSurface; the second not having
           genomes but having dispersal determined by a 
-          _DirectionalitySurface, and undergoing
+          _ConductanceSurface, and undergoing
           demographic change)
         - data-collection;
         - stats-collection;
@@ -232,9 +232,9 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
     #check if any keys in the layers or populations dicts are abnormal, and
     #provide warning if so
     valid_l_keys = ['type', 'change']
-    valid_p_keys = ['movement', 'movement_surface', 'genomes',
-        'n_traits', 'custom_genomic_architecture', 'demographic_change',
-        'parameter_change']
+    valid_p_keys = ['movement', 'movement_surface', 'dispersal_surface',
+        'genomes', 'n_traits', 'custom_genomic_architecture',
+        'demographic_change', 'parameter_change']
     if isinstance(layers, list):
         for n, lyr_dict in enumerate(layers):
             if False in [k in valid_l_keys for k in lyr_dict.keys()]:

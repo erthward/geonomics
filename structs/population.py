@@ -143,7 +143,7 @@ class Population(OD):
         #will have movement; set to False now but will be updated
         #below if a 'movement' section is encountered in the params
         self._move = False
-        #create empty attributes for spatial._DirectionalitySurface objects
+        #create empty attributes for spatial._ConductanceSurface objects
         #that could be used for movement and/or dispersal
         #(may be created, depending on paramters)
         self._move_surf = None
@@ -356,7 +356,7 @@ class Population(OD):
                 #get the next offspring_key
                 offspring_key = offspring_keys.pop()
 
-                offspring_x, offspring_y = movement._disperse(self.land,
+                offspring_x, offspring_y = movement._disperse(self, self.land,
                         parent_midpoint_x, parent_midpoint_y,
                         self.dispersal_distr_mu, self.dispersal_distr_sigma)
 
@@ -694,7 +694,7 @@ class Population(OD):
             viz._plot_rasters(dens, plt_lims = plt_lims)
         else:
             viz._plot_rasters(dens, plt_lims = plt_lims, vmax = dens.max())
-        self.plot(hide_land=True, individs = individs, text = text,
+        self._plot(hide_land=True, individs = individs, text = text,
             color=color, edge_color = edge_color, text_color = text_color,
             size=size, text_size = text_size, alpha=alpha,
                                     zoom_width = zoom_width, x = x, y = y)
@@ -725,7 +725,7 @@ class Population(OD):
                                         ) if np.atleast_1d(g)[0] == genotype]
             # plot if there are any individuals of this genotype
             if len(genotype_individs) >= 1:
-                self.plot(lyr_num = lyr_num, individs = genotype_individs,
+                self._plot(lyr_num = lyr_num, individs = genotype_individs,
                     text = text, color = colors[n], edge_color = edge_color,
                     text_color = text_color, colorbar = colorbar,
                     size = size, text_size = text_size,
@@ -744,7 +744,7 @@ class Population(OD):
         if individs is not None:
             z = {i:v for i,v in z.items() if i in individs}
 
-        self.plot(lyr_num = lyr_num, individs = individs, text = text,
+        self._plot(lyr_num = lyr_num, individs = individs, text = text,
             color = list(z.values()), pt_cmap = 'terrain',
             edge_color = edge_color, text_color = text_color,
             colorbar = colorbar, size = size, text_size = text_size,
@@ -762,11 +762,11 @@ class Population(OD):
 
         #return messages if population does not have genomes or traits
         if self.gen_arch is None:
-            print(("Population.plot_fitness is not valid for populations "
+            print(("Population._plot_fitness is not valid for populations "
                    "without genomes.\n"))
             return
         elif self.gen_arch.traits is None:
-            print(("Population.plot_fitness is not valid for populations "
+            print(("Population._plot_fitness is not valid for populations "
                    "without traits.\n"))
             return
 
@@ -806,7 +806,7 @@ class Population(OD):
         #plot the trait phenotype in larger circles first, if trait is not None
         if trt_num is not None:
             #plot the outer (phenotype) circles
-            self.plot_phenotype(trait = trt_num, lyr_num = lyr_num,
+            self._plot_phenotype(trait = trt_num, lyr_num = lyr_num,
                 individs = individs, text = False, size = size,
                 text_size = text_size, edge_color=edge_color,
                 text_color = text_color, colorbar = colorbar,
@@ -815,7 +815,7 @@ class Population(OD):
             #make size smaller for the next layer of inner (fitness) circles
             size = round(0.2*size)
 
-        self.plot(lyr_num = lyr_num, individs = individs, text = text,
+        self._plot(lyr_num = lyr_num, individs = individs, text = text,
                 color = list(w.values()), pt_cmap = cmap,
                 edge_color = edge_color, text_color = text_color,
                 colorbar = colorbar, size = size, text_size = text_size,
@@ -828,7 +828,7 @@ class Population(OD):
     #method to plot a population's allele frequencies
     def _plot_allele_frequencies(self):
         if self.gen_arch is None:
-            print(("Population.plot_allele_frequencies is not valid for "
+            print(("Population._plot_allele_frequencies is not valid for "
                 "populations without genomes.\n"))
         else:
             self.gen_arch._plot_allele_frequencies(self)
@@ -866,7 +866,7 @@ class Population(OD):
         else:
             #display the movement-surface raster
             lyr_num = surf.lyr_num
-            self.land[lyr_num].plot(zoom_width = zoom_width, x = x, y = y)
+            self.land[lyr_num]._plot(zoom_width = zoom_width, x = x, y = y)
 
             if style == 'circ_hist':
                 v, a = np.histogram(r.choice(surf.surf[y,
@@ -960,14 +960,14 @@ class Population(OD):
 
     def _plot_demographic_changes(self):
         if self._changer is None:
-            print(("Population.plot_demographic_changes is not valid "
+            print(("Population._plot_demographic_changes is not valid "
                 "for populations with no _PopulationChanger object.\n"))
         else:
             self._changer._plot_dem_changes(self)
 
     def _plot_stat(self, stat):
         if self._stats_collector is None:
-            print(("Population.plot_stat is not valid "
+            print(("Population._plot_stat is not valid "
                 "for populations with no _StatsCollector object.\n"))
 
         else:
@@ -1055,12 +1055,12 @@ def _make_population(land, name, pop_params, burn=False):
                                             ) if v.name == move_surf_lyr]
             assert len(move_surf_lyr_num) == 1, ("Expected to find only a "
                 "single Layer with the name provided for the "
-                "_DirectionalitySurface,"
+                "_ConductanceSurface,"
                 " but instead found %i") % len(move_surf_lyr_num)
             move_surf_lyr_num = move_surf_lyr_num[0]
             #make the movement surface and set it as the pop's
             #move_surf attribute
-            pop._move_surf= spt._DirectionalitySurface(land[move_surf_lyr_num],
+            pop._move_surf= spt._ConductanceSurface(land[move_surf_lyr_num],
                                                                 **ms_params)
     #make dispersal surface, if needed
     if 'disp_surf' in pop_params.movement.keys():
@@ -1072,12 +1072,12 @@ def _make_population(land, name, pop_params, burn=False):
                                         ) if v.name == disp_surf_lyr]
         assert len(disp_surf_lyr_num) == 1, ("Expected to find only a "
             "single Layer with the name provided for the "
-            "_DirectionalitySurface, "
+            "_ConductanceSurface, "
             "but instead found %i") % len(disp_surf_lyr_num)
         disp_surf_lyr_num = disp_surf_lyr_num[0]
         #make the dispersal surface and set it as the pop's
         #disp_surf attribute
-        pop._disp_surf = spt._DirectionalitySurface(land[disp_surf_lyr_num],
+        pop._disp_surf = spt._ConductanceSurface(land[disp_surf_lyr_num],
                                                                 **ms_params)
 
     #if this population has changes parameterized, create a

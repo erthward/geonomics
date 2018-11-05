@@ -95,14 +95,15 @@ def _move(pop):
     [ind._set_pos(x, y) for ind, x, y in zip(pop.values(), new_x, new_y)];
 
 
-def _disperse(land, parent_midpoint_x, parent_midpoint_y, dispersal_distr_mu,
-                            dispersal_distr_sigma, mu_dir = 0, kappa_dir = 0):
+def _disperse(pop, land, parent_midpoint_x, parent_midpoint_y,
+        dispersal_distr_mu, dispersal_distr_sigma, mu_dir = 0, kappa_dir = 0):
     within_landscape = False
     while within_landscape == False:
         # choose direction using movement surface, if applicable
         if pop._disp_surf:
             #and use those choices to draw movement directions
-            direction = pop._disp_surf._draw_directions(old_y_cells, old_x_cells)
+            direction = pop._disp_surf._draw_directions(
+                [int(parent_midpoint_x)], [int(parent_midpoint_y)])[0]
         # else, choose direction using a random walk with a uniform vonmises
         elif not pop._disp_surf:
             direction = r_vonmises(mu_dir, kappa_dir)

@@ -69,6 +69,8 @@
 
         5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
 
+        5 decide whether to keep the 'support' module, and if so then debug it
+
 -----------------------------------------------------------------------------------------------------------------------------------------
 burn:                                                                                                                                                         
         0:53                                                                                                                                                  

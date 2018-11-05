@@ -190,37 +190,39 @@ class _DensityGridStack:
         return dens
 
 
-class _DirectionalitySurface:
-    def __init__(self, dir_lyr, mixture, approximation_len = 7500,
+class _ConductanceSurface:
+    def __init__(self, cond_lyr, mixture, approx_len = 5000,
                                                     vm_distr_kappa = 12):
         #dimensions
-        self.dim = dir_lyr.dim
+        self.dim = cond_lyr.dim
         #resolution (i.e. cell-size); defaults to 1
-        self.res = dir_lyr.res
-
-        #set the default values, in case they're accidentally fed in
-        #as None values in the params
-        if approximation_len is None:
-            approximation_len = 7500
+        self.res = cond_lyr.res
+        #save whether it uses VonMises mixture dists or not
+        self.mix = mixture
+        #layer number 
+        self.lyr_num = cond_lyr.idx
+        #set the default approx_len and kappa values if 
+        #they're accidentally fed in as None values in the params,
+        #otherwise set them to the values provided
+        if approx_len is None:
+            self.approx_len = 5000
+        else:
+            self.approx_len = approx_len
         if vm_distr_kappa is None:
-            vm_distr_kappa = 12
-            #NOTE: when I eventually have a mix = True/False argument
-            #(to make shallow gradients work better),
-            #should probably set this to a lower value if mix == False
+            self.kappa = 12
+        else:
+            self.kappa = vm_distr_kappa
+        #create the surface
+        self.surf = _make_conductance_surface(cond_lyr.rast, 
+            mixture = self.mix, vm_distr_kappa = self.kappa, 
+            approx_len = self.approx_len)
 
-        self.lyr_num = dir_lyr.idx
-        self.approximation_len = approximation_len
-        self.surf = _make_directionality_surface(dir_lyr.rast, 
-            mixture = mixture, approximation_len = self.approximation_len,
-            vm_distr_kappa = vm_distr_kappa)
-
-        assert self.approximation_len == self.surf.shape[2], ("_"
-            "DirectionalitySurface.approximation_len not equal to "
-            "DirectionalitySurface.surf.shape[2]")
+        assert self.approx_len == self.surf.shape[2], ("_"
+            "_ConductanceSurface.approx_len not equal to "
+            "_ConductanceSurface.surf.shape[2]")
 
     def _draw_directions(self, x, y):
-        choices = r.randint(low = 0, high = self.approximation_len,
-                                                                size = len(x))
+        choices = r.randint(low = 0, high = self.approx_len, size = len(x))
         return self.surf[y, x, choices]
 
 
@@ -347,7 +349,7 @@ def _make_density_grids(land, ww):
 # Function to generate a simulative Von Mises mixture distribution
 #sampler function
 def _make_von_mises_mixture_sampler(neigh, dirs, vm_distr_kappa=12,
-                                                    approximation_len = 5000):
+                                                    approx_len = 5000):
     # Returns a lambda function that is a quick and reliable way to simulate
     #draws from a Von Mises mixture distribution:
     # 1.) Chooses a direction by neighborhood-weighted probability
@@ -376,7 +378,7 @@ def _make_von_mises_mixture_sampler(neigh, dirs, vm_distr_kappa=12,
         n_probs = [i / sum_n for i in n]
     else:
         n_probs = [.125]*8
-    loc_choices = r.choice(d, approximation_len, replace = True, p = n_probs)
+    loc_choices = r.choice(d, approx_len, replace = True, p = n_probs)
     loc_choices = list(C(loc_choices).items())
     approx = np.hstack([s_vonmises.rvs(vm_distr_kappa, loc=loc, scale=1,
                                 size = size) for loc, size in loc_choices])
@@ -387,7 +389,7 @@ def _make_von_mises_mixture_sampler(neigh, dirs, vm_distr_kappa=12,
 # or the Von Mises unimodal sampler function (make_von_mises_unimodal_sampler)
 #across the entire landscape and returns an array-like (list of lists) of the 
 #resulting lambda-function samplers
-def _make_directionality_surface(rast, mixture=True, approximation_len=5000,
+def _make_conductance_surface(rast, mixture=True, approx_len=5000,
                                                         vm_distr_kappa=12):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0],
                                             [3 * pi / 4, pi / 2, pi / 4]])
@@ -402,21 +404,21 @@ def _make_directionality_surface(rast, mixture=True, approximation_len=5000,
                                     ] - 1, 1:embedded_rast.shape[1] - 1] = rast
 
     #create a numpy array and store vectors approximating the functions!
-    dir_surf = np.float16(np.zeros((rast.shape[0],
-                                        rast.shape[1], approximation_len)))
+    cond_surf = np.float16(np.zeros((rast.shape[0],
+                                        rast.shape[1], approx_len)))
 
     for i in range(rast.shape[0]):
         for j in range(rast.shape[1]):
             neigh = embedded_rast[i:i + 3, j:j + 3].copy()
             if mixture:
-                dir_surf[i, j, :] = _make_von_mises_mixture_sampler(neigh,
+                cond_surf[i, j, :] = _make_von_mises_mixture_sampler(neigh,
                     queen_dirs, vm_distr_kappa = vm_distr_kappa,
-                    approximation_len= approximation_len)
+                    approx_len = approx_len)
             else:
-                dir_surf[i, j, :] = _make_von_mises_unimodal_sampler(neigh,
+                cond_surf[i, j, :] = _make_von_mises_unimodal_sampler(neigh,
                     queen_dirs, vm_distr_kappa = vm_distr_kappa,
-                    approximation_len= approximation_len)
-    return dir_surf
+                    approx_len = approx_len)
+    return cond_surf
 
 
 #coarse wrapper around the nlmpy package

@@ -114,7 +114,7 @@ class Model:
             self._stats_collector = self._make_stats_collector()
 
         #create a self.reassign_genomes attribute, which defaults to False,
-        #unless any population has a genomic architecture, indicating that its
+        #unless any species has a genomic architecture, indicating that its
         #genomes should be reassigned after burn-in; in that case it will be 
         #reset to False as soon as the genomes are reassigned
         self.reassign_genomes = None
@@ -157,11 +157,11 @@ class Model:
         main_t_str = "Number of main timesteps:%s%i"
         main_t_str = main_t_str % (_sr_._get_spacing(main_t_str), self.T)
         #get strings for land and comm
-        comm_str = "Populations:"
-        pop_strs = ["%s %i: '%s'" % (_sr_._get_spacing(""),
-            i, pop.name) for i, pop in self.comm.items()]
-        pop_strs[0] = comm_str + pop_strs[0][len(comm_str):]
-        comm_str = '\n'.join(pop_strs)
+        comm_str = "Species:"
+        spp_strs = ["%s %i: '%s'" % (_sr_._get_spacing(""),
+            i, spp.name) for i, spp in self.comm.items()]
+        spp_strs[0] = comm_str + spp_strs[0][len(comm_str):]
+        comm_str = '\n'.join(spp_strs)
         land_str = "Layers:"
         lyr_strs = ["%s %i: '%s'" % (_sr_._get_spacing(""),
             i, lyr.name) for i, lyr in self.land.items()]
@@ -231,42 +231,42 @@ class Model:
                 "provided.") % str(type(lyr_id)))
 
 
-    #method for getting a population's number, given a name (str) or number
-    def _get_pop_num(self, pop_id):
-        if isinstance(pop_id, int):
-            return(pop_id)
-        elif isinstance(pop_id, str):
-            #get nums for all pops with  matching names
-            pop_nums = [k for k, pop in self.comm.items(
-                                                    ) if pop.name == pop_id]
-            assert len(pop_nums) == 1, ("Expected to find a single Population "
+    #method for getting a species' number, given a name (str) or number
+    def _get_spp_num(self, spp_id):
+        if isinstance(spp_id, int):
+            return(spp_id)
+        elif isinstance(spp_id, str):
+            #get nums for all spps with  matching names
+            spp_nums = [k for k, spp in self.comm.items(
+                                                    ) if spp.name == spp_id]
+            assert len(spp_nums) == 1, ("Expected to find a single Species "
                 "with a name matching the name provided (%s). Instead "
-                "found %i.") % (pop_id, len(nums))
-            pop_num = pop_nums[0]
-            return pop_num
+                "found %i.") % (spp_id, len(nums))
+            spp_num = spp_nums[0]
+            return spp_num
         else:
-            raise ValueError(("The Population identifier must be either a str "
-                "(indicating the Population's name) or an int (indicating "
+            raise ValueError(("The Species identifier must be either a str "
+                "(indicating the Species' name) or an int (indicating "
                 "its key in the Community dict). Instead, a %s was "
-                "provided.") % str(type(pop_id)))
+                "provided.") % str(type(spp_id)))
 
     #method for getting a Trait's number, give a name (str) or number
-    def _get_trt_num(self, pop, trt_id):
+    def _get_trt_num(self, spp, trt_id):
         if isinstance(trt_id, int) or trt_id is None:
             return(trt_id)
         elif isinstance(trt, str):
             #get nums for all traits with matching names
-            trt_nums = [k for k, trt in pop.gen_arch.traits.items(
+            trt_nums = [k for k, trt in spp.gen_arch.traits.items(
                                                     ) if trt.name == trt_id]
             assert len(trt_nums) == 1, ("Expected to find a single Trait in "
-                "Population '%s' with a name matching the name provided (%s). "
-                "Instead found %i.") % (pop.name, trt_id, len(trt_nums))
+                "Species '%s' with a name matching the name provided (%s). "
+                "Instead found %i.") % (spp.name, trt_id, len(trt_nums))
             trt_num = trt_nums[0]
             return trt_num
         else:
             raise ValueError(("The Trait identifier must be either a str "
                 "(indicating the Trait's name) or an int (indicating "
-                "its key in the Population.gen_arch.traits dict). Instead, "
+                "its key in the Species.gen_arch.traits dict). Instead, "
                 "a %s was provided.") % str(type(trt_id)))
 
 
@@ -302,7 +302,7 @@ class Model:
     #method to set the self.reassign_genomes attribute 
     def _set_reassign_genomes(self):
         self.reassign_genomes = np.any(
-                    [pop.gen_arch is not None for pop in self.comm.values()])
+                    [spp.gen_arch is not None for spp in self.comm.values()])
 
     #method to set seed (will be run when Model object is first created, if
     #called for in params)
@@ -358,16 +358,16 @@ class Model:
                 print(('Copying the original community for '
                                     'iteration %i...\n\n') % self.it)
             self.comm = deepcopy(self.orig_comm)
-            #and reset the pop._changer.changes objects for each pop,
-            #if needed (so that they point to the current populations,
+            #and reset the spp._changer.changes objects for each spp,
+            #if needed (so that they point to the current species,
             #not previous ones with updated attribute values)
-            for pop in self.comm.values():
-                if pop._changer is not None:
+            for spp in self.comm.values():
+                if spp._changer is not None:
                     #verbose output
                     if self._verbose:
-                        print(('Resetting the pop._changer.changes '
-                            'object for population " %s"...\n\n') % pop.name)
-                    pop._changer._set_changes(pop)
+                        print(('Resetting the spp._changer.changes '
+                            'object for species " %s"...\n\n') % spp.name)
+                    spp._changer._set_changes(spp)
         else:
             #verbose ouput
             if self._verbose:
@@ -425,10 +425,10 @@ class Model:
         if repeat_burn:
             self._reset_burn_t()
 
-        #reset the community and population t attributes
+        #reset the community and species t attributes
         self.comm._reset_t()
-        for pop in self.comm.values():
-            pop._reset_t()
+        for spp in self.comm.values():
+            spp._reset_t()
 
         #set the self.reassign_genomes attribute
         self._set_reassign_genomes()
@@ -472,39 +472,39 @@ class Model:
         if not burn:
             queue.append(self._set_t)
             queue.append(self.comm._set_t)
-            for pop in self.comm.values():
-                queue.append(pop._set_t)
+            for spp in self.comm.values():
+                queue.append(spp._set_t)
 
         #append the set_age_stage methods to the queue
-        for pop in self.comm.values():
-            queue.append(pop._set_age_stage)
+        for spp in self.comm.values():
+            queue.append(spp._set_age_stage)
         #append the set_Nt methods
-        for pop in self.comm.values():
-            queue.append(pop._set_Nt)
-        #append the do_movement_methods, if pop._move
-        for pop in self.comm.values():
-            if pop._move:
-                queue.append(pop._do_movement)
+        for spp in self.comm.values():
+            queue.append(spp._set_Nt)
+        #append the do_movement_methods, if spp._move
+        for spp in self.comm.values():
+            if spp._move:
+                queue.append(spp._do_movement)
         #append the do_pop_dynamics methods
         #FIXME: Consider whether the order of these needs to be specified, or
         #randomized, should people want to eventually simulate
-        #multiple, interacting populations
-        for pop in self.comm.values():
-            queue.append(pop._do_pop_dynamics)
+        #multiple, interacting species
+        for spp in self.comm.values():
+            queue.append(spp._do_pop_dynamics)
 
         #add the Changer.make_change, data._DataCollector._write_data, and 
         #stats._StatsCollector._write_stats methods, if this is not the burn-in
-        #and if pop and/or land have Changer objects, or if the model has 
+        #and if spp and/or land have Changer objects, or if the model has 
         #_DataCollector or _StatsCollector objects (in the self._data_collector 
         #and self._stats_collector attributes)
         if not burn:
             #add land._make_change method
             if self.land._changer is not None:
                 queue.append(lambda: self.land._make_change(self.t))
-            #add pop._make_change methods
-            for pop in self.comm.values():
-                if pop._changer is not None:
-                    queue.append(pop._make_change)
+            #add spp._make_change methods
+            for spp in self.comm.values():
+                if spp._changer is not None:
+                    queue.append(spp._make_change)
             #add self.write_data method
             if self._data_collector is not None:
                 queue.append(self.write_data)
@@ -515,12 +515,8 @@ class Model:
             #TODO depending how I integrate the Stats module, 
             #add stats functions to this queue too
 
-
-
         #add the burn-in function if need be
         if burn:
-            #for pop in self.comm.values():
-                #queue.append(lambda: pop.check_burned(self.burn_T))
             queue.append(lambda: self.comm._check_burned(burn_T = self.burn_T))
         return(queue)
 
@@ -529,13 +525,13 @@ class Model:
     def _print_timestep_info(self, mode):
         verbose_msg = '%s:\t%i:%i\n' % (mode, self.it,
                                 [self.burn_t if mode == 'burn' else self.t][0])
-        pops_submsgs = ''.join(['\tPOP: %s%sN=%i\t(births=%i\tdeaths=%i)\n' %
-                        (pop.name,
-                        ' ' * (30 - len(pop.name)),
-                        pop.Nt[:].pop(),
-                        pop.n_births[:].pop(),
-                        pop.n_deaths[:].pop()) for pop in self.comm.values()])
-        verbose_msg = verbose_msg + pops_submsgs
+        spps_submsgs = ''.join(['\tSPP: %s%sN=%i\t(births=%i\tdeaths=%i)\n' %
+                        (spp.name,
+                        ' ' * (30 - len(spp.name)),
+                        spp.Nt[:].pop(),
+                        spp.n_births[:].pop(),
+                        spp.n_deaths[:].pop()) for spp in self.comm.values()])
+        verbose_msg = verbose_msg + spps_submsgs
         print(verbose_msg)
         print('\t' + '.' * (self.__term_width__ - self.__tab_len__))
 
@@ -546,7 +542,7 @@ class Model:
         #do a burn-in step
         if mode == 'burn':
             for fn in self.burn_fn_queue:
-                if True not in [pop.extinct for pop in self.comm.values()]:
+                if True not in [spp.extinct for spp in self.comm.values()]:
                     fn()
                 else:
                     break
@@ -554,15 +550,15 @@ class Model:
                 self._print_timestep_info(mode)
             #if the burn-in is complete, reassign the genomes if needed
             #and then set self.comm.burned = True
-            if np.all([pop.burned for pop in self.comm.values()]):
+            if np.all([spp.burned for spp in self.comm.values()]):
                 if self.reassign_genomes:
-                    for pop in self.comm.values():
-                        if pop.gen_arch is not None:
+                    for spp in self.comm.values():
+                        if spp.gen_arch is not None:
                             #verbose output
                             if self._verbose:
                                 print(('Assigning genomes for '
-                                    'population "%s"...\n\n') % pop.name)
-                            genome._set_genomes(pop, self.burn_T, self.T)
+                                    'species "%s"...\n\n') % spp.name)
+                            genome._set_genomes(spp, self.burn_T, self.T)
                     #and then set the reassign_genomes attribute to False, so
                     #that they won'r get reassigned again during this iteration
                     self.reassign_genomes = False
@@ -574,22 +570,22 @@ class Model:
         #or do a main step
         elif mode == 'main':
             for fn in self.main_fn_queue:
-                if  True not in [pop.extinct for pop in self.comm.values()]:
+                if  True not in [spp.extinct for spp in self.comm.values()]:
                     fn()
                 else:
                     break
             if self._verbose:
                 self._print_timestep_info(mode)
 
-        #then check if any populations are extinct and
+        #then check if any species are extinct and
         #return the correpsonding boolean
-        extinct = np.any([pop.extinct for pop in self.comm.values()])
+        extinct = np.any([spp.extinct for spp in self.comm.values()])
         #verbose output
         if extinct and self._verbose:
-            print(('XXXX     Population %s went extinct. '
+            print(('XXXX     Species %s went extinct. '
                 'Iteration %i aborting.\n\n') % (' & '.join(
-                ['"' + pop.name + '"' for pop in self.comm.values(
-                                                ) if pop.extinct]), self.it))
+                ['"' + spp.name + '"' for spp in self.comm.values(
+                                                ) if spp.extinct]), self.it))
         return(extinct)
 
 
@@ -616,18 +612,18 @@ class Model:
         self._set_next_iteration()
 
         #loop over the burn-in timesteps running the burn-in
-        #queue (if copied pop isn't already burned in)
+        #queue (if copied spp isn't already burned in)
         if (self.rand_comm
             or (not self.rand_comm and self.repeat_burn)
             or self.it == 0):
             #verbose output
             if self._verbose:
                 print('Running burn-in, iteration %i...\n\n' % self.it)
-            #until all populations have pop.burned == True
-            while not np.all([pop.burned for pop in self.comm.values()]):
+            #until all species have spp.burned == True
+            while not np.all([spp.burned for spp in self.comm.values()]):
                 #run a burn-in timestep
                 extinct = self._do_timestep(mode = 'burn')
-                #and end the iteration early if any population is extinct
+                #and end the iteration early if any species is extinct
                 if extinct:
                     break
 
@@ -646,7 +642,7 @@ class Model:
         for t in range(self.T):
             #run a main timestep
             extinct = self._do_timestep('main')
-            #and end the iteration early if any population is extinct 
+            #and end the iteration early if any species is extinct 
             if extinct:
                 break
 
@@ -668,7 +664,7 @@ class Model:
         attribute). If stats and/or data are going to be collected (also
         stipulated by the parameters file used to create the Model), then the
         output files for each iteration will be saved in a separate
-        subdirectory, containing further subdirectories for each Population.
+        subdirectory, containing further subdirectories for each Species.
 
         Parameters
         ----------
@@ -839,7 +835,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                           'Running mod.reset()...\n\n'))
                 self._reset()
             extinct = self._do_timestep(mode = mode)
-            #end the iteration early if any population is extinct
+            #end the iteration early if any species is extinct
             if extinct:
                 break
         #reset self._verbose to False
@@ -858,162 +854,162 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     #plotting#
     ##########
 
-    #wrapper around Population._plot and Landscape._plot
-    #TODO: allow pop to be a list of pop ids, to plot each pop in a
+    #wrapper around Species._plot and Landscape._plot
+    #TODO: allow spp to be a list of spp ids, to plot each spp in a
     #different color with a legend!
-    def plot(self, pop=None, lyr=None, hide_land=False, individs=None,
+    def plot(self, spp=None, lyr=None, hide_land=False, individs=None,
             text=False, color='black', edge_color='face', text_color='black',
             colorbar=True, size=25, text_size=9, im_interp_method='nearest',
             land_cmap='terrain', pt_cmap=None, alpha=False,
              zoom_width=None, x=None, y=None, vmin=None, vmax=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
-        #if no pop provided, then call Landscape._plot
-        if pop is None:
+        #if no spp provided, then call Landscape._plot
+        if spp is None:
             self.land._plot(lyr_num=lyr_num, colorbar=colorbar, cmap=land_cmap,
                 im_interp_method=im_interp_method, x=x, y=y,
                 zoom_width=zoom_width, vmin=vmin, vmax=vmax)
-        #or else plot the pop
+        #or else plot the spp
         else:
-            #get the pop
-            pop = self.comm[self._get_pop_num(pop)]
-            #feed args into pop._plot
-            pop._plot(lyr_num=lyr_num, hide_land=hide_land,
-                individs=individs, text=text, color=color, edge_color=edge_color, 
+            #get the spp
+            spp = self.comm[self._get_spp_num(spp)]
+            #feed args into spp._plot
+            spp._plot(lyr_num=lyr_num, hide_land=hide_land,
+                individs=individs, text=text, color=color, edge_color=edge_color,
                 text_color=text_color, colorbar=colorbar, size=size,
                 text_size=text_size, im_interp_method=im_interp_method,
                 land_cmap=land_cmap, pt_cmap=pt_cmap, alpha=alpha,
                 zoom_width=zoom_width, x=x, y=y, vmin=vmin, vmax=vmax)
-            #add pop name
-            plt.suptitle(pop.name)
+            #add spp name
+            plt.suptitle(spp.name)
 
-    #wrapper around Population._plot_density
-    def plot_density(self, pop, normalize=False, individs=None,
+    #wrapper around Species._plot_density
+    def plot_density(self, spp, normalize=False, individs=None,
             text=False, color='black', edge_color='face',
             text_color='black', size=25, text_size = 9,
             alpha=0.5, zoom_width=None, x=None, y=None):
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
-        #feed args into pop._plot_density
-        pop._plot_density(normalize=normalize, individs=individs, text=text,
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
+        #feed args into spp._plot_density
+        spp._plot_density(normalize=normalize, individs=individs, text=text,
             color=color, edge_color=edge_color, text_color=text_color,
             size=size, text_size=text_size, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
-        #add pop name
-        plt.suptitle(pop.name)
+        #add spp name
+        plt.suptitle(spp.name)
 
-    #wrapper around Population._plot_genotype
-    def plot_genotype(self, pop, locus, lyr=None, by_dominance=False,
+    #wrapper around Species._plot_genotype
+    def plot_genotype(self, spp, locus, lyr=None, by_dominance=False,
             individs=None, text=False, size=25, text_size = 9,
             edge_color='black', text_color='black', colorbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
             y=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
-        #feed args into pop._plot_genotype
-        pop._plot_genotype(locus=locus, lyr_num=lyr_num, individs=individs, 
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
+        #feed args into spp._plot_genotype
+        spp._plot_genotype(locus=locus, lyr_num=lyr_num, individs=individs,
             text=text, size=size, text_size=text_size, edge_color=edge_color,
             text_color=text_color, colorbar=colorbar,
             im_interp_method=im_interp_method, alpha=alpha,
             by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y)
-        #add pop name
-        plt.suptitle(pop.name)
+        #add spp name
+        plt.suptitle(spp.name)
 
-    #wrapper around Population._plot_phenotype
+    #wrapper around Species._plot_phenotype
     #for a given trait
-    def plot_phenotype(self, pop, trait, lyr=None, individs=None, 
+    def plot_phenotype(self, spp, trait, lyr=None, individs=None,
             text=False, size=25, text_size = 9, edge_color='black',
             text_color='black', colorbar=True, im_interp_method='nearest',
             alpha=1, zoom_width=None, x=None, y=None):
         #get the lyr num
-        lyr_num = self._get_lyr_num(lyr)       
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
-        #return messages if population does not have genomes or traits
-        if pop.gen_arch is None:
-            print(("Model.plot_phenotype is not valid for populations "
+        lyr_num = self._get_lyr_num(lyr)
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
+        #return messages if species does not have genomes or traits
+        if spp.gen_arch is None:
+            print(("Model.plot_phenotype is not valid for Species "
                 "without genomes.\n"))
             return
-        elif pop.gen_arch.traits is None:
-            print(("Model.plot_phenotype is not valid for populations "
+        elif spp.gen_arch.traits is None:
+            print(("Model.plot_phenotype is not valid for Species "
                 "without traits.\n"))
             return
         #get the trt_num
-        trt_num = self._get_trt_num(pop, trait)
+        trt_num = self._get_trt_num(spp, trait)
         #trt_num can't be None for plot_phenotype
         assert trt_num is not None, ("None is not a valid value for the "
             "'trait' arguemnt.")
-        #feed args into pop._plot_phenotype
-        pop._plot_phenotype(trait=trait, lyr_num=lyr_num, individs=individs, 
+        #feed args into spp._plot_phenotype
+        spp._plot_phenotype(trait=trait, lyr_num=lyr_num, individs=individs,
             text=text, size=size, text_size=text_size, edge_color=edge_color,
             text_color=text_color, colorbar=colorbar,
             im_interp_method=im_interp_method, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
-        #add pop name
-        plt.suptitle(pop.name)
+        #add spp name
+        plt.suptitle(spp.name)
 
-    #wrapper around Population._plot_fitness
-    def plot_fitness(self, pop, trait=None, lyr=None, individs=None, 
+    #wrapper around Species._plot_fitness
+    def plot_fitness(self, spp, trait=None, lyr=None, individs=None,
             text=False, size=25, text_size = 9, edge_color='black',
             text_color='black', fit_cmap='RdYlGn', colorbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
             y=None):
         #get the lyr num
-        lyr_num = self._get_lyr_num(lyr)       
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
-        #return messages if population does not have genomes or traits
-        if pop.gen_arch is None:
-            print(("Model.plot_fitness is not valid for populations "
+        lyr_num = self._get_lyr_num(lyr)
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
+        #return messages if species does not have genomes or traits
+        if spp.gen_arch is None:
+            print(("Model.plot_fitness is not valid for Species "
                 "without genomes.\n"))
             return
-        elif pop.gen_arch.traits is None:
-            print(("Model.plot_fitness is not valid for populations "
+        elif spp.gen_arch.traits is None:
+            print(("Model.plot_fitness is not valid for Species "
                 "without traits.\n"))
             return
         #get the trt_num, which CAN be None for plot_fitness
-        trt_num = self._get_trt_num(pop, trait)
-        #feed args into pop._plot_fitness
-        pop._plot_fitness(trt_num=trt_num, lyr_num=lyr_num, individs=individs, 
+        trt_num = self._get_trt_num(spp, trait)
+        #feed args into spp._plot_fitness
+        spp._plot_fitness(trt_num=trt_num, lyr_num=lyr_num, individs=individs,
             text=text, size=size, text_size=text_size, edge_color=edge_color,
             text_color=text_color, fit_cmap=fit_cmap, colorbar=colorbar,
             im_interp_method=im_interp_method, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
-        #add pop name
-        plt.suptitle(pop.name)
+        #add spp name
+        plt.suptitle(spp.name)
 
-    #wrapper around pop._plot_allele_frequencies
-    def plot_allele_frequencies(self, pop):
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
+    #wrapper around Species._plot_allele_frequencies
+    def plot_allele_frequencies(self, spp):
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        pop._plot_allele_frequencies()
+        spp._plot_allele_frequencies()
 
-    #wrapper around pop._plot_hist_fitness
-    def plot_hist_fitness(self, pop):
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
+    #wrapper around Species._plot_hist_fitness
+    def plot_hist_fitness(self, spp):
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        pop._plot_hist_fitness()
+        spp._plot_hist_fitness()
 
-    #wrapper around pop._plot_direction_surface for _move_surf
-    def plot_movement_surface(self, pop, style, x, y, zoom_width=8,
+    #wrapper around Species._plot_direction_surface for _move_surf
+    def plot_movement_surface(self, spp, style, x, y, zoom_width=8,
                             scale_fact=4.5, color='black', colorbar = True):
-        self._plot_direction_surface(surf_type='move', pop=pop, style=style,
+        self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, colorbar=colorbar)
 
-    #wrapper around pop._plot_direciton_surface for _disp_surf
-    def plot_dispersal_surface(self, pop, style, x, y, zoom_width=8,
+    #wrapper around Species._plot_direciton_surface for _disp_surf
+    def plot_dispersal_surface(self, spp, style, x, y, zoom_width=8,
                             scale_fact=4.5, color='black', colorbar = True):
-        self._plot_direction_surface(surf_type='move', pop=pop, style=style,
+        self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, colorbar=colorbar)
 
-    #wrapper around pop._plot_direction_surface
-    def _plot_direction_surface(self, surf_type, pop, style, x, y, 
+    #wrapper around Species._plot_direction_surface
+    def _plot_direction_surface(self, surf_type, spp, style, x, y,
         zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
 
         """
@@ -1037,38 +1033,38 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                 distribution.
 
         """
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        pop._plot_direction_surface(surf_type=surf_type, style=style, x=x, y=y,
+        spp._plot_direction_surface(surf_type=surf_type, style=style, x=x, y=y,
             zoom_width=zoom_width, scale_fact=scale_fact, color=color,
             colorbar=colorbar)
 
-    #wrapper around pop._plot_demographic_pyramid
-    def plot_demographic_pyramid(self, pop):
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
+    #wrapper around Species._plot_demographic_pyramid
+    def plot_demographic_pyramid(self, spp):
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        pop._plot_demographic_pyramid()
-    
-    #wrapper around pop._plot_pop_growth
+        spp._plot_demographic_pyramid()
+
+    #wrapper around Species._plot_pop_growth
     def plot_pop_growth(self):
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        pop._plot_pop_growth()
+        spp._plot_pop_growth()
 
-    #wrapper around pop._plot_demographic_changes
+    #wrapper around Species._plot_demographic_changes
     def plot_demographic_changes(self):
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        pop._plot_demographic_changes()
+        spp._plot_demographic_changes()
 
-    #wrapper around pop._plot_stat
+    #wrapper around Species._plot_stat
     def plot_stat(self, stat):
-        #get the pop
-        pop = self.comm[self._get_pop_num(pop)]
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        pop._plot_stat(stat)
+        spp._plot_stat(stat)
 

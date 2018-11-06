@@ -133,7 +133,7 @@ def _write_file(filepath, data):
 
 #write a CSV of data from a dictionary of columns
 def _write_dict_to_csv(filepath, array_1d_dict):
-    #make a pandas DataFrame from the population's stats
+    #make a pandas DataFrame from the species' stats
     df = pd.DataFrame.from_dict(array_1d_dict)
     #add a timestep column
     df['t'] = [*df.index]

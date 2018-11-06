@@ -235,7 +235,7 @@ def _make_fitness_cmap_and_cbar_maker(min_val, max_val = 1,
             round(min_val,2)) if n == ind_closest else str(
             tick) for n,tick in enumerate(ticks)]
     #create a function for making the colorbar, to be shipped out to and
-    #called within population.Population.plot_fitness()
+    #called within species.Species.plot_fitness()
     def make_cbar(ax):
         cbar = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm,
             spacing='proportional', ticks=ticks, boundaries=bounds,

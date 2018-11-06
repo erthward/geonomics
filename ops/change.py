@@ -37,14 +37,14 @@ from copy import deepcopy
 
 #TODO:
 
-    #1 I created a quick, crude way of stipulating other-parameter pop changes,
+    #1 I created a quick, crude way of stipulating other-parameter spp changes,
     #but it would probably be nicer to just further generalize the
     #dem-change functions to allow for linear, stochastic, cyclic, or custom
     #changes of other param values?
 
     #2 I think this can be standardized (e.g. _LandscapeChanger
     #get_<   >_change_fns functions I believe return just the
-    #functions, whereas _PopulationChanger
+    #functions, whereas _SpeciesChanger
     #ones return list(zip(t, change_fn)) objects) and generalized still
     #further. Worth doing now, while the code is fresh in my head...
 
@@ -55,7 +55,7 @@ from copy import deepcopy
 # -----------------------------------#
 ######################################
 
-#base class for _LandscapeChanger and _PopulationChanger
+#base class for _LandscapeChanger and _SpeciesChanger
 class _Changer:
     def __init__(self, params):
         #set the type-label of the changer
@@ -88,7 +88,7 @@ class _Changer:
                 #call the next_change function to make the change
                 self.next_change[1](self)
                     #NOTE: feeding self in so that some change functions
-                    #that need to set Changer attributes (e.g. pop-changer
+                    #that need to set Changer attributes (e.g. spp-changer
                     #dem functions set the #base_K raster at the beginning
                     #of a period of dem changes) have access to the
                     #Changer object
@@ -178,10 +178,10 @@ class _LandscapeChanger(_Changer):
         self._set_next_change()
 
 
-class _PopulationChanger(_Changer):
-    def __init__(self, pop, pop_change_params, land=None):
-        super(_PopulationChanger, self).__init__(pop_change_params)
-        self.type = 'pop'
+class _SpeciesChanger(_Changer):
+    def __init__(self, spp, spp_change_params, land=None):
+        super(_SpeciesChanger, self).__init__(spp_change_params)
+        self.type = 'spp'
 
         #an attribute that is used by some dem-change fns, as a baseline
         #population size at the start of the demographic change event
@@ -189,14 +189,14 @@ class _PopulationChanger(_Changer):
         self.base_K = None
 
     #call self._set_changes() to set self.changes and self.next_change
-        self._set_changes(pop)
+        self._set_changes(spp)
 
-    #method to set the base_K attribute to pop.K
-    def _set_base_K(self, pop):
-        self.base_K = pop.K
+    #method to set the base_K attribute to spp.K
+    def _set_base_K(self, spp):
+        self.base_K = spp.K
 
-    #method to set the changes stipulated in params dict for the pop object
-    def _set_changes(self, pop, land=None):
+    #method to set the changes stipulated in params dict for the spp object
+    def _set_changes(self, spp, land=None):
         #pull out the parts of the params
         try:
             dem_change_params = self.change_params.dem
@@ -206,47 +206,47 @@ class _PopulationChanger(_Changer):
             parameter_change_params = self.change_params.life_hist
         except Exception:
             parameter_change_params = None
-        #check if this pop has a _move_surf, and if there are land-changes
+        #check if this spp has a _move_surf, and if there are land-changes
         #that affect its lyr
         move_surf_change_fns = []
-        if (pop._move_surf is not None
+        if (spp._move_surf is not None
             and land is not None
-            and pop._move_surf.lyr_num in land._changer.change_info.keys()):
+            and spp._move_surf.lyr_num in land._changer.change_info.keys()):
             #if so, grab that lyr's land change params and create a
             #move_surf_series with them, to be 
-            #added to this pop's change fns
+            #added to this spp's change fns
             lc_move_surf_params = land._changer.change_info[
-                                                    pop._move_surf.lyr_num]
+                                                    spp._move_surf.lyr_num]
             #create a time-series of movement surfaces 
-            surf = pop._move_surf
+            surf = spp._move_surf
             surf_series = _make_conductance_surface_series(
                 start_lyr = land[surf.lyr_num], mixture = surf.mix,
                 kappa = surf.kappa, approx_len = surf.approx_len,
                 **lc_move_surf_params)
             #and create change fns from them
             move_surf_change_fns.extend(_get_conductance_surface_change_fns(
-                                                        pop, surf_series))
+                                                        spp, surf_series))
 
-        #check if this pop has a _disp_surf, and if there are land-changes
+        #check if this spp has a _disp_surf, and if there are land-changes
         #that affect its lyr
         disp_surf_change_fns = []
-        if (pop._disp_surf is not None
+        if (spp._disp_surf is not None
             and land is not None
-            and pop._disp_surf.lyr_num in land._changer.change_info.keys()):
+            and spp._disp_surf.lyr_num in land._changer.change_info.keys()):
             #if so, grab that lyr's land change params and create a
             #disp_surf_series with them, to be 
-            #added to this pop's change fns
+            #added to this spp's change fns
             lc_disp_surf_params = land._changer.change_info[
-                                                    pop._disp_surf.lyr_num]
+                                                    spp._disp_surf.lyr_num]
             #create a time-series of movement surfaces 
-            surf = pop._disp_surf
+            surf = spp._disp_surf
             surf_series = _make_conductance_surface_series(
                 start_lyr = land[surf.lyr_num], mixture = surf.mix,
                 kappa = surf.kappa, approx_len = surf.approx_len,
                 **lc_disp_surf_params)
             #and create change fns from them
             disp_surf_change_fns.extend(_get_conductance_surface_change_fns(
-                                                        pop, surf_series))
+                                                        spp, surf_series))
 
 
         #set the demographic changes, if applicable
@@ -254,7 +254,7 @@ class _PopulationChanger(_Changer):
         if dem_change_params is not None:
             for event, event_params in dem_change_params.items():
                 if True in [v is not None for v in event_params.values()]:
-                    dem_change_fns.extend(_get_dem_change_fns(pop,
+                    dem_change_fns.extend(_get_dem_change_fns(spp,
                                                              **event_params))
 
         #set the other changes, if applicable
@@ -262,7 +262,7 @@ class _PopulationChanger(_Changer):
         if parameter_change_params is not None:
             for parameter, parameter_params in parameter_change_params.items():
                 if True in [v is not None for v in parameter_params.values()]:
-                    parameter_change_fns.extend(_get_parameter_change_fns(pop,
+                    parameter_change_fns.extend(_get_parameter_change_fns(spp,
                                         parameter, **parameter_change_params))
 
         #put all the changes in chronological order
@@ -280,13 +280,13 @@ class _PopulationChanger(_Changer):
             #attribute
             self._set_next_change()
 
-    #a method to visualize the population changes that will occur
-    def _plot_dem_changes(self, pop):
+    #a method to visualize the species changes that will occur
+    def _plot_dem_changes(self, spp):
         if self.next_change is None:
-            print(("No demographic changes remaining for this population. "
+            print(("No demographic changes remaining for this species. "
                 "They were likely already run."))
         else:
-            cop_pop = deepcopy(pop)
+            cop_spp = deepcopy(spp)
             cop_self = deepcopy(self)
             cop_changes = deepcopy(cop_self.changes)
             step_list = [cop_self.next_change[0]]
@@ -298,17 +298,17 @@ class _PopulationChanger(_Changer):
                 except StopIteration:
                     more = False
             end = int(1.1*max(step_list))
-            #set pop.K to 1, for viz purposes
-            pop.K = 1
+            #set spp.K to 1, for viz purposes
+            spp.K = 1
             #and set cop_self.base_K 
-            cop_self._set_base_K(pop)
+            cop_self._set_base_K(spp)
             Ks = []
             for t in range(end):
                 cop_self._make_change(t, for_plotting = True)
-                Ks.append(pop.K)
+                Ks.append(spp.K)
             plt.plot(range(end), Ks)
-            #set pop back to its original value
-            pop = cop_pop
+            #set spp back to its original value
+            spp = cop_spp
 
 
 ######################################
@@ -378,9 +378,9 @@ def _get_lyr_change_fn(land, lyr_num, new_lyr):
     return(fn)
 
 
-    ##########################
-    # for _PopulationChanger #
-    ##########################
+    #######################
+    # for _SpeciesChanger #
+    #######################
 
 def _make_conductance_surface_series(start_lyr, mixture, kappa,
         approx_len, end_rast, start_t, end_t, n_steps,
@@ -405,12 +405,12 @@ def _make_conductance_surface_series(start_lyr, mixture, kappa,
     return(surf_series)
 
 
-def _get_conductance_surface_change_fns(pop, surf_series):
+def _get_conductance_surface_change_fns(spp, surf_series):
     timesteps = []
     fns = []
     for t, new_surf in surf_series:
-        def fn(pc, pop=pop, new_surf = new_surf):
-            pop._move_surf = new_surf
+        def fn(pc, spp=spp, new_surf = new_surf):
+            spp._move_surf = new_surf
         timesteps.append(t)
         fns.append(fn)
     change_fns = zip(timesteps, fns)
@@ -420,57 +420,57 @@ def _get_conductance_surface_change_fns(pop, surf_series):
         # demographic #
         ###############
 
-def _get_dem_change_fns(pop, kind, start=None, end=None, rate=None,
+def _get_dem_change_fns(spp, kind, start=None, end=None, rate=None,
     interval=None, n_cycles=None, size_range=None,
     distr='uniform', min_size=None, max_size=None, timesteps=None,
                                     sizes=None, increase_first=True):
     if kind == 'monotonic':
-        fns = _get_monotonic_dem_change_fns(pop = pop, rate = rate,
+        fns = _get_monotonic_dem_change_fns(spp = spp, rate = rate,
                     start = start, end = end)
     elif kind == 'stochastic':
-        fns = _get_stochastic_dem_change_fns(pop = pop, start = start,
+        fns = _get_stochastic_dem_change_fns(spp = spp, start = start,
             end = end, interval = interval, size_range = size_range,
                                                             distr = distr)
     elif kind == 'cyclical':
-        fns = _get_cyclical_dem_change_fns(pop = pop, start = start,
+        fns = _get_cyclical_dem_change_fns(spp = spp, start = start,
             end = end, n_cycles = n_cycles, size_range = size_range,
             min_size = min_size, max_size = max_size,
                                         increase_first = increase_first)
     elif kind == 'custom':
-        fns = _get_custom_dem_change_fns(pop = pop, timesteps = timesteps,
+        fns = _get_custom_dem_change_fns(spp = spp, timesteps = timesteps,
                                                             sizes = sizes)
     return(fns)
 
 
-def _make_dem_change_fns(pop, sizes, timesteps, K_mode='base'):
+def _make_dem_change_fns(spp, sizes, timesteps, K_mode='base'):
     fns = []
     if K_mode == 'current':
         for size in sizes:
-            def fn(pc, pop = pop, size = size):
-                pop.K*=size
+            def fn(pc, spp = spp, size = size):
+                spp.K*=size
             fns.append(fn)
     elif K_mode == 'base':
         t0 = timesteps[0]
         for size in sizes:
-            def fn(pc, pop=pop, size=size, t0 = t0):
-                if pop.t == t0:
-                    pc._set_base_K(pop)
-                pop.K = pc.base_K*size
+            def fn(pc, spp=spp, size=size, t0 = t0):
+                if spp.t == t0:
+                    pc._set_base_K(spp)
+                spp.K = pc.base_K*size
             fns.append(fn)
     change_fns = list(zip(timesteps, fns))
     return(change_fns)
 
 
-#will generate exponential change in the population by iteratively
+#will generate exponential change in the population size by iteratively
 #multiplying a carrying-capacity (K) raster
-def _get_monotonic_dem_change_fns(pop, rate, start, end):
+def _get_monotonic_dem_change_fns(spp, rate, start, end):
     #get the timesteps for the demogprahic changes (subtract 1 from start
     #to set Python's 0th timestep as 1)
     #NOTE: setting start and end to the same value will create a
     #single-timestep change (e.g. a sudden bottleneck or rapid expansion)
     timesteps = range(start, end)
     sizes = [rate]*len(timesteps)
-    change_fns = _make_dem_change_fns(pop, sizes, timesteps, K_mode='current')
+    change_fns = _make_dem_change_fns(spp, sizes, timesteps, K_mode='current')
     return(change_fns)
 
 
@@ -479,9 +479,9 @@ def _get_monotonic_dem_change_fns(pop, rate, start, end):
 
 
 #will create stochastic changes around a baseline carrying-capacity (K) raster
-def _get_stochastic_dem_change_fns(pop, size_range, start, end, interval,
+def _get_stochastic_dem_change_fns(spp, size_range, start, end, interval,
                                                         distr = 'uniform'):
-    start_K = pop.K
+    start_K = spp.K
     if interval is None:
         interval = 1
     timesteps = range(start, end, interval)
@@ -497,11 +497,11 @@ def _get_stochastic_dem_change_fns(pop, size_range, start, end, interval,
     #make size return to starting size
     sizes[-1] = 1
     #make all the change functions
-    change_fns = _make_dem_change_fns(pop, sizes, timesteps, K_mode = 'base')
+    change_fns = _make_dem_change_fns(spp, sizes, timesteps, K_mode = 'base')
     return(change_fns)
 
 
-def _get_cyclical_dem_change_fns(pop, start, end, n_cycles, size_range=None,
+def _get_cyclical_dem_change_fns(spp, start, end, n_cycles, size_range=None,
                             min_size=None, max_size=None, increase_first=True):
     #detemine the min and max sizes for the cycles, based on input arguments
     if size_range is not None and min_size is None and max_size is None:
@@ -539,14 +539,14 @@ def _get_cyclical_dem_change_fns(pop, start, end, n_cycles, size_range=None,
     #then get all timesteps across the cycles, to match up to the pop sizes
     timesteps = range(cycle_timesteps[0], cycle_timesteps[-1]+1)
     #get all the change functions for those timesteps
-    change_fns = _make_dem_change_fns(pop, sizes, timesteps, K_mode = 'base')
+    change_fns = _make_dem_change_fns(spp, sizes, timesteps, K_mode = 'base')
     return(change_fns)
 
 
-def _get_custom_dem_change_fns(pop, timesteps, sizes):
+def _get_custom_dem_change_fns(spp, timesteps, sizes):
     assert len(timesteps) == len(sizes), ('For custom demographic changes, '
                     'timesteps and sizes must be iterables of equal length.')
-    change_fns = _make_dem_change_fns(pop, sizes, timesteps, K_mode = 'base')
+    change_fns = _make_dem_change_fns(spp, sizes, timesteps, K_mode = 'base')
     return(change_fns)
 
 
@@ -554,19 +554,19 @@ def _get_custom_dem_change_fns(pop, timesteps, sizes):
         #   life_hist   #
         #################
 
-def _make_parameter_change_fns(pop, parameter, timesteps, vals):
+def _make_parameter_change_fns(spp, parameter, timesteps, vals):
     fns = []
     for val in vals:
-        def fn(pc, parameter, pop = pop, val = val):
-            setattr(pop, parameter, val)
+        def fn(pc, parameter, spp = spp, val = val):
+            setattr(spp, parameter, val)
         fns.append(fn)
     change_fns = list(zip(timesteps, fns))
     return(change_fns)
 
 
-def _get_parameter_change_fns(pop, parameter, timesteps, vals):
+def _get_parameter_change_fns(spp, parameter, timesteps, vals):
     assert len(timesteps) == len(vals), ("For custom changes of the '%s' "
      "paramter, timesteps and vals must be iterables of equal length.") % param
-    change_fns = _make_parameter_change_fns(pop, param, timesteps, vals)
+    change_fns = _make_parameter_change_fns(spp, param, timesteps, vals)
     return(change_fns)
 

@@ -72,7 +72,7 @@ class _DensityGrid:
         self.dim_om = dim_om
 
         #window width to be used for grid-cell windows within which
-        #population will be counted
+        #species will be counted
         self.window_width = window_width
 
         #self.x_edge/y_edge are True if this grid has cells centered
@@ -155,7 +155,7 @@ class _DensityGridStack:
         #with whatever window_width was initially used to create the grid stack
 
         #set window width of the grid-cell windows within which
-        #to count the population
+        #to count the species
         self.window_width = window_width
 
         #get the order of magnitude of the larger of the two land
@@ -213,8 +213,8 @@ class _ConductanceSurface:
         else:
             self.kappa = vm_distr_kappa
         #create the surface
-        self.surf = _make_conductance_surface(cond_lyr.rast, 
-            mixture = self.mix, vm_distr_kappa = self.kappa, 
+        self.surf = _make_conductance_surface(cond_lyr.rast,
+            mixture = self.mix, vm_distr_kappa = self.kappa,
             approx_len = self.approx_len)
 
         assert self.approx_len == self.surf.shape[2], ("_"
@@ -274,7 +274,7 @@ def _make_density_grid(land, ww, x_edge, y_edge):
                        False: np.arange(0+hww, dim[0]+hww, ww)}
 
     #create the meshgrid of the centerpoints of neighborhoods (or cells)
-    #within which population will be counted
+    #within which species will be counted
     #(x_edge and y_edge arguments determine whether this grid's 
     #x and y cells are centered on the landscape edges or not)
     #NOTE: these are expressed as points in continuous space from 0 to
@@ -298,14 +298,14 @@ def _make_density_grid(land, ww, x_edge, y_edge):
 
     #use the Polygons' intersection method to calculate the total area
     #of the land that is covered by each grid cell (which will be 
-    #used as the denominator for calculating neighborhood population densities
-    #from neighborhood population counts)
+    #used as the denominator for calculating neighborhood species densities
+    #from neighborhood species counts)
     areas = np.reshape([p.intersection(land_poly).area for p in polys],
                                                                     gj.shape)
 
     #get lists of the integer-identifiers (i,j in the proper matrix sense)
     #of the cells in each of the grids (so that these can be matched up
-    #with individuals' cell numbers when calculating population density while
+    #with individuals' cell numbers when calculating species density while
     #the model is running)
     #(e.g. a cell centered at point y = 0, x = 5 would be cell i = 0,j = 6
     #if the window-width is 1, or cell i =0,j = 1 if the window width is 5)
@@ -314,7 +314,7 @@ def _make_density_grid(land, ww, x_edge, y_edge):
 
 
     #turn the cell-number integers into cell strings
-    #(NOTE: the previous algorithm used to calculate population density
+    #(NOTE: the previous algorithm used to calculate species density
     #was more or less the same, but found individuals' cells by
     #checking numerically whether they were within each window, but
     #was much slower and scaled poorly with decreasing window width,
@@ -322,7 +322,7 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     #This approach instead uses the floor-divide // on individuals'
     #x and y coordinates to generate cell-number integers for them,
     #converts those to strings, then counts the number of instances of each
-    #string for the population and uses those values as the counts
+    #string for the species and uses those values as the counts
     #of individuals within each density-grid cell,
     #obviating the need to loop across grid dimensions.
     #This performs better and scales much better.

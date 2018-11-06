@@ -39,14 +39,14 @@ from itertools import repeat, starmap
 # -----------------------------------#
 ######################################
 
-def _find_mates(pop, land=None, sex=False, repro_age=None,
+def _find_mates(spp, land=None, sex=False, repro_age=None,
                                 dist_weighted_birth=False):
-    b = pop.b
-    mating_radius = pop.mating_radius
-    if 'sex' in pop.__dict__.keys():
-        sex = pop.sex
-    if 'repro_age' in pop.__dict__.keys():
-        repro_age = pop.repro_age
+    b = spp.b
+    mating_radius = spp.mating_radius
+    if 'sex' in spp.__dict__.keys():
+        sex = spp.sex
+    if 'repro_age' in spp.__dict__.keys():
+        repro_age = spp.repro_age
     # NOTE: In an IDEAL world, this would work as follows:
     # for all individuals, find set of nearest neighbors (excluding selves)
     # for females:
@@ -55,15 +55,15 @@ def _find_mates(pop, land=None, sex=False, repro_age=None,
         # if sexual_selection:
             # (product of?) selection coefficients
     ######################################################
-    # First, query the scipy.spatial.cKDTree (i.e. pop._kd_tree) for
+    # First, query the scipy.spatial.cKDTree (i.e. spp._kd_tree) for
     #nearest-neigh pairs
-    dists, pairs = pop._find_neighbors(dist = mating_radius)
+    dists, pairs = spp._find_neighbors(dist = mating_radius)
     ####################################################
     # Then, operationalize sexes, if being used, and find all 
     #available pairs within max distance
     if sex:
         # np.array of the sexes of all individuals
-        sexes = np.array([ind.sex for ind in pop.values()])
+        sexes = np.array([ind.sex for ind in spp.values()])
         # array of couplings for all females with 
         #nearest individual < mating_radius
         # i.e.  [AT LEAST 1 INDIVID < mating_radius (OTHERWISE 
@@ -98,7 +98,7 @@ def _find_mates(pop, land=None, sex=False, repro_age=None,
     if (repro_age is not None
         and np.any(np.atleast_1d(repro_age) > 0)):
         # np.array of the ages of all individuals
-        ages = np.array([ind.age for ind in pop.values()])
+        ages = np.array([ind.age for ind in spp.values()])
         # if sexual species, repro_age expected to be a tuple or list of 
         #numerics of length 2
         if sex:
@@ -145,7 +145,7 @@ def _find_mates(pop, land=None, sex=False, repro_age=None,
             # finally, link individuals' ordinal indices back to the initially
             #created structure, to get individuals' proper keys
             f = ig(*mating_pairs.flatten())
-            mates = np.array(f([*pop])).reshape(mating_pairs.shape)
+            mates = np.array(f([*spp])).reshape(mating_pairs.shape)
         else:
             mates = np.array([])
     else:
@@ -165,24 +165,24 @@ def _draw_n_births(num_pairs, n_births_distr_lambda, fecundity=1):
 
 
 # function for mating a chosen mating-pair
-def _do_mating_sngl_offspr(pop, pair, gamete_recomb_paths):
+def _do_mating_sngl_offspr(spp, pair, recomb_paths):
     # generate a gamete for each member of mating pair, stack, and transpose
     new_genome = np.vstack(
-      [pop[ind].genome.flatten()[gamete_recomb_paths.pop()] for ind in pair]).T
+      [spp[ind].genome.flatten()[recomb_paths.pop()] for ind in pair]).T
     return new_genome
 
 
-def _do_mating_sngl_pair(pop, pair, n_offspring, recomb_paths):
-    offspring = [_do_mating_sngl_offspr(pop, pair,
+def _do_mating_sngl_pair(spp, pair, n_offspring, recomb_paths):
+    offspring = [_do_mating_sngl_offspr(spp, pair,
         [recomb_paths.pop() for _ in range(2)]) for off in range(n_offspring)]
     return offspring
 
 
 # function for mating a chosen mating-pair
-def _do_mating(pop, mating_pairs, n_offspring, recomb_paths):
+def _do_mating(spp, mating_pairs, n_offspring, recomb_paths):
     pairs_paths = [[next(iter(recomb_paths)) for _ in range(
                                                 2*n)] for n in n_offspring]
-    new_genomes = list(starmap(_do_mating_sngl_pair, zip(repeat(pop),
+    new_genomes = list(starmap(_do_mating_sngl_pair, zip(repeat(spp),
                                     mating_pairs, n_offspring, pairs_paths)))
     return new_genomes
 

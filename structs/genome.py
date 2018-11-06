@@ -70,11 +70,11 @@ class Trait:
         self.alpha = np.array([])
 
 
-    def _get_phi(self, pop):
+    def _get_phi(self, spp):
         if type(self.phi) in (float, int):
-            phi = np.array([self.phi]*len(pop))
+            phi = np.array([self.phi]*len(spp))
         else:
-            phi = self.phi[pop.cells[:,1], pop.cells[:,0]]
+            phi = self.phi[spp.cells[:,1], spp.cells[:,0]]
         return(phi)
 
     def _set_loci(self, loci):
@@ -148,21 +148,21 @@ class GenomicArchitecture:
         self._planned_muts = None
 
     #method to make a _mut_fns dict, containing a function 
-    #for each type of mutation for this population
+    #for each type of mutation for this species
     def _make_mut_fns_dict(self):
         mut_fns = {}
         if self.mu_neut > 0:
-            fn = lambda pop,offspring: mutation._do_neutral_mutation(pop,
+            fn = lambda spp,offspring: mutation._do_neutral_mutation(spp,
                                                                     offspring)
             mut_fns.update({'neut': fn})
         if self.mu_delet > 0:
-            fn = lambda pop,offspring: mutation._do_deleterious_mutation(pop,
+            fn = lambda spp,offspring: mutation._do_deleterious_mutation(spp,
                                                                     offspring)
             mut_fns.update({'delet': fn})
         if self.traits is not None:
             for trait_num in self.traits:
                 if self.traits[trait_num].mu > 0:
-                    fn = lambda pop,offspring: mutation._do_trait_mutation(pop,
+                    fn = lambda spp,offspring: mutation._do_trait_mutation(spp,
                                                         offspring, trait_num)
                     mut_fns.update({'t%i' % trait_num: fn})
         return mut_fns
@@ -198,7 +198,7 @@ class GenomicArchitecture:
         loci = r.choice([*self._mutable_loci])
         #TODO: SHOULD I INCLUDE HERE A STATEMENT THAT CHECKS
         #IF len(gen_arch._mutable_loci) IS <= SOME SMALL
-        #VALUE, AND IF SO FINDS FIXED SITES IN THE POPULATION AND ADDS
+        #VALUE, AND IF SO FINDS FIXED SITES IN THE SPECIES AND ADDS
         #THEM TO IT??? (so that I'm not running that time-intensive
         #procedure often, but to make sure I'm almost certain not
         #to run out of mutable sites (unless I by chance draw more 
@@ -263,10 +263,10 @@ class GenomicArchitecture:
                                                                         self))
 
 
-    #method for plotting all allele frequencies for the population
-    def _plot_allele_frequencies(self, pop):
-        populome = np.stack([ind.genome for ind in pop.values()])
-        freqs = populome.sum(axis = 2).sum(axis = 0)/(2*populome.shape[0])
+    #method for plotting all allele frequencies for the species
+    def _plot_allele_frequencies(self, spp):
+        speciome = np.stack([ind.genome for ind in spp.values()])
+        freqs = speciome.sum(axis = 2).sum(axis = 0)/(2*speciome.shape[0])
         plt.plot(range(self.L), self.p, ':r')
         plt.plot(range(self.L), freqs, '-b')
         plt.show()
@@ -454,9 +454,9 @@ def _make_bitarray_recomb_subsetter(recomb_path):
 
 
 #build the genomic architecture
-def _make_genomic_architecture(pop_params, land):
+def _make_genomic_architecture(spp_params, land):
     #get the genome parameters
-    g_params = pop_params.gen_arch
+    g_params = spp_params.gen_arch
     #get the custom genomic-architecture file, if provided
     gen_arch_file = None
     if 'gen_arch_file' in g_params.keys():
@@ -465,7 +465,7 @@ def _make_genomic_architecture(pop_params, land):
             assert len(gen_arch_file) == g_params.L, ('The custom '
             'genomic architecture file must contain a table with number of '
             'rows equal to the genome length stipulated in the genome '
-            'parameters (params.comm[<pop_num>].gen_arch.L).')
+            'parameters (params.comm[<spp_name>].gen_arch.L).')
             assert np.all(gen_arch_file['locus'].values ==
                           np.array([*range(len(gen_arch_file))])), ('The '
             "'locus' column of the custom genomic architecture file must "
@@ -476,7 +476,7 @@ def _make_genomic_architecture(pop_params, land):
               "contain only 0s and 1s.")
 
     #also get the sex parameter and add it as an item in g_params
-    g_params['sex'] = pop_params.mating.sex
+    g_params['sex'] = spp_params.mating.sex
 
     #draw locus-wise 1-allele frequencies, unless provided in 
     #custom gen-arch file
@@ -585,25 +585,25 @@ def _draw_genome(genomic_architecture):
 
 
 #function to reset genomes after burn-in
-def _set_genomes(pop, burn_T, T):
+def _set_genomes(spp, burn_T, T):
     #use mean n_births at tail end of burn-in to estimate number of mutations,
     #and randomly choose set of neutral loci 
-    #of that length to go into the pop.gen_arch._mutable_loci attribute
-    n_muts = mutation._calc_estimated_total_mutations(pop, burn_T, T)
+    #of that length to go into the spp.gen_arch._mutable_loci attribute
+    n_muts = mutation._calc_estimated_total_mutations(spp, burn_T, T)
     #add a small number if n_muts evaluates to 0
     if n_muts == 0:
-        neut_loci_remaining = pop.gen_arch.L - len(pop.gen_arch.nonneut_loci)
+        neut_loci_remaining = spp.gen_arch.L - len(spp.gen_arch.nonneut_loci)
         n_muts = min(int(np.ceil(0.1 * neut_loci_remaining)),
                                                     neut_loci_remaining)
-    muts = set(r.choice([*pop.gen_arch.neut_loci], n_muts, replace = False))
-    pop.gen_arch._mutable_loci.update(muts)
+    muts = set(r.choice([*spp.gen_arch.neut_loci], n_muts, replace = False))
+    spp.gen_arch._mutable_loci.update(muts)
     #set those loci's p values to 0 (i.e. non-segregating)
-    pop.gen_arch.p[np.array([*muts])] = 0
+    spp.gen_arch.p[np.array([*muts])] = 0
     #now reassign genotypes to all individuals, using gen_arch.p
-    [ind._set_genome(_draw_genome(pop.gen_arch)) for ind in pop.values()]
+    [ind._set_genome(_draw_genome(spp.gen_arch)) for ind in spp.values()]
     #and then reset the individuals' phenotypes
-    if pop.gen_arch.traits is not None:
-        [ind._set_z(pop.gen_arch) for ind in pop.values()];
+    if spp.gen_arch.traits is not None:
+        [ind._set_z(spp.gen_arch) for ind in spp.values()];
 
 
 #method for loading a pickled genomic architecture

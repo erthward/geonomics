@@ -169,7 +169,7 @@ class _DataCollector:
         self.geo_formats = [format_params.geo_vect_format]
         #and grab the raster format, if a raster is required
         #NOTE: added to a separate attribute because this is written per
-        #timestep, not per population within timestep
+        #timestep, not per species within timestep
         self.rast_format = None
         if (sampling_params.include_landscape
             and 'geo_rast_format' in format_params.keys()):
@@ -188,11 +188,11 @@ class _DataCollector:
             self.next_t = None
 
     #method to create filenames for genetic and geographic datafiles
-    def _make_filenames(self, iteration, pop_name):
+    def _make_filenames(self, iteration, spp_name):
         filenames = []
         for att_name in ['gen_formats', 'geo_formats']:
-            filenames.append(['mod-%s_it-%i_t-%i_pop-%s.%s' % (self.model_name,
-              iteration, self.next_t, pop_name, self.file_extension_dict[fmt])
+            filenames.append(['mod-%s_it-%i_t-%i_spp-%s.%s' % (self.model_name,
+              iteration, self.next_t, spp_name, self.file_extension_dict[fmt])
                         for fmt in getattr(self, att_name)])
         return(filenames)
 
@@ -205,49 +205,49 @@ class _DataCollector:
         #if this timestep is scheduled for sampling
         if community.t == self.next_t:
 
-            #for each population
-            for pop in community.values():
+            #for each species
+            for spp in community.values():
 
                 #TODO: Probably get rid of this conditional; should be
                 #unnecessary, and is not a direct check of the in-sync
                 #assumption at any rate
-                #double-check that each population's timestep is in sync with
+                #double-check that each species' timestep is in sync with
                 #comm.t and is scheduled for sampling 
-                if pop.t == self.next_t:
+                if spp.t == self.next_t:
 
                     #get the data directory name for this timestep
                     dirname = os.path.join(os.getcwd(),
                           'GEONOMICS_mod-%s' % self.model_name,
                                     'it-%i' % iteration)
 
-                    #get the subdirectory for this population
-                    subdirname = os.path.join(dirname, 'pop-%s' % pop.name)
+                    #get the subdirectory for this species
+                    subdirname = os.path.join(dirname, 'spp-%s' % spp.name)
 
                     #and create (and its parent data directory, if needed)
                     os.makedirs(subdirname, exist_ok = True)
 
                     #get filenames
                     gen_files, geo_files = self._make_filenames(
-                                    iteration = iteration, pop_name = pop.name)
+                                    iteration = iteration, spp_name = spp.name)
 
                     #sample individuals according to the scheme defined 
-                    sample = self._get_sample(pop)
+                    sample = self._get_sample(spp)
 
                     #write files, if sample length > 0 
                     #(NOTE: otherwise, an empty file with "ZERO_SAMPLE" in the 
                     #name will be written, below)
                     if len(sample) > 0:
 
-                        #save genetic data, if the pop has a
+                        #save genetic data, if the spp has a
                         #genomic architeecture
-                        if pop.gen_arch is not None:
+                        if spp.gen_arch is not None:
                             #for each genetic data format to be written
                             for n, data_format in enumerate(self.gen_formats):
 
                                 #format the data accordingly
                                 data = self._format_gen_data(
                                     data_format = data_format, sample = sample,
-                                                                    pop = pop)
+                                                                    spp = spp)
 
                                 #then write it to disk
                                 gen_filepath = os.path.join(subdirname,
@@ -255,7 +255,7 @@ class _DataCollector:
                                 self._write_gendata(filepath = gen_filepath,
                                                             gen_data = data)
 
-                        #also write the geodata for this pop
+                        #also write the geodata for this spp
                         for n, data_format in enumerate(self.geo_formats):
                             #write the geodata to disk
                             geo_filepath = os.path.join(subdirname,
@@ -298,37 +298,37 @@ class _DataCollector:
         return(sample)
 
 
-    def _get_point_sample(self, pop):
+    def _get_point_sample(self, spp):
         #TODO: check if this should to be sped up any more
-        sample = [i for i,v in pop.items() if self.pts_buff.contains(
+        sample = [i for i,v in spp.items() if self.pts_buff.contains(
                                                         Point(v.x, v.y))]
         if len(sample) > self.n:
             sample = _get_random_sample(individuals = sample)
         return(sample)
 
 
-    def _get_sample(self, pop):
+    def _get_sample(self, spp):
         #get a set of indices for the individuals in the sample
         sample = set()
-        #take the whole population, if scheme is 'all'
+        #take the whole species, if scheme is 'all'
         if self.scheme == 'all':
-            sample.update([*pop])
+            sample.update([*spp])
         #or take a random sample, if scheme is 'random'
         elif self.scheme == 'random':
-            inds = self._get_random_sample([*pop])
+            inds = self._get_random_sample([*spp])
             sample.update(inds)
         #or take individuals within a given radius of self.buffs (which could
         #have come from a set of input points or from a calculated set of
         #transect points), if scheme is 'point' or 'transect'
         elif self.scheme in ['point', 'transect']:
-            inds = self._get_point_sample(pop)
+            inds = self._get_point_sample(spp)
             sample.update(inds)
         #convert sample to a dict of individuals
-        sample = {i:pop[i] for i in sample}
+        sample = {i:spp[i] for i in sample}
         return(sample)
 
 
-    def _format_gen_data(self, data_format, sample, pop):
+    def _format_gen_data(self, data_format, sample, spp):
         '''<data_format> can be:
                             'fasta'
                             'vcf'
@@ -336,7 +336,7 @@ class _DataCollector:
         if data_format == 'fasta':
             formatted_data = _format_fasta(sample)
         elif data_format == 'vcf':
-            formatted_data = _format_vcf(sample, pop.gen_arch,
+            formatted_data = _format_vcf(sample, spp.gen_arch,
                     include_fixed_sites = self.include_fixed_sites)
         return(formatted_data)
 

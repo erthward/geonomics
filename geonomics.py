@@ -25,7 +25,7 @@ Documentation:        URL
 #geonomics imports
 from sim import model
 from sim import params as par
-from structs import landscape, genome, individual, population, community
+from structs import landscape, genome, individual, species, community
 
 #other imports
 import re
@@ -48,8 +48,7 @@ import pandas as pd
 ######################################
 
 #wrapper around params.make_parameters_file
-#TODO
-def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
+def make_parameters_file(filepath=None, layers=1, species=1, data=None,
         stats=None):
     """
     Create a new parameters file.
@@ -86,19 +85,19 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
                 }
             This will add one section of Layer parameters, with the
             contents indicated, for each dict in this list.
-    populations : {int, list of dicts}, optional
-        Number (and optionally, types) of Population-parameter sections to
+    species : {int, list of dicts}, optional
+        Number (and optionally, types) of Species-parameter sections to
         include in the parameters file that is generated. Defaults to 1. Valid
         values and their associated behaviors are:
 
         int:
-            Add sections for the stipulated number of Populations, each with
+            Add sections for the stipulated number of Species, each with
             default settings:
-                - parameters for movement and dispersal without 
+                - parameters for movement and dispersal without
                   _ConductanceSurfaces
                 - parameters for a GenomicArchitecture with 0 Traits (i.e. with
                   only neutral loci)
-                - no _PopulationChanger parameters
+                - no _SpeciesChanger parameters
         [dict, ..., dict]:
             Each dict should contain at least one argument from among the
             following:
@@ -111,7 +110,7 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
                 'demographic_change':              int,
                 'parameter_change':                bool
                 }
-            This will add one section of Population parameters, customized
+            This will add one section of Species parameters, customized
             as indicated, for each dict in the list.
 
     data : bool, optional
@@ -182,7 +181,7 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
     TODO: PUT TYPICAL MODEL OUTPUT HERE, EVEN THOUGH IT'S ONLY PRINTED?
 
     We can use some of the function's arguments, to create a parameters
-    file for a model with 3 Layers and 1 Population (all with the default
+    file for a model with 3 Layers and 1 Species (all with the default
     components for their sections of the parameters file) and with a section
     for parameterizing data collection.
 
@@ -193,14 +192,14 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
         - 2 Layers (one being an nlmpy Layer that will not change over model
           time, the other being a raster read in from a GIS file and being
           subject to change over model time);
-        - 2 Populations (the first having genomes, 2 Traits, and movement
+        - 2 Species (the first having genomes, 2 Traits, and movement
           that is dictated by a _ConductanceSurface; the second not having
-          genomes but having dispersal determined by a 
+          genomes but having dispersal determined by a
           _ConductanceSurface, and undergoing
           demographic change)
         - data-collection;
         - stats-collection;
-    We can save this to a file named "2-pop_2-trait_model.py" in our current
+    We can save this to a file named "2-spp_2-trait_model.py" in our current
     working directory.
 
     >>> gnx.make_parameters_file(
@@ -211,14 +210,14 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
     >>>         {'type': 'gis',                                 #layer 2 
     >>>          'change': True}
     >>>         ],
-    >>>     #list of 2 dicts, each containing the values for each Population's
+    >>>     #list of 2 dicts, each containing the values for each Species's
     >>>     #parameters section
-    >>>     populations = [
-    >>>         {'genomes': True,                               #pop 1
+    >>>     species = [
+    >>>         {'genomes': True,                               #spp 1
     >>>          'n_traits': 2,
     >>>          'movement': True,
     >>>          'movement_surface': True},
-    >>>         {'genomes': False,                              #pop 2
+    >>>         {'genomes': False,                              #spp 2
     >>>          'movement': True,
     >>>          'dispersal_surface': True,
     >>>          'demographic_change': True}
@@ -226,10 +225,10 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
     >>>     #arguments to the data and stats parameters
     >>>     data = True, stats = True,
     >>>     #destination to which to write the resulting parameter file
-    >>>     filepath = '2-pop_2-trait_model.py')
+    >>>     filepath = '2-spp_2-trait_model.py')
 
     """
-    #check if any keys in the layers or populations dicts are abnormal, and
+    #check if any keys in the layers or species dicts are abnormal, and
     #provide warning if so
     valid_l_keys = ['type', 'change']
     valid_p_keys = ['movement', 'movement_surface', 'dispersal_surface',
@@ -245,18 +244,18 @@ def make_parameters_file(filepath=None, layers=1, populations=1, data=None,
                     "%s.") % (n, invalid_keys)
                 print('')
                 raise ValueError(err_msg)
-    if isinstance(populations, list):
-        for n, pop_dict in enumerate(populations):
-            if False in [k in valid_p_keys for k in pop_dict.keys()]:
-                invalid_keys = ', '.join([k for k in pop_dict.keys(
+    if isinstance(species, list):
+        for n, spp_dict in enumerate(species):
+            if False in [k in valid_p_keys for k in spp_dict.keys()]:
+                invalid_keys = ', '.join([k for k in spp_dict.keys(
                     ) if k not in valid_p_keys])
                 err_msg = ("One or more of the keys in dict number %i of "
-                    "the 'populations' argument is not valid. Invalid values: "
+                    "the 'species' argument is not valid. Invalid values: "
                     "%s.") % (n, invalid_keys)
                 raise ValueError(err_msg)
 
     par._make_parameters_file(filepath = filepath, layers = layers,
-                                populations = populations, data = data,
+                                species = species, data = data,
                                 stats = stats)
 
 
@@ -266,7 +265,7 @@ def read_parameters_file(filepath):
     Create a new ParametersDict object.
 
     Read the Geonomics parameters file saved at the location indicated by
-    'filepath', check its validity (i.e. that all the Layers and Populations
+    'filepath', check its validity (i.e. that all the Layers and Species
     parameterized in that file have been given distinct names), then use the
     file to instantiate a ParametersDict object.
 
@@ -286,7 +285,7 @@ def read_parameters_file(filepath):
     Raises
     ------
     AssertionError
-        If either the Layers or the Populations parameterized in the parameters
+        If either the Layers or the Species parameterized in the parameters
         file have not all been given distinct names
 
     See Also
@@ -308,41 +307,41 @@ def read_parameters_file(filepath):
     #first read in file as a block of text
     with open(filepath, 'r') as f:
         txt = f.read()
-    #find all the layer names and pop names
+    #find all the layer names and spp names
     lyr_names = re.findall('\S+(?=: \{\n\n\s+#*\n\s+#### layer num\.)', txt)
     lyr_names = [re.sub("'", '"', n) for n in lyr_names]
-    pop_names = re.findall('\S+(?=: \{\n\n\s+#*\n\s+#### pop num\.)', txt)
-    pop_names = [re.sub("'", '"', n) for n in pop_names]
+    spp_names = re.findall('\S+(?=: \{\n\n\s+#*\n\s+#### spp num\.)', txt)
+    spp_names = [re.sub("'", '"', n) for n in spp_names]
     #get Counter objects of each
     lyr_name_cts = C(lyr_names)
-    pop_name_cts = C(pop_names)
+    spp_name_cts = C(spp_names)
     #assert that each layer name is used only once
     assert set([*lyr_name_cts.values()]) == {1}, ("At least one of the "
         "Layer names provided in the parameters file appears to be used more "
         "than once. Violating names include: %s") % (';'.join([( "'%s', "
         "used %i times.") % (str(k),
                             v) for k, v in lyr_name_cts.items() if v>1]))
-    #assert that each pop name is used only once
-    assert set([*pop_name_cts.values()]) == {1}, ("At least one of the "
-        "Population names provided in the parameters file appears to be used "
+    #assert that each spp name is used only once
+    assert set([*spp_name_cts.values()]) == {1}, ("At least one of the "
+        "Species names provided in the parameters file appears to be used "
         "more than once. Violating names include: %s") % (';'.join([("'%s', "
             "used %i times.") % (
-                str(k), v) for k, v in pop_name_cts.items() if v>1]))
+                str(k), v) for k, v in spp_name_cts.items() if v>1]))
 
-    #break the file into sections for each population, then check that
-    #trait names are only used once within each pop
-    pop_sects = re.split('#pop name', txt)
-    for sect in pop_sects:
+    #break the file into sections for each species, then check that
+    #trait names are only used once within each spp
+    spp_sects = re.split('#spp name', txt)
+    for sect in spp_sects:
         trt_names = re.findall('\S+(?=: \{\n\s+#trait-selection)', sect)
         if len(trt_names) > 0:
             trt_names = [re.sub("'", '"', n) for n in trt_names]
             trt_name_cts = C(trt_names)
-            sect_pop_name = re.findall(
-                        '\S+(?=: \{\n\n\s+#*\n\s+#### pop num\.)', txt)[0]
+            sect_spp_name = re.findall(
+                        '\S+(?=: \{\n\n\s+#*\n\s+#### spp num\.)', txt)[0]
             assert set([*trt_name_cts.values()]) == {1}, ("At least one of the"
-                " Trait names provided in the parameters for Population "
+                " Trait names provided in the parameters for Species "
                 "%s appears to be used more than once. "
-                "Violating names include: %s") % (sect_pop_name,
+                "Violating names include: %s") % (sect_spp_name,
                 ';'.join([("'%s', used %i times.") % (str(k),
                 v) for k, v in trt_name_cts.items() if v>1]))
 
@@ -411,7 +410,7 @@ def make_model(parameters=None):
     <class 'sim.model.Model'>
     Model name:                                     GEONOMICS_params_13-10-2018_15:54:03
     Layers:                                         0: '0'
-    Populations:                                    0: '0'
+    Species:                                        0: '0'
     Number of iterations:                           1
     Number of burn-in timesteps (minimum):          30
     Number of main timesteps:                       100
@@ -428,7 +427,7 @@ def make_model(parameters=None):
     Model name:                                     null_model
     Layers:                                         0: 'tmp'
                                                     1: 'ppt'
-    Populations:                                    0: 'C. fasciata'
+    Species:                                        0: 'C. fasciata'
     Number of iterations:                           2500
     Number of burn-in timesteps (mininum):          100
     Number of main timesteps:                       1000
@@ -547,11 +546,11 @@ def make_individual(idx, genomic_architecture=None, new_genome=None, dim=None,
     return ind
 
 
-#wrapper around population.make_population
+#wrapper around species.make_species
     #burn can be True (i.e. then the individuals will have a [[0,0]] genome)
-def make_population(landscape, pop_params, burn=False):
-    pop = population.make_population(landscape, pop_params, burn = burn)
-    return(pop)
+def make_species(landscape, spp_params, burn=False):
+    spp = species.make_species(landscape, spp_params, burn = burn)
+    return(spp)
 
 
 #wrapper around community.make_comunity

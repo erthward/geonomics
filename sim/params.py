@@ -45,7 +45,7 @@ import re
 #main text-block
 #STRING SLOTS:
     #%s = layers_params,
-    #%s = pops_params,
+    #%s = spps_params,
     #%s = its_params,
     #%s = data_params,
     #%s = stats_params,
@@ -121,15 +121,15 @@ params = {
 ###################
     'comm': {
 
-        'pops': {
+        'species': {
 %s
 
 
-    #### NOTE: Individual Populations' sections can be copy-and-pasted (and
-    #### assigned distinct keys and names), to create additional Populations.
+    #### NOTE: individual Species' sections can be copy-and-pasted (and
+    #### assigned distinct keys and names), to create additional Species.
 
 
-            }, # <END> 'pops'
+            }, # <END> 'species'
 
         }, # <END> 'comm'
 
@@ -255,33 +255,33 @@ LYR_CHANGE_PARAMS = '''
                 }, # <END> 'change'
 '''
 
-#block of population params
+#block of species params
 #STRING SLOTS:
-    #%s = pop_name,
-    #%i = pop_num,
-    #%i = pop_num,
-    #%i = pop_num,
+    #%s = spp_name,
+    #%i = spp_num,
+    #%i = spp_num,
+    #%i = spp_num,
     #%s = move_params,
     #%s = genome_params,
     #%s = change_params,
-    #%i = pop_num,
-POP_PARAMS = '''
-            #pop name (POP NAMES MUST BE UNIQUE!)
+    #%i = spp_num,
+SPP_PARAMS = '''
+            #species name (SPECIES NAMES MUST BE UNIQUE!)
             %s: {
 
             #####################################
-            #### pop num. %i: init parameters ####
+            #### spp num. %i: init parameters ####
             #####################################
 
                 'init': {
-                    #starting population size
-                    'N':                200,
+                    #starting number of individs
+                    'N':                250,
                     #carrying-capacity Layer name
                     'K_layer':          'layer_0',
                     }, # <END> 'init'
 
             #######################################
-            #### pop num. %i: mating parameters ####
+            #### spp num. %i: mating parameters ####
             #######################################
 
                 'mating'    : {
@@ -293,9 +293,9 @@ POP_PARAMS = '''
                     'sex_ratio':                1/1,
                     #whether P(birth) should be weighted by parental dist
                     'distweighted_birth':       False,
-                    #pop intrinsic growth rate
+                    #intrinsic growth rate
                     'R':                        0.5,
-                    #pop intrinsic birth rate (MUST BE 0<=b<=1)
+                    #intrinsic birth rate (MUST BE 0<=b<=1)
                     'b':                        0.2,
                     #expectation of distr of n offspring per mating pair
                     'n_births_distr_lambda':    1,
@@ -304,7 +304,7 @@ POP_PARAMS = '''
                     }, # <END> 'mating'
 
             ##########################################
-            #### pop num. %i: mortality parameters ####
+            #### spp num. %i: mortality parameters ####
             ##########################################
 
                 'mortality'     : {
@@ -320,17 +320,17 @@ POP_PARAMS = '''
 %s
 %s
 %s
-                }, # <END> pop num. %i
+                }, # <END> spp num. %i
 '''
 
 #block for movement params
 #STRING SLOTS:
-    #%i = pop_num,
+    #%i = spp_num,
     #%s = move_surf_params,
     #%s = disp_surf_params,
 MOVE_PARAMS = '''
             #########################################
-            #### pop num. %i: movement parameters ####
+            #### spp num. %i: movement parameters ####
             #########################################
 
                 'movement': {
@@ -379,12 +379,12 @@ DISP_SURF_PARAMS = '''
 
 #block for genome params
 #STRING SLOTS:
-    #%i = pop_num,
+    #%i = spp_num,
     #
     #%s = traits_params,
 GENOME_PARAMS = '''
             #####################################################
-            #### pop num. %i: genomic architecture parameters ####
+            #### spp num. %i: genomic architecture parameters ####
             #####################################################
 
                 'gen_arch': {
@@ -466,13 +466,13 @@ TRT_PARAMS = '''
                             }, # <END> trait %i
 '''
 
-#block for pop_change params
+#block for spp_change params
 #STRING SLOTS:
-    #%i = pop_num,
+    #%i = spp_num,
     #%s = dem_and-or_param_change_params_str,
-POP_CHANGE_PARAMS = '''
+SPP_CHANGE_PARAMS = '''
             #######################################
-            #### pop num. %i: change parameters ####
+            #### spp num. %i: change parameters ####
             #######################################
 
                 'change': {
@@ -483,7 +483,7 @@ POP_CHANGE_PARAMS = '''
 #block for a series of demographic-change events
 #STRING SLOTS:
     #%s = multi_dem_change_event_params,
-POP_DEM_CHANGE_EVENTS_PARAMS = '''
+SPP_DEM_CHANGE_EVENTS_PARAMS = '''
                     #################################
                     # demographic change parameters #
                     #################################
@@ -503,7 +503,7 @@ POP_DEM_CHANGE_EVENTS_PARAMS = '''
 #STRING SLOTS:
     #%i = dem_change_event_num,
     #%i = dem_change_event_num,
-POP_DEM_CHANGE_EVENT_PARAMS = '''
+SPP_DEM_CHANGE_EVENT_PARAMS = '''
                         %i: {
                             #kind of event {'monotonic', 'stochastic',
                                                 #'cyclical', 'custom'}
@@ -531,7 +531,7 @@ POP_DEM_CHANGE_EVENT_PARAMS = '''
 '''
 
 #block for a series of life-history parameter-change events
-POP_PARAM_CHANGE_PARAMS = '''
+SPP_PARAM_CHANGE_PARAMS = '''
                     ##################################
                     # life-history change parameters #
                     ##################################
@@ -613,7 +613,7 @@ STATS_PARAMS = '''
         #### stats-collection parameters ####
         #####################################
         'stats': {
-            #pop size at time t
+            #number of individs at time t
             'Nt': {
                 #whether to calculate
                 'calc':     True,
@@ -626,7 +626,7 @@ STATS_PARAMS = '''
                 'calc':     True,
                 #calculation frequency (in timesteps)
                 'freq':     5,
-                #whether to calculate as pop mean
+                #whether to mean across sampled individs
                 'mean': False,
                 },
             #minor allele freq
@@ -778,17 +778,17 @@ def _make_lyrs_params_str(lyrs=1):
     return lyrs_params_str
 
 
-#function to create the pops-params section of a params file
-def _make_populations_params_str(populations=1):
-    #create an empty list, to be filled with one params string per pop
-    pops_params_list = []
-    #if pops is an integer, create a string of identical parameter sections
-    if type(populations) is int:
+#function to create the spps-params section of a params file
+def _make_species_params_str(species=1):
+    #create an empty list, to be filled with one params string per spp
+    spps_params_list = []
+    #if species is an integer, create a string of identical parameter sections
+    if type(species) is int:
         #assert that it's an integer greater than 0
-        assert populations > 0, ("The number of Populations to be created "
+        assert species > 0, ("The number of Species to be created "
         "must be a positive integer.")
-                #for each pop
-        for i in range(populations):
+                #for each spp
+        for i in range(species):
             #use movement params, but with no movement surface (i.e.
             #string-format with a zero-length str)
             move_params = MOVE_PARAMS % (i, '', '')
@@ -797,104 +797,104 @@ def _make_populations_params_str(populations=1):
             genome_params = GENOME_PARAMS % (i, 'None', '')
             #add no change params
             change_params = ''
-            #create the pop_params str
-            pop_params_str = POP_PARAMS % ("'pop_%i'" % i, i, i, i,
+            #create the spp_params str
+            spp_params_str = SPP_PARAMS % ("'spp_%i'" % i, i, i, i,
                             move_params, genome_params, change_params, i)
-            #append to the pops_params_list
-            pops_params_list.append(pop_params_str)
+            #append to the spps_params_list
+            spps_params_list.append(spp_params_str)
 
-    #or if populations is a list of dicts, then create individually customized
-    #params sections for each Population
-    elif type(populations) is list:
-        #create an empty list, to which any populations who should have custom
+    #or if species is a list of dicts, then create individually customized
+    #params sections for each Species
+    elif type(species) is list:
+        #create an empty list, to which any species who should have custom
         #gen-arch files created will be appended
         #assert that each item in the list is a dict
-        assert False not in [type(item) is dict for item in populations], ("If"
-            " the 'populations' argument is a list then it must contain only "
+        assert False not in [type(item) is dict for item in species], ("If"
+            " the 'species' argument is a list then it must contain only "
             "objects of type dict.")
-        #create a lookup dict for the params strings for different pop params
+        #create a lookup dict for the params strings for different spp params
         #sections
         params_str_dict = {'move': {True: MOVE_PARAMS},
                         'move_surf': {True: MOVE_SURF_PARAMS},
                         'disp_surf': {True: DISP_SURF_PARAMS},
                         'genome': {True: GENOME_PARAMS},
-                        'change': {True: POP_CHANGE_PARAMS},
-                        'dem_change': {True: POP_DEM_CHANGE_EVENT_PARAMS},
-                        'dem_events': {True: POP_DEM_CHANGE_EVENTS_PARAMS},
-                        'param_change': {True: POP_PARAM_CHANGE_PARAMS},
+                        'change': {True: SPP_CHANGE_PARAMS},
+                        'dem_change': {True: SPP_DEM_CHANGE_EVENT_PARAMS},
+                        'dem_events': {True: SPP_DEM_CHANGE_EVENTS_PARAMS},
+                        'param_change': {True: SPP_PARAM_CHANGE_PARAMS},
 
                             }
         [v.update({False: ''}) for v in params_str_dict.values()]
-        #for each pop
-        for i, pop_dict in enumerate(populations):
+        #for each spp
+        for i, spp_dict in enumerate(species):
             #assert that the argument values are valid
             bool_args= ['movement', 'movement_surface', 'genomes',
                                                         'parameter_change']
             int_args = ['n_traits', 'demographic_change']
             for arg in bool_args:
-                if arg in [*pop_dict]:
-                    assert type(pop_dict[arg]) is bool, ("The '%s' key in "
-                        "each Population's dictionary must contain a "
+                if arg in [*spp_dict]:
+                    assert type(spp_dict[arg]) is bool, ("The '%s' key in "
+                        "each Species' dictionary must contain a "
                         "boolean value. But dict number %i in the "
-                        "'population' argument contains a non-boolean "
+                        "'species' argument contains a non-boolean "
                                                         "value.") % (arg, i)
             for arg in int_args:
-                if arg in [*pop_dict]:
-                    assert type(pop_dict[arg]) is int, ("The '%s' "
-                        "key in each Population's dictionary must contain an "
+                if arg in [*spp_dict]:
+                    assert type(spp_dict[arg]) is int, ("The '%s' "
+                        "key in each Species' dictionary must contain an "
                         "integer value. But dict number %i in the "
-                        "'populations' argument contains a non-integer "
+                        "'species' argument contains a non-integer "
                         "value:\n\n\t" "'%s': %s ") % (arg, i, arg,
-                                                            str(pop_dict[arg]))
+                                                            str(spp_dict[arg]))
                     int_arg_str_fmt_dict = {'n_traits':'Traits',
                             'demographic_change': 'demographic change events'}
-                    assert pop_dict[arg] > 0, ("The number of %s to "
+                    assert spp_dict[arg] > 0, ("The number of %s to "
                                     "be created must be a positive "
                                     "integer.") % (int_arg_str_fmt_dict[arg])
             #get the movement surf and movement params, if required
-            #NOTE: check if pop_dict['movement'] is True, so that poorly
+            #NOTE: check if spp_dict['movement'] is True, so that poorly
             #entered arguments (i.e. 'movement': False,
             #'movement_surface':True) don't inadvertently try to format 
             #a zero-length string with the movement-surface params str
-            if 'movement' in [*pop_dict] and pop_dict['movement']:
-                if 'movement_surface' in [*pop_dict]:
-                    ms_arg = pop_dict['movement_surface']
+            if 'movement' in [*spp_dict] and spp_dict['movement']:
+                if 'movement_surface' in [*spp_dict]:
+                    ms_arg = spp_dict['movement_surface']
                     move_surf_params = params_str_dict['move_surf'][ms_arg]
                 else:
                     move_surf_params = ''
-                if 'dispersal_surface' in [*pop_dict]:
-                    ds_arg = pop_dict['dispersal_surface']
+                if 'dispersal_surface' in [*spp_dict]:
+                    ds_arg = spp_dict['dispersal_surface']
                     disp_surf_params = params_str_dict['disp_surf'][ds_arg]
                 else:
                     disp_surf_params = ''
-                move_params = params_str_dict['move'][pop_dict['movement']]
+                move_params = params_str_dict['move'][spp_dict['movement']]
                 move_params = move_params % (i, move_surf_params,
                                                             disp_surf_params)
             #or get empty str
             else:
                 move_params = ''
             #get the genome params, if required
-            if 'genomes' in [*pop_dict] and pop_dict['genomes'] in [True,
+            if 'genomes' in [*spp_dict] and spp_dict['genomes'] in [True,
                                                                     'custom']:
-                #if this population should have a custom gen_arch_file made
-                if ('custom_genomic_architecture' in [*pop_dict] and
-                    pop_dict['custom_genomic_architecture']):
-                    gen_arch_file_str = ("'%%%%GEN_ARCH_FILE_STR%%%%_pop-%i_"
+                #if this species should have a custom gen_arch_file made
+                if ('custom_genomic_architecture' in [*spp_dict] and
+                    spp_dict['custom_genomic_architecture']):
+                    gen_arch_file_str = ("'%%%%GEN_ARCH_FILE_STR%%%%_spp-%i_"
                                                             "gen_arch.csv'")
                     gen_arch_file_str = gen_arch_file_str % i
-                    #make a tmp gen_arch_file for this pop
+                    #make a tmp gen_arch_file for this spp
                     tmp_gen_arch_filename = '%i_%s.tmp' % (i,
                         str(np.random.randint(0, 10000)).zfill(5))
                     _make_custom_genomic_architecture_file(
                                                     tmp_gen_arch_filename)
                 else:
                     gen_arch_file_str = 'None'
-                #if this population's genomes should have traits
-                if 'n_traits' in [*pop_dict]:
+                #if this species' genomes should have traits
+                if 'n_traits' in [*spp_dict]:
                     #get a list of params strings of length equal
                     #to the number of traits it should have
                     trait_params_list = []
-                    for trt in range(pop_dict['n_traits']):
+                    for trt in range(spp_dict['n_traits']):
                         trait_params = TRT_PARAMS % (trt,
                                                 "'trait_%i'" % trt, trt)
                         trait_params_list.append(trait_params)
@@ -905,24 +905,24 @@ def _make_populations_params_str(populations=1):
                     traits_params = traits_params % ''.join(trait_params_list)
                 else:
                     traits_params = ''
-                genome_params = params_str_dict['genome'][pop_dict['genomes']]
+                genome_params = params_str_dict['genome'][spp_dict['genomes']]
                 genome_params = genome_params % (i, gen_arch_file_str,
                                                                 traits_params)
             #or get empty str
             else:
                 genome_params = ''
-            #get the pop-change params (if either dem or param changes are
+            #get the spp-change params (if either dem or param changes are
             #required
-            if (('demographic_change' in [*pop_dict]
-                 and pop_dict['demographic_change'])
-                or ('parameter_change' in [*pop_dict]
-                    and pop_dict['parameter_change'])):
+            if (('demographic_change' in [*spp_dict]
+                 and spp_dict['demographic_change'])
+                or ('parameter_change' in [*spp_dict]
+                    and spp_dict['parameter_change'])):
                 #create an empty string to tack either/both section(s) onto
                 change_series_str = ''
                 #tack on the dem-change events params str, if required
-                if 'demographic_change' in [*pop_dict]:
+                if 'demographic_change' in [*spp_dict]:
                     dem_change_event_params_list = []
-                    for n in range(pop_dict['demographic_change']):
+                    for n in range(spp_dict['demographic_change']):
                         params_str = params_str_dict['dem_change'][True]
                         dem_change_event_params_list.append(
                                                         params_str % (n, n))
@@ -931,8 +931,8 @@ def _make_populations_params_str(populations=1):
                     events_params_str = events_params_str % events_series
                     change_series_str = change_series_str + events_params_str
                 #tack on the param-change params, if required
-                if 'parameter_change' in [*pop_dict]:
-                    param_change_arg = pop_dict['parameter_change']
+                if 'parameter_change' in [*spp_dict]:
+                    param_change_arg = spp_dict['parameter_change']
                     param_change_params_str = (
                     params_str_dict['param_change'][param_change_arg])
                     events_params_str=events_params_str+param_change_params_str
@@ -941,14 +941,14 @@ def _make_populations_params_str(populations=1):
             #or get empty str
             else:
                 change_params = ''
-            #get the overall pop params str for this pop
-            pop_params_str = POP_PARAMS % ("'pop_%i'" % i, i, i, i,
+            #get the overall spp params str for this spp
+            spp_params_str = SPP_PARAMS % ("'spp_%i'" % i, i, i, i,
                             move_params, genome_params, change_params, i)
-            #append to the pops_params_list
-            pops_params_list.append(pop_params_str)
+            #append to the spps_params_list
+            spps_params_list.append(spp_params_str)
     #join the whole list into one str
-    pops_params_str = ''.join(pops_params_list)
-    return pops_params_str
+    spps_params_str = ''.join(spps_params_list)
+    return spps_params_str
 
 
 #function to create the data- and  stats-params sections of params file
@@ -969,11 +969,11 @@ def _make_model_params_strs(section, arg=None):
 
 
 #function to create a default params file, to be filled in by the user
-def _make_parameters_file(filepath=None, layers=1, populations=1, data=None,
+def _make_parameters_file(filepath=None, layers=1, species=1, data=None,
         stats=None):
     '''<see docstring in gnx.make_parameters_file>'''
     lyrs_params_str = _make_lyrs_params_str(lyrs = layers)
-    pops_params_str= _make_populations_params_str(populations = populations)
+    spps_params_str= _make_species_params_str(species = species)
     data_params_str = _make_model_params_strs('data', arg = data)
     stats_params_str = _make_model_params_strs('stats', arg = stats)
     #TODO DECIDE IF THIS SHOULD BE MADE OPTIONAL IN SOME WAY
@@ -992,7 +992,7 @@ def _make_parameters_file(filepath=None, layers=1, populations=1, data=None,
     filepath = os.path.splitext(filepath)[0] + '.py'
     #create the full params-file string
     file_str = PARAMS % (os.path.split(filepath)[1], lyrs_params_str,
-        pops_params_str, its_params_str, data_params_str, stats_params_str)
+        spps_params_str, its_params_str, data_params_str, stats_params_str)
 
     #add the gen_arch_file name and then create the files, if needed
     if re.search('%%GEN_ARCH_FILE_STR%%', file_str):
@@ -1003,7 +1003,7 @@ def _make_parameters_file(filepath=None, layers=1, populations=1, data=None,
             os.path.splitext(f)[1] == '.tmp')]
         for tmp_file in tmp_files:
             os.rename(tmp_file, gen_arch_file_prefix +
-                '_pop-%s_gen_arch.csv' % (tmp_file.split('_')[0]))
+                '_spp-%s_gen_arch.csv' % (tmp_file.split('_')[0]))
         #replace the standin pattern with the file prefix
         file_str = re.sub('%%GEN_ARCH_FILE_STR%%', gen_arch_file_prefix,
                                                                 file_str)
@@ -1047,9 +1047,9 @@ def _read(filepath):
     return(params)
 
 
-#create a an empty custom gen-arch file for a population 
+#create a an empty custom gen-arch file for a species 
 #(will be called if 'genomes':'custom' is a k:v pair in a 
-#population dict fed into _make_paramters_file's 'populations' argument
+#species dict fed into _make_paramters_file's 'species' argument
 def _make_custom_genomic_architecture_file(filepath):
     #create the dataframe for the CSV file
     cols = ('locus', 'p', 'dom', 'r', 'trait', 'alpha')

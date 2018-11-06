@@ -1,5 +1,9 @@
 - knock out these secondary to-do items
 
+        5 change implementation of 'custom_genomic_architecture' argument in params.py
+          to what is suggested in the comment just above def _make_custom_genomic_architecture_file
+          (i.e. allow the 'genomes' argument to be True, False, or 'custom'
+
         5 change Population to Species (or Group?)
 
         IAN draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr

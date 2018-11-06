@@ -52,18 +52,18 @@ s_vonmises.b = np.inf
 # -----------------------------------#
 ######################################
 
-def _move(pop):
+def _move(spp):
     #get individuals' coordinates (soon to be their old coords, so 
     #'old_x' and 'old_y')
-    old_x, old_y = [a.flatten() for a in np.split(pop._get_coords(),
+    old_x, old_y = [a.flatten() for a in np.split(spp._get_coords(),
                                                             2, axis = 1)]
     #and get their cells (by rounding down to the int)
-    old_x_cells, old_y_cells = [a.flatten() for a in np.split(pop._get_cells(),
+    old_x_cells, old_y_cells = [a.flatten() for a in np.split(spp._get_cells(),
                                                               2, axis = 1)]
     # choose direction using movement surface, if applicable
-    if pop._move_surf:
+    if spp._move_surf:
         #and use those choices to draw movement directions
-        direction = pop._move_surf._draw_directions(old_y_cells, old_x_cells)
+        direction = spp._move_surf._draw_directions(old_y_cells, old_x_cells)
         # NOTE: Pretty sure that I don't need to constrain values output
         #for the Gaussian KDE that is approximating the von Mises mixture 
         #distribution to 0<=val<=2*pi, because e.g. cos(2*pi + 1) = cos(1),
@@ -72,14 +72,14 @@ def _move(pop):
         #list of lists (like a numpy array structure) is indexed i then j,
         #i.e. vertical, then horizontal
     # else, choose direction using a random walk with a uniform vonmises
-    elif not pop._move_surf:
-        direction = r_vonmises(pop.direction_distr_mu,
-                               pop.direction_distr_kappa, size = len(old_x))
+    elif not spp._move_surf:
+        direction = r_vonmises(spp.direction_distr_mu,
+                               spp.direction_distr_kappa, size = len(old_x))
 
     # choose distance
     # NOTE: Instead of lognormal, could use something with long right tail
     #for Levy-flight type movement, same as below
-    distance = wald(pop.distance_distr_mu, pop.distance_distr_sigma,
+    distance = wald(spp.distance_distr_mu, spp.distance_distr_sigma,
                                                         size = len(old_x))
 
     #create the new locations by adding x- and y-dim line segments to their
@@ -88,24 +88,24 @@ def _move(pop):
     #NOTE: subtract a small value to avoid having the dimension itself set
     #as a coordinate, when the coordinates are converted to np.float32 
     new_x = old_x + cos(direction)*distance
-    new_x = np.clip(new_x, a_min = 0, a_max = pop._land_dim[1]-0.001)
+    new_x = np.clip(new_x, a_min = 0, a_max = spp._land_dim[1]-0.001)
     new_y = old_y + sin(direction)*distance
-    new_y = np.clip(new_y, a_min = 0, a_max = pop._land_dim[0]-0.001)
+    new_y = np.clip(new_y, a_min = 0, a_max = spp._land_dim[0]-0.001)
     #then feed the new locations into each individual's set_pos method
-    [ind._set_pos(x, y) for ind, x, y in zip(pop.values(), new_x, new_y)];
+    [ind._set_pos(x, y) for ind, x, y in zip(spp.values(), new_x, new_y)];
 
 
-def _disperse(pop, land, parent_midpoint_x, parent_midpoint_y,
+def _disperse(spp, land, parent_midpoint_x, parent_midpoint_y,
         dispersal_distr_mu, dispersal_distr_sigma, mu_dir = 0, kappa_dir = 0):
     within_landscape = False
     while within_landscape == False:
         # choose direction using movement surface, if applicable
-        if pop._disp_surf:
+        if spp._disp_surf:
             #and use those choices to draw movement directions
-            direction = pop._disp_surf._draw_directions(
+            direction = spp._disp_surf._draw_directions(
                 [int(parent_midpoint_x)], [int(parent_midpoint_y)])[0]
         # else, choose direction using a random walk with a uniform vonmises
-        elif not pop._disp_surf:
+        elif not spp._disp_surf:
             direction = r_vonmises(mu_dir, kappa_dir)
         distance = wald(dispersal_distr_mu, dispersal_distr_sigma)
         offspring_x = parent_midpoint_x + np.cos(direction)*distance

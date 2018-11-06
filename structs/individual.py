@@ -149,7 +149,7 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
     #set the sex, if necessary
     if sex is None:
         #NOTE: For now sex randomly chosen at 50/50. Change if
-        #decide to implement sex chroms, or pop.sex_ratio
+        #decide to implement sex chroms, or spp.sex_ratio
         sex = r.binomial(1,0.5)
 
     return Individual(idx = idx, x = x, y = y, age = age,

@@ -1,16 +1,16 @@
-#!/usr/bin/python 
-# population.py
+#!/usr/bin/python
+# species.py
 
 '''
 ##########################################
 
-Module name:              population
+Module name:              species
 
 
 Module contains:
-                          - definition of the Population class
-                          - function for creating a population of
-                            Individuals (incl. their genomes and
+                          - definition of the Species class
+                          - function for creating a Species comprised of
+                            Individuals (including their genomes and
                             associated data)
                           - associated functions
 
@@ -55,27 +55,27 @@ import sys
 
 #a simple little class into which params-file parameters and their values will
 #be dumped (as attributes). This class will be added as a hidden attribute to
-#the Population. Can do this so that these parameters' values can still be 
+#the Species. Can do this so that these parameters' values can still be 
 #accessed by Geonomics functions easily (in fact, the same as if they were
-#Population attributes because of how the Population's __getattr__ method is
+#Species attributes because of how the Species' __getattr__ method is
 #altered below), but they will be hidden to the regular user (so that they
 #don't appear as though they could be just be changed in a custom model script
 #to change model behavior (since some of them are used to instantiate objects
 #at the time the model is made, so are 'baked in', such that those objects
 #would need to be reinstantiated each time the params concerned were changed).
 class _ParamsVals:
-    def __init__(self, pop_name):
-        self.pop_name = pop_name
+    def __init__(self, spp_name):
+        self.spp_name = spp_name
 
 
-#the Population class
-class Population(OD):
+#the Species class
+class Species(OD):
 
     #######################
     ### SPECIAL METHODS ###
     #######################
 
-    def __init__(self, name, inds, land, pop_params,
+    def __init__(self, name, inds, land, spp_params,
                                                 genomic_architecture=None):
 
         #check the inds object is correct
@@ -95,51 +95,51 @@ class Population(OD):
         self._land_dim = land.dim
         self.land = land
             # attribute to keep track of iteration number this 
-            #pop is being used for (optional; will be set by
+            #spp is being used for (optional; will be set by
             #the iteration.py module if called)
         self._it = None
         #attribute to track total number of timesteps to be run
         #(will be set by the Model object)
         #self.T = None 
         # attribute to keep of track of number of timesteps
-        #the population has evolved (starts at -1, 
+        #the species has evolved (starts at -1, 
         #to indicate unrun, and so that first timestep will
         #be set to 0 at beginning of timestep)
         # NOTE: This way, if model is stopped, changes 
         #are made, then it is run further,
         # this makes it easy to continue tracking from the beginning
         self.t = -1
-        #will be switched to True when the population passes the burn-in tests
+        #will be switched to True when the species passes the burn-in tests
         self.burned = False
-        #will be switched to True if the population goes extinct
+        #will be switched to True if the species goes extinct
         self.extinct = False
 
         self.start_N = len(self)
         #attribute to hold a landscape.Layer object of
-        #the current population density
+        #the current species density
         self.N = None
         # attribute to hold an landscape.Layer object of
         #the local carrying capacity (i.e.
-        #'target' dynamic equilibrium population density)
+        #'target' dynamic equilibrium species density)
         self.K = None
-        # list to record population size (appended each time
+        # list to record species size (appended each time
         self.Nt = []
-        # pop.increment_age_stage() is called)
-        # tracker of number of births each time pop.do_mating is called
+        # spp.increment_age_stage() is called)
+        # tracker of number of births each time spp.do_mating is called
         self.n_births = []
         # tracker of number of deaths each time
-        #demography.pop_dynamics is called
+        #demography.spp_dynamics is called
         self.n_deaths = []
         #attributes for storing numpy arrays of all individuals'
         #coordinates and cells, to avoid repeat compute time each turn
         self.coords = None
         self.cells = None
         #create empty attributes to hold spatial objects that will
-        #be created after the population is instantiated
+        #be created after the species is instantiated
         self._kd_tree = None
         #create empty attribute to hold the _DensityGridStack
         self._dens_grids = None
-        #create an attribute to indicate whether this population
+        #create an attribute to indicate whether this species
         #will have movement; set to False now but will be updated
         #below if a 'movement' section is encountered in the params
         self._move = False
@@ -149,7 +149,7 @@ class Population(OD):
         self._move_surf = None
         self._disp_surf = None
         #create an empty changer attribute, which will
-        #be reset if the parameters define changes for this pop
+        #be reset if the parameters define changes for this spp
         self._changer = None
         #set the sex_ratio to 0.5 default (but this will be changed if a
         #non-1/1 sex ratio is provided in the params)
@@ -159,8 +159,8 @@ class Population(OD):
         #then grab all of the mating, mortality, and movement
         #parameters as attributes of that _ParamsVals object
         for section in ['mating', 'mortality', 'movement']:
-            if section in [*pop_params]:
-                for att,val in pop_params[section].items():
+            if section in [*spp_params]:
+                for att,val in spp_params[section].items():
                     #leave out the move_surf and disp_surf components,
                     #which will be handled separately
                     if not isinstance(val, dict):
@@ -170,7 +170,7 @@ class Population(OD):
                         #add as an attribute of the _ParamsVals object (_pv)
                         setattr(self._pv, att, val)
                 #if the section is 'movement', and it's in the params,
-                #this means the Population should have movement,
+                #this means the Species should have movement,
                 #so update the self._move attribute
                 if section == 'movement':
                     self._move = True
@@ -184,12 +184,12 @@ class Population(OD):
         #set the GenomicArchitecture object
         self.gen_arch = genomic_architecture
         assert (self.gen_arch.__class__.__name__ == 'GenomicArchitecture'
-            or self.gen_arch is None), ("The Population.gen_arch attribute "
+            or self.gen_arch is None), ("The Species.gen_arch attribute "
             "must be an instance of the genome.GenomicArchitecture class "
             "or else None.")
 
         #set the selection attribute, to indicate whether or not
-        #natural selection should be implemented for the population
+        #natural selection should be implemented for the species
         self.selection = (self.gen_arch is not None and
             (self.gen_arch.mu_delet > 0 or self.gen_arch.traits is not None))
 
@@ -200,17 +200,17 @@ class Population(OD):
                        and self.gen_arch._mu_tot > 0)
 
         #set the self.mut_log attribute, which dictates whether
-        #or not a mutation log should be written for this pop
+        #or not a mutation log should be written for this spp
         self.mut_log = None
-        if 'gen_arch' in [*pop_params]:
-            self.mut_log = pop_params.gen_arch.mut_log
+        if 'gen_arch' in [*spp_params]:
+            self.mut_log = spp_params.gen_arch.mut_log
 
         #create a coord attrgetter function,
         #for use in getting all individs' coordinates
         self._coord_attrgetter = attrgetter('x', 'y')
 
 
-    #override the __deepcopy__ method, so that the population can
+    #override the __deepcopy__ method, so that the species can
     #be copy.deepcopy'd (because otherwise this doesn't work for
     #classes that inherit from #collections.OrderedDict)
     def __deepcopy__(self, memo):
@@ -265,13 +265,13 @@ class Population(OD):
 
     #customize the __getattr__ special method, so that attributes inside the
     #private _ParamsVals attribute (_pv) also behave as though their attributes
-    #of the Population
+    #of the Species
     def __getattr__(self, attr):
         try:
             val = self._pv.__getattribute__(attr)
             return val
         except Exception:
-            raise AttributeError("The Population has no attribute %s" % attr)
+            raise AttributeError("The Species has no attribute %s" % attr)
 
 
     #####################
@@ -290,7 +290,7 @@ class Population(OD):
     def _set_N(self, N):  # NOTE: Requires a landscape.Layer instance
         self.N = N
 
-    #method to append current pop size to the pop.Nt list
+    #method to append current spp size to the spp.Nt list
     def _set_Nt(self):
         self.Nt.append(len(self))
 
@@ -302,8 +302,8 @@ class Population(OD):
     def _reset_t(self):
         self.t = -1
 
-    #method to increment all population's age by one
-    #(also adds current pop size to tracking array)
+    #method to increment all species' age by one
+    #(also adds current spp size to tracking array)
     def _set_age_stage(self):
         # increment age of all individuals
         [ind._set_age_stage() for ind in self.values()];
@@ -315,12 +315,12 @@ class Population(OD):
         self._set_e()
         self._set_coords_and_cells()
 
-    #function for finding all the mating pairs in a population
+    #function for finding all the mating pairs in a species
     def _find_mating_pairs(self):
         mating_pairs = mating._find_mates(self, self.land)
         return mating_pairs
 
-    #function for executing mating for a population
+    #function for executing mating for a species
     def _do_mating(self, mating_pairs, burn=False):
 
         #draw the number of births for each pair, and append
@@ -387,7 +387,7 @@ class Population(OD):
 
                 #set new individual's phenotype (won't be set
                 #during burn-in, because no genomes assigned;
-                #won't be set if the population has no gen_arch)
+                #won't be set if the species has no gen_arch)
                 if (self.gen_arch is not None
                     and self.gen_arch.traits is not None
                     and not burn):
@@ -402,35 +402,35 @@ class Population(OD):
             mutation._do_mutation(keys_list, self, log = self.mut_log)
 
 
-    #method to do population dynamics
+    #method to do species dynamics
     def _do_pop_dynamics(self):
-        #implement selection, iff self.selection is True and the pop has
+        #implement selection, iff self.selection is True and the spp has
         #already been burned in
         with_selection = self.selection and self.burned
         burn = not self.burned
-        #then carry out the pop_dynamics, with selection as set above, and save
-        #result, which will be True iff pop has gone extinct
+        #then carry out the pop-dynamics, with selection as set above, and save
+        #result, which will be True iff spp has gone extinct
         extinct = demography._do_pop_dynamics(self.land,
                             self, with_selection = with_selection, burn = burn)
         if extinct:
             #set self.extinct equal to True, so that the iteration will end
             self.extinct = extinct
 
-    #method to make population changes
+    #method to make species changes
     def _make_change(self):
         self._changer._make_change(self.t)
 
-    #method to check if the population has gone extinct
+    #method to check if the species has gone extinct
     def _check_extinct(self):
         return len(self) == 0
 
-    #method to calculate population density
+    #method to calculate species density
     def _calc_density(self, normalize = False, as_layer = False, set_N=False):
 
         '''
-        Calculate an interpolated raster of local population density, using
+        Calculate an interpolated raster of local species density, using
         the spatial._DensityGridStack object stored in the
-        Population._dens_grids attribute.
+        Species._dens_grids attribute.
 
         If normalize is True, the density raster will vary between 0 and 1
         (after being normalized by its own maximum value). If false, it will
@@ -439,7 +439,7 @@ class Population(OD):
         #check validity of normalize argument
         assert type(normalize) is bool, ("The 'normalize' argument takes "
             "a boolean value.\n")
-        #get population coordinates
+        #get species coordinates
         x = self._get_x_coords()
         y = self._get_y_coords()
         #calculate the density array
@@ -486,18 +486,18 @@ class Population(OD):
         [ind._set_fit(f) for ind, f in zip(self.values(), fit)];
 
 
-    #method to set population's coords and cells arrays
+    #method to set species' coords and cells arrays
     def _set_coords_and_cells(self):
         self.coords = self._get_coords()
         self.cells = np.int32(np.floor(self.coords))
 
 
-    #method to set the population's kd_tree attribute (a spatial._KDTree)
+    #method to set the species' kd_tree attribute (a spatial._KDTree)
     def _set_kd_tree(self, leafsize = 100):
         self._kd_tree = spt._KDTree(coords = self.coords, leafsize = leafsize)
 
 
-    #method to set the population's spatial._DensityGridStack attribute
+    #method to set the species' spatial._DensityGridStack attribute
     def _set_dens_grids(self, widow_width = None):
         self._dens_grids = spt._DensityGridStack(land = self.land,
                                 window_width = self.density_grid_window_width)
@@ -551,17 +551,17 @@ class Population(OD):
             vals = np.array(ig(vals))
         return vals
 
-    #convenience method for getting age of whole population
+    #convenience method for getting age of whole species
     def _get_age(self, individs=None):
         ages = self._get_scalar_attr('age', individs = individs)
         return ages
 
-    # convenience method for getting whole population's phenotype
+    # convenience method for getting whole species' phenotype
     def _get_z(self, individs=None):
         zs = self._get_scalar_attr('z', individs = individs)
         return zs
 
-    #convenience method for getting whole population's fitnesses
+    #convenience method for getting whole species' fitnesses
     def _get_fit(self, individs = None):
         fits = self._get_scalar_attr('fit', individs = individs)
         return fits
@@ -617,12 +617,12 @@ class Population(OD):
         return(inds)
 
     #use the kd_tree attribute to find nearest neighbors either
-    #within the population, if within == True, or between the population
+    #within the species, if within == True, or between the species
     #and the points provided, if within == False and points is not None
     def _find_neighbors(self, dist, within=True, coords=None, k = 2):
         #NOTE: In lieu of a more sophisticated way of
         #determining whether the kd_tree needs to be updated 
-        #(i.e. if the population have undergone movement, mating,
+        #(i.e. if the species have undergone movement, mating,
         #or mortality since the last time it was 
         #constructed), and in an effort to minimize the number
         #of times it is constructed each time (since
@@ -630,9 +630,9 @@ class Population(OD):
         #model to rebuild it after each move, birth, or
         #death step could be unncessarily costly), for now I
         #am just telling the tree to be rebuilt each time 
-        #the pop.find_neighbors() method is called!
+        #the spp.find_neighbors() method is called!
         self._set_kd_tree()
-        #if neighbors are to be found within the population,
+        #if neighbors are to be found within the species,
         #set coords to self.coords (otherwise, the coords to
         #find nearest neighbors with should have been provided)
         if within:
@@ -642,7 +642,7 @@ class Population(OD):
                                                         dist = dist, k = k)
         return(dists, pairs)
 
-    #method for plotting the population (or a subset of its individuals, by ID)
+    #method for plotting the species (or a subset of its individuals, by ID)
     #on top of a layer (or landscape)
     def _plot(self, lyr_num=None, hide_land=False, individs=None, text=False,
             color='black', edge_color='face', text_color='black',
@@ -680,8 +680,8 @@ class Population(OD):
                                         vmin = vmin, vmax = vmax)
 
 
-    #method for plotting the population on top of its estimated
-    #population-density raster
+    #method for plotting the species on top of its estimated
+    #species-density raster
     def _plot_density(self, normalize=False, individs=None,
             text=False, color='black', edge_color='face',
             text_color='black', size=25, text_size = 9,
@@ -760,13 +760,13 @@ class Population(OD):
             im_interp_method='nearest', alpha=1, zoom_width=None,
                                                     x=None, y=None):
 
-        #return messages if population does not have genomes or traits
+        #return messages if species does not have genomes or traits
         if self.gen_arch is None:
-            print(("Population._plot_fitness is not valid for populations "
+            print(("Species._plot_fitness is not valid for species "
                    "without genomes.\n"))
             return
         elif self.gen_arch.traits is None:
-            print(("Population._plot_fitness is not valid for populations "
+            print(("Species._plot_fitness is not valid for species "
                    "without traits.\n"))
             return
 
@@ -825,11 +825,11 @@ class Population(OD):
         #and make a colorbar for the fitness values 
         viz._make_fitness_cbar(make_cbar_fn, min_fit)
 
-    #method to plot a population's allele frequencies
+    #method to plot a species' allele frequencies
     def _plot_allele_frequencies(self):
         if self.gen_arch is None:
-            print(("Population._plot_allele_frequencies is not valid for "
-                "populations without genomes.\n"))
+            print(("Species._plot_allele_frequencies is not valid for "
+                "species without genomes.\n"))
         else:
             self.gen_arch._plot_allele_frequencies(self)
 
@@ -850,7 +850,7 @@ class Population(OD):
             surf == self._disp_surf
         #check if the surface is none
         if surf is None:
-            print(('This Population appears to have no _%sSurface. '
+            print(('This Species appears to have no _%sSurface. '
                 'Function not valid.') % ({
                 'move': 'Movement', 'disp': 'Dispersal'}[surf_type]))
             return
@@ -913,7 +913,7 @@ class Population(OD):
                                     surf.surf.shape[1])]
 
 
-    # method for plotting a population pyramid
+    # method for plotting a species' population pyramid
     def _plot_demographic_pyramid(self):
         #make dict of female and male colors
         col_dict = {-1: 'cyan', 1: 'pink'}
@@ -938,7 +938,7 @@ class Population(OD):
         #use max_count to set the x-limits and y-limits
         plt.xlim((-1*max_count-2, max_count+2))
         #set the axis labels
-        plt.xlabel('Population (individuals)')
+        plt.xlabel('Species (individuals)')
         plt.ylabel('Age (timesteps)')
         #then set the xlabels to positive numbers on either side
         locs, labels = plt.xticks()
@@ -960,18 +960,18 @@ class Population(OD):
 
     def _plot_demographic_changes(self):
         if self._changer is None:
-            print(("Population._plot_demographic_changes is not valid "
-                "for populations with no _PopulationChanger object.\n"))
+            print(("Species._plot_demographic_changes is not valid "
+                "for species with no _SpeciesChanger object.\n"))
         else:
             self._changer._plot_dem_changes(self)
 
     def _plot_stat(self, stat):
         if self._stats_collector is None:
-            print(("Population._plot_stat is not valid "
-                "for populations with no _StatsCollector object.\n"))
+            print(("Species._plot_stat is not valid "
+                "for species with no _StatsCollector object.\n"))
 
         else:
-            self._stats_collector._plot_stat(stat, pop_name = self.name)
+            self._stats_collector._plot_stat(stat, spp_name = self.name)
 
 
         ################
@@ -990,9 +990,9 @@ class Population(OD):
 # -----------------------------------#
 ######################################
 
-#function that uses the params.pops[<pop_num>].init.['K_<>'] parameters 
+#function that uses the params.species[<spp_num>].init.['K_<>'] parameters 
 #to make the initial carrying-capacity raster
-def _make_K(pop, land, K_layer):
+def _make_K(spp, land, K_layer):
     K_layer = [lyr for lyr in land.values() if lyr.name == K_layer]
     assert len(K_layer) == 1, ("The K_layer parameter should point to"
         "a single Layer, but instead %i Layers were found.") % len(K_layer)
@@ -1000,15 +1000,15 @@ def _make_K(pop, land, K_layer):
     return K_rast
 
 
-def _make_population(land, name, pop_params, burn=False):
-    #get pop's intializing params
-    init_params = deepcopy(pop_params.init)
+def _make_species(land, name, spp_params, burn=False):
+    #get spp's intializing params
+    init_params = deepcopy(spp_params.init)
 
-    #if this population should have genomes, create the genomic architecture
-    if 'gen_arch' in pop_params.keys():
-        g_params = pop_params.gen_arch
+    #if this species should have genomes, create the genomic architecture
+    if 'gen_arch' in spp_params.keys():
+        g_params = spp_params.gen_arch
         #make genomic_architecture
-        gen_arch = genome._make_genomic_architecture(pop_params = pop_params,
+        gen_arch = genome._make_genomic_architecture(spp_params = spp_params,
                                                                 land = land)
     else:
         gen_arch = None
@@ -1019,35 +1019,35 @@ def _make_population(land, name, pop_params, burn=False):
     inds = OD()
     for idx in range(N):
         # use individual.create_individual to simulate individuals
-        #and add them to the population
+        #and add them to the species
         ind = individual._make_individual(idx = idx, offspring = False,
                 dim = land.dim, genomic_architecture = gen_arch, burn = burn)
         inds[idx] = ind
 
-    #create the population from those individuals
-    pop = Population(name = name, inds = inds, land = land,
-                     pop_params = pop_params, genomic_architecture=gen_arch)
+    #create the species from those individuals
+    spp = Species(name = name, inds = inds, land = land,
+                     spp_params = spp_params, genomic_architecture=gen_arch)
 
     #use the remaining init_params to set the carrying-capacity raster (K)
-    pop._set_K(_make_K(pop, land, **init_params))
+    spp._set_K(_make_K(spp, land, **init_params))
     #set initial environment values
-    pop._set_e()
+    spp._set_e()
     #set initial coords and cells
-    pop._set_coords_and_cells()
+    spp._set_coords_and_cells()
     #set the kd_tree
-    pop._set_kd_tree()
+    spp._set_kd_tree()
 
-    #set phenotypes, if the population has genomes
-    if pop.gen_arch is not None and not burn:
-        [ind._set_z(pop.gen_arch) for ind in pop.values()]
+    #set phenotypes, if the species has genomes
+    if spp.gen_arch is not None and not burn:
+        [ind._set_z(spp.gen_arch) for ind in spp.values()]
 
     #make density_grid
-    pop._set_dens_grids()
+    spp._set_dens_grids()
 
     #make movement surface, if needed
-    if pop._move:
-        if 'move_surf' in pop_params.movement.keys():
-            ms_params = deepcopy(pop_params.movement.move_surf)
+    if spp._move:
+        if 'move_surf' in spp_params.movement.keys():
+            ms_params = deepcopy(spp_params.movement.move_surf)
             #grab the lyr number for the lyr that the 
             #movement surface is to be based on
             move_surf_lyr = ms_params.pop('layer')
@@ -1058,13 +1058,13 @@ def _make_population(land, name, pop_params, burn=False):
                 "_ConductanceSurface,"
                 " but instead found %i") % len(move_surf_lyr_num)
             move_surf_lyr_num = move_surf_lyr_num[0]
-            #make the movement surface and set it as the pop's
+            #make the movement surface and set it as the spp's
             #move_surf attribute
-            pop._move_surf= spt._ConductanceSurface(land[move_surf_lyr_num],
+            spp._move_surf= spt._ConductanceSurface(land[move_surf_lyr_num],
                                                                 **ms_params)
     #make dispersal surface, if needed
-    if 'disp_surf' in pop_params.movement.keys():
-        ds_params = deepcopy(pop_params.movement.disp_surf)
+    if 'disp_surf' in spp_params.movement.keys():
+        ds_params = deepcopy(spp_params.movement.disp_surf)
         #grab the lyr number for the lyr that the 
         #dispersal surface is to be based on
         disp_surf_lyr = ds_params.pop('layer')
@@ -1075,29 +1075,29 @@ def _make_population(land, name, pop_params, burn=False):
             "_ConductanceSurface, "
             "but instead found %i") % len(disp_surf_lyr_num)
         disp_surf_lyr_num = disp_surf_lyr_num[0]
-        #make the dispersal surface and set it as the pop's
+        #make the dispersal surface and set it as the spp's
         #disp_surf attribute
-        pop._disp_surf = spt._ConductanceSurface(land[disp_surf_lyr_num],
+        spp._disp_surf = spt._ConductanceSurface(land[disp_surf_lyr_num],
                                                                 **ms_params)
 
-    #if this population has changes parameterized, create a
-    #_PopulationChanger object for it
-    if 'change' in pop_params.keys():
+    #if this species has changes parameterized, create a
+    #_SpeciesChanger object for it
+    if 'change' in spp_params.keys():
         #grab the change params
-        ch_params = pop_params.change
-        #make _PopulationChanger and set it to the pop's changer attribute
+        ch_params = spp_params.change
+        #make _SpeciesChanger and set it to the spp's changer attribute
         if land._changer is not None:
-            pop._changer = change._PopulationChanger(pop, ch_params, land= land)
+            spp._changer = change._SpeciesChanger(spp, ch_params, land= land)
         else:
-            pop._changer = change._PopulationChanger(pop, ch_params, land= None)
+            spp._changer = change._SpeciesChanger(spp, ch_params, land= None)
 
-    return pop
+    return spp
 
 
-# function for reading in a pickled pop
-def read_pickled_pop(filename):
+# function for reading in a pickled spp
+def read_pickled_spp(filename):
     import cPickle
     with open(filename, 'rb') as f:
-        pop = cPickle.load(f)
-    return pop
+        spp = cPickle.load(f)
+    return spp
 

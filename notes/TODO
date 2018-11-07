@@ -1,26 +1,26 @@
 - knock out these secondary to-do items
 
-        5 change implementation of 'custom_genomic_architecture' argument in params.py
-          to what is suggested in the comment just above def _make_custom_genomic_architecture_file
-          (i.e. allow the 'genomes' argument to be True, False, or 'custom'
+        5 restrict to just square landscapes (at least for now? or permanently?) by asserting this in the code and stating it in the docs
 
-        5 change Population to Species (or Group?)
+        5 why does the colorbar in plot_density often have a compressed section with all colors and then a ton of white at the top? check if this is a plotting bug or actually
+          a bug in the density estimation --> LOOKS LIKE IT'S THANKFULLY JUST A PLOTTING ISSUE! FIX THIS
 
-        IAN draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
+        5 figure out what to do with the density-estimation issue where it leaves blank areas and gets all screwed up when the window width isn't a clean factor of the landscape width
+          (see images saved under 10-09-18 in sim_etc)
+
+        5 ASK IAN: draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
           should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!
+
+        5 not at all sure that a gamma is the right distribution for drawing the deleterious mutations' effects
 
         3 make "run_default_model" into more of a vignette (which stops and plots things along the way; and possible which takes different arguments to demonstrate a simple model, a model with selection,
           a model with landscape change, etc)
 
-        6 maybe change _MovementSurface to _ConductanceSurface, then allow it to be used as _MovementSurface and/or _DispersalSurface??
-
-                - and add a params switch for Movement and Dispersal surfaces to be equal??
+        5 and add a params 'switch' to dictate that Movement and Dispersal surfaces should be equal??
 
         5 consider adding a generalized function for making a distribution's draw be a function of phenotype, then apply that to movement, dispersal, fecundity, etc?
 
         5 consider adding ability for life-history parameters to be determined by a trait's phenotype
-
-        5 not at all sure that a gamma is the right distribution for drawing the deleterious mutations' effects
 
         5 replace all "if str(type(whatever))" statements with proper "isinstance(whatever, classname)" calls as soon as I know how my finalized class names are going to
           look to geonomics when it's properly set up as a package
@@ -46,14 +46,6 @@
           - add a graphical representation of the model components to the docs (Species composed of Individuals, possibly with genomes, on a Landscape with multiple Layers)
 
         5 decide what to do if someone instantiates a model that has no neutral loci (line 126 in genome.py currently throws an error)
-
-        5 use Wright's genetic neighborhood/cruising distance to set window width of DensityGrids
-                BUT: I can't exactly do this without working out the following issues:
-                1. - If I try to use a window width that isn't a whole-number factor of the landscape
-                     dimensions then I get weird errors in the calculated density surface (I have
-                     images of this saved under 10-09-18 in the images directory on my Desktop)
-                2. - The runtime get ridiculous at small window widths for large landscapes and large
-                     numbers of individuals (see runtime plots, also in the same directory as above)
 
         5 decide whether or not to enable non-moving populations! (right now it's offered in the params, but then doesn't work)
                 IF SO, PROBABLY NEED TO CREATE A DISPERSAL SURFACE JUST LIKE THE MOVEMENT SURFACE
@@ -127,12 +119,7 @@ IndexError: tuple index out of range
 
 
 
-
-
 -----------------------------------------------------------------------------------------------------------------------------------------
-
-
-- walk through & methodically clean up all code and comments, line by line
 
 - write popgen-based theoretical validations-tests
 

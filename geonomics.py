@@ -104,14 +104,20 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=None,
                 {'movement':                       bool,
                 'movement_surface':                bool,
                 'dispersal_surface':               bool,
-                'genomes':                         bool,
+                'genomes':                         {bool, 'custom'},
                 'n_traits':                        int,
-                'custom_genomic_architecture':     bool,
                 'demographic_change':              int,
                 'parameter_change':                bool
                 }
             This will add one section of Species parameters, customized
-            as indicated, for each dict in the list.
+            as indicated, for each dict in the list. (Note that if the
+            'genomes' argument is True or 'custom', a section for
+            parameterization of the genomic architecture will be added,
+            but if it is 'custom' then a template custom genomic architecture
+            file will also be created (a CSV file), which can be filled in
+            to stipulate the locus-wise values for starting allele frequency,
+            recombination rate, dominance, associated traits, and effect
+            sizes.)
 
     data : bool, optional
         Whether to include a Data-parameter section in the parameters file that

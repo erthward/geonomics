@@ -134,7 +134,7 @@ class _LandscapeChanger(_Changer):
     #the land object
     def _set_changes(self, land):
 
-        #get the linearly spaced time-series of layer for each lyr_num
+        #get the linearly spaced time-series of layers for each lyr_num
         lyrs = {}
         surfs = {}
         for lyr_num in self.change_params.keys():

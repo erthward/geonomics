@@ -34,6 +34,7 @@ import numpy.random as r
 import random
 from copy import deepcopy
 import sys, os, traceback
+import matplotlib.pyplot as plt
 
 
 ######################################
@@ -525,7 +526,7 @@ class Model:
     def _print_timestep_info(self, mode):
         verbose_msg = '%s:\t%i:%i\n' % (mode, self.it,
                                 [self.burn_t if mode == 'burn' else self.t][0])
-        spps_submsgs = ''.join(['\tSPP: %s%sN=%i\t(births=%i\tdeaths=%i)\n' %
+        spps_submsgs = ''.join(['\tspecies: %s%sN=%i\t(births=%i\tdeaths=%i)\n' %
                         (spp.name,
                         ' ' * (30 - len(spp.name)),
                         spp.Nt[:].pop(),

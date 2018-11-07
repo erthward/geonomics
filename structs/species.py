@@ -38,6 +38,7 @@ import random
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy import interpolate
+from scipy.stats.distributions import norm
 from collections import Counter as C
 from collections import OrderedDict as OD
 from copy import deepcopy

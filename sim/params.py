@@ -244,13 +244,13 @@ LYR_CHANGE_PARAMS = '''
                 #landscape-change event for this Layer
                 'change': {
                     #end raster for event (DIM MUST EQUAL DIM OF LANDSCAPE!)
-                    'end_rast':         np.zeros((20,20)),
+                    'end_rast':         np.ones((20,20)),
                     #starting timestep of event
-                    'start_t':          1500,
+                    'start_t':          50,
                     #ending timestep of event
-                    'end_t':            2000,
+                    'end_t':            100,
                     #number of stepwise changes in event
-                    'n_steps':          10
+                    'n_steps':          5,
 
                 }, # <END> 'change'
 '''
@@ -309,7 +309,7 @@ SPP_PARAMS = '''
 
                 'mortality'     : {
                     #maximum age
-                    'max_age':                      1,
+                    'max_age':                      None,
                     #min P(death) (MUST BE 0<=d_min<=1)
                     'd_min':                        0.01,
                     #max P(death) (MUST BE 0<=d_max<=1)
@@ -817,7 +817,8 @@ def _make_species_params_str(species=1):
         params_str_dict = {'move': {True: MOVE_PARAMS},
                         'move_surf': {True: MOVE_SURF_PARAMS},
                         'disp_surf': {True: DISP_SURF_PARAMS},
-                        'genome': {True: GENOME_PARAMS},
+                        'genome': {True: GENOME_PARAMS,
+                                   'custom': GENOME_PARAMS},
                         'change': {True: SPP_CHANGE_PARAMS},
                         'dem_change': {True: SPP_DEM_CHANGE_EVENT_PARAMS},
                         'dem_events': {True: SPP_DEM_CHANGE_EVENTS_PARAMS},
@@ -833,11 +834,13 @@ def _make_species_params_str(species=1):
             int_args = ['n_traits', 'demographic_change']
             for arg in bool_args:
                 if arg in [*spp_dict]:
-                    assert type(spp_dict[arg]) is bool, ("The '%s' key in "
+                    assert (type(spp_dict[arg]) is bool
+                        or arg == 'genomes' and spp_dict[arg] == 'custom'), (
+                        "The '%s' key in "
                         "each Species' dictionary must contain a "
                         "boolean value. But dict number %i in the "
                         "'species' argument contains a non-boolean "
-                                                        "value.") % (arg, i)
+                        "and otherwise invalid value.") % (arg, i)
             for arg in int_args:
                 if arg in [*spp_dict]:
                     assert type(spp_dict[arg]) is int, ("The '%s' "
@@ -877,8 +880,7 @@ def _make_species_params_str(species=1):
             if 'genomes' in [*spp_dict] and spp_dict['genomes'] in [True,
                                                                     'custom']:
                 #if this species should have a custom gen_arch_file made
-                if ('custom_genomic_architecture' in [*spp_dict] and
-                    spp_dict['custom_genomic_architecture']):
+                if spp_dict['genomes'] == 'custom':
                     gen_arch_file_str = ("'%%%%GEN_ARCH_FILE_STR%%%%_spp-%i_"
                                                             "gen_arch.csv'")
                     gen_arch_file_str = gen_arch_file_str % i

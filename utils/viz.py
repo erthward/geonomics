@@ -91,7 +91,7 @@ def _plot_rasters(land, lyr_num=None, colorbar=True,
         #two rasters maximum, since the second and onward share
         #the same palette)
         if colorbar and n < 2:
-            cbar_max_bound = max(rasters[n].max(), 1)
+            cbar_max_bound = max(rasters[n].max(), vmax)
             cbar_bounds = np.linspace(0, cbar_max_bound, 51)
             cbar = plt.colorbar(boundaries=cbar_bounds)
             cbar.ax.set_title("layer: %s" % lyr_names[n])
@@ -102,7 +102,7 @@ def _plot_rasters(land, lyr_num=None, colorbar=True,
             title.set_font_properties(font)
 
 
-def _plot_points(points, lyr_num=None, color='black', 
+def _plot_points(points, lyr_num=None, color='black',
             edge_color='face', text_color='black', linewidth=0.5,
             pt_cmap=None, size=25, text_size=9, alpha=False, text=None,
             plt_lims=None, vmin=None, vmax=None):

@@ -89,7 +89,7 @@ class _DensityGrid:
         self.grid_coords = np.array(list(zip(self.gi.flatten(),
                                                         self.gj.flatten())))
 
-        #create attriibutes of the grid cells and their areas
+        #create attributes of the grid cells and their areas
         self.cells = cells
         self.areas = areas
 
@@ -174,11 +174,11 @@ class _DensityGridStack:
 
     def _calc_density(self, x, y):
         #get a concatenated list of the grid-cell center coordinates
-        #from both density grids
+        #from all density grids
         pts = np.vstack([self.grids[n].grid_coords for n in range(len(
                                                                 self.grids))])
         #and a concatenated list of the densities calculated for
-        #both density grids
+        #all density grids
         vals = np.hstack([self.grids[n]._calc_density(x,
                                 y).flatten() for n in range(len(self.grids))])
 
@@ -302,6 +302,12 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     #from neighborhood species counts)
     areas = np.reshape([p.intersection(land_poly).area for p in polys],
                                                                     gj.shape)
+    #areas of 0 create infinities in divsion, which breaks interpolation
+    #and fails to return a density surface, so replace them with very small
+    #values, which seems to completely fix the issue and return realistic
+    #values for interpolated density surfaces
+    areas[areas == 0] = 0.0001
+
 
     #get lists of the integer-identifiers (i,j in the proper matrix sense)
     #of the cells in each of the grids (so that these can be matched up

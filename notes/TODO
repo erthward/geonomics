@@ -1,12 +1,6 @@
-- knock out these secondary to-do items
+- knock out these secondary to-do items:
 
         5 restrict to just square landscapes (at least for now? or permanently?) by asserting this in the code and stating it in the docs
-
-        5 why does the colorbar in plot_density often have a compressed section with all colors and then a ton of white at the top? check if this is a plotting bug or actually
-          a bug in the density estimation --> LOOKS LIKE IT'S THANKFULLY JUST A PLOTTING ISSUE! FIX THIS
-
-        5 figure out what to do with the density-estimation issue where it leaves blank areas and gets all screwed up when the window width isn't a clean factor of the landscape width
-          (see images saved under 10-09-18 in sim_etc)
 
         5 ASK IAN: draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
           should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!
@@ -63,9 +57,9 @@
 
         1 perhaps read through and consider rewriting mating.find_mates() (i.e. consider how to re-implement repro_age and sex to speed it up)
 
-        5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
-
         5 decide whether to keep the 'support' module, and if so then debug it
+
+        5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 burn:                                                                                                                                                         

@@ -52,14 +52,17 @@ class Layer:
     ### SPECIAL METHODS ###
     #######################
 
-    def __init__(self, rast, lyr_type, name, dim, res=(1,1), ulc = (0,0),
-                 prj=None, scale_min=0, scale_max=1):
+    def __init__(self, rast, lyr_type, name, dim, res=(1,1),
+                 ulc = (0,0), prj=None, scale_min=0, scale_max=1):
         self.idx = None
         self.type = lyr_type
         self.name = str(name)
+        #the x,y dimensions
         self.dim = dim
+        #the y,x dimensions (to satisfy the np.array i,j matrix notation)
+        self._inv_dim = self.dim[::-1]
         assert type(self.dim) in [tuple, list], ("dim must be expressed "
-                                                 "on a tuple or a list")
+                                                 "as a tuple or a list")
         #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc)
         #to defaults; will be reset if layer read in from a GIS raster or
         #numpy txt array file
@@ -142,6 +145,11 @@ class Landscape(dict):
             ))])) == 1, 'Dimensions of all layers must be equal.'
         #then set the dim to the 0th layer's dim 
         self.dim = list(self.values())[0].dim
+        #and do the same thing for the _inv_dim attribute (which is the
+        #inverse of (x,y) dimensions input by the user (i.e. the Landscape.dim
+        #attribute), such that it's expressed in the (y,x), a.k.a. (i, j)
+        #array/matrix notation expected by numpy
+        self._inv_dim = list(self.values())[0]._inv_dim
         #get the order of magnitude of the larger land dimension
         #(used when zero-padding cell-coorindate strings)
         self._dim_om = max([len(str(d)) for d in self.dim])
@@ -218,8 +226,8 @@ class Landscape(dict):
         [setattr(lyr, 'prj', self.prj) for lyr in self.values()]
 
     #method to make landscape changes
-    def _make_change(self, t):
-        self._changer._make_change(t)
+    def _make_change(self, t, verbose=False):
+        self._changer._make_change(t, verbose = verbose)
 
     #method to plot the landscape (or just a certain lyr)
     def _plot(self, lyr_num=None, colorbar=True, cmap='terrain',
@@ -296,17 +304,15 @@ def _make_random_lyr(dim, n_pts, interp_method="cubic", num_hab_types=2,
         #or == 1, as would likely be the case with linear interpolation
                 0.01 * r.rand())
         I = I / (I.max() + (0.01 * r.rand()))
+    #use the dim tuple to subset an approriate size if dim not equal
     if dim[0] != dim[1]:
-        pass
-        # NOTE: figure out how to get it to use the dim tuple
-        #to subset an approriate size if dim not equal
-
+        I = I[:dim[0], :dim[1]]
     return I
 
 
 def _make_defined_lyr(dim, pts, vals, interp_method="cubic",
                                                     num_hab_types=2):
-    # pts should be provided as n-by-2 Numpy array, vals as a 1-by-n Numpy array
+    #pts should be provided as n-by-2 Numpy array, vals as a 1-by-n Numpy array
 
     # NOTE: There seem to be some serious issues with all of this code,
     #because the resulting layers are not quite symmetrical;
@@ -334,10 +340,10 @@ def _make_defined_lyr(dim, pts, vals, interp_method="cubic",
     grid_x, grid_y = np.mgrid[1:max_dim:complex("%ij" % max_dim),
                               1:max_dim:complex("%ij" % max_dim)]
     I = interpolate.griddata(pts, vals, (grid_x, grid_y), method=interp_method)
-    if interp_method == 'nearest':  
+    if interp_method == 'nearest':
     # i.e., if being used to generate random habitat patches...
         I = I.round().astype(float)
-    if interp_method == 'cubic':  
+    if interp_method == 'cubic':
         # transform to constrain all values to 0 <= val <= 1
         I = I + abs(I.min()) + (
                 0.01 * r.rand())
@@ -345,10 +351,9 @@ def _make_defined_lyr(dim, pts, vals, interp_method="cubic",
             #reaching == 0 or == 1,
         # as would likely be the case with linear interpolation
         I = I / (I.max() + (0.01 * r.rand()))
+    #use the dim tuple to subset an approriate size if dim not equal
     if dim[0] != dim[1]:
-        pass
-        # NOTE: figure out how to get it to use the dim tuple
-        #to subset an approriate size if dim not equal
+        I = I[:dim[0], :dim[1]]
     return I
 
 
@@ -356,8 +361,8 @@ def _make_landscape(params, num_hab_types=2):
     # NOTE: If a multi-class (rather than binary) block-habitat raster
     #would be of interest, would need to make
     # num_hab_types customizable)
-
     dim = params.landscape.main.dim
+    inv_dim = dim[::-1]
     res = params.landscape.main.res
     ulc = params.landscape.main.ulc
     prj = params.landscape.main.prj
@@ -404,7 +409,7 @@ def _make_landscape(params, num_hab_types=2):
         #create a random lyr, if called for
         if lyr_type == 'random':
             #create the random lyr and add it to the lyrs dict
-            lyr_rast = _make_random_lyr(dim, **init_params[lyr_type],
+            lyr_rast = _make_random_lyr(inv_dim, **init_params[lyr_type],
                                            num_hab_types=num_hab_types)
             lyrs[n] = Layer(lyr_rast, lyr_type = lyr_type,
                 name = lyr_name, dim = dim, res = res, ulc = ulc)
@@ -412,7 +417,7 @@ def _make_landscape(params, num_hab_types=2):
         #or else create a defined lyr 
         elif lyr_type == 'defined':
             #create the defined raster
-            lyr_rast = _make_defined_lyr(dim, **init_params[lyr_type],
+            lyr_rast = _make_defined_lyr(inv_dim, **init_params[lyr_type],
                                             num_hab_types=num_hab_types)
             lyrs[n] = Layer(lyr_rast, lyr_type = lyr_type,
                 name = lyr_name, dim = dim, res = res, ulc = ulc)
@@ -424,10 +429,10 @@ def _make_landscape(params, num_hab_types=2):
             #make the nlm
             lyr_rast = spt._make_nlmpy_raster(nlmpy_params)
             #check that its dimensions match those of the Landscape
-            assert lyr_rast.shape == dim, ("The dimensions of the NLM "
+            assert lyr_rast.shape == inv_dim, ("The dimensions of the NLM "
                 "created appear to differ from the Landscape dims: "
                 "Landscape has dims %s, "
-                "NLM has dims %s.\n\n") % (str(dim), str(lyr_rast.shape))
+                "NLM has dims %s.\n\n") % (str(inv_dim), str(lyr_rast.shape))
             #set the nlm as the nth Layer in the Landscape
             lyrs[n] = Layer(lyr_rast, lyr_type = lyr_type,
                 name = lyr_name, dim = dim, res = res, ulc = ulc)
@@ -488,18 +493,19 @@ def _get_file_rasters(land_dim, names, lyr_nums, filepaths,
     prj = []
     rasters = []
     lyrs = []
+    inv_dim = land_dim[::-1]
     for n,filepath in enumerate(filepaths):
         #get the array, dim, res, upper-left corner, and projection from
         #io.read_raster
         rast_array, rast_dim, rast_res, rast_ulc, rast_prj = io._read_raster(
-                                                                filepath, dim)
+            filepath, land_dim)
         #check that the dimensions are right
-        assert rast_dim == land_dim, ('Variable land_dim and the dimensions '
+        assert rast_dim == inv_dim, ('Variable inv_dim and the dimensions '
             'of the input raster %s appear to differ. Please clip %s to '
             'the correct dimensions and try again. %s has dimensions '
             '(%i, %i), but land has dimensions (%i,%i)') % (filepath,
-            filepath, filepath, rast_dim[0], rast_dim[1], land_dim[0],
-                                                            land_dim[1])
+            filepath, filepath, rast_dim[0], rast_dim[1], inv_dim[0],
+                                                            inv_dim[1])
         #if either the scale_min_val or scale_max_val for this Layer is None,
         #set it to the min or max value of this Layer's array
         if scale_min_vals[n] is None:
@@ -541,10 +547,10 @@ def _get_file_rasters(land_dim, names, lyr_nums, filepaths,
     prj = prj[0]
     #create lyrs from the rasters
     lyrs = [Layer(rast, lyr_type = 'file', name = name, dim = land_dim,
-            res = res, ulc = ulc, prj = prj, scale_min=scale_min,
-            scale_max=scale_max) for lyr_num, name, rast, scale_min,
-            scale_max in zip(lyr_nums, names, rasters, scale_min_vals,
-                                                            scale_max_vals)]
+            res = res, ulc = ulc, prj = prj,
+            scale_min=scale_min, scale_max=scale_max) for lyr_num, name,
+            rast, scale_min, scale_max in zip(lyr_nums, names, rasters,
+            scale_min_vals, scale_max_vals)]
     return(lyrs, res, ulc, prj)
 
 

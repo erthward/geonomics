@@ -1,6 +1,10 @@
 - knock out these secondary to-do items:
 
-        5 restrict to just square landscapes (at least for now? or permanently?) by asserting this in the code and stating it in the docs
+        3 why colorbar totally different for mod.plot() when called with and without a species to plot?
+
+        5 why some layers (such as reading in from random numpy array file or tif file) not capped at 1.0 max?
+
+        5 think I need to reinstitute the K_fact thing
 
         5 ASK IAN: draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
           should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!
@@ -40,9 +44,6 @@
           - add a graphical representation of the model components to the docs (Species composed of Individuals, possibly with genomes, on a Landscape with multiple Layers)
 
         5 decide what to do if someone instantiates a model that has no neutral loci (line 126 in genome.py currently throws an error)
-
-        5 decide whether or not to enable non-moving populations! (right now it's offered in the params, but then doesn't work)
-                IF SO, PROBABLY NEED TO CREATE A DISPERSAL SURFACE JUST LIKE THE MOVEMENT SURFACE
 
         5 add type annotation to all functions
 

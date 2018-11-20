@@ -94,6 +94,7 @@ class Species(OD):
         #set other attributes
         self.name = str(name)
         self._land_dim = land.dim
+        self._land_inv_dim = land._inv_dim
         self.land = land
             # attribute to keep track of iteration number this 
             #spp is being used for (optional; will be set by
@@ -174,7 +175,8 @@ class Species(OD):
                 #this means the Species should have movement,
                 #so update the self._move attribute
                 if section == 'movement':
-                    self._move = True
+                    if spp_params[section].move:
+                        self._move = True
 
         #if sex is True and repro_age is an int or float, coerce to a tuple
         #(one val for each sex)
@@ -418,8 +420,8 @@ class Species(OD):
             self.extinct = extinct
 
     #method to make species changes
-    def _make_change(self):
-        self._changer._make_change(self.t)
+    def _make_change(self, verbose=False):
+        self._changer._make_change(self.t, verbose = verbose)
 
     #method to check if the species has gone extinct
     def _check_extinct(self):
@@ -457,7 +459,7 @@ class Species(OD):
             dens = (dens - dens.min()) / norm_factor
         #return as layer, if necessary
         if as_layer == True:
-            dens = landscape.Layer(self._land_dim, dens)
+            dens = landscape.Layer(dens, 'density', 'density', self._land_dim)
         #set self.N attribute, if necessary
         if set_N:
             self._set_N(dens)
@@ -692,9 +694,10 @@ class Species(OD):
         dens = self._calc_density(normalize = normalize)
         plt_lims = viz._get_plt_lims(self.land, x, y, zoom_width)
         if normalize:
-            viz._plot_rasters(dens, plt_lims = plt_lims)
+            viz._plot_rasters(dens, plt_lims = plt_lims, lyr_name = 'density')
         else:
-            viz._plot_rasters(dens, plt_lims = plt_lims, vmax = dens.max())
+            viz._plot_rasters(dens, plt_lims = plt_lims, vmax = dens.max(),
+                lyr_name = 'density')
         self._plot(hide_land=True, individs = individs, text = text,
             color=color, edge_color = edge_color, text_color = text_color,
             size=size, text_size = text_size, alpha=alpha,
@@ -1079,7 +1082,7 @@ def _make_species(land, name, spp_params, burn=False):
         #make the dispersal surface and set it as the spp's
         #disp_surf attribute
         spp._disp_surf = spt._ConductanceSurface(land[disp_surf_lyr_num],
-                                                                **ms_params)
+                                                                **ds_params)
 
     #if this species has changes parameterized, create a
     #_SpeciesChanger object for it

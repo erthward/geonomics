@@ -43,7 +43,7 @@ import sys
 
 def _plot_rasters(land, lyr_num=None, colorbar=True,
         im_interp_method='nearest', cmap='terrain', plt_lims=None,
-        vmin=0, vmax=1):
+        vmin=0, vmax=1, lyr_name = None):
     #if a figure is already open, force colorbar to False
     if plt.get_fignums() and plt.gcf().get_axes():
         colorbar = False
@@ -53,7 +53,10 @@ def _plot_rasters(land, lyr_num=None, colorbar=True,
     #the raster into a list
     if str(type(land)) == "<class 'numpy.ndarray'>":
         rasters = [land]
-        lyr_names = ['n/a']
+        if lyr_name is not None:
+            lyr_names = [lyr_name]
+        else:
+            lyr_names = ['n/a']
     elif str(type(land)) == "<class 'structs.landscape.Layer'>":
         rasters = [land.rast]
         lyr_names = [land.name]
@@ -65,7 +68,6 @@ def _plot_rasters(land, lyr_num=None, colorbar=True,
         else:
             rasters = [lyr.rast for lyr in land.values()]
             lyr_names = [lyr.name for lyr in land.values()]
-    print(str(type(land)))
 
     if type(cmap) == str:
         #get the requested cmap 
@@ -91,7 +93,8 @@ def _plot_rasters(land, lyr_num=None, colorbar=True,
         #two rasters maximum, since the second and onward share
         #the same palette)
         if colorbar and n < 2:
-            cbar_max_bound = max(rasters[n].max(), vmax)
+            cbar_max_bound = max(rasters[n].max(),
+                [1 if vmax is None else vmax][0])
             cbar_bounds = np.linspace(0, cbar_max_bound, 51)
             cbar = plt.colorbar(boundaries=cbar_bounds)
             cbar.ax.set_title("layer: %s" % lyr_names[n])
@@ -168,8 +171,8 @@ def _plot_points(points, lyr_num=None, color='black',
 
 
 def _get_lyr_plt_lims(land):
-    xlim = (-1, land.dim[1])
-    ylim = (-1, land.dim[0])
+    xlim = (-1, land.dim[0])
+    ylim = (-1, land.dim[1])
     lims = (xlim, ylim)
     return(lims)
 
@@ -192,7 +195,7 @@ def _get_plt_lims(land=None, x=None, y=None, zoom_width=None):
 
 
 def _make_fitness_cmap_and_cbar_maker(min_val, max_val = 1,
-                        cmap = 'RdYlGn', max_cmap_len = 100, trait_num = None):
+                        cmap = 'RdYlGn', max_cmap_len = 100, trt_num = None):
     # define the colormap
     cmap = getattr(plt.cm, cmap)
     #extract all the colors into a list
@@ -225,13 +228,13 @@ def _make_fitness_cmap_and_cbar_maker(min_val, max_val = 1,
     ticks[ind_closest] = min_val
     ticks = sorted(ticks)
     ticks = [round(tick, 2) for tick in ticks]
-    if trait_num is None:
+    if trt_num is None:
         tick_labs = [('$1-\prod_{trait=1}^{t} \phi_{t} '
             '\prod_{del.mut.=1}^{d} \phi_{d} = %0.2f$') % round(
             min_val,2) if n == ind_closest else str(
             tick) for n,tick in enumerate(ticks)]
     else:
-        tick_labs = ['$1-\phi_{trait=%i} = %0.2f$' % (trait_num,
+        tick_labs = ['$1-\phi_{trait=%i} = %0.2f$' % (trt_num,
             round(min_val,2)) if n == ind_closest else str(
             tick) for n,tick in enumerate(ticks)]
     #create a function for making the colorbar, to be shipped out to and

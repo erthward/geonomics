@@ -88,7 +88,7 @@ params = {
     #### main ####
     ##############
         'main': {
-            #dimensions of the Landscape
+            #y,x (a.k.a. i, j) dimensions of the Landscape
             'dim':                      (20,20),
             #resolution of the Landscape
             'res':                      (1,1),
@@ -261,7 +261,9 @@ LYR_CHANGE_PARAMS = '''
     #%i = spp_num,
     #%i = spp_num,
     #%i = spp_num,
-    #%s = move_params,
+    #%i = spp_num,
+    #%s = move_surf_params,
+    #%s = disp_surf_params,
     #%s = genome_params,
     #%s = change_params,
     #%i = spp_num,
@@ -317,36 +319,31 @@ SPP_PARAMS = '''
                     #width of window used to estimate local pop density
                     'density_grid_window_width':    None,
                     }, # <END> 'mortality'
-%s
-%s
-%s
-                }, # <END> spp num. %i
-'''
 
-#block for movement params
-#STRING SLOTS:
-    #%i = spp_num,
-    #%s = move_surf_params,
-    #%s = disp_surf_params,
-MOVE_PARAMS = '''
             #########################################
             #### spp num. %i: movement parameters ####
             #########################################
 
                 'movement': {
+                    #whether or not the species is mobile
+                    'move':                     True,
                     #mode of distr of movement direction
-                    'direction_distr_mu':     1,
+                    'direction_distr_mu':       1,
                     #concentration of distr of movement direction
-                    'direction_distr_kappa':  0,
+                    'direction_distr_kappa':    0,
                     #mean of distr of movement distance
-                    'distance_distr_mu':      0.5,
+                    'distance_distr_mu':        0.5,
                     #variance of distr of movement distance
-                    'distance_distr_sigma':   0.5,
+                    'distance_distr_sigma':     0.5,
                     #mean of distr of dispersal distance
-                    'dispersal_distr_mu':     0.5,
+                    'dispersal_distr_mu':       0.5,
                     #variance of distr of dispersal distance
-                    'dispersal_distr_sigma':  0.5,%s%s
+                    'dispersal_distr_sigma':    0.5,%s%s
                     },    # <END> 'movement'
+
+%s
+%s
+                }, # <END> spp num. %i
 '''
 
 #block for movement-surface params
@@ -789,17 +786,14 @@ def _make_species_params_str(species=1):
         "must be a positive integer.")
                 #for each spp
         for i in range(species):
-            #use movement params, but with no movement surface (i.e.
-            #string-format with a zero-length str)
-            move_params = MOVE_PARAMS % (i, '', '')
             #use genome params, but with no traits (i.e. string-format with a
             #zero-length str)
             genome_params = GENOME_PARAMS % (i, 'None', '')
             #add no change params
             change_params = ''
-            #create the spp_params str
-            spp_params_str = SPP_PARAMS % ("'spp_%i'" % i, i, i, i,
-                            move_params, genome_params, change_params, i)
+            #create the spp_params str, with no move_surf or disp_surf params
+            spp_params_str = SPP_PARAMS % ("'spp_%i'" % i, i, i, i, i,
+                '', '', genome_params, change_params, i)
             #append to the spps_params_list
             spps_params_list.append(spp_params_str)
 
@@ -814,8 +808,7 @@ def _make_species_params_str(species=1):
             "objects of type dict.")
         #create a lookup dict for the params strings for different spp params
         #sections
-        params_str_dict = {'move': {True: MOVE_PARAMS},
-                        'move_surf': {True: MOVE_SURF_PARAMS},
+        params_str_dict = {'move_surf': {True: MOVE_SURF_PARAMS},
                         'disp_surf': {True: DISP_SURF_PARAMS},
                         'genome': {True: GENOME_PARAMS,
                                    'custom': GENOME_PARAMS},
@@ -829,8 +822,7 @@ def _make_species_params_str(species=1):
         #for each spp
         for i, spp_dict in enumerate(species):
             #assert that the argument values are valid
-            bool_args= ['movement', 'movement_surface', 'genomes',
-                                                        'parameter_change']
+            bool_args= ['movement_surface', 'genomes', 'parameter_change']
             int_args = ['n_traits', 'demographic_change']
             for arg in bool_args:
                 if arg in [*spp_dict]:
@@ -854,28 +846,17 @@ def _make_species_params_str(species=1):
                     assert spp_dict[arg] > 0, ("The number of %s to "
                                     "be created must be a positive "
                                     "integer.") % (int_arg_str_fmt_dict[arg])
-            #get the movement surf and movement params, if required
-            #NOTE: check if spp_dict['movement'] is True, so that poorly
-            #entered arguments (i.e. 'movement': False,
-            #'movement_surface':True) don't inadvertently try to format 
-            #a zero-length string with the movement-surface params str
-            if 'movement' in [*spp_dict] and spp_dict['movement']:
-                if 'movement_surface' in [*spp_dict]:
-                    ms_arg = spp_dict['movement_surface']
-                    move_surf_params = params_str_dict['move_surf'][ms_arg]
-                else:
-                    move_surf_params = ''
-                if 'dispersal_surface' in [*spp_dict]:
-                    ds_arg = spp_dict['dispersal_surface']
-                    disp_surf_params = params_str_dict['disp_surf'][ds_arg]
-                else:
-                    disp_surf_params = ''
-                move_params = params_str_dict['move'][spp_dict['movement']]
-                move_params = move_params % (i, move_surf_params,
-                                                            disp_surf_params)
-            #or get empty str
+            #get the movement surf and dispersal surf params, if required
+            if 'movement_surface' in [*spp_dict]:
+                ms_arg = spp_dict['movement_surface']
+                move_surf_params = params_str_dict['move_surf'][ms_arg]
             else:
-                move_params = ''
+                move_surf_params = ''
+            if 'dispersal_surface' in [*spp_dict]:
+                ds_arg = spp_dict['dispersal_surface']
+                disp_surf_params = params_str_dict['disp_surf'][ds_arg]
+            else:
+                disp_surf_params = ''
             #get the genome params, if required
             if 'genomes' in [*spp_dict] and spp_dict['genomes'] in [True,
                                                                     'custom']:
@@ -944,8 +925,9 @@ def _make_species_params_str(species=1):
             else:
                 change_params = ''
             #get the overall spp params str for this spp
-            spp_params_str = SPP_PARAMS % ("'spp_%i'" % i, i, i, i,
-                            move_params, genome_params, change_params, i)
+            spp_params_str = SPP_PARAMS % ("'spp_%i'" % i, i, i, i, i,
+                move_surf_params, disp_surf_params, genome_params,
+                change_params, i)
             #append to the spps_params_list
             spps_params_list.append(spp_params_str)
     #join the whole list into one str

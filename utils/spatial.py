@@ -63,6 +63,8 @@ class _DensityGrid:
 
         #same as land.dim
         self.dim = dim
+        #same as land._inv_dim
+        self._inv_dim = self.dim[::-1]
 
         #resolution (i.e. cell-size); defaults to 1
         self.res = 1
@@ -130,6 +132,7 @@ class _DensityGridStack:
 
         #dimensions
         self.dim = land.dim
+        self._inv_dim = land._inv_dim
 
         #resolution (i.e. cell-size)
         self.res = land.res
@@ -176,17 +179,16 @@ class _DensityGridStack:
         #get a concatenated list of the grid-cell center coordinates
         #from all density grids
         pts = np.vstack([self.grids[n].grid_coords for n in range(len(
-                                                                self.grids))])
+            self.grids))])
         #and a concatenated list of the densities calculated for
         #all density grids
         vals = np.hstack([self.grids[n]._calc_density(x,
-                                y).flatten() for n in range(len(self.grids))])
+            y).flatten() for n in range(len(self.grids))])
 
         #then interpolate from those points and values to the centerpoints
         #of all of the land centerpoints
         dens = interpolate.griddata(pts, vals, (self.land_gj, self.land_gi),
-                                                            method = 'cubic')
-
+            method = 'cubic')
         return dens
 
 
@@ -195,6 +197,7 @@ class _ConductanceSurface:
                                                     vm_distr_kappa = 12):
         #dimensions
         self.dim = cond_lyr.dim
+        self._inv_dim = cond_lyr._inv_dim
         #resolution (i.e. cell-size); defaults to 1
         self.res = cond_lyr.res
         #save whether it uses VonMises mixture dists or not
@@ -270,17 +273,19 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     #create a dictionary of cell ranges, one for when cells center
     #on edge values (i.e. 0 and dim[n] for either dimension), 
     #the other for when they don't (i.e. run from hww to dim[n] - hww)
-    edge_range_dict = {True:  np.arange(0, dim[0]+ww, ww),
+    x_edge_range_dict = {True:  np.arange(0, dim[0]+ww, ww),
                        False: np.arange(0+hww, dim[0]+hww, ww)}
+    y_edge_range_dict = {True:  np.arange(0, dim[1]+ww, ww),
+                       False: np.arange(0+hww, dim[1]+hww, ww)}
+
 
     #create the meshgrid of the centerpoints of neighborhoods (or cells)
     #within which species will be counted
     #(x_edge and y_edge arguments determine whether this grid's 
     #x and y cells are centered on the landscape edges or not)
     #NOTE: these are expressed as points in continuous space from 0 to
-    #each land dimension, NOT as cell
-    #numbers (which will be calculated below)
-    gj, gi = np.meshgrid(edge_range_dict[x_edge], edge_range_dict[y_edge])
+    #each land dimension, NOT as cell numbers (which will be calculated below)
+    gj, gi = np.meshgrid(x_edge_range_dict[x_edge], y_edge_range_dict[y_edge])
 
     #and get flattened lists of the grid's i and j coordinates 
     j = gj.flatten()

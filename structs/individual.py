@@ -133,7 +133,7 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
         #want to run) np.float32 can't return a number round up to
         #the dimension itself if an extremely high value is drawn
         x = np.clip(x, 0, dim[0]-0.001)
-        y = np.clip(y, 0, dim[0]-0.001)
+        y = np.clip(y, 0, dim[1]-0.001)
 
     #set the genome, if necessary
     if genomic_architecture is not None or new_genome is not None:

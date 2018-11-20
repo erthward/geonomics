@@ -501,11 +501,12 @@ class Model:
         if not burn:
             #add land._make_change method
             if self.land._changer is not None:
-                queue.append(lambda: self.land._make_change(self.t))
+                queue.append(lambda: self.land._make_change(self.t,
+                    self._verbose))
             #add spp._make_change methods
             for spp in self.comm.values():
                 if spp._changer is not None:
-                    queue.append(spp._make_change)
+                    queue.append(lambda: spp._make_change(self._verbose))
             #add self.write_data method
             if self._data_collector is not None:
                 queue.append(self.write_data)
@@ -1049,21 +1050,21 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         spp._plot_demographic_pyramid()
 
     #wrapper around Species._plot_pop_growth
-    def plot_pop_growth(self):
+    def plot_pop_growth(self, spp):
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
         spp._plot_pop_growth()
 
     #wrapper around Species._plot_demographic_changes
-    def plot_demographic_changes(self):
+    def plot_demographic_changes(self, spp):
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
         spp._plot_demographic_changes()
 
     #wrapper around Species._plot_stat
-    def plot_stat(self, stat):
+    def plot_stat(self, spp, stat):
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn

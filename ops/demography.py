@@ -104,7 +104,7 @@ def _calc_n_pairs(pairs, spp):
 
     #otherwise just return a 0 raster
     else:
-        n_pairs = np.zeros(spp._land_dim)
+        n_pairs = np.zeros(spp._land_inv_dim)
 
     return n_pairs
 
@@ -121,7 +121,6 @@ def _calc_logistic_soln(x0, R, t):
 
 def _calc_dNdt(land, R, N, K, pop_growth_eq = 'logistic'):
     with np.errstate(divide='ignore', invalid='ignore'):
-        dim = land.dim
         #if using the logistic equation for pop growth
         #NOTE: For now this is the only option and the default, but could 
         #easily offer other equations later if desired

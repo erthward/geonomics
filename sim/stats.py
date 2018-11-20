@@ -85,7 +85,7 @@ class _StatsCollector:
 
         #get the species names
         spps_with_wout_genomes = {str(k):('gen_arch' in v.keys()) for k, v
-                                 in params.comm.spps.items()}
+                                 in params.comm.species.items()}
 
         #list stats that cannot be calculated for species without genomes
         stats_invalid_wout_genomes = ['ld', 'het', 'maf', 'mean_fit']

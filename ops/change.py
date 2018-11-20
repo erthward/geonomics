@@ -79,12 +79,13 @@ class _Changer:
         except StopIteration:
             self.next_change = None
 
-    def _make_change(self, t, for_plotting=False):
+    def _make_change(self, t, for_plotting=False, verbose=False):
         #if this is the right timestep for the next change
         if self.next_change is not None:
             if t == self.next_change[0] and for_plotting == False:
-                print("\t**** Running the next change\t%s\n\n" % str(
-                                                    self.next_change))
+                if verbose:
+                    print("\t**** Running the next change\t%s\n\n" % str(
+                        self.next_change))
                 #call the next_change function to make the change
                 self.next_change[1](self)
                     #NOTE: feeding self in so that some change functions
@@ -140,8 +141,8 @@ class _LandscapeChanger(_Changer):
         for lyr_num in self.change_params.keys():
             lyr_series, dim, res, ulc, prj = _make_linear_lyr_series(
                         land[lyr_num].rast, **self.change_params[lyr_num])
-            assert dim == land.dim, ('Dimensionality of lyr_series fed into '
-                '_LandscapeChanger does not match that of the land '
+            assert dim == land._inv_dim, ('Dimensionality of lyr_series fed '
+                'into _LandscapeChanger does not match that of the land '
                 'to be changed.')
             assert res == land.res or res is None, ('Resolution of '
                 'lyr_series fed into _LandscapeChanger does not match '
@@ -519,7 +520,7 @@ def _get_cyclical_dem_change_fns(spp, start, end, n_cycles, size_range=None,
         'be no more than half the number of time steps over which the cycling '
                                                         'should take place.')
     #create a base cycle (one sine cycle)
-    base = np.sin(np.linspace(0, 2*np.pi,1000)) 
+    base = np.sin(np.linspace(0, 2*np.pi,1000))
     #flip it if cycles should decrease before increasing
     if not increase_first:
         base = base[::-1]

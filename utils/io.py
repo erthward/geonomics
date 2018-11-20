@@ -95,8 +95,8 @@ def _read_raster(filepath, dim=None):
         'file provided does not have a size equal to the product of the '
         'dimensions provided, and thus cannot be coerced to an array of '
         'those dimensions.')
-        rast = np.float32(rast.reshape(dim))
-        dim = dim
+        rast = np.float32(rast.reshape(dim[::-1]))
+        dim = rast.shape
         res = (1,1)
         ulc = (0,0)
         prj = None

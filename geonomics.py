@@ -530,7 +530,7 @@ def make_genomic_architecture(params, landscape):
     #should provide either a new genome for the individual, or a
     #genomic_architecture to use to draw its genome;
     #and should provide either a parental centerpoint to disperse from, or a
-    #landscape.dim tuple within whihc to choose a location;
+    #landscape.dim tuple within which to choose a location;
     #burn can be True (i.e. then the individual will have a [[0,0]] genome)
 def make_individual(idx, genomic_architecture=None, new_genome=None, dim=None,
     parental_centerpoint=None, sex=None, age=0, burn=False):
@@ -544,7 +544,7 @@ def make_individual(idx, genomic_architecture=None, new_genome=None, dim=None,
             "provided (i.e. 'dim' must not be None) or a parental centerpoint "
             "from which to disperse the individual must be provided (i.e. "
             "'parental_centerpoint' must not be None).")
-    ind = individual.make_individaul(idx = idx, offspring = False,
+    ind = individual.make_individual(idx = idx, offspring = False,
             dim = dim, genomic_architecture = genomic_architecture,
             new_genome = new_genome, sex = sex,
             parental_centerpoint = parental_centerpoint, age = age,

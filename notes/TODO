@@ -1,27 +1,21 @@
 - knock out these secondary to-do items:
 
-        3 why colorbar totally different for mod.plot() when called with and without a species to plot?
+        5 decide whether to keep the 'support' module, and if so then debug it
+        
+        5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
 
-        5 why some layers (such as reading in from random numpy array file or tif file) not capped at 1.0 max?
+        2 generalize the change fns some more, so that landscape changes can also be made cyclical, random, etc (like pop-dem changes)
 
-        5 think I need to reinstitute the K_fact thing
+        5 decide what to do if someone instantiates a model that has no neutral loci (line 126 in genome.py currently throws an error)
 
         5 ASK IAN: draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
           should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!
 
         5 not at all sure that a gamma is the right distribution for drawing the deleterious mutations' effects
 
-        3 make "run_default_model" into more of a vignette (which stops and plots things along the way; and possible which takes different arguments to demonstrate a simple model, a model with selection,
-          a model with landscape change, etc)
-
-        5 and add a params 'switch' to dictate that Movement and Dispersal surfaces should be equal??
-
         5 consider adding a generalized function for making a distribution's draw be a function of phenotype, then apply that to movement, dispersal, fecundity, etc?
 
         5 consider adding ability for life-history parameters to be determined by a trait's phenotype
-
-        5 replace all "if str(type(whatever))" statements with proper "isinstance(whatever, classname)" calls as soon as I know how my finalized class names are going to
-          look to geonomics when it's properly set up as a package
 
    |||| 5 "layers" and "population" argument in make_parameters_file both have "change" arugments, which should be able to take int as a value too, and then add that umber of events
    ||||         - and/or a change events params section should be able to take either a file or a directory of files (in which case those will change at the set timesteps)
@@ -30,20 +24,21 @@
    ||||   this consistent
    ||||         - the 'end_rast' parameter also should be able to take a filepath, not just a numpy array (which seems almost useless)
 
-        3 write a Land.plot_land_changes method (akin to Population.plot_demographic_changes)??
-
         5 DOCS:
           - make clearer that "dispersal" means "offspring" and is differentiated from "movement"
+          - make clear that a Species' K will change because of landscape changes in the Layer it's based on, or because of parameterized changes, OR BOTH (BUT BOTH WILL BE A MESS,
+            so user should either include a Layer in the Landscape that won't change, just to start off a Pop's K raster, then tweak that K raster with demo changes, OR plan Landscape
+            changes knowing that the Species' K raster will be affected, but NOT BOTH!)
           - write docstrings for remaining classes
           - add images
           - explain dist-parameters' name format somewhere
           - put together some examples (from simplest upward), in a Cookbook section of the docs
                 - and use one of them as an off-the-bat example that can serve as a vehicle for continuing to discuss all the additional possible parts of a model?
           - add to the Intro (or somewhere near there) in the docs a list of the sorts of questions the package could answer???
+          - rework Intro based on feedback from lab meeting, and on Nick's notes (see his email)
           - add mention of "geonomics" the philosophical movememnt (and disambiguation)
-          - add a graphical representation of the model components to the docs (Species composed of Individuals, possibly with genomes, on a Landscape with multiple Layers)
+          - add a graphical representation of the model components to the docs (Species composed of Individuals, optionally having genomes, optionally subtending phenotypes, and living on a Landscape with multiple Layers)
 
-        5 decide what to do if someone instantiates a model that has no neutral loci (line 126 in genome.py currently throws an error)
 
         5 add type annotation to all functions
 
@@ -51,16 +46,9 @@
 
         2 finalize nice string representations for all classes
 
-        2 generalize the change fns some more, so that landscape changes can also be made cyclical, random, etc (like pop-dem changes)
+        5 replace all "if str(type(whatever))" statements with proper "isinstance(whatever, classname)" calls as soon as I know how my finalized class names are going to
+          look to geonomics when it's properly set up as a package
 
-        1 write a function for plotting the community (where each pop has a different color) (how about some way for each population to have its fitness
-          plotted with colors as usual, but SHAPE to be population indicator?)
-
-        1 perhaps read through and consider rewriting mating.find_mates() (i.e. consider how to re-implement repro_age and sex to speed it up)
-
-        5 decide whether to keep the 'support' module, and if so then debug it
-
-        5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 burn:                                                                                                                                                         

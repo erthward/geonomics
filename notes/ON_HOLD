@@ -1,3 +1,5 @@
+- make "run_default_model" into more of a vignette (which stops and plots things along the way; and possibly which takes different arguments to demonstrate a simple model, a model with selection,
+          a model with landscape change, etc)
 - assortative mating (based on some trait)
 - add module for interactions between populations
 - fecundity selection:
@@ -14,4 +16,14 @@
 - change Population back from a class that inherits from an OrderedDict to one that inherits from a 
   plain old dict (since dicts are now ordered, as of Py 3.6 [reliable starting Py 3.7])                                                                                                                   
 - pick through all the notes in demography.py and decide which are taken care of, which need to stay, which I still need to take care of, etc. 
+- update species.plot_pop_growth to account for demographic changes (either because of demographic changes parameterized by the user, or because of
+  landscape changes in the K_layer) (use a species.K_sum dict attribute that gets updated with the timestep (as key) of each change in the K raster, as a starting point)
+- add a clear little line-break between Layers, Species, Traits, Change events in params files with more than one of them
+- write a function for plotting the community (where each pop has a different color) (how about some way for each population to have its fitness
+  plotted with colors as usual, but SHAPE to be population indicator?)
+- read through and consider rewriting mating.find_mates() (i.e. consider how to re-implement repro_age and sex to speed it up)
+- write a Land.plot_land_changes method (akin to Population.plot_demographic_changes)??
+ 
+
+
 

@@ -97,6 +97,15 @@ class Model:
         self.land = self._make_landscape()
         self.comm = self._make_community()
 
+        #update the land's Landscape.mod attribute
+        #(NOTE: added this attribute so that the lyr_change_fns created by
+        #ops/change can access the approp. Species objects to run their calc_K
+        #methods, even in multiple iterations of a Model when the Communities
+        #are refreshed, because putting pointers to the Species themselves in
+        #Landscape._is_K winds up breaking after the first iteration because
+        #the closures cotinue to point to the first iteration's Species)
+        self.land.mod = self
+
         #and make the self._never_run attribute False,
         #to prevent the land and community from being reset
         #on the very first iteration
@@ -313,7 +322,7 @@ class Model:
 
     #method to wrap around landscape._make_landscape
     def _make_landscape(self):
-        land = landscape._make_landscape(self.params)
+        land = landscape._make_landscape(mod = self, params = self.params)
         return(land)
 
     #a method to reset the land as necessary
@@ -344,12 +353,18 @@ class Model:
                                     'iteration %i...\n\n') % self.it)
             self.land = self._make_landscape()
 
+        #update the Landscape.mod attribute, so that it points to
+        #the current Model
+        self.land.mod = self
+
+    #method to wrap around Species._calc_K
+    def _calc_K(self, spp_idx, land):
+        self.comm[spp_idx]._calc_K(land)
 
     #method to wrap around community._make_community
     def _make_community(self):
         comm = community._make_community(self.land, self.params, burn = True)
         return(comm)
-
 
     #a method to reset the community (recopying or regenerating as necessary)
     def _reset_community(self, rand_comm=True):
@@ -375,7 +390,6 @@ class Model:
                 print(('Creating new community for '
                                     'iteration %i...\n\n') % self.it)
             self.comm = self._make_community()
-
 
     #method to make a data._DataCollector object for this model
     def _make_data_collector(self):
@@ -806,7 +820,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     TODO: PUT TYPICAL MODEL OUTPUT HERE, EVEN THOUGH IT'S ONLY PRINTED?
 
         """
-        
+
         #validate T, and convert to int if a float fed (such as 1e6,
         #to run burn-in to completion)
         assert isinstance(T, int) or isinstance(T, float), ("'T' must be "

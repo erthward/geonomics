@@ -76,7 +76,7 @@ class Species(OD):
     ### SPECIAL METHODS ###
     #######################
 
-    def __init__(self, name, inds, land, spp_params,
+    def __init__(self, name, idx, inds, land, spp_params,
                                                 genomic_architecture=None):
 
         #check the inds object is correct
@@ -87,6 +87,8 @@ class Species(OD):
             "dictionary containing only instances of the individual."
                                                     "Individual class")
 
+        #attribute to hold the Species' idx in the Community dictionary
+        self.idx =  idx
         # update with the input dict of all individuals,
         #as instances of individual.Individual class
         self.update(inds)
@@ -128,6 +130,11 @@ class Species(OD):
         #the local carrying capacity (i.e.
         #'target' dynamic equilibrium species density)
         self.K = None
+        #the index number of the Layer to be used as this Species' K-Layer
+        self.K_layer = None
+        #the factor by which this Species' K-Layer should be
+        #multiplied to get its K raster
+        self.K_factor = None
         # list to record species size (appended each time
         self.Nt = []
         # spp.increment_age_stage() is called)
@@ -259,7 +266,7 @@ class Species(OD):
         #get a string representation of the first two and last two parameters
         #params = sorted([str(k) + ': ' +str(v) for k,v in vars(
         #   self).items() if type(v) in (str, int, bool,
-        #                               float)], key = lambda x: x.lower())
+        #                               float)], idx = lambda x: x.lower())
         #params_str = "Parameters:\n\t" + ',\n\t'.join(params[:2]) + ','
         #params_str = params_str + '\n\t...\n\t'
         #params_str = params_str + ',\n\t'.join(params[-2:])
@@ -289,12 +296,12 @@ class Species(OD):
         #private methods#
         #################
 
-    #method to set self.K
-    def _set_K(self, K):  # NOTE: Requires a landscape.Layer instance
-        self.K = K
+    #method to calculate and set self.K
+    def _calc_K(self, land):
+        self.K = land[self.K_layer].rast * self.K_factor
 
     #method to set self.N
-    def _set_N(self, N):  # NOTE: Requires a landscape.Layer instance
+    def _set_N(self, N):  #NOTE: Requires a landscape.Layer instance
         self.N = N
 
     #method to append current spp size to the spp.Nt list
@@ -1001,17 +1008,29 @@ class Species(OD):
 # -----------------------------------#
 ######################################
 
-#function that uses the params.species[<spp_num>].init.['K_<>'] parameters 
-#to make the initial carrying-capacity raster
-def _make_K(spp, land, K_layer):
+#function to be called when a Species is initiated,
+#which uses the params.species[<spp_num>].init.['K_<>'] parameters 
+#to make the initial carrying-capacity raster, and also
+#sets the Species' K_layer and K_factor attributes
+def _make_K(spp, land, K_layer, K_factor):
+    #make sure we find only a single layer with the name specified by K_layer
     K_layer = [lyr for lyr in land.values() if lyr.name == K_layer]
     assert len(K_layer) == 1, ("The K_layer parameter should point to"
         "a single Layer, but instead %i Layers were found.") % len(K_layer)
-    K_rast = K_layer[0].rast
-    return K_rast
+    #grab the identified layer
+    K_layer = K_layer[0]
+    #set the Species' K_layer and K_factor attributes
+    spp.K_layer = K_layer.idx
+    spp.K_factor = K_factor
+    #add this Species to this Layer's ._is_K attribute
+    #(which will be used to update Species.K if this Layer undergoes
+    #any kandscape changes)
+    K_layer._is_K.append(spp.idx)
+    #now calculate and set the K raster
+    spp._calc_K(land)
 
 
-def _make_species(land, name, spp_params, burn=False):
+def _make_species(land, name, idx, spp_params, burn=False):
     #get spp's intializing params
     init_params = deepcopy(spp_params.init)
 
@@ -1028,19 +1047,19 @@ def _make_species(land, name, spp_params, burn=False):
     N = init_params.pop('N')
     #create an ordered dictionary to hold the individuals, and fill it up
     inds = OD()
-    for idx in range(N):
+    for ind_idx in range(N):
         # use individual.create_individual to simulate individuals
         #and add them to the species
-        ind = individual._make_individual(idx = idx, offspring = False,
+        ind = individual._make_individual(idx = ind_idx, offspring = False,
                 dim = land.dim, genomic_architecture = gen_arch, burn = burn)
-        inds[idx] = ind
+        inds[ind_idx] = ind
 
     #create the species from those individuals
-    spp = Species(name = name, inds = inds, land = land,
+    spp = Species(name = name, idx = idx, inds = inds, land = land,
                      spp_params = spp_params, genomic_architecture=gen_arch)
 
     #use the remaining init_params to set the carrying-capacity raster (K)
-    spp._set_K(_make_K(spp, land, **init_params))
+    _make_K(spp, land, **init_params)
     #set initial environment values
     spp._set_e()
     #set initial coords and cells

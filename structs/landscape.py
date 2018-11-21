@@ -73,6 +73,10 @@ class Layer:
         assert type(self.rast) == np.ndarray, "rast should be a numpy.ndarray"
         self._scale_min = scale_min
         self._scale_max = scale_max
+        #attribute that will track the Species for which this Layer
+        #is the K_layer (to be used to update
+        #Species.K if this Layer undergoes any landscape changes)
+        self._is_K = []
 
 
     #####################
@@ -121,7 +125,7 @@ class Landscape(dict):
     ### SPECIAL METHODS ###
     #######################
 
-    def __init__(self, lyrs, res=(1,1), ulc=(0,0), prj=None):
+    def __init__(self, lyrs, res=(1,1), ulc=(0,0), prj=None, mod=None):
         #check the lyrs dict is correct, then update the Landscape with it
         assert False not in [
             lyr.__class__.__name__ == 'Layer' for lyr in lyrs.values(
@@ -158,8 +162,9 @@ class Landscape(dict):
         self.res = res
         self.ulc = ulc
         self.prj = prj
-        #TODO: DO I ACTUALLY HAVE TO RUN THIS LINE?
-        #self.set_lyrs_res_ulc_prj()
+        #an attribute to serve as a pointer
+        #to the Model object to which this land belongs
+        self.mod = mod
         #And check that the Layers' res, ulc, and prj values are equal to 
         #the Landscape's values
         assert np.all([lyr.res == self.res for lyr in self.values(
@@ -357,7 +362,7 @@ def _make_defined_lyr(dim, pts, vals, interp_method="cubic",
     return I
 
 
-def _make_landscape(params, num_hab_types=2):
+def _make_landscape(mod, params, num_hab_types=2):
     # NOTE: If a multi-class (rather than binary) block-habitat raster
     #would be of interest, would need to make
     # num_hab_types customizable)
@@ -460,7 +465,7 @@ def _make_landscape(params, num_hab_types=2):
             lyrs[n] = file_lyrs[n]
 
     #create the land object
-    land = Landscape(lyrs, res=res, ulc=ulc, prj=prj)
+    land = Landscape(lyrs, res=res, ulc=ulc, prj=prj, mod=mod)
 
     #grab the change parameters into a dictionary of
     #lyr_num:events:events_params hierarchical
@@ -478,7 +483,8 @@ def _make_landscape(params, num_hab_types=2):
                 "but found %i Layers matching Layer name "
                 "'%s'.") % (len(lyr_num), k)
             lyr_num_change_params[lyr_num[0]] = v
-        land._changer = change._LandscapeChanger(land, lyr_num_change_params)
+        land._changer = change._LandscapeChanger(land, lyr_num_change_params,
+            mod = mod)
 
     return land
 

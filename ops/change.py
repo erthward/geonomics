@@ -117,10 +117,13 @@ class _Changer:
 
 
 class _LandscapeChanger(_Changer):
-    def __init__(self, land, land_change_params):
+    def __init__(self, land, land_change_params, mod):
         super(_LandscapeChanger, self).__init__(land_change_params)
         #set the type-label of the changer
         self.type = 'land'
+
+        #pointer to the model to which this Changer belongs
+        self.mod = mod
 
         #create an empty dict to hold all the basic change info
         #(end_rast, timesteps) for each layer that will change (so that
@@ -373,9 +376,12 @@ def _make_custom_lyr_series(lyr_dict):
     pass
 
 
-def _get_lyr_change_fn(land, lyr_num, new_lyr):
-    def fn(lc, land = land, lyr_num = lyr_num, new_lyr = new_lyr):
-        land._set_raster(lyr_num, new_lyr)
+def _get_lyr_change_fn(land, lyr_num, new_lyr_rast):
+    def fn(lc, land = land, lyr_num = lyr_num, new_lyr_rast = new_lyr_rast):
+        land._set_raster(lyr_num, new_lyr_rast)
+        #update associated Species' K rasters if necessary
+        if len(land[lyr_num]._is_K) > 0:
+            [land.mod._calc_K(spp, land) for spp in land[lyr_num]._is_K]
     return(fn)
 
 

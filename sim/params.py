@@ -246,9 +246,9 @@ LYR_CHANGE_PARAMS = '''
                     #end raster for event (DIM MUST EQUAL DIM OF LANDSCAPE!)
                     'end_rast':         np.ones((20,20)),
                     #starting timestep of event
-                    'start_t':          50,
+                    'start_t':          49,
                     #ending timestep of event
-                    'end_t':            100,
+                    'end_t':            99,
                     #number of stepwise changes in event
                     'n_steps':          5,
 
@@ -280,6 +280,8 @@ SPP_PARAMS = '''
                     'N':                250,
                     #carrying-capacity Layer name
                     'K_layer':          'layer_0',
+                    #multiplicative factor for carrying-capacity layer
+                    'K_factor':         1,
                     }, # <END> 'init'
 
             #######################################

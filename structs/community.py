@@ -112,7 +112,7 @@ class Community(dict):
 
 #function for making a community using a Landscape object and params
 def _make_community(land, params, burn=False):
-    spps = {n: species._make_species(land = land, name = name,
+    spps = {n: species._make_species(land = land, name = name, idx = n,
         spp_params = params.comm.species[name], burn = burn) for n, name in
             enumerate(params.comm.species.keys())}
     return Community(land, spps)

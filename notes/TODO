@@ -1,7 +1,5 @@
 - knock out these secondary to-do items:
 
-        5 decide whether to keep the 'support' module, and if so then debug it
-        
         5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
 
         2 generalize the change fns some more, so that landscape changes can also be made cyclical, random, etc (like pop-dem changes)

@@ -115,8 +115,12 @@ class Species(OD):
         self.burned = False
         #will be switched to True if the species goes extinct
         self.extinct = False
-
+        #starting pop size
         self.start_N = len(self)
+        #create a tracker for the maximum Individual index already used
+        #(this will be updated each time offspring are created, so that
+        #indices are never repeated, ovewrriting existing Individuals)
+        self.max_ind_idx = max([*inds])
         #attribute to hold a landscape.Layer object of
         #the current species density
         self.N = None
@@ -334,9 +338,12 @@ class Species(OD):
         self.n_births.append(total_births)
 
         #create the offspring_ids
-        next_offspring_key = next(reversed(self))+1
+        next_offspring_key = self.max_ind_idx + 1
         offspring_keys = set(range(next_offspring_key,
                                         next_offspring_key + total_births))
+        #update self.max_ind_idx
+        self.max_ind_idx = max(offspring_keys)
+
         #copy the keys, for use in mutation.do_mutation()
         keys_list = [*offspring_keys]
 

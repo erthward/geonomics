@@ -806,6 +806,13 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     TODO: PUT TYPICAL MODEL OUTPUT HERE, EVEN THOUGH IT'S ONLY PRINTED?
 
         """
+        
+        #validate T, and convert to int if a float fed (such as 1e6,
+        #to run burn-in to completion)
+        assert isinstance(T, int) or isinstance(T, float), ("'T' must be "
+            "a numeric data type.")
+        if isinstance(T, float):
+            T = int(T)
 
         #throw an error and quit if mode == 'main' but the community is 
         #not burned in

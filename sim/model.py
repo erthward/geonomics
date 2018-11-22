@@ -333,7 +333,7 @@ class Model:
         if not rand_landscape:
             #verbose output
             if self._verbose:
-                print(('Copying the original Lanscape '
+                print(('Copying the original Landscape '
                        'for iteration %i...\n\n') % self.it)
             #deepcopy the original land
             self.land = deepcopy(self.orig_land)

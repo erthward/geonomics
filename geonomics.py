@@ -475,12 +475,11 @@ def make_model(parameters=None):
         try:
             parameters = read_parameters_file(parameters)
         except Exception as e:
-            print(("Failed to read the parameters file at the "
+            traceback.print_exc(file = sys.stdout)
+            raise ValueError(("Failed to read the parameters file at the "
                 "filepath that was provided. The following error was raised: "
                 "\n\t%s\n\n") % e)
-            print('Traceback:')
-            traceback.print_exc(file = sys.stdout)
-            raise ValueError()
+
     elif str(type(parameters)) == "<class '__main__.Parameters_Dict'>":
         pass
     try:
@@ -488,12 +487,10 @@ def make_model(parameters=None):
         mod = model.Model(name, parameters)
         return(mod)
     except Exception as e:
-            print(("Failed to create a Model object from the "
+            traceback.print_exc(file = sys.stdout)
+            raise ValueError(("Failed to create a Model object from the "
                 "ParametersDict object being used. "
                 "The following error was raised: \n\t%s\n\n") % e)
-            print('Traceback:')
-            traceback.print_exc(file = sys.stdout)
-            raise ValueError()
 
 
 #convenience function for creating a parameters-file for, instantiating, and

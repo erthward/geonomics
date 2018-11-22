@@ -301,8 +301,18 @@ def _make_traits(traits_params, land):
     num_traits = len(params_copy)
     #and set each Layer number using Layer names
     for k, v in params_copy.items():
-        lyr_num = [num for num, lyr in land.items(
+        #the first time this is run during a model with random
+        #communities at each iteration, the layer identified in
+        #the traits_params will be a string indicating the layer's name
+        if isinstance(v.layer, str):
+            lyr_num = [num for num, lyr in land.items(
                                                 ) if lyr.name == v.layer]
+        #the second and later times it's run during such a model (see
+        #previous comment), it will already have been swapped out for an int
+        #indicating the layer's index num
+        elif isinstance(v.layer, int):
+            lyr_num = [num for num, lyr in land.items(
+                                                ) if lyr.idx == v.layer]
         assert len(lyr_num) == 1, ("Expected to find a single Layer with "
             "the Layer name indicated for Trait %s, but instead found "
             "%i.") % (k, len(lyr_num))
@@ -462,6 +472,13 @@ def _make_genomic_architecture(spp_params, land):
     if 'gen_arch_file' in g_params.keys():
         if g_params.gen_arch_file is not None:
             gen_arch_file = pd.read_csv(g_params.gen_arch_file)
+            #ensure that trait and alpha columns are strings to start (because
+            #in many cases alpha would likely read in as a float, if each row
+            #has at most one alpha value because there's no pleiotropy, but in
+            #case of pleiotropy I need to be able to use the str.split method
+            #on each row's values further down)
+            gen_arch_file['trait'] = [str(v) for v in gen_arch_file['trait']]
+            gen_arch_file['alpha'] = [str(v) for v in gen_arch_file['alpha']]
             assert len(gen_arch_file) == g_params.L, ('The custom '
             'genomic architecture file must contain a table with number of '
             'rows equal to the genome length stipulated in the genome '
@@ -471,9 +488,23 @@ def _make_genomic_architecture(spp_params, land):
             "'locus' column of the custom genomic architecture file must "
             "contain serial integers from 0 to 1 - the length of the table.")
             assert (np.all(
-              (gen_arch_file['dom'] == 0) + gen_arch_file['dom'] == 1)), ("The"
-              " 'dom' column of the custom genomic architecture file must "
-              "contain only 0s and 1s.")
+                (gen_arch_file['dom'] == 0) + gen_arch_file['dom'] == 1)), (
+                "The 'dom' column of the custom genomic architecture file "
+                "must contain only 0s and 1s (where 0 indicates codominance "
+                "of the 0 and 1 alleles, 1 indicates that the 1 allele "
+                "is dominant).")
+            #check that each trait has in that file the number of loci
+            #indicated by n_loci in that trait's params dict
+            if 'traits' in [*g_params]:
+                all_traits = [trt.strip() for row in [val.split(
+                    ',') for val in gen_arch_file['trait']] for trt in row]
+                for trt_name, trt in g_params.traits.items():
+                    n_loci_in_file=sum([trt == trt_name for trt in all_traits])
+                    assert n_loci_in_file == trt.n_loci, ("The number of "
+                        "times a Trait is appears in the custom genomic "
+                        "architecture file must be equivalent to the number "
+                        "of loci subtending that Trait as indicated by the "
+                        "'n_loci' key in its section of the parameters file.")
 
     #also get the sex parameter and add it as an item in g_params
     g_params['sex'] = spp_params.mating.sex
@@ -520,7 +551,8 @@ def _make_genomic_architecture(spp_params, land):
         trait_names_nums = {
             trt.name: num for num, trt in gen_arch.traits.items()}
         gen_arch_file['trait'] = [[trait_names_nums[
-            val] for val in row.split(',')] for row in gen_arch_file['trait']]
+            val] for val in [x.strip() for x in row.split(
+            ',')]] for row in gen_arch_file['trait']]
         #turn the values in the 'alpha' column into lists of
         #values, by splitting on commas
         #(this will allow people to assign a single locus
@@ -595,10 +627,21 @@ def _set_genomes(spp, burn_T, T):
         neut_loci_remaining = spp.gen_arch.L - len(spp.gen_arch.nonneut_loci)
         n_muts = min(int(np.ceil(0.1 * neut_loci_remaining)),
                                                     neut_loci_remaining)
-    muts = set(r.choice([*spp.gen_arch.neut_loci], n_muts, replace = False))
-    spp.gen_arch._mutable_loci.update(muts)
-    #set those loci's p values to 0 (i.e. non-segregating)
-    spp.gen_arch.p[np.array([*muts])] = 0
+    #skip this step and force the neutral mutation rate to 0, if there are no
+    #neutral loci in the genome as it was configured
+    if len(spp.gen_arch.neut_loci) == 0:
+        print(('#\n#\nWARNING: This species has been parameterized without any'
+            ' neutral loci, leaving no place for mutations (neutral or not) '
+            'to land. Thus all mutation rates will be forced to 0.\n#\n#\n\n'))
+        spp.gen_arch.mu_neut = 0
+        spp.gen_arch.mu_delet = 0
+        for trt in spp.gen_arch.traits.values():
+            trt.mu = 0
+    else:
+        muts = set(r.choice([*spp.gen_arch.neut_loci], n_muts, replace = False))
+        spp.gen_arch._mutable_loci.update(muts)
+        #set those loci's p values to 0 (i.e. non-segregating)
+        spp.gen_arch.p[np.array([*muts])] = 0
     #now reassign genotypes to all individuals, using gen_arch.p
     [ind._set_genome(_draw_genome(spp.gen_arch)) for ind in spp.values()]
     #and then reset the individuals' phenotypes

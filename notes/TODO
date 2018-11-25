@@ -1,9 +1,5 @@
 - knock out these secondary to-do items:
 
-        5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
-
-        2 generalize the change fns some more, so that landscape changes can also be made cyclical, random, etc (like pop-dem changes)
-
         5 ASK IAN: draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
           should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!
 
@@ -13,12 +9,21 @@
 
         5 consider adding ability for life-history parameters to be determined by a trait's phenotype
 
+################################
+a. implement the 'dir' option that I added in the dem change section, or get rid of it
+b. implement a 'dir' option and a 'timesteps' option for a land-change event
+c. implement a filename instaed of just an np.array for land-change events
+d. implement the option to create a list of sep. land change events by feeding change: int
+e. add the 'dir' parameters to the docs
+f. DEBUG
+
    |||| 5 "layers" and "population" argument in make_parameters_file both have "change" arugments, which should be able to take int as a value too, and then add that umber of events
    ||||         - and/or a change events params section should be able to take either a file or a directory of files (in which case those will change at the set timesteps)
 
    |||| 5 I say that a Layer can have any number of change events, but the make_parameters_file only takes a bool argument for 'change', not an integer; decide and make
    ||||   this consistent
    ||||         - the 'end_rast' parameter also should be able to take a filepath, not just a numpy array (which seems almost useless)
+###################################
 
         5 DOCS:
           - make clearer that "dispersal" means "offspring" and is differentiated from "movement"
@@ -45,6 +50,8 @@
         5 replace all "if str(type(whatever))" statements with proper "isinstance(whatever, classname)" calls as soon as I know how my finalized class names are going to
           look to geonomics when it's properly set up as a package
 
+
+        5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 burn:                                                                                                                                                         

@@ -23,6 +23,9 @@
   plotted with colors as usual, but SHAPE to be population indicator?)
 - read through and consider rewriting mating.find_mates() (i.e. consider how to re-implement repro_age and sex to speed it up)
 - write a Land.plot_land_changes method (akin to Population.plot_demographic_changes)??
+- generalize the change fns some more, so that landscape changes can also be made cyclical, random, etc (like pop-dem changes)
+
+
  
 
 

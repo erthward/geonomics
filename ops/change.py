@@ -142,8 +142,45 @@ class _LandscapeChanger(_Changer):
         lyrs = {}
         surfs = {}
         for lyr_num in self.change_params.keys():
-            lyr_series, dim, res, ulc, prj = _make_linear_lyr_series(
-                        land[lyr_num].rast, **self.change_params[lyr_num])
+            #check that the timeframes of the change events for this layer
+            #don't overlap 
+            all_timesteps = [[*range(v.start_t,
+                v.end_t)] for v in self.change_params[lyr_num]]
+            all_timesteps = [t for i in all_timesteps for t in i]
+            assert (len(set(all_timesteps)) == len(all_timesteps)), ("Some "
+                "of the change events for Layer number %i overlap "
+                "in time.") % lyr_num
+            #get the congolmerated lyr_series for all change events for this
+            #layer
+            all_lyr_series = [_make_lyr_series(
+                land[lyr_num].rast, **self.change_params[lyr_num][
+                i]) for i in self.change_params[lyr_num].keys()]
+            #check that dim, res, ulc, and prj values are the same for each
+            #change event
+            assert len(set([i[1] for i in all_lyr_series]))==1, (""
+                "Not all change events for Layer number %i produce layer "
+                "series with the same dimensions.  Resulting dimensions "
+                "include: (%s).") % ', '.join([*set(
+                [i[1] for i in all_lyr_series])])
+            assert len(set([i[2] for i in all_lyr_series]))==1, (""
+                "Not all change events for Layer number %i produce layer "
+                "series with the same resolution.  Resulting resolutions "
+                "include: (%s).") % ', '.join([*set(
+                [i[2] for i in all_lyr_series])])
+            assert len(set([i[3] for i in all_lyr_series]))==1, (""
+                "Not all change events for Layer number %i produce layer "
+                "series with the same upper-left corners.  Resulting "
+                "upper-left corners include: (%s).") % ', '.join([*set(
+                [i[3] for i in all_lyr_series])])
+            assert len(set([i[4] for i in all_lyr_series]))==1, (""
+                "Not all change events for Layer number %i produce layer "
+                "series with the same resolution.  Resulting resolutions "
+                "include: (%s).") % ', '.join([*set(
+                [i[4] for i in all_lyr_series])])
+            #take dim, res, ulc, and prj as single values
+            dim, res, ulc, prj = [[*set(
+                [i[n] for i in all_lyr_series])][0] for n in range(1,5)]
+            #check that dim, res, ulc, and prj match that of the land
             assert dim == land._inv_dim, ('Dimensionality of lyr_series fed '
                 'into _LandscapeChanger does not match that of the land '
                 'to be changed.')
@@ -156,8 +193,11 @@ class _LandscapeChanger(_Changer):
             assert prj == land.prj or prj is None, ('Projection of '
             'lyr_series fed into _LandscapeChanger does not match that of the '
             'land to be changed.')
-            lyrs[lyr_num] = lyr_series
-
+            #combine all lyr_series into one single lyr series
+            conglom_lyr_series = [
+                lyr_step for series in all_lyr_series for lyr_step in series]
+            #add the conglomerate lyr series to the lyrs object
+            lyrs[lyr_num] = conglom_lyr_series
             #set the _LandscapeChanger.change_info attribute, so that it can be
             #grabbed later for building _move_surf,
             #_disp_surf, and other objects
@@ -328,14 +368,30 @@ class _SpeciesChanger(_Changer):
 #function that takes a starting lyr, an ending lyr, a number of
 #timesteps, and a Model object, and returns a linearly interpolated
 #stack of rasters
-def _make_linear_lyr_series(start_rast, end_rast, start_t, end_t, n_steps):
+def _make_lyr_series(start_rast, end_rast, start_t, end_t, n_steps,
+        directory):
+
+    #TODO: REORDER THIS FN, SUCH THAT IT DOES:
+        #1. generate timesteps
+        #2. generate end_rast (whether np.array, individual file, or from dir)
+        #3. check the dimension is same in start and end rasts
+
+    #TODO: FIGURE OUT HOW USER WOULD NEED TO ORDER THE FILES IN A DIRECTORY
+    #FULL OF FILES, IN ORDER TO DICTATE THE TIME ORDER OF THEM
+
+    #TODO: IF directory is not None, CHECK THAT THE NUMBER OF LAYERS IN THE
+    #DIRECTORY EQUALS THE NUMBER OF TIMESTEPS INDICATED, THEN READ IN ALL
+    #THE LAYERS INSTEAD OF LINEARLY INTERPOLATING THEM
+
+    #TODO: READ end_rast IN FROM FILE, if not an np.array
+
+    if isinstance(end_rast, str):
+        end_rast, dim, res, ulc, prj = io._read_raster(end_rast)
+
     assert start_rast.shape == end_rast.shape, ('The starting raster and '
         'ending raster for the land-change event are not of the same '
         'dimensions: START: %s,  END %s') % (str(start_rast.shape),
                                                     str(end_rast.shape))
-
-    if type(end_rast) is str:
-        end_rast, dim, res, ulc, prj = io._read_raster(end_rast)
 
     elif type(end_rast) is np.ndarray:
         dim = end_rast.shape
@@ -344,7 +400,9 @@ def _make_linear_lyr_series(start_rast, end_rast, start_t, end_t, n_steps):
         prj = None
 
     #get (rounded) evenly spaced timesteps at which to implement the changes
-    timesteps = np.int64(np.round(np.linspace(start_t, end_t, n_steps)))
+    #NOTE: Subtract 1 from end_t, to emulate the behavior of Python's 
+    #range function, even though I have to use np.linspace here
+    timesteps = np.int64(np.round(np.linspace(start_t, end_t-1, n_steps)))
     #flatten the starting and ending rasters
     start = start_rast.flatten()
     end = end_rast.flatten()
@@ -397,7 +455,7 @@ def _make_conductance_surface_series(start_lyr, mixture, kappa,
     #because probably unnecessary to change the move_surf or disp_surf every
     #time the land changes, and they could be a fairly large objects to
     #hold in memory anyhow; but t_res_reduct_factor defaults to 1)
-    lyr_series, dim, res, ulc, prj = _make_linear_lyr_series(
+    lyr_series, dim, res, ulc, prj = _make_lyr_series(
         start_lyr.rast, end_rast, start_t, end_t, int(
                                     n_steps*t_res_reduct_factor))
     #then get the series of _ConductanceSurface objects
@@ -536,7 +594,8 @@ def _get_cyclical_dem_change_fns(spp, start, end, n_cycles, size_range=None,
     scaled_base = [1 + n*(1-min_size) if n<0 else n for n in scaled_base]
     scaled_base = np.array(scaled_base)
     #then get the timesteps at which each cycle should complete
-    cycle_timesteps = np.int32(np.linspace(start, end, n_cycles+1))
+    #NOTE: subtract 1 to imitate Python range stop-exclusivity
+    cycle_timesteps = np.int32(np.linspace(start, end-1, n_cycles+1))
     #get from that the length in timesteps of each cycle
     cycle_lengths = np.diff(cycle_timesteps)
     #get from that the pop sizes at each timestep (which will approximate

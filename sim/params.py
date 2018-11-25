@@ -233,27 +233,39 @@ NLMPY_LYR_PARAMS = '''
                         }, # <END> 'nlmpy'
 '''
 
-#the block of layer-change parameters
+#block of layer-change parameters
 #STRING SLOTS:
     #%i = lyr_num,
+    #%s = change events,
 LYR_CHANGE_PARAMS = '''
             #########################################
             #### layer num. %i: change parameters ####
             #########################################
 
-                #landscape-change event for this Layer
+                #landscape-change events for this Layer
                 'change': {
-                    #end raster for event (DIM MUST EQUAL DIM OF LANDSCAPE!)
-                    'end_rast':         np.ones((20,20)),
-                    #starting timestep of event
-                    'start_t':          49,
-                    #ending timestep of event
-                    'end_t':            99,
-                    #number of stepwise changes in event
-                    'n_steps':          5,
+%s
 
-                }, # <END> 'change'
+                    }, # <END> 'change'
 '''
+
+#block for params in a single layer-change event
+#STRING SLOTS:
+    #%i = lyr_change_event_num,
+    #%i = lyr_change_event_num,
+LYR_CHANGE_EVENT_PARAMS = '''
+                    %i: {
+                        #array or raster file for end raster of event
+                        'end_rast':         '/PATH/TO/FILE.EXT',
+                        #starting timestep of event
+                        'start_t':          49,
+                        #ending timestep of event
+                        'end_t':            99,
+                        #number of stepwise changes in event
+                        'n_steps':          5,
+                        #directory of raster files for each stepwise change
+                        'directory':              '/PATH/TO/DIRECTORY/',
+                        }, # <END> event %i'''
 
 #block of species params
 #STRING SLOTS:
@@ -387,7 +399,7 @@ GENOME_PARAMS = '''
             #####################################################
 
                 'gen_arch': {
-                    #/path/to/file.csv defining custom genomic arch
+                    #file defining custom genomic arch
                     'gen_arch_file':            %s,
                     #num of loci
                     'L':                        100,
@@ -465,7 +477,7 @@ TRT_PARAMS = '''
                             }, # <END> trait %i
 '''
 
-#block for spp_change params
+#block of spp_change params
 #STRING SLOTS:
     #%i = spp_num,
     #%s = dem_and-or_param_change_params_str,
@@ -525,7 +537,9 @@ SPP_DEM_CHANGE_EVENT_PARAMS = '''
                             'timesteps':        [50, 90, 95],
                             #list of sizes, for custom change
                             'sizes':            [2, 5, 0.5],
-                            } # <END> event %i
+                            #directory containing K-rasters, for custom change
+                            'directory':              '/PATH/TO/DIRECTORY',
+                            }, # <END> event %i
 
 '''
 
@@ -739,8 +753,6 @@ def _make_lyrs_params_str(lyrs=1):
                                       'file': FILE_LYR_PARAMS,
                                       'nlmpy': NLMPY_LYR_PARAMS,
                                      }
-        lyr_change_params_str_dict = {True: LYR_CHANGE_PARAMS,
-                                        False: ''}
         #for each lyr
         for i, lyr_dict in enumerate(lyrs):
             #assert that the 'type' value is valid
@@ -756,16 +768,27 @@ def _make_lyrs_params_str(lyrs=1):
             type_params = lyr_type_params_str_dict[lyr_type]
             #assert that the 'change' value is valid
             if 'change' in [*lyr_dict]:
-                assert type(lyr_dict['change']) is bool, ("The value "
+                assert (isinstance(lyr_dict['change'], bool)
+                        or (isinstance(lyr_dict['change'], int)
+                           and lyr_dict['change'] > 0)), ("The value "
                     "provided for the 'change' value of Layer %i is invalid. "
-                    "Value must be a boolean.") % i
+                    "Value must be either a boolean (to create a single "
+                    "change event), or a positive int (to create a series "
+                    "of that many change events).") % i
                 #get the change params for this lyr
                 lyr_change = lyr_dict['change']
             else:
                 lyr_change = False
-            change_params = lyr_change_params_str_dict[lyr_change]
+            #get the LYR_CHANGE_PARAMS, if change argument is True or int > 0
+            if lyr_change is not False:
+                change_params = LYR_CHANGE_PARAMS
+                #get the necessary number of change events' params strings
+                events_params = '\n'.join([LYR_CHANGE_EVENT_PARAMS % (n,
+                    n) for n in range(lyr_change)])
+            else:
+                change_params = ''
             if change_params != '':
-                change_params = change_params % i
+                change_params = change_params % (i, events_params)
             #create the lyr_params str for this Layer
             lyr_params_str = LYR_PARAMS % ("'layer_%i'" % i, i,
                                                type_params, change_params, i)
@@ -814,7 +837,6 @@ def _make_species_params_str(species=1):
                         'disp_surf': {True: DISP_SURF_PARAMS},
                         'genome': {True: GENOME_PARAMS,
                                    'custom': GENOME_PARAMS},
-                        'change': {True: SPP_CHANGE_PARAMS},
                         'dem_change': {True: SPP_DEM_CHANGE_EVENT_PARAMS},
                         'dem_events': {True: SPP_DEM_CHANGE_EVENTS_PARAMS},
                         'param_change': {True: SPP_PARAM_CHANGE_PARAMS},
@@ -921,7 +943,7 @@ def _make_species_params_str(species=1):
                     param_change_params_str = (
                     params_str_dict['param_change'][param_change_arg])
                     events_params_str=events_params_str+param_change_params_str
-                change_params = params_str_dict['change'][True]
+                change_params = SPP_CHANGE_PARAMS
                 change_params = change_params % (i, events_params_str)
             #or get empty str
             else:

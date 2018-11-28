@@ -95,7 +95,7 @@ def _read_raster(filepath, dim=None):
         'file provided does not have a size equal to the product of the '
         'dimensions provided, and thus cannot be coerced to an array of '
         'those dimensions.')
-        rast = np.float32(rast.reshape(dim[::-1]))
+        rast = np.float32(rast.reshape(dim))
         dim = rast.shape
         res = (1,1)
         ulc = (0,0)
@@ -105,10 +105,10 @@ def _read_raster(filepath, dim=None):
             rast_file = gdal.Open(filepath)
             rast = rast_file.ReadAsArray()
             dim = rast.shape
-            res = [i for n,i in enumerate(rast_file.GetGeoTransform(
-                                                            )) if n in [1,5]]
-            ulc = [i for n,i in enumerate(rast_file.GetGeoTransform(
-                                                            )) if n in [0,3]]
+            res = tuple([i for n,i in enumerate(rast_file.GetGeoTransform(
+                                                            )) if n in [1,5]])
+            ulc = tuple([i for n,i in enumerate(rast_file.GetGeoTransform(
+                                                            )) if n in [0,3]])
             #get the projection as WKT
             prj = rast_file.GetProjection()
         else:
@@ -225,13 +225,13 @@ def _write_geotiff(filepath, lyr):
         driver = gdal.GetDriverByName('GTiff')
         #get values
         #number of pixels in x and y
-        x_pixels = lyr.dim[0]
-        y_pixels = lyr.dim[1]
+        x_pixels = lyr.dim[1]
+        y_pixels = lyr.dim[0]
         #resolution
         PIXEL_SIZE = lyr.res[0]
         #x_min & y_max are the "top-left corner"
         x_min = lyr.ulc[0]
-        y_max = lyr.ulc[1] + (lyr.dim[1]*lyr.res[1])
+        y_max = lyr.ulc[1] + (lyr.dim[0]*lyr.res[1])
         #get the WKT projection
         wkt_projection = lyr.prj
         if wkt_projection is None:

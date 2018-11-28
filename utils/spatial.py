@@ -63,8 +63,6 @@ class _DensityGrid:
 
         #same as land.dim
         self.dim = dim
-        #same as land._inv_dim
-        self._inv_dim = self.dim[::-1]
 
         #resolution (i.e. cell-size); defaults to 1
         self.res = 1
@@ -81,7 +79,6 @@ class _DensityGrid:
         #on the edge (i.e. 0 and the dim val) for this dimension, else False
         self.x_edge = x_edge
         self.y_edge = y_edge
-
 
         #meshgrid arrays of the i and j points associated with each window
         self.gi = gi
@@ -132,30 +129,13 @@ class _DensityGridStack:
 
         #dimensions
         self.dim = land.dim
-        self._inv_dim = land._inv_dim
 
         #resolution (i.e. cell-size)
         self.res = land.res
 
-
-        #NOTE: This is a quick hack to find the closest whole-number
-        #factor of the larger of the land dimensions and set to 1/10th
-        #of that dimension, and set that as the window_width.
-        #This is so the windows fit evenly across the land. Otherwise,
-        #strange numerical errors are occurring. But when I get the 
-        #time, I need to puzzle through the density_grid_stack code again and
-        #figure out why it throws errors in those cases, and how to rectify it
+        #Get the integer closest to 1/10th of the larger of the Landscape dims
         if window_width == None:
-            facts = [(i,abs(i-0.1*max(self.dim))) for i in range(1,
-                                    max(self.dim)+1) if max(self.dim)%i == 0]
-            closest_fact = min([f[1] for f in facts])
-            window_width = [f[0] for f in facts if f[1] == closest_fact][0]
-
-        #TODO: Should figure out how to make attributes like this one
-        #(window_width) unchangeable by the user, because the ability to change
-        #them gives the impression that density will be calculated with the
-        #newly changed value whereas in fact it will still always be calculated
-        #with whatever window_width was initially used to create the grid stack
+            window_width = round(0.1*max(self.dim))
 
         #set window width of the grid-cell windows within which
         #to count the species
@@ -173,7 +153,6 @@ class _DensityGridStack:
         #create inner and outer density grids from the land and window-width
         self.grids = dict([(n,g) for n,g in enumerate(_make_density_grids(land,
                                                         self.window_width))])
-
 
     def _calc_density(self, x, y):
         #get a concatenated list of the grid-cell center coordinates
@@ -197,7 +176,6 @@ class _ConductanceSurface:
                                                     vm_distr_kappa = 12):
         #dimensions
         self.dim = cond_lyr.dim
-        self._inv_dim = cond_lyr._inv_dim
         #resolution (i.e. cell-size); defaults to 1
         self.res = cond_lyr.res
         #save whether it uses VonMises mixture dists or not
@@ -273,10 +251,10 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     #create a dictionary of cell ranges, one for when cells center
     #on edge values (i.e. 0 and dim[n] for either dimension), 
     #the other for when they don't (i.e. run from hww to dim[n] - hww)
-    x_edge_range_dict = {True:  np.arange(0, dim[0]+ww, ww),
-                       False: np.arange(0+hww, dim[0]+hww, ww)}
-    y_edge_range_dict = {True:  np.arange(0, dim[1]+ww, ww),
+    x_edge_range_dict = {True:  np.arange(0, dim[1]+ww, ww),
                        False: np.arange(0+hww, dim[1]+hww, ww)}
+    y_edge_range_dict = {True:  np.arange(0, dim[0]+ww, ww),
+                       False: np.arange(0+hww, dim[0]+hww, ww)}
 
 
     #create the meshgrid of the centerpoints of neighborhoods (or cells)
@@ -285,17 +263,15 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     #x and y cells are centered on the landscape edges or not)
     #NOTE: these are expressed as points in continuous space from 0 to
     #each land dimension, NOT as cell numbers (which will be calculated below)
-    gj, gi = np.meshgrid(x_edge_range_dict[x_edge], y_edge_range_dict[y_edge])
+    gi, gj = np.meshgrid(y_edge_range_dict[y_edge], x_edge_range_dict[x_edge])
 
     #and get flattened lists of the grid's i and j coordinates 
     j = gj.flatten()
     i = gi.flatten()
 
-
     #create a single, large Polygon object of the landscape quadrilateral
-    land_poly_coords = ((0,0), (dim[0], 0), (dim[0], dim[1]), (0, dim[1]))
+    land_poly_coords = ((0,0), (dim[1], 0), (dim[1], dim[0]), (0, dim[0]))
     land_poly = g.Polygon(land_poly_coords)
-
 
     #create a list of quadrilaterals centered on each of the points in the grid
     polys = [g.Polygon(((j[n]-hww, i[n]-hww), (j[n]-hww, i[n]+hww),
@@ -313,7 +289,6 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     #values for interpolated density surfaces
     areas[areas == 0] = 0.0001
 
-
     #get lists of the integer-identifiers (i,j in the proper matrix sense)
     #of the cells in each of the grids (so that these can be matched up
     #with individuals' cell numbers when calculating species density while
@@ -322,7 +297,6 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     #if the window-width is 1, or cell i =0,j = 1 if the window width is 5)
     i_cells = (i - (hww * (y_edge))) // ww + (y_edge)
     j_cells = (j - (hww * (x_edge))) // ww + (x_edge)
-
 
     #turn the cell-number integers into cell strings
     #(NOTE: the previous algorithm used to calculate species density

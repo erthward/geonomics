@@ -104,7 +104,7 @@ def _calc_n_pairs(pairs, spp):
 
     #otherwise just return a 0 raster
     else:
-        n_pairs = np.zeros(spp._land_inv_dim)
+        n_pairs = np.zeros(spp._land_dim)
 
     return n_pairs
 

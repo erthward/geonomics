@@ -23,6 +23,7 @@ Documentation:        URL
 '''
 #geonomics imports
 from utils import spatial as spt
+from utils import io
 
 #other imports
 import numpy as np
@@ -30,9 +31,11 @@ import numpy.random as r
 import matplotlib.pyplot as plt
 from operator import attrgetter as ag
 from collections import OrderedDict as OD
+from collections import Counter as C
 from copy import deepcopy
 import itertools as it
 from copy import deepcopy
+import os
 
 
 #TODO:
@@ -145,7 +148,7 @@ class _LandscapeChanger(_Changer):
             #check that the timeframes of the change events for this layer
             #don't overlap 
             all_timesteps = [[*range(v.start_t,
-                v.end_t)] for v in self.change_params[lyr_num]]
+                v.end_t)] for v in self.change_params[lyr_num].values()]
             all_timesteps = [t for i in all_timesteps for t in i]
             assert (len(set(all_timesteps)) == len(all_timesteps)), ("Some "
                 "of the change events for Layer number %i overlap "
@@ -181,7 +184,7 @@ class _LandscapeChanger(_Changer):
             dim, res, ulc, prj = [[*set(
                 [i[n] for i in all_lyr_series])][0] for n in range(1,5)]
             #check that dim, res, ulc, and prj match that of the land
-            assert dim == land._inv_dim, ('Dimensionality of lyr_series fed '
+            assert dim == land.dim, ('Dimensionality of lyr_series fed '
                 'into _LandscapeChanger does not match that of the land '
                 'to be changed.')
             assert res == land.res or res is None, ('Resolution of '
@@ -194,15 +197,15 @@ class _LandscapeChanger(_Changer):
             'lyr_series fed into _LandscapeChanger does not match that of the '
             'land to be changed.')
             #combine all lyr_series into one single lyr series
-            conglom_lyr_series = [
-                lyr_step for series in all_lyr_series for lyr_step in series]
+            conglom_lyr_series = [lyr_step for series in [
+                i[0] for i in all_lyr_series] for lyr_step in series]
             #add the conglomerate lyr series to the lyrs object
             lyrs[lyr_num] = conglom_lyr_series
             #set the _LandscapeChanger.change_info attribute, so that it can be
             #grabbed later for building _move_surf,
             #_disp_surf, and other objects
             self.change_info[lyr_num] = {**self.change_params[lyr_num]}
-            self.change_info[lyr_num]['end_rast'] = lyr_series[-1][1]
+            self.change_info[lyr_num]['end_rast'] = conglom_lyr_series[-1][1]
 
         #get everything in chronological order (with lyr-change functions
         #coming before surf-change functions if they're in the same timestep)
@@ -368,60 +371,143 @@ class _SpeciesChanger(_Changer):
 #function that takes a starting lyr, an ending lyr, a number of
 #timesteps, and a Model object, and returns a linearly interpolated
 #stack of rasters
-def _make_lyr_series(start_rast, end_rast, start_t, end_t, n_steps,
-        directory):
-
-    #TODO: REORDER THIS FN, SUCH THAT IT DOES:
-        #1. generate timesteps
-        #2. generate end_rast (whether np.array, individual file, or from dir)
-        #3. check the dimension is same in start and end rasts
+def _make_lyr_series(start_rast, change_rast, start_t, end_t, n_steps):
 
     #TODO: FIGURE OUT HOW USER WOULD NEED TO ORDER THE FILES IN A DIRECTORY
     #FULL OF FILES, IN ORDER TO DICTATE THE TIME ORDER OF THEM
-
-    #TODO: IF directory is not None, CHECK THAT THE NUMBER OF LAYERS IN THE
-    #DIRECTORY EQUALS THE NUMBER OF TIMESTEPS INDICATED, THEN READ IN ALL
-    #THE LAYERS INSTEAD OF LINEARLY INTERPOLATING THEM
-
-    #TODO: READ end_rast IN FROM FILE, if not an np.array
-
-    if isinstance(end_rast, str):
-        end_rast, dim, res, ulc, prj = io._read_raster(end_rast)
-
-    assert start_rast.shape == end_rast.shape, ('The starting raster and '
-        'ending raster for the land-change event are not of the same '
-        'dimensions: START: %s,  END %s') % (str(start_rast.shape),
-                                                    str(end_rast.shape))
-
-    elif type(end_rast) is np.ndarray:
-        dim = end_rast.shape
-        ulc = None
-        res = None
-        prj = None
 
     #get (rounded) evenly spaced timesteps at which to implement the changes
     #NOTE: Subtract 1 from end_t, to emulate the behavior of Python's 
     #range function, even though I have to use np.linspace here
     timesteps = np.int64(np.round(np.linspace(start_t, end_t-1, n_steps)))
-    #flatten the starting and ending rasters
-    start = start_rast.flatten()
-    end = end_rast.flatten()
-    #get a column of values for each grid cell on the landscape, linearly
-    #spaced between that cell's start and end values
-    #NOTE: linspace(..., ..., n+1)[1:] gives us the changed rasters
-    #for n steps, leaving off the starting lyr value because that's
-    #already the existing lyr so we don't want that added into our changes
-    rast_series = np.vstack([np.linspace(start[i],
-                            end[i], n_steps+1)[1:] for i in range(len(start))])
-    #then reshape each timeslice into the dimensions of start_rast
-    rast_series = [rast_series[:,i].reshape(
-                    start_rast.shape) for i in range(rast_series.shape[1])]
-    #check that all the lenghts match up
+
+    #if change_rast is a file or an array
+    if ((isinstance(change_rast, str) and os.path.isfile(change_rast))
+        or isinstance(change_rast, np.ndarray)):
+        #if it's an array, keep it, and set the prj, res, dim, ulc values;
+        #if it's a file, read it in and get the dim, res, ulc, and prj values
+        if isinstance(change_rast, np.ndarray):
+            dim = change_rast.shape
+            ulc = None
+            res = None
+            prj = None
+        elif os.path.isfile(change_rast):
+            change_rast, dim, res, ulc, prj = io._read_raster(change_rast)
+        #flatten the start and end rasters
+        start = start_rast.flatten()
+        end = change_rast.flatten()
+        #get a column of values for each grid cell on the landscape, linearly
+        #spaced between that cell's start and end values
+        #NOTE: linspace(..., ..., n+1)[1:] gives us the changed rasters
+        #for n steps, leaving off the starting lyr value because that's
+        #already the existing lyr so we don't want that added into our changes
+        rast_series = np.vstack([np.linspace(start[i],
+            end[i], n_steps+1)[1:] for i in range(len(start))])
+        #then reshape each timeslice into the dimensions of start_rast
+        rast_series = [rast_series[:,i].reshape(
+            start_rast.shape) for i in range(rast_series.shape[1])]
+
+    #elif it's a directory
+    elif isinstance(change_rast, str) and os.path.isdir(change_rast):
+        files = os.listdir(change_rast)
+        assert len(files) == n_steps, ("The number of files in the directory "
+            "provided for the 'change_rast' parameter is not equal to the "
+            "number provided for the 'n_steps' parameter.")
+        #check that each file starts with an integer
+        for f in files:
+            assert f.isnumeric(), ("In the directory provided for the "
+                "'change_rast' parameter, the file %s does not start "
+                "with an integer followed by an underscore. This is "
+                "necessary, to indicate the timestep during the Landscape "
+                "change event at which the file's raster should be used.")
+        #ensure that the files are ordered by the beginning integer
+        #NOTE: should already be sorted by natural sorting, but just in case
+        steps_and_files = {int(f.split('_')[0]):f for f in files}
+        files = [steps_and_files[i] for i in sorted(steps_and_files.keys())]
+        #read in the whole series, check all prj, dim, ulc, and res values
+        #are equal, then set rasters equal to rast_series
+        all_rasts = [io._read_raster(os.path.join(
+            change_rast, f)) for f in files]
+        dim_cts = C([i[1] for i in all_rasts])
+        assert len(dim_cts) == 1, ("The dimensions of "
+            "all files in the directory provided for the 'change_rast' "
+            "parameter are not equal. Most files have dimensions %s, but the "
+            "following files differ: %s.") % (
+            str([k for k,v in dim_cts.items() if v == max(dim_cts.values())]),
+            str([files[k] for k,v in dim_cts.items() if v != max(
+            dim_cts.values())]))
+        res_cts = C([i[2] for i in all_rasts])
+        assert len(res_cts) == 1, ("The spatial resolutions of "
+            "all files in the directory provided for the 'change_rast' "
+            "parameter are not equal. Most files have resolution %s, but the "
+            "following files differ: %s.") % (
+            str([k for k,v in res_cts.items() if v == max(res_cts.values())]),
+            str([files[k] for k,v in res_cts.items() if v != max(
+            res_cts.values())]))
+        ulc_cts = C([i[3] for i in all_rasts])
+        assert len(ulc_cts) == 1, ("The upper left corners of "
+            "all files in the directory provided for the 'change_rast' "
+            "parameter are not equal. Most files have upper left corner %s, "
+            "but the following files differ: %s.") % (
+            str([k for k,v in ulc_cts.items() if v == max(ulc_cts.values())]),
+            str([files[k] for k,v in ulc_cts.items() if v != max(
+            ulc_cts.values())]))
+        prj_cts = C([i[4] for i in all_rasts])
+        assert len(prj_cts) == 1, ("The projections of "
+            "all files in the directory provided for the 'change_rast' "
+            "parameter are not equal. Most files have projection %s, but the "
+            "following files differ: %s.") % (
+            str([k for k,v in prj_cts.items() if v == max(prj_cts.values())]),
+            str([files[k] for k,v in prj_cts.items() if v != max(
+            prj_cts.values())]))
+        rast_series = [i[0] for i in all_rasts]
+        #try to get the timesteps from the filenames
+        try:
+            timesteps = [int(i.split('_')[0]) for i in files]
+        except Exception as e:
+            raise ValueError("Unable to extract timesteps from the beginning "
+                "of all filenames in the directory provided to the "
+                "'change_rast' parameter. Each filename must begin with an "
+                "integer indicating the timestep at which that raster should "
+                "be switched out for the Layer's previous value, followed "
+                "by an underscore (e.g. '50_mat_2011.tif' for a raster that "
+                "should be used at timestep 50).")
+        #check that there are no repeat timesteps
+        timestep_cts = C(timesteps)
+        assert len(set(timestep_cts.values())) == 1, ("Not all timesteps "
+            "indicated by the beginnings of the files in the directory "
+            "provided for the 'change_rast' parameter are unique. "
+            "Duplicated timesteps include: %s") % (
+            str([k for k, v in timestep_cts if v > 1]))
+        #check that first and last timesteps of the files equal start_t & end_t
+        assert timesteps[0] == start_t, ("The timesteps indicated by the "
+            "beginnings of the filenames must start at the timestep indicated "
+            "by the 'start_t' parameter. The 'start_t' parameter was provided "
+            "the value %i, but the first timestep found in the directory was "
+            "%i (from the file named '%s').") % (start_t, timesteps[0],
+            files[0])
+        assert timesteps[::-1][0] == end_t, ("The timesteps indicated by the "
+            "beginnings of the filenames must end at the timestep indicated "
+            "by the 'end_t' parameter. The 'end_t' parameter was provided "
+            "the value %i, but the last timestep found in the directory was "
+            "%i (from the file named '%s').") % (end_t, timesteps[::-1][0],
+            files[::-1][0])
+
+    #otherwise raise a ValueError
+    else:
+        raise ValueError(("The value provided for the 'change_rast' parameter "
+            "must be either a numpy.ndarray or a path to a valid file "
+            "(indicating the endpoint-raster of the change event), or a "
+            "path to a directory of valid files (one for each timestep in "
+            "the change event)."))
+
+    #check that all the lengths match up
     assert len(rast_series) == n_steps, ("The length of the rast_series "
         "variable is not equal to the n_steps variable.")
     assert len(rast_series) == len(timesteps), ("The number of changing "
         "rasters created is not the same as the number of timesteps to be "
         "assigned to them")
+
     #zip the timesteps and the rasters together and return them as a list
     rast_series = list(zip(timesteps, rast_series))
     return(rast_series, dim, res, ulc, prj)

@@ -96,7 +96,6 @@ class Species(OD):
         #set other attributes
         self.name = str(name)
         self._land_dim = land.dim
-        self._land_inv_dim = land._inv_dim
         self.land = land
             # attribute to keep track of iteration number this 
             #spp is being used for (optional; will be set by
@@ -349,7 +348,8 @@ class Species(OD):
         offspring_keys = set(range(next_offspring_key,
                                         next_offspring_key + total_births))
         #update self.max_ind_idx
-        self.max_ind_idx = max(offspring_keys)
+        if len(offspring_keys) > 0:
+            self.max_ind_idx = max(offspring_keys)
 
         #copy the keys, for use in mutation.do_mutation()
         keys_list = [*offspring_keys]

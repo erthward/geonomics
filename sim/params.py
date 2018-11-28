@@ -73,8 +73,6 @@ PARAMS = '''#%s
                       ##                         ##
 
 
-#NOTE: GET RID OF THIS SOON!
-import numpy as np
 
 params = {
 ###############################################################################
@@ -255,16 +253,15 @@ LYR_CHANGE_PARAMS = '''
     #%i = lyr_change_event_num,
 LYR_CHANGE_EVENT_PARAMS = '''
                     %i: {
-                        #array or raster file for end raster of event
-                        'end_rast':         '/PATH/TO/FILE.EXT',
+                        #array or file for final raster of event, or directory
+                        #of files for each stepwise change in event
+                        'change_rast':         '/PATH/TO/FILE.EXT',
                         #starting timestep of event
                         'start_t':          49,
                         #ending timestep of event
                         'end_t':            99,
                         #number of stepwise changes in event
                         'n_steps':          5,
-                        #directory of raster files for each stepwise change
-                        'directory':              '/PATH/TO/DIRECTORY/',
                         }, # <END> event %i'''
 
 #block of species params
@@ -517,7 +514,7 @@ SPP_DEM_CHANGE_EVENTS_PARAMS = '''
 SPP_DEM_CHANGE_EVENT_PARAMS = '''
                         %i: {
                             #kind of event {'monotonic', 'stochastic',
-                                                #'cyclical', 'custom'}
+                            #'cyclical', 'custom'}
                             'kind':             'monotonic',
                             #starting timestep
                             'start':            49,
@@ -537,8 +534,6 @@ SPP_DEM_CHANGE_EVENT_PARAMS = '''
                             'timesteps':        [50, 90, 95],
                             #list of sizes, for custom change
                             'sizes':            [2, 5, 0.5],
-                            #directory containing K-rasters, for custom change
-                            'directory':              '/PATH/TO/DIRECTORY',
                             }, # <END> event %i
 
 '''

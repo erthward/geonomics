@@ -1,5 +1,9 @@
 - knock out these secondary to-do items:
 
+        5 decide whether or not to add a switch determining whether movement surafces are calculated up front, before model is run, or are calculated during the model run (b/c of the memory/compute time ttrade-off)
+
+        5 allow r_distr_alpha/beta to be set to 0, which would set all recomb rates to 0.6
+
         5 ASK IAN: draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
           should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!
 
@@ -10,13 +14,6 @@
         5 consider adding ability for life-history parameters to be determined by a trait's phenotype
 
 ################################
-a. implement the 'dir' option that I added in the dem change section, or get rid of it
-b. implement a 'dir' option and a 'timesteps' option for a land-change event
-c. implement a filename instaed of just an np.array for land-change events
-d. implement the option to create a list of sep. land change events by feeding change: int
-e. add the 'dir' parameters to the docs
-f. DEBUG
-
    |||| 5 "layers" and "population" argument in make_parameters_file both have "change" arugments, which should be able to take int as a value too, and then add that umber of events
    ||||         - and/or a change events params section should be able to take either a file or a directory of files (in which case those will change at the set timesteps)
 
@@ -40,6 +37,7 @@ f. DEBUG
           - add mention of "geonomics" the philosophical movememnt (and disambiguation)
           - add a graphical representation of the model components to the docs (Species composed of Individuals, optionally having genomes, optionally subtending phenotypes, and living on a Landscape with multiple Layers)
 
+        5 touch up all comments (only add necessary, non-obvious comments, and separate each comment-topped section by a single line break)
 
         5 add type annotation to all functions
 
@@ -49,6 +47,7 @@ f. DEBUG
 
         5 replace all "if str(type(whatever))" statements with proper "isinstance(whatever, classname)" calls as soon as I know how my finalized class names are going to
           look to geonomics when it's properly set up as a package
+
 
 
         5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct

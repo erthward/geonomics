@@ -64,8 +64,8 @@ class _DensityGrid:
         #same as land.dim
         self.dim = dim
 
-        #resolution (i.e. cell-size); defaults to 1
-        self.res = 1
+        #resolution (i.e. cell-size); defaults to 1,1
+        self.res = (1,1)
 
         #order of magnitude of the largest dimension in self.dim
         #(used for zero-padding the cell strings)
@@ -86,7 +86,7 @@ class _DensityGrid:
 
         #create array of the i,j grid-cell centerpoints
         self.grid_coords = np.array(list(zip(self.gi.flatten(),
-                                                        self.gj.flatten())))
+            self.gj.flatten())))
 
         #create attributes of the grid cells and their areas
         self.cells = cells
@@ -138,7 +138,7 @@ class _DensityGridStack:
             window_width = round(0.1*max(self.dim))
 
         #set window width of the grid-cell windows within which
-        #to count the species
+        #to count the species' individuals
         self.window_width = window_width
 
         #get the order of magnitude of the larger of the two land
@@ -147,8 +147,8 @@ class _DensityGridStack:
 
         #get meshgrids of the i and j cell-center coordinates of the
         #landscape-raster cells (to be interpolated to for density calculation)
-        self.land_gi, self.land_gj = np.meshgrid(np.arange(0,
-                            self.dim[0])+0.5, np.arange(0, self.dim[1])+0.5)
+        self.land_gj, self.land_gi = np.meshgrid(np.arange(0,
+                            self.dim[1])+0.5, np.arange(0, self.dim[0])+0.5)
 
         #create inner and outer density grids from the land and window-width
         self.grids = dict([(n,g) for n,g in enumerate(_make_density_grids(land,
@@ -166,7 +166,7 @@ class _DensityGridStack:
 
         #then interpolate from those points and values to the centerpoints
         #of all of the land centerpoints
-        dens = interpolate.griddata(pts, vals, (self.land_gj, self.land_gi),
+        dens = interpolate.griddata(pts, vals, (self.land_gi, self.land_gj),
             method = 'cubic')
         return dens
 
@@ -263,7 +263,7 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     #x and y cells are centered on the landscape edges or not)
     #NOTE: these are expressed as points in continuous space from 0 to
     #each land dimension, NOT as cell numbers (which will be calculated below)
-    gi, gj = np.meshgrid(y_edge_range_dict[y_edge], x_edge_range_dict[x_edge])
+    gj, gi = np.meshgrid(x_edge_range_dict[x_edge], y_edge_range_dict[y_edge])
 
     #and get flattened lists of the grid's i and j coordinates 
     j = gj.flatten()

@@ -171,8 +171,9 @@ def _plot_points(points, lyr_num=None, color='black',
 
 
 def _get_lyr_plt_lims(land):
+    #NOTE: these are set up so that 0,0 is in the upper-left corner
     xlim = (-1, land.dim[1])
-    ylim = (-1, land.dim[0])
+    ylim = (land.dim[0], -1)
     lims = (xlim, ylim)
     return(lims)
 

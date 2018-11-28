@@ -61,8 +61,8 @@ class Layer:
         self.dim = dim
         assert type(self.dim) in [tuple, list], ("dim must be expressed "
                                                  "as a tuple or a list")
-        #set the resoultion (res; i.e. cell-size) and upper-left corner (ulc)
-        #to defaults; will be reset if layer read in from a GIS raster or
+        #set the resoultion (res; i.e. y,x cell sizes) and upper-left corner
+        #(ulc) to defaults; will be reset if layer read in from a GIS raster or
         #numpy txt array file
         self.res = res
         self.ulc = ulc
@@ -150,8 +150,8 @@ class Landscape(dict):
         #get the order of magnitude of the larger land dimension
         #(used when zero-padding cell-coorindate strings)
         self._dim_om = max([len(str(d)) for d in self.dim])
-        #set the resoultion (res; i.e. cell-size), upper-left corner (ulc), and
-        #projection (prj) to the provided values
+        #set the resoultion (res; i.e. y,x cell sizes), upper-left corner
+        #(ulc), and projection (prj) to the provided values
         self.res = res
         self.ulc = ulc
         self.prj = prj

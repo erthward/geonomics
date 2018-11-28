@@ -86,7 +86,7 @@ params = {
     #### main ####
     ##############
         'main': {
-            #y,x (a.k.a. i, j) dimensions of the Landscape
+            #y,x (a.k.a. i,j) dimensions of the Landscape
             'dim':                      (20,20),
             #resolution of the Landscape
             'res':                      (1,1),

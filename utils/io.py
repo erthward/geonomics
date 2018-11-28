@@ -105,8 +105,15 @@ def _read_raster(filepath, dim=None):
             rast_file = gdal.Open(filepath)
             rast = rast_file.ReadAsArray()
             dim = rast.shape
+            #NOTE: From tutorial at https://www.gdal.org/gdal_tutorial.html:
+                #adfGeoTransform[0] /* top left x */
+                #adfGeoTransform[1] /* w-e pixel resolution */
+                #adfGeoTransform[2] /* 0 */
+                #adfGeoTransform[3] /* top left y */
+                #adfGeoTransform[4] /* 0 */
+                #adfGeoTransform[5] /* n-s pixel resolution (negative value) */
             res = tuple([i for n,i in enumerate(rast_file.GetGeoTransform(
-                                                            )) if n in [1,5]])
+                                                            )) if n in [5,1]])
             ulc = tuple([i for n,i in enumerate(rast_file.GetGeoTransform(
                                                             )) if n in [0,3]])
             #get the projection as WKT
@@ -231,7 +238,7 @@ def _write_geotiff(filepath, lyr):
         PIXEL_SIZE = lyr.res[0]
         #x_min & y_max are the "top-left corner"
         x_min = lyr.ulc[0]
-        y_max = lyr.ulc[1] + (lyr.dim[0]*lyr.res[1])
+        y_max = lyr.ulc[1] + (lyr.dim[0]*lyr.res[0])
         #get the WKT projection
         wkt_projection = lyr.prj
         if wkt_projection is None:

@@ -705,6 +705,10 @@ class Species(OD):
             alpha=0.5, zoom_width=None, x=None, y=None):
         assert type(normalize) is bool, ("The 'normalize' argument takes "
             "a boolean value.\n")
+        #update the species' coordinates and cells, in case it hasn't
+        #been update since some internal or manual changes in population-size
+        #have occurred
+        self._set_coords_and_cells()
         dens = self._calc_density(normalize = normalize)
         plt_lims = viz._get_plt_lims(self.land, x, y, zoom_width)
         if normalize:

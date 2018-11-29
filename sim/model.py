@@ -383,7 +383,7 @@ class Model:
                     if self._verbose:
                         print(('Resetting the spp._changer.changes '
                             'object for species " %s"...\n\n') % spp.name)
-                    spp._changer._set_changes(spp)
+                    spp._changer._set_changes(spp, self.land)
         else:
             #verbose ouput
             if self._verbose:
@@ -898,7 +898,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             #get the spp
             spp = self.comm[self._get_spp_num(spp)]
             #feed args into spp._plot
-            spp._plot(lyr_num=lyr_num, hide_land=hide_land,
+            spp._plot(lyr_num=lyr_num, land = self.land, hide_land=hide_land,
                 individs=individs, text=text, color=color, edge_color=edge_color,
                 text_color=text_color, colorbar=colorbar, size=size,
                 text_size=text_size, im_interp_method=im_interp_method,

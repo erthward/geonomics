@@ -661,8 +661,8 @@ class Species(OD):
 
     #method for plotting the species (or a subset of its individuals, by ID)
     #on top of a layer (or landscape)
-    def _plot(self, lyr_num=None, hide_land=False, individs=None, text=False,
-            color='black', edge_color='face', text_color='black',
+    def _plot(self, lyr_num=None, land=None, hide_land=False, individs=None,
+            text=False, color='black', edge_color='face', text_color='black',
             colorbar=True, size=25, text_size=9, im_interp_method='nearest',
             land_cmap='terrain', pt_cmap=None, alpha=False,
             zoom_width=None, x=None, y=None, vmin = None, vmax = None):
@@ -681,12 +681,12 @@ class Species(OD):
         if not text:
             text = None
         #set the plt_lims
-        plt_lims = viz._get_plt_lims(self.land, x, y, zoom_width)
+        plt_lims = viz._get_plt_lims(land, x, y, zoom_width)
         #plot the layer(s)
         if hide_land:
             pass
         else:
-            viz._plot_rasters(self.land, lyr_num = lyr_num,
+            viz._plot_rasters(land, lyr_num = lyr_num,
                 colorbar = colorbar, im_interp_method = im_interp_method,
                                     cmap = land_cmap, plt_lims = plt_lims)
         #and plot the individuals
@@ -1114,16 +1114,21 @@ def _make_species(land, name, idx, spp_params, burn=False):
         spp._disp_surf = spt._ConductanceSurface(land[disp_surf_lyr_num],
                                                                 **ds_params)
 
-    #if this species has changes parameterized, create a
-    #_SpeciesChanger object for it
-    if 'change' in spp_params.keys():
-        #grab the change params
-        ch_params = spp_params.change
-        #make _SpeciesChanger and set it to the spp's changer attribute
-        if land._changer is not None:
-            spp._changer = change._SpeciesChanger(spp, ch_params, land= land)
+    #if this species has changes parameterized, or if not but it has
+    #either a MovementSurf or a DispersalSurf based on a Layer that
+    #will undergo landscape change, then create a _SpeciesChanger object for it
+    if ('change' in spp_params.keys()
+        or (spp._move_surf is not None
+        and spp._move_surf.lyr_num in spp.land._changer.change_info.keys())
+        or (spp._disp_surf is not None
+        and spp._disp_surf.lyr_num in spp.land._changer.change_info.keys())):
+        #grab the change params (or None, if 
+        if 'change' in spp_params.keys():
+            ch_params = spp_params.change
         else:
-            spp._changer = change._SpeciesChanger(spp, ch_params, land= None)
+            ch_params = None
+        #make _SpeciesChanger and set it to the spp's changer attribute
+        spp._changer = change._SpeciesChanger(spp, ch_params, land = land)
 
     return spp
 

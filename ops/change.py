@@ -38,20 +38,6 @@ from copy import deepcopy
 import os
 
 
-#TODO:
-
-    #1 I created a quick, crude way of stipulating other-parameter spp changes,
-    #but it would probably be nicer to just further generalize the
-    #dem-change functions to allow for linear, stochastic, cyclic, or custom
-    #changes of other param values?
-
-    #2 I think this can be standardized (e.g. _LandscapeChanger
-    #get_<   >_change_fns functions I believe return just the
-    #functions, whereas _SpeciesChanger
-    #ones return list(zip(t, change_fn)) objects) and generalized still
-    #further. Worth doing now, while the code is fresh in my head...
-
-
 ######################################
 # -----------------------------------#
 # CLASSES ---------------------------#
@@ -141,71 +127,20 @@ class _LandscapeChanger(_Changer):
     #the land object
     def _set_changes(self, land):
 
-        #get the linearly spaced time-series of layers for each lyr_num
+        #get the time-series of layers for each lyr_num
         lyrs = {}
         surfs = {}
         for lyr_num in self.change_params.keys():
-            #check that the timeframes of the change events for this layer
-            #don't overlap 
-            all_timesteps = [[*range(v.start_t,
-                v.end_t)] for v in self.change_params[lyr_num].values()]
-            all_timesteps = [t for i in all_timesteps for t in i]
-            assert (len(set(all_timesteps)) == len(all_timesteps)), ("Some "
-                "of the change events for Layer number %i overlap "
-                "in time.") % lyr_num
-            #get the congolmerated lyr_series for all change events for this
-            #layer
-            all_lyr_series = [_make_lyr_series(
-                land[lyr_num].rast, land.dim, **self.change_params[lyr_num][
-                i]) for i in self.change_params[lyr_num].keys()]
-            #check that dim, res, ulc, and prj values are the same for each
-            #change event
-            assert len(set([i[1] for i in all_lyr_series]))==1, (""
-                "Not all change events for Layer number %i produce layer "
-                "series with the same dimensions.  Resulting dimensions "
-                "include: (%s).") % ', '.join([*set(
-                [i[1] for i in all_lyr_series])])
-            assert len(set([i[2] for i in all_lyr_series]))==1, (""
-                "Not all change events for Layer number %i produce layer "
-                "series with the same resolution.  Resulting resolutions "
-                "include: (%s).") % ', '.join([*set(
-                [i[2] for i in all_lyr_series])])
-            assert len(set([i[3] for i in all_lyr_series]))==1, (""
-                "Not all change events for Layer number %i produce layer "
-                "series with the same upper-left corners.  Resulting "
-                "upper-left corners include: (%s).") % ', '.join([*set(
-                [i[3] for i in all_lyr_series])])
-            assert len(set([i[4] for i in all_lyr_series]))==1, (""
-                "Not all change events for Layer number %i produce layer "
-                "series with the same resolution.  Resulting resolutions "
-                "include: (%s).") % ', '.join([*set(
-                [i[4] for i in all_lyr_series])])
-            #take dim, res, ulc, and prj as single values
-            dim, res, ulc, prj = [[*set(
-                [i[n] for i in all_lyr_series])][0] for n in range(1,5)]
-            #check that dim, res, ulc, and prj match that of the land
-            assert dim == land.dim, ('Dimensionality of lyr_series fed '
-                'into _LandscapeChanger does not match that of the land '
-                'to be changed.')
-            assert res == land.res or res is None, ('Resolution of '
-                'lyr_series fed into _LandscapeChanger does not match '
-                'that of the land to be changed.')
-            assert ulc == land.ulc or ulc is None, ('Upper-left corner of '
-                'lyr_series fed into _LandscapeChanger does not match that of '
-                'the land to be changed.')
-            assert prj == land.prj or prj is None, ('Projection of '
-            'lyr_series fed into _LandscapeChanger does not match that of the '
-            'land to be changed.')
-            #combine all lyr_series into one single lyr series
-            conglom_lyr_series = [lyr_step for series in [
-                i[0] for i in all_lyr_series] for lyr_step in series]
+            #get the conglomerate lyr series, across all change events
+            #parameterized for this Layer
+            conglom_lyr_series = _make_conglom_lyr_series(land, lyr_num,
+                self.change_params[lyr_num])
             #add the conglomerate lyr series to the lyrs object
             lyrs[lyr_num] = conglom_lyr_series
             #set the _LandscapeChanger.change_info attribute, so that it can be
             #grabbed later for building _move_surf,
             #_disp_surf, and other objects
             self.change_info[lyr_num] = {**self.change_params[lyr_num]}
-            self.change_info[lyr_num]['end_rast'] = conglom_lyr_series[-1][1]
 
         #get everything in chronological order (with lyr-change functions
         #coming before surf-change functions if they're in the same timestep)
@@ -226,7 +161,7 @@ class _LandscapeChanger(_Changer):
 
 
 class _SpeciesChanger(_Changer):
-    def __init__(self, spp, spp_change_params, land=None):
+    def __init__(self, spp, spp_change_params, land):
         super(_SpeciesChanger, self).__init__(spp_change_params)
         self.type = 'spp'
 
@@ -236,14 +171,14 @@ class _SpeciesChanger(_Changer):
         self.base_K = None
 
     #call self._set_changes() to set self.changes and self.next_change
-        self._set_changes(spp)
+        self._set_changes(spp, land)
 
     #method to set the base_K attribute to spp.K
     def _set_base_K(self, spp):
         self.base_K = spp.K
 
     #method to set the changes stipulated in params dict for the spp object
-    def _set_changes(self, spp, land=None):
+    def _set_changes(self, spp, land):
         #pull out the parts of the params
         try:
             dem_change_params = self.change_params.dem
@@ -257,7 +192,6 @@ class _SpeciesChanger(_Changer):
         #that affect its lyr
         move_surf_change_fns = []
         if (spp._move_surf is not None
-            and land is not None
             and spp._move_surf.lyr_num in land._changer.change_info.keys()):
             #if so, grab that lyr's land change params and create a
             #move_surf_series with them, to be 
@@ -266,10 +200,10 @@ class _SpeciesChanger(_Changer):
                                                     spp._move_surf.lyr_num]
             #create a time-series of movement surfaces 
             surf = spp._move_surf
-            surf_series = _make_conductance_surface_series(
+            surf_series = _make_conductance_surface_series(land,
                 start_lyr = land[surf.lyr_num], mixture = surf.mix,
                 kappa = surf.kappa, approx_len = surf.approx_len,
-                **lc_move_surf_params)
+                change_params_one_lyr = lc_move_surf_params)
             #and create change fns from them
             move_surf_change_fns.extend(_get_conductance_surface_change_fns(
                                                         spp, surf_series))
@@ -287,10 +221,10 @@ class _SpeciesChanger(_Changer):
                                                     spp._disp_surf.lyr_num]
             #create a time-series of movement surfaces 
             surf = spp._disp_surf
-            surf_series = _make_conductance_surface_series(
+            surf_series = _make_conductance_surface_series(land,
                 start_lyr = land[surf.lyr_num], mixture = surf.mix,
                 kappa = surf.kappa, approx_len = surf.approx_len,
-                **lc_disp_surf_params)
+                change_params_one_lyr = lc_disp_surf_params)
             #and create change fns from them
             disp_surf_change_fns.extend(_get_conductance_surface_change_fns(
                                                         spp, surf_series))
@@ -527,6 +461,65 @@ def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps):
     return(rast_series, dim, res, ulc, prj)
 
 
+#function for getting the congolmerate lyr_series for all change
+#events parameterized for a Layer
+def _make_conglom_lyr_series(land, lyr_num, change_params_one_lyr):
+    #check that the timeframes of the change events for this layer
+    #don't overlap 
+    all_timesteps = [[*range(v.start_t,
+        v.end_t)] for v in change_params_one_lyr.values()]
+    all_timesteps = [t for i in all_timesteps for t in i]
+    assert (len(set(all_timesteps)) == len(all_timesteps)), ("Some "
+        "of the change events for Layer number %i overlap "
+        "in time.") % lyr_num
+    #get the congolmerated lyr_series for all change events for this
+    #layer
+    all_lyr_series = [_make_lyr_series(land[lyr_num].rast, land.dim,
+        **v) for v in change_params_one_lyr.values()]
+    #check that dim, res, ulc, and prj values are the same for each
+    #change event
+    assert len(set([i[1] for i in all_lyr_series]))==1, (""
+        "Not all change events for Layer number %i produce layer "
+        "series with the same dimensions.  Resulting dimensions "
+        "include: (%s).") % (lyr_num, ', '.join([*set(
+        [i[1] for i in all_lyr_series])]))
+    assert len(set([i[2] for i in all_lyr_series]))==1, (""
+        "Not all change events for Layer number %i produce layer "
+        "series with the same resolution.  Resulting resolutions "
+        "include: (%s).") % (lyr_num, ', '.join([*set(
+        [i[2] for i in all_lyr_series])]))
+    assert len(set([i[3] for i in all_lyr_series]))==1, (""
+        "Not all change events for Layer number %i produce layer "
+        "series with the same upper-left corners.  Resulting "
+        "upper-left corners include: (%s).") % (lyr_num, ', '.join([*set(
+        [i[3] for i in all_lyr_series])]))
+    assert len(set([i[4] for i in all_lyr_series]))==1, (""
+        "Not all change events for Layer number %i produce layer "
+        "series with the same resolution.  Resulting resolutions "
+        "include: (%s).") % (lyr_num, ', '.join([*set(
+        [i[4] for i in all_lyr_series])]))
+    #take dim, res, ulc, and prj as single values
+    dim, res, ulc, prj = [[*set(
+        [i[n] for i in all_lyr_series])][0] for n in range(1,5)]
+    #check that dim, res, ulc, and prj match that of the land
+    assert dim == land.dim, ('Dimensionality of lyr_series fed '
+        'into _LandscapeChanger for Layer number %i does not '
+        'match that of the land to be changed.') % lyr_num
+    assert res == land.res or res is None, ('Resolution of '
+        'lyr_series fed into _LandscapeChanger for Layer number %i '
+        'does not match that of the land to be changed.') % lyr_num
+    assert ulc == land.ulc or ulc is None, ('Upper-left corner of '
+        'lyr_series fed into _LandscapeChanger for Layer number %i '
+        'does not match that of the land to be changed.') % lyr_num
+    assert prj == land.prj or prj is None, ('Projection of '
+        'lyr_series fed into _LandscapeChanger for Layer number %i '
+        'does not match that of the land to be changed.') % lyr_num
+    #combine all lyr_series into one single lyr series
+    conglom_lyr_series = [lyr_step for series in [
+        i[0] for i in all_lyr_series] for lyr_step in series]
+    return conglom_lyr_series
+        
+
 #function that takes a Landscape, a lyr_num and a dictionary of
 #{t_change:new_lyr} and creates an _LandscapeChanger object that will change
 #out Landscape[lyr_num] for new_lyr at each requisite t_change timestep
@@ -546,22 +539,19 @@ def _get_lyr_change_fn(land, lyr_num, new_lyr_rast):
     #######################
     # for _SpeciesChanger #
     #######################
-
-def _make_conductance_surface_series(start_lyr, mixture, kappa,
-        approx_len, end_rast, start_t, end_t, n_steps,
-        t_res_reduct_factor=1):
+def _make_conductance_surface_series(land, start_lyr, mixture, kappa,
+        approx_len, change_params_one_lyr):
     #get the time-series of lyrs across the land-change event (can
     #be at a reduced temporal resolution determined by t_res_reduct_factor,
     #because probably unnecessary to change the move_surf or disp_surf every
     #time the land changes, and they could be a fairly large objects to
     #hold in memory anyhow; but t_res_reduct_factor defaults to 1)
-    lyr_series, dim, res, ulc, prj = _make_lyr_series(
-        start_lyr.rast, start_lyr.shape, end_rast, start_t,
-        end_t, int(n_steps*t_res_reduct_factor))
+    conglom_lyr_series= _make_conglom_lyr_series(land, start_lyr.idx,
+        change_params_one_lyr)
     #then get the series of _ConductanceSurface objects
     surf_series = []
     dummy_lyr = deepcopy(start_lyr)
-    for t, rast in lyr_series:
+    for t, rast in conglom_lyr_series:
         #change the lyr's raster
         dummy_lyr.rast = rast
         #then create a Movement_Surface using the copied Landscape

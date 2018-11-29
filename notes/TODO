@@ -1,6 +1,9 @@
 - knock out these secondary to-do items:
-
-        5 finish fixing the land-change directory-of-files option by looking into what will happen when a directory of stepwise change rasters is fed in for a layer on which movement surfaces are also based, because the movement surfaces that are made cannot be linearly interpolated either, they need to actually use the precise rasters!!
+        
+        5 double-check how timesteps stipulated in params file are handled (i.e. does the user
+          stipulate the exact timestep at which an event will happen, or am I checking t-1 to
+          account for python 0-indexed counting?), then make this STANDARD across the package
+          and VERY CLEAR in the docs!!
 
         5 decide whether or not to add a switch determining whether movement surafces are calculated up front, before model is run, or are calculated during the model run (b/c of the memory/compute time ttrade-off)
 

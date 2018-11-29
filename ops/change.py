@@ -156,7 +156,7 @@ class _LandscapeChanger(_Changer):
             #get the congolmerated lyr_series for all change events for this
             #layer
             all_lyr_series = [_make_lyr_series(
-                land[lyr_num].rast, **self.change_params[lyr_num][
+                land[lyr_num].rast, land.dim, **self.change_params[lyr_num][
                 i]) for i in self.change_params[lyr_num].keys()]
             #check that dim, res, ulc, and prj values are the same for each
             #change event
@@ -371,7 +371,7 @@ class _SpeciesChanger(_Changer):
 #function that takes a starting lyr, an ending lyr, a number of
 #timesteps, and a Model object, and returns a linearly interpolated
 #stack of rasters
-def _make_lyr_series(start_rast, change_rast, start_t, end_t, n_steps):
+def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps):
 
     #TODO: FIGURE OUT HOW USER WOULD NEED TO ORDER THE FILES IN A DIRECTORY
     #FULL OF FILES, IN ORDER TO DICTATE THE TIME ORDER OF THEM
@@ -387,12 +387,15 @@ def _make_lyr_series(start_rast, change_rast, start_t, end_t, n_steps):
         #if it's an array, keep it, and set the prj, res, dim, ulc values;
         #if it's a file, read it in and get the dim, res, ulc, and prj values
         if isinstance(change_rast, np.ndarray):
+            #NOTE: this resets dim from the argument that was fed in
             dim = change_rast.shape
             ulc = None
             res = None
             prj = None
         elif os.path.isfile(change_rast):
-            change_rast, dim, res, ulc, prj = io._read_raster(change_rast)
+            #NOTE: this resets dim from the argument that was fed in
+            change_rast, dim, res, ulc, prj = io._read_raster(change_rast,
+                dim = dim)
         #flatten the start and end rasters
         start = start_rast.flatten()
         end = change_rast.flatten()
@@ -415,19 +418,23 @@ def _make_lyr_series(start_rast, change_rast, start_t, end_t, n_steps):
             "number provided for the 'n_steps' parameter.")
         #check that each file starts with an integer
         for f in files:
-            assert f.isnumeric(), ("In the directory provided for the "
+            assert os.path.splitext(f.split('_')[0])[0].isnumeric(), ("In the "
+                "directory provided for the "
                 "'change_rast' parameter, the file %s does not start "
                 "with an integer followed by an underscore. This is "
                 "necessary, to indicate the timestep during the Landscape "
-                "change event at which the file's raster should be used.")
+                "change event at which the file's raster should "
+                "be used.") % f
         #ensure that the files are ordered by the beginning integer
         #NOTE: should already be sorted by natural sorting, but just in case
-        steps_and_files = {int(f.split('_')[0]):f for f in files}
+        steps_and_files = {int(
+            os.path.splitext(f.split('_')[0])[0]):f for f in files}
         files = [steps_and_files[i] for i in sorted(steps_and_files.keys())]
         #read in the whole series, check all prj, dim, ulc, and res values
-        #are equal, then set rasters equal to rast_series
+        #are equal, then set the prj, dim, ulc, and res values, and
+        #set rasters equal to rast_series
         all_rasts = [io._read_raster(os.path.join(
-            change_rast, f)) for f in files]
+            change_rast, f), dim) for f in files]
         dim_cts = C([i[1] for i in all_rasts])
         assert len(dim_cts) == 1, ("The dimensions of "
             "all files in the directory provided for the 'change_rast' "
@@ -436,6 +443,8 @@ def _make_lyr_series(start_rast, change_rast, start_t, end_t, n_steps):
             str([k for k,v in dim_cts.items() if v == max(dim_cts.values())]),
             str([files[k] for k,v in dim_cts.items() if v != max(
             dim_cts.values())]))
+        #NOTE: this resets dim from the argument that was fed in
+        dim = all_rasts[0][1]
         res_cts = C([i[2] for i in all_rasts])
         assert len(res_cts) == 1, ("The spatial resolutions of "
             "all files in the directory provided for the 'change_rast' "
@@ -444,6 +453,7 @@ def _make_lyr_series(start_rast, change_rast, start_t, end_t, n_steps):
             str([k for k,v in res_cts.items() if v == max(res_cts.values())]),
             str([files[k] for k,v in res_cts.items() if v != max(
             res_cts.values())]))
+        res = all_rasts[0][2]
         ulc_cts = C([i[3] for i in all_rasts])
         assert len(ulc_cts) == 1, ("The upper left corners of "
             "all files in the directory provided for the 'change_rast' "
@@ -452,6 +462,7 @@ def _make_lyr_series(start_rast, change_rast, start_t, end_t, n_steps):
             str([k for k,v in ulc_cts.items() if v == max(ulc_cts.values())]),
             str([files[k] for k,v in ulc_cts.items() if v != max(
             ulc_cts.values())]))
+        ulc = all_rasts[0][3]
         prj_cts = C([i[4] for i in all_rasts])
         assert len(prj_cts) == 1, ("The projections of "
             "all files in the directory provided for the 'change_rast' "
@@ -460,10 +471,12 @@ def _make_lyr_series(start_rast, change_rast, start_t, end_t, n_steps):
             str([k for k,v in prj_cts.items() if v == max(prj_cts.values())]),
             str([files[k] for k,v in prj_cts.items() if v != max(
             prj_cts.values())]))
+        prj = all_rasts[0][4]
         rast_series = [i[0] for i in all_rasts]
         #try to get the timesteps from the filenames
         try:
-            timesteps = [int(i.split('_')[0]) for i in files]
+            timesteps = [int(os.path.splitext(
+                i.split('_')[0])[0]) for i in files]
         except Exception as e:
             raise ValueError("Unable to extract timesteps from the beginning "
                 "of all filenames in the directory provided to the "
@@ -510,6 +523,7 @@ def _make_lyr_series(start_rast, change_rast, start_t, end_t, n_steps):
 
     #zip the timesteps and the rasters together and return them as a list
     rast_series = list(zip(timesteps, rast_series))
+
     return(rast_series, dim, res, ulc, prj)
 
 
@@ -542,8 +556,8 @@ def _make_conductance_surface_series(start_lyr, mixture, kappa,
     #time the land changes, and they could be a fairly large objects to
     #hold in memory anyhow; but t_res_reduct_factor defaults to 1)
     lyr_series, dim, res, ulc, prj = _make_lyr_series(
-        start_lyr.rast, end_rast, start_t, end_t, int(
-                                    n_steps*t_res_reduct_factor))
+        start_lyr.rast, start_lyr.shape, end_rast, start_t,
+        end_t, int(n_steps*t_res_reduct_factor))
     #then get the series of _ConductanceSurface objects
     surf_series = []
     dummy_lyr = deepcopy(start_lyr)

@@ -888,7 +888,8 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
         #if no spp provided, then call Landscape._plot
-        if spp is None:
+        if (spp is None or
+            (spp is not None and len(self.comm[self._get_spp_num(spp)])) == 0):
             self.land._plot(lyr_num=lyr_num, colorbar=colorbar, cmap=land_cmap,
                 im_interp_method=im_interp_method, x=x, y=y,
                 zoom_width=zoom_width, vmin=vmin, vmax=vmax)

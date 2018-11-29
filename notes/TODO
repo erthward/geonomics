@@ -1,5 +1,7 @@
 - knock out these secondary to-do items:
 
+        5 finish fixing the land-change directory-of-files option by looking into what will happen when a directory of stepwise change rasters is fed in for a layer on which movement surfaces are also based, because the movement surfaces that are made cannot be linearly interpolated either, they need to actually use the precise rasters!!
+
         5 decide whether or not to add a switch determining whether movement surafces are calculated up front, before model is run, or are calculated during the model run (b/c of the memory/compute time ttrade-off)
 
         5 allow r_distr_alpha/beta to be set to 0, which would set all recomb rates to 0.6
@@ -12,15 +14,6 @@
         5 consider adding a generalized function for making a distribution's draw be a function of phenotype, then apply that to movement, dispersal, fecundity, etc?
 
         5 consider adding ability for life-history parameters to be determined by a trait's phenotype
-
-################################
-   |||| 5 "layers" and "population" argument in make_parameters_file both have "change" arugments, which should be able to take int as a value too, and then add that umber of events
-   ||||         - and/or a change events params section should be able to take either a file or a directory of files (in which case those will change at the set timesteps)
-
-   |||| 5 I say that a Layer can have any number of change events, but the make_parameters_file only takes a bool argument for 'change', not an integer; decide and make
-   ||||   this consistent
-   ||||         - the 'end_rast' parameter also should be able to take a filepath, not just a numpy array (which seems almost useless)
-###################################
 
         5 DOCS:
           - make clearer that "dispersal" means "offspring" and is differentiated from "movement"
@@ -47,8 +40,6 @@
 
         5 replace all "if str(type(whatever))" statements with proper "isinstance(whatever, classname)" calls as soon as I know how my finalized class names are going to
           look to geonomics when it's properly set up as a package
-
-
 
         5 debug all the various ways that pop extinction breaks the model; here is one example, that results from one of multiple populations going extinct
 

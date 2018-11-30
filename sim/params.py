@@ -411,9 +411,9 @@ GENOME_PARAMS = '''
                     #scale of distr of deleterious effect sizes
                     'delet_alpha_distr_scale':  0.2,
                     #alpha of distr of recomb rates
-                    'r_distr_alpha':            0.5,
+                    'r_distr_alpha':            None,
                     #beta of distr of recomb rates
-                    'r_distr_beta':             15e9,
+                    'r_distr_beta':             None,
                     #whether loci should be dominant (for allele '1')
                     'dom':                      False,
                     #whether to allow pleiotropy
@@ -517,9 +517,9 @@ SPP_DEM_CHANGE_EVENT_PARAMS = '''
                             #'cyclical', 'custom'}
                             'kind':             'monotonic',
                             #starting timestep
-                            'start':            49,
+                            'start_t':            49,
                             #ending timestep
-                            'end':              99,
+                            'end_t':              99,
                             #rate, for monotonic change
                             'rate':             1.02,
                             #interval of changes, for stochastic change

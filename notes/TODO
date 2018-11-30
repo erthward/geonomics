@@ -1,13 +1,8 @@
 - knock out these secondary to-do items:
+
+        5 double-check and think through all attributes that are subject to change at some point during runtime (esp. the Species.land attribute, which seems like a nightmare and should probably actually be passed through as function arguments rather than set as an attribute)
         
-        5 double-check how timesteps stipulated in params file are handled (i.e. does the user
-          stipulate the exact timestep at which an event will happen, or am I checking t-1 to
-          account for python 0-indexed counting?), then make this STANDARD across the package
-          and VERY CLEAR in the docs!!
-
         5 decide whether or not to add a switch determining whether movement surafces are calculated up front, before model is run, or are calculated during the model run (b/c of the memory/compute time ttrade-off)
-
-        5 allow r_distr_alpha/beta to be set to 0, which would set all recomb rates to 0.6
 
         5 ASK IAN: draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
           should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!

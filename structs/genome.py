@@ -336,26 +336,18 @@ def _draw_r(g_params, recomb_rate_fn = None):
     #otherwise, use default function with either default or custom param vals
     else:
         L = g_params.L
-
-        param_vals = {'r_distr_alpha': 7e2, 'r_distr_beta': 7e3}
-
-        for param in ['r_distr_alpha', 'r_distr_beta_']:
-            if (param in g_params.keys() and g_params[param] is not None):
-                param_vals[param] = g_params[param]
-
-        recomb_array = np.array([max(0,min(0.5,
-            recomb_rate)) for recomb_rate in r.beta(
-            a = param_vals['r_distr_alpha'], b = param_vals['r_distr_beta'],
-                                                            size = L)])
-    #NOTE: for now, using the Beta, which can be very flexibly parameterized
-    #NOTE: current default alpha/beta vals, after being subtracted from 0.5 
-    #in sim_r function, will result in a tight distribution of r vals 
-    #around 0.21 (~ 95% between 0.19 and 0.22)
-    #NOTE: to essentially fix r at 0.5, Beta(1,1e7) will do...
-    #NOTE: Ideally, would be good to look into to developing some sort
-    #of mixture distribution to reasonably and flexibly model
-    #map-distance values...
-
+    
+        #if either or both distribution parameters are None, then set all
+        #recomb rates to 0.5
+        if (g_params.r_distr_alpha is None or g_params.r_distr_beta is None):
+            print('DEFAULT')
+            recomb_array = np.array([0.5]*L)
+        #else draw the recombination rates
+        else:
+            print('DRAWN')
+            recomb_array = np.clip(r.beta(a = g_params.r_distr_alpha,
+            b = g_params.r_distr_beta, size = L), a_min = 0, a_max = 0.5)
+        
         return(recomb_array)
 
 

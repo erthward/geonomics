@@ -311,9 +311,7 @@ def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps):
     #FULL OF FILES, IN ORDER TO DICTATE THE TIME ORDER OF THEM
 
     #get (rounded) evenly spaced timesteps at which to implement the changes
-    #NOTE: Subtract 1 from end_t, to emulate the behavior of Python's 
-    #range function, even though I have to use np.linspace here
-    timesteps = np.int64(np.round(np.linspace(start_t, end_t-1, n_steps)))
+    timesteps = np.int64(np.round(np.linspace(start_t, end_t, n_steps)))
 
     #if change_rast is a file or an array
     if ((isinstance(change_rast, str) and os.path.isfile(change_rast))
@@ -575,20 +573,20 @@ def _get_conductance_surface_change_fns(spp, surf_series):
         # demographic #
         ###############
 
-def _get_dem_change_fns(spp, kind, start=None, end=None, rate=None,
+def _get_dem_change_fns(spp, kind, start_t=None, end_t=None, rate=None,
     interval=None, n_cycles=None, size_range=None,
     distr='uniform', min_size=None, max_size=None, timesteps=None,
                                     sizes=None, increase_first=True):
     if kind == 'monotonic':
         fns = _get_monotonic_dem_change_fns(spp = spp, rate = rate,
-                    start = start, end = end)
+                    start_t = start_t, end_t = end_t)
     elif kind == 'stochastic':
-        fns = _get_stochastic_dem_change_fns(spp = spp, start = start,
-            end = end, interval = interval, size_range = size_range,
+        fns = _get_stochastic_dem_change_fns(spp = spp, start_t = start_t,
+            end_t = end_t, interval = interval, size_range = size_range,
                                                             distr = distr)
     elif kind == 'cyclical':
-        fns = _get_cyclical_dem_change_fns(spp = spp, start = start,
-            end = end, n_cycles = n_cycles, size_range = size_range,
+        fns = _get_cyclical_dem_change_fns(spp = spp, start_t = start_t,
+            end_t = end_t, n_cycles = n_cycles, size_range = size_range,
             min_size = min_size, max_size = max_size,
                                         increase_first = increase_first)
     elif kind == 'custom':
@@ -618,12 +616,11 @@ def _make_dem_change_fns(spp, sizes, timesteps, K_mode='base'):
 
 #will generate exponential change in the population size by iteratively
 #multiplying a carrying-capacity (K) raster
-def _get_monotonic_dem_change_fns(spp, rate, start, end):
-    #get the timesteps for the demogprahic changes (subtract 1 from start
-    #to set Python's 0th timestep as 1)
-    #NOTE: setting start and end to the same value will create a
+def _get_monotonic_dem_change_fns(spp, rate, start_t, end_t):
+    #get the timesteps for the demogprahic changes
+    #NOTE: setting start_t and end_t to the same value will create a
     #single-timestep change (e.g. a sudden bottleneck or rapid expansion)
-    timesteps = range(start, end)
+    timesteps = range(start_t, end_t+1)
     sizes = [rate]*len(timesteps)
     change_fns = _make_dem_change_fns(spp, sizes, timesteps, K_mode='current')
     return(change_fns)
@@ -634,12 +631,12 @@ def _get_monotonic_dem_change_fns(spp, rate, start, end):
 
 
 #will create stochastic changes around a baseline carrying-capacity (K) raster
-def _get_stochastic_dem_change_fns(spp, size_range, start, end, interval,
+def _get_stochastic_dem_change_fns(spp, size_range, start_t, end_t, interval,
                                                         distr = 'uniform'):
     start_K = spp.K
     if interval is None:
         interval = 1
-    timesteps = range(start, end, interval)
+    timesteps = range(start_t, end_t + 1, interval)
     if distr == 'uniform':
         sizes = r.uniform(*size_range, len(timesteps))
     elif distr == 'normal':
@@ -656,7 +653,7 @@ def _get_stochastic_dem_change_fns(spp, size_range, start, end, interval,
     return(change_fns)
 
 
-def _get_cyclical_dem_change_fns(spp, start, end, n_cycles, size_range=None,
+def _get_cyclical_dem_change_fns(spp, start_t, end_t, n_cycles, size_range=None,
                             min_size=None, max_size=None, increase_first=True):
     #detemine the min and max sizes for the cycles, based on input arguments
     if size_range is not None and min_size is None and max_size is None:
@@ -670,7 +667,7 @@ def _get_cyclical_dem_change_fns(spp, start, end, n_cycles, size_range=None,
             'minimum and maximum sizes), or provide min_size and max_size '
                                                 'separately, but not both.'))
     #check that there are enough timesteps to complete the cycles
-    assert n_cycles <= (end - start)/2, ('The number of cycles requested must '
+    assert n_cycles <= (end_t - start_t)/2, ('The number of cycles requested must '
         'be no more than half the number of time steps over which the cycling '
                                                         'should take place.')
     #create a base cycle (one sine cycle)
@@ -685,7 +682,7 @@ def _get_cyclical_dem_change_fns(spp, start, end, n_cycles, size_range=None,
     scaled_base = np.array(scaled_base)
     #then get the timesteps at which each cycle should complete
     #NOTE: subtract 1 to imitate Python range stop-exclusivity
-    cycle_timesteps = np.int32(np.linspace(start, end-1, n_cycles+1))
+    cycle_timesteps = np.int32(np.linspace(start_t, end_t, n_cycles+1))
     #get from that the length in timesteps of each cycle
     cycle_lengths = np.diff(cycle_timesteps)
     #get from that the pop sizes at each timestep (which will approximate

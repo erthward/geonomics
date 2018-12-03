@@ -340,11 +340,9 @@ def _draw_r(g_params, recomb_rate_fn = None):
         #if either or both distribution parameters are None, then set all
         #recomb rates to 0.5
         if (g_params.r_distr_alpha is None or g_params.r_distr_beta is None):
-            print('DEFAULT')
             recomb_array = np.array([0.5]*L)
         #else draw the recombination rates
         else:
-            print('DRAWN')
             recomb_array = np.clip(r.beta(a = g_params.r_distr_alpha,
             b = g_params.r_distr_beta, size = L), a_min = 0, a_max = 0.5)
         

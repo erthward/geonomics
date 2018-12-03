@@ -654,6 +654,14 @@ class Model:
         #verbose output
         if self._verbose:
             print('Running main model, iteration %i...\n\n' % self.it)
+        #check if any species is starting out extinct (which would happen if it
+        #went extinct in the burn-in), and if so, then skip main mode
+        if np.any([spp.extinct for spp in self.comm.values()]):
+            if self._verbose:
+                print(("WARNING: At least one Species went extinct during "
+                    "the burn-in. Cannot run main phase for "
+                    "iteration %i.\n\n") % self.it)
+            return
         #loop over the timesteps, running the run_main function repeatedly
         for t in range(self.T):
             #run a main timestep

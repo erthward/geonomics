@@ -68,7 +68,7 @@ class _Changer:
         except StopIteration:
             self.next_change = None
 
-    def _make_change(self, t, additionl_args, for_plotting=False,
+    def _make_change(self, t, additional_args, for_plotting=False,
         verbose=False):
         #if this is the right timestep for the next change
         if self.next_change is not None:
@@ -255,7 +255,7 @@ class _SpeciesChanger(_Changer):
                 if True in [v is not None for v in parameter_params.values()]:
                     parameter_change_fns.extend(
                         _get_parameter_change_fns(parameter,
-                        **parameter_change_params))
+                        **parameter_params))
 
         #put all the changes in chronological order
         if (len(dem_change_fns) + len( parameter_change_fns) + len(

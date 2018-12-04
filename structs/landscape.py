@@ -225,7 +225,8 @@ class Landscape(dict):
 
     #method to make landscape changes
     def _make_change(self, t, verbose=False):
-        self._changer._make_change(t, verbose = verbose)
+        self._changer._make_change(t = t, additional_args = {'land': self},
+            verbose = verbose)
 
     #method to plot the landscape (or just a certain lyr)
     def _plot(self, lyr_num=None, colorbar=True, cmap='terrain',

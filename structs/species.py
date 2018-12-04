@@ -433,7 +433,8 @@ class Species(OD):
 
     #method to make species changes
     def _make_change(self, verbose=False):
-        self._changer._make_change(self.t, verbose = verbose)
+        self._changer._make_change(t = self.t, additional_args = {'spp': self},
+            verbose = verbose)
 
     #method to check if the species has gone extinct
     def _check_extinct(self):

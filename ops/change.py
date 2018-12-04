@@ -68,7 +68,8 @@ class _Changer:
         except StopIteration:
             self.next_change = None
 
-    def _make_change(self, t, for_plotting=False, verbose=False):
+    def _make_change(self, t, additionl_args, for_plotting=False,
+        verbose=False):
         #if this is the right timestep for the next change
         if self.next_change is not None:
             if t == self.next_change[0] and for_plotting == False:
@@ -76,17 +77,26 @@ class _Changer:
                     print("\t**** Running the next change\t%s\n\n" % str(
                         self.next_change))
                 #call the next_change function to make the change
-                self.next_change[1](self)
+                #NOTE: unpacking additonal_args dict into it, so that the
+                #LandChanger can receive the current Landscape object, rather
+                #than capturing the Landscape object within the closure, taking
+                #up memory, or capturing a pointer to the object and risking
+                #problems that I'm not foreseeing (a la https://docs.python.
+                #org/3/faq/programming.html#why-do-lambdas-defined-in-a
+                #-loop-with-different-values-all-return-the-same-result),
+                #and so that SpeciesChanger can similarly get the current
+                #Species object
+                self.next_change[1](changer = self, **additional_args)
                     #NOTE: feeding self in so that some change functions
                     #that need to set Changer attributes (e.g. spp-changer
-                    #dem functions set the #base_K raster at the beginning
-                    #of a period of dem changes) have access to the
-                    #Changer object
+                    #demographic functions set the base_K raster at
+                    #the beginning of a period of dem changes)
+                    #have access to the Changer object
                 #then load the next change after that
                 self._set_next_change()
                 #then recurse this function, so that multiple changes
                 #will happen this timestep if need be
-                self._make_change(t)
+                self._make_change(t, additional_args)
 
     #add a change (in the form of a (timestep, change_fn) pair) at the
     #appropriate timestep
@@ -152,8 +162,8 @@ class _LandscapeChanger(_Changer):
 
         #make a list of change_fns for the changes in all_changes, and make
         #self.changes an iterator over that list
-        change_fns = [(change[0], _get_lyr_change_fn(land,
-                                    *change[1:])) for change in lyr_changes]
+        change_fns = [(change[0],
+            _get_lyr_change_fn(*change[1:])) for change in lyr_changes]
         change_fns = iter(change_fns)
         self.changes = change_fns
         #load the first change to happen into the self.next_change attribute
@@ -205,8 +215,8 @@ class _SpeciesChanger(_Changer):
                 kappa = surf.kappa, approx_len = surf.approx_len,
                 change_params_one_lyr = lc_move_surf_params)
             #and create change fns from them
-            move_surf_change_fns.extend(_get_conductance_surface_change_fns(
-                                                        spp, surf_series))
+            move_surf_change_fns.extend(
+                _get_conductance_surface_change_fns(surf_series))
 
         #check if this spp has a _disp_surf, and if there are land-changes
         #that affect its lyr
@@ -226,8 +236,8 @@ class _SpeciesChanger(_Changer):
                 kappa = surf.kappa, approx_len = surf.approx_len,
                 change_params_one_lyr = lc_disp_surf_params)
             #and create change fns from them
-            disp_surf_change_fns.extend(_get_conductance_surface_change_fns(
-                                                        spp, surf_series))
+            disp_surf_change_fns.extend(
+                _get_conductance_surface_change_fns(surf_series))
 
 
         #set the demographic changes, if applicable
@@ -243,8 +253,9 @@ class _SpeciesChanger(_Changer):
         if parameter_change_params is not None:
             for parameter, parameter_params in parameter_change_params.items():
                 if True in [v is not None for v in parameter_params.values()]:
-                    parameter_change_fns.extend(_get_parameter_change_fns(spp,
-                                        parameter, **parameter_change_params))
+                    parameter_change_fns.extend(
+                        _get_parameter_change_fns(parameter,
+                        **parameter_change_params))
 
         #put all the changes in chronological order
         if (len(dem_change_fns) + len( parameter_change_fns) + len(
@@ -516,7 +527,7 @@ def _make_conglom_lyr_series(land, lyr_num, change_params_one_lyr):
     conglom_lyr_series = [lyr_step for series in [
         i[0] for i in all_lyr_series] for lyr_step in series]
     return conglom_lyr_series
-        
+
 
 #function that takes a Landscape, a lyr_num and a dictionary of
 #{t_change:new_lyr} and creates an _LandscapeChanger object that will change
@@ -525,8 +536,8 @@ def _make_custom_lyr_series(lyr_dict):
     pass
 
 
-def _get_lyr_change_fn(land, lyr_num, new_lyr_rast):
-    def fn(lc, land = land, lyr_num = lyr_num, new_lyr_rast = new_lyr_rast):
+def _get_lyr_change_fn(lyr_num, new_lyr_rast):
+    def fn(changer, land, lyr_num = lyr_num, new_lyr_rast = new_lyr_rast):
         land._set_raster(lyr_num, new_lyr_rast)
         #update associated Species' K rasters if necessary
         if len(land[lyr_num]._is_K) > 0:
@@ -558,11 +569,11 @@ def _make_conductance_surface_series(land, start_lyr, mixture, kappa,
     return(surf_series)
 
 
-def _get_conductance_surface_change_fns(spp, surf_series):
+def _get_conductance_surface_change_fns(surf_series):
     timesteps = []
     fns = []
     for t, new_surf in surf_series:
-        def fn(pc, spp=spp, new_surf = new_surf):
+        def fn(changer, spp, new_surf = new_surf):
             spp._move_surf = new_surf
         timesteps.append(t)
         fns.append(fn)
@@ -578,37 +589,36 @@ def _get_dem_change_fns(spp, kind, start_t=None, end_t=None, rate=None,
     distr='uniform', min_size=None, max_size=None, timesteps=None,
                                     sizes=None, increase_first=True):
     if kind == 'monotonic':
-        fns = _get_monotonic_dem_change_fns(spp = spp, rate = rate,
-                    start_t = start_t, end_t = end_t)
+        fns = _get_monotonic_dem_change_fns(rate = rate,
+            start_t = start_t, end_t = end_t)
     elif kind == 'stochastic':
-        fns = _get_stochastic_dem_change_fns(spp = spp, start_t = start_t,
-            end_t = end_t, interval = interval, size_range = size_range,
-                                                            distr = distr)
+        fns = _get_stochastic_dem_change_fns(start_K = spp.K,
+            start_t = start_t, end_t = end_t, interval = interval,
+            size_range = size_range, distr = distr)
     elif kind == 'cyclical':
-        fns = _get_cyclical_dem_change_fns(spp = spp, start_t = start_t,
+        fns = _get_cyclical_dem_change_fns(start_t = start_t,
             end_t = end_t, n_cycles = n_cycles, size_range = size_range,
             min_size = min_size, max_size = max_size,
                                         increase_first = increase_first)
     elif kind == 'custom':
-        fns = _get_custom_dem_change_fns(spp = spp, timesteps = timesteps,
-                                                            sizes = sizes)
+        fns = _get_custom_dem_change_fns(timesteps = timesteps, sizes = sizes)
     return(fns)
 
 
-def _make_dem_change_fns(spp, sizes, timesteps, K_mode='base'):
+def _make_dem_change_fns(sizes, timesteps, K_mode='base'):
     fns = []
     if K_mode == 'current':
         for size in sizes:
-            def fn(pc, spp = spp, size = size):
+            def fn(changer, spp, size = size):
                 spp.K*=size
             fns.append(fn)
     elif K_mode == 'base':
         t0 = timesteps[0]
         for size in sizes:
-            def fn(pc, spp=spp, size=size, t0 = t0):
+            def fn(changer, spp, size=size, t0 = t0):
                 if spp.t == t0:
-                    pc._set_base_K(spp)
-                spp.K = pc.base_K*size
+                    changer._set_base_K(spp)
+                spp.K = changer.base_K*size
             fns.append(fn)
     change_fns = list(zip(timesteps, fns))
     return(change_fns)
@@ -616,13 +626,13 @@ def _make_dem_change_fns(spp, sizes, timesteps, K_mode='base'):
 
 #will generate exponential change in the population size by iteratively
 #multiplying a carrying-capacity (K) raster
-def _get_monotonic_dem_change_fns(spp, rate, start_t, end_t):
+def _get_monotonic_dem_change_fns(rate, start_t, end_t):
     #get the timesteps for the demogprahic changes
     #NOTE: setting start_t and end_t to the same value will create a
     #single-timestep change (e.g. a sudden bottleneck or rapid expansion)
     timesteps = range(start_t, end_t+1)
     sizes = [rate]*len(timesteps)
-    change_fns = _make_dem_change_fns(spp, sizes, timesteps, K_mode='current')
+    change_fns = _make_dem_change_fns(sizes, timesteps, K_mode='current')
     return(change_fns)
 
 
@@ -631,9 +641,8 @@ def _get_monotonic_dem_change_fns(spp, rate, start_t, end_t):
 
 
 #will create stochastic changes around a baseline carrying-capacity (K) raster
-def _get_stochastic_dem_change_fns(spp, size_range, start_t, end_t, interval,
-                                                        distr = 'uniform'):
-    start_K = spp.K
+def _get_stochastic_dem_change_fns(start_K, size_range, start_t, end_t,
+    interval, distr = 'uniform'):
     if interval is None:
         interval = 1
     timesteps = range(start_t, end_t + 1, interval)
@@ -649,12 +658,12 @@ def _get_stochastic_dem_change_fns(spp, size_range, start_t, end_t, interval,
     #make size return to starting size
     sizes[-1] = 1
     #make all the change functions
-    change_fns = _make_dem_change_fns(spp, sizes, timesteps, K_mode = 'base')
+    change_fns = _make_dem_change_fns(sizes, timesteps, K_mode = 'base')
     return(change_fns)
 
 
-def _get_cyclical_dem_change_fns(spp, start_t, end_t, n_cycles, size_range=None,
-                            min_size=None, max_size=None, increase_first=True):
+def _get_cyclical_dem_change_fns(start_t, end_t, n_cycles,
+    size_range=None, min_size=None, max_size=None, increase_first=True):
     #detemine the min and max sizes for the cycles, based on input arguments
     if size_range is not None and min_size is None and max_size is None:
         min_size, max_size = size_range
@@ -692,14 +701,14 @@ def _get_cyclical_dem_change_fns(spp, start_t, end_t, n_cycles, size_range=None,
     #then get all timesteps across the cycles, to match up to the pop sizes
     timesteps = range(cycle_timesteps[0], cycle_timesteps[-1]+1)
     #get all the change functions for those timesteps
-    change_fns = _make_dem_change_fns(spp, sizes, timesteps, K_mode = 'base')
+    change_fns = _make_dem_change_fns(sizes, timesteps, K_mode = 'base')
     return(change_fns)
 
 
-def _get_custom_dem_change_fns(spp, timesteps, sizes):
+def _get_custom_dem_change_fns(timesteps, sizes):
     assert len(timesteps) == len(sizes), ('For custom demographic changes, '
                     'timesteps and sizes must be iterables of equal length.')
-    change_fns = _make_dem_change_fns(spp, sizes, timesteps, K_mode = 'base')
+    change_fns = _make_dem_change_fns(sizes, timesteps, K_mode = 'base')
     return(change_fns)
 
 
@@ -707,19 +716,20 @@ def _get_custom_dem_change_fns(spp, timesteps, sizes):
         #   life_hist   #
         #################
 
-def _make_parameter_change_fns(spp, parameter, timesteps, vals):
+def _make_parameter_change_fns(parameter, timesteps, vals):
     fns = []
     for val in vals:
-        def fn(pc, parameter, spp = spp, val = val):
+        def fn(changer, spp, parameter = parameter, val = val):
             setattr(spp, parameter, val)
         fns.append(fn)
     change_fns = list(zip(timesteps, fns))
     return(change_fns)
 
 
-def _get_parameter_change_fns(spp, parameter, timesteps, vals):
+def _get_parameter_change_fns(parameter, timesteps, vals):
     assert len(timesteps) == len(vals), ("For custom changes of the '%s' "
-     "paramter, timesteps and vals must be iterables of equal length.") % param
-    change_fns = _make_parameter_change_fns(spp, param, timesteps, vals)
+        "parameter, timesteps and vals must be iterables of equal "
+        "length.") % parameter
+    change_fns = _make_parameter_change_fns(parameter, timesteps, vals)
     return(change_fns)
 

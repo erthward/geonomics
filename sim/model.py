@@ -350,11 +350,14 @@ class Model:
 
     #wrapper around Land._make_change
     def _make_land_change(self):
-        self.land._make_change(self.t, self._verbose)
+        self.land._make_change(t = self.t,
+            additional_args = {'land': self.land}, verbose = self._verbose)
 
     #wrapper around Species._make_change
     def _make_spp_change(self, spp_idx):
-        self.comm[spp_idx]._make_change(self._verbose)
+        self.comm[spp_idx]._make_change(t = self.t,
+            additional_args = {'spp': self.comm[spp_idx]},
+            verbose = self._verbose)
 
     #wrapper around Community._check_burned
     def _check_comm_burned(self):

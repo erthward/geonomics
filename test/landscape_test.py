@@ -1,38 +1,50 @@
 import unittest
 from sim import burnin
 from sim import model
+import os
+import geonomics as gnx
 from structs import landscape
 import copy
 
+
+
 class LandscapeTestCases(unittest.TestCase):
-    def test_make_random_scape(self): 
-        params = exec(open('./params.py', 'r').read())
-        dim = params.land.main.dim 
+    """
+    Unit tests for Landscape.py. 
+    """
+    def test_make_random_scape(self):
+        current_working_directory = os.getcwd()
+        filepath = current_working_directory + "/GENOMICS_parameter.py"
+        gnx.make_parameters_file(filepath)
+        params = exec(open(filepath, 'r').read())
+        dim = params.land.main.dim
         try:
             random_scape = landscape._make_random_lyr(dim, 10)
         except:
             print("Can not make the random scape")
 
     def test_make_defined_scape(self):
-        params = exec(open('./params.py', 'r').read())
+        current_working_directory = os.getcwd()
+        filepath = current_working_directory + "/GENOMICS_parameter.py"
+        gnx.make_parameters_file(filepath)
+        params = exec(open(filepath, 'r').read())
         dim = params.land.main.dim
         res = params.land.main.res
         ulc = params.land.main.ulc
         #TODO: The make defined scape has wrong number of parameters as called in the function
         #defined_scape = landscape.make_defined_scape(dim,)
 
-    def test_make_land(self): 
-        params = exec(open('./params.py', 'r').read())
+    def test_make_land(self):
+        current_working_directory = os.getcwd()
+        filepath = current_working_directory + "/GENOMICS_parameter.py"
+        gnx.make_parameters_file(filepath)
+        params = exec(open(filepath, 'r').read())
         dim = params.land.main.dim
         res = params.land.main.res
         ulc = params.land.main.ulc
         land = landscape._make_landscape(params, 2)
         self.assertIsInstance(land, landscape.Landscape)
-    
-        
-    def test_get_gis_rasters(self):
-        #TODO: get_gis_rasters has wrong number of parameters compared with the one called in function at line 344
-        return 
+
 
 
 if __name__ == '__main__':

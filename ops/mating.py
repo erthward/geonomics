@@ -39,7 +39,7 @@ from itertools import repeat, starmap
 # -----------------------------------#
 ######################################
 
-def _find_mates(spp, land=None, sex=False, repro_age=None,
+def _find_mates(spp, sex=False, repro_age=None,
                                 dist_weighted_birth=False):
     b = spp.b
     mating_radius = spp.mating_radius

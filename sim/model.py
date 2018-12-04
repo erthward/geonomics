@@ -320,6 +320,48 @@ class Model:
         random.seed(self.seed)
         r.seed(self.seed)
 
+    ###################################################
+    #wrappers around functions for timesteps' fn_queues
+    ###################################################
+
+    #wrapper around Community._set_t
+    def _set_comm_t(self):
+        self.comm._set_t()
+
+    #wrapper around Species._set_t
+    def _set_spp_t(self, spp_idx):
+        self.comm[spp_idx]._set_t()
+
+    #wrapper around Species._set_age_stage
+    def _set_age_stage(self, spp_idx):
+        self.comm[spp_idx]._set_age_stage()
+
+    #wrapper around Species._set_Nt
+    def _set_Nt(self, spp_idx):
+        self.comm[spp_idx]._set_Nt()
+
+    #wrapper around Species._do_movement
+    def _do_movement(self, spp_idx):
+        self.comm[spp_idx]._do_movement(self.land)
+
+    #wrapper around Species._do_pop_dynamics
+    def _do_pop_dynamics(self, spp_idx):
+        self.comm[spp_idx]._do_pop_dynamics(self.land)
+
+    #wrapper around Land._make_change
+    def _make_land_change(self):
+        self.land._make_change(self.t, self._verbose)
+
+    #wrapper around Species._make_change
+    def _make_spp_change(self, spp_idx):
+        self.comm[spp_idx]._make_change(self._verbose)
+
+    #wrapper around Community._check_burned
+    def _check_comm_burned(self):
+        self.comm._check_burned(burn_T = self.burn_T)
+
+    ###################################################
+
     #method to wrap around landscape._make_landscape
     def _make_landscape(self):
         land = landscape._make_landscape(mod = self, params = self.params)
@@ -486,26 +528,26 @@ class Model:
             queue.append(self._set_burn_t)
         if not burn:
             queue.append(self._set_t)
-            queue.append(self.comm._set_t)
+            queue.append(self._set_comm_t)
             for spp in self.comm.values():
-                queue.append(spp._set_t)
+                queue.append(lambda: self._set_spp_t(spp.idx))
 
         #append the set_age_stage methods to the queue
         for spp in self.comm.values():
-            queue.append(spp._set_age_stage)
+            queue.append(lambda: self._set_age_stage(spp.idx))
         #append the set_Nt methods
         for spp in self.comm.values():
-            queue.append(spp._set_Nt)
+            queue.append(lambda: self._set_Nt(spp.idx))
         #append the do_movement_methods, if spp._move
         for spp in self.comm.values():
             if spp._move:
-                queue.append(spp._do_movement)
+                queue.append(lambda: self._do_movement(spp.idx))
         #append the do_pop_dynamics methods
         #FIXME: Consider whether the order of these needs to be specified, or
         #randomized, should people want to eventually simulate
         #multiple, interacting species
         for spp in self.comm.values():
-            queue.append(spp._do_pop_dynamics)
+            queue.append(lambda: self._do_pop_dynamics(spp.idx))
 
         #add the Changer.make_change, data._DataCollector._write_data, and 
         #stats._StatsCollector._write_stats methods, if this is not the burn-in
@@ -515,12 +557,11 @@ class Model:
         if not burn:
             #add land._make_change method
             if self.land._changer is not None:
-                queue.append(lambda: self.land._make_change(self.t,
-                    self._verbose))
+                queue.append(self._make_land_change)
             #add spp._make_change methods
             for spp in self.comm.values():
                 if spp._changer is not None:
-                    queue.append(lambda: spp._make_change(self._verbose))
+                    queue.append(lambda: self._make_spp_change(spp.idx))
             #add self.write_data method
             if self._data_collector is not None:
                 queue.append(self.write_data)
@@ -533,7 +574,7 @@ class Model:
 
         #add the burn-in function if need be
         if burn:
-            queue.append(lambda: self.comm._check_burned(burn_T = self.burn_T))
+            queue.append(self._check_comm_burned)
         return(queue)
 
 
@@ -923,9 +964,9 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #feed args into spp._plot_density
-        spp._plot_density(normalize=normalize, individs=individs, text=text,
-            color=color, edge_color=edge_color, text_color=text_color,
-            size=size, text_size=text_size, alpha=alpha,
+        spp._plot_density(land = self.land, normalize=normalize,
+            individs=individs, text=text, color=color, edge_color=edge_color,
+            text_color=text_color, size=size, text_size=text_size, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
         #add spp name
         plt.suptitle(spp.name)
@@ -1068,9 +1109,9 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        spp._plot_direction_surface(surf_type=surf_type, style=style, x=x, y=y,
-            zoom_width=zoom_width, scale_fact=scale_fact, color=color,
-            colorbar=colorbar)
+        spp._plot_direction_surface(land = self.land, surf_type=surf_type,
+            style=style, x=x, y=y, zoom_width=zoom_width,
+            scale_fact=scale_fact, color=color, colorbar=colorbar)
 
     #wrapper around Species._plot_demographic_pyramid
     def plot_demographic_pyramid(self, spp):

@@ -119,7 +119,7 @@ def _calc_logistic_soln(x0, R, t):
         return 1/(1+((1/x0)-1)*np.e**(-1*R*t))
 
 
-def _calc_dNdt(land, R, N, K, pop_growth_eq = 'logistic'):
+def _calc_dNdt(R, N, K, pop_growth_eq = 'logistic'):
     with np.errstate(divide='ignore', invalid='ignore'):
         #if using the logistic equation for pop growth
         #NOTE: For now this is the only option and the default, but could 
@@ -184,7 +184,7 @@ def _calc_d(N_d, N, d_min, d_max):
     return d
 
 
-def _do_mortality(land, spp, death_probs):
+def _do_mortality(spp, death_probs):
     deaths = np.array([*spp])[np.bool8(r.binomial(n = 1, p = death_probs))]
     if len(deaths) > 0:
         ig = itemgetter(*deaths)
@@ -192,8 +192,8 @@ def _do_mortality(land, spp, death_probs):
     return len(deaths)
 
 
-def _do_pop_dynamics(land, spp, with_selection = True, burn = False,
-                births_before_deaths = False, asserts = False, debug = False):
+def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
+    births_before_deaths = False, asserts = False, debug = False):
     '''Generalized function for implementation population dynamics.
     Will carry out one round of mating and death, according to parameterization
     laid out in params dict (which were grabbed as Species attributes).
@@ -204,6 +204,7 @@ def _do_pop_dynamics(land, spp, with_selection = True, burn = False,
        attribute will be updated, stationarity metrics will be assessed, and
        the function will return the decision it has reached regarding
        stationarity.
+
     '''
 
     #NOTE: Would be good to write in option to ONLY mate or ONLY die when the
@@ -235,7 +236,7 @@ def _do_pop_dynamics(land, spp, with_selection = True, burn = False,
     if births_before_deaths:
         #Feed the land and mating pairs to spp.do_mating, to produce and
         #disperse zygotes
-        spp._do_mating(pairs, burn)
+        spp._do_mating(land, pairs, burn)
 
     #calc N raster, set it as spp.N, then get it  
     spp._calc_density(set_N = True)
@@ -261,7 +262,7 @@ def _do_pop_dynamics(land, spp, with_selection = True, burn = False,
         dp._next_plot('K', K)
 
     #calc dNdt
-    dNdt = _calc_dNdt(land = land, R = spp.R, N = N, K = K,
+    dNdt = _calc_dNdt(R = spp.R, N = N, K = K,
                                     pop_growth_eq = 'logistic')
     #run checks on dNdt
     if asserts:
@@ -327,7 +328,7 @@ def _do_pop_dynamics(land, spp, with_selection = True, burn = False,
     if not births_before_deaths:
         #Feed the land and mating pairs to the mating functions, to produce
         #and disperse zygotes
-        spp._do_mating(pairs, burn)
+        spp._do_mating(land, pairs, burn)
     #Get death probabilities
     death_probs = d[spp.cells[:,1], spp.cells[:,0]]
     #If with_selection (i.e. if death probs should account for fitness),
@@ -347,7 +348,7 @@ def _do_pop_dynamics(land, spp, with_selection = True, burn = False,
         num_killed_age = np.sum(death_probs == 1)
 
     #Use the per-individual death probabilities to carry out mortality 
-    num_deaths = _do_mortality(land, spp, death_probs)
+    num_deaths = _do_mortality(spp, death_probs)
     spp._set_coords_and_cells()
     spp.n_deaths.append(num_deaths)
 

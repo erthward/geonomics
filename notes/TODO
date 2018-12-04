@@ -1,6 +1,8 @@
 - knock out these secondary to-do items:
 
         5 double-check and think through all attributes that are subject to change at some point during runtime (esp. the Species.land attribute, which seems like a nightmare and should probably actually be passed through as function arguments rather than set as an attribute)
+                - CHECK IF ANY CLOSURES IN THE CHANGE FNS ARE CLOSING AROUND MUTABLES
+                - LOOK AT ALL ATTRIBUTES IN ALL ALL CLASSES AND SEE WHICH ARE MUTABLE AND LIKELY TO CHANGE
         
         5 decide whether or not to add a switch determining whether movement surafces are calculated up front, before model is run, or are calculated during the model run (b/c of the memory/compute time ttrade-off)
 

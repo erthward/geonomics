@@ -96,10 +96,8 @@ class Species(OD):
         #set other attributes
         self.name = str(name)
         self._land_dim = land.dim
-        self.land = land
-            # attribute to keep track of iteration number this 
-            #spp is being used for (optional; will be set by
-            #the iteration.py module if called)
+        #attribute to keep track of iteration number this spp is being used for
+        #(optional; will be set by the iteration.py module if called)
         self._it = None
         #attribute to track total number of timesteps to be run
         #(will be set by the Model object)
@@ -323,18 +321,18 @@ class Species(OD):
 
     #method to move all individuals simultaneously, and sample
     #their new locations' environment
-    def _do_movement(self):
+    def _do_movement(self, land):
         movement._move(self)
-        self._set_e()
+        self._set_e(land)
         self._set_coords_and_cells()
 
     #function for finding all the mating pairs in a species
     def _find_mating_pairs(self):
-        mating_pairs = mating._find_mates(self, self.land)
+        mating_pairs = mating._find_mates(self)
         return mating_pairs
 
     #function for executing mating for a species
-    def _do_mating(self, mating_pairs, burn=False):
+    def _do_mating(self, land, mating_pairs, burn=False):
 
         #draw the number of births for each pair, and append
         #total births to self.n_births list
@@ -373,9 +371,9 @@ class Species(OD):
                 #get the next offspring_key
                 offspring_key = offspring_keys.pop()
 
-                offspring_x, offspring_y = movement._disperse(self, self.land,
-                        parent_midpoint_x, parent_midpoint_y,
-                        self.dispersal_distr_mu, self.dispersal_distr_sigma)
+                offspring_x, offspring_y = movement._disperse(self,
+                    self._land_dim, parent_midpoint_x, parent_midpoint_y,
+                    self.dispersal_distr_mu, self.dispersal_distr_sigma)
 
                 #set the age to 0
                 age = 0
@@ -411,7 +409,7 @@ class Species(OD):
                     self[offspring_key]._set_z(self.gen_arch)
 
         # sample all individuals' environment values, to initiate for offspring
-        self._set_e()
+        self._set_e(land)
         self._set_coords_and_cells()
 
         # do mutation if necessary
@@ -420,15 +418,15 @@ class Species(OD):
 
 
     #method to do species dynamics
-    def _do_pop_dynamics(self):
+    def _do_pop_dynamics(self, land):
         #implement selection, iff self.selection is True and the spp has
         #already been burned in
         with_selection = self.selection and self.burned
         burn = not self.burned
         #then carry out the pop-dynamics, with selection as set above, and save
         #result, which will be True iff spp has gone extinct
-        extinct = demography._do_pop_dynamics(self.land,
-                            self, with_selection = with_selection, burn = burn)
+        extinct = demography._do_pop_dynamics(self, land,
+            with_selection = with_selection, burn = burn)
         if extinct:
             #set self.extinct equal to True, so that the iteration will end
             self.extinct = extinct
@@ -482,7 +480,7 @@ class Species(OD):
             return dens
 
     #method to set the individuals' environment values 
-    def _set_e(self, individs = None):
+    def _set_e(self, land, individs = None):
         if individs is None:
             inds_to_set = self.values()
         else:
@@ -490,9 +488,8 @@ class Species(OD):
             inds_to_set = ig(self)
             if type(inds_to_set) is individual.Individual:
                 inds_to_set = (inds_to_set,)
-        hab = [ind._set_e([lyr.rast[int(ind.y),
-            int(ind.x)] for lyr in self.land.values(
-                                                )]) for ind in inds_to_set]
+        hab = [ind._set_e([lyr.rast[int(ind.y), int(
+            ind.x)] for lyr in land.values()]) for ind in inds_to_set]
 
     #method to set the individuals' phenotype attributes 
     def _set_z(self):
@@ -515,8 +512,8 @@ class Species(OD):
 
 
     #method to set the species' spatial._DensityGridStack attribute
-    def _set_dens_grids(self, widow_width = None):
-        self._dens_grids = spt._DensityGridStack(land = self.land,
+    def _set_dens_grids(self, land, widow_width = None):
+        self._dens_grids = spt._DensityGridStack(land = land,
                                 window_width = self.density_grid_window_width)
 
 
@@ -699,7 +696,7 @@ class Species(OD):
 
     #method for plotting the species on top of its estimated
     #species-density raster
-    def _plot_density(self, normalize=False, individs=None,
+    def _plot_density(self, land, normalize=False, individs=None,
             text=False, color='black', edge_color='face',
             text_color='black', size=25, text_size = 9,
             alpha=0.5, zoom_width=None, x=None, y=None):
@@ -710,7 +707,7 @@ class Species(OD):
         #have occurred
         self._set_coords_and_cells()
         dens = self._calc_density(normalize = normalize)
-        plt_lims = viz._get_plt_lims(self.land, x, y, zoom_width)
+        plt_lims = viz._get_plt_lims(land, x, y, zoom_width)
         if normalize:
             viz._plot_rasters(dens, plt_lims = plt_lims, lyr_name = 'density')
         else:
@@ -863,8 +860,8 @@ class Species(OD):
 
 
     #method for plotting the movement surface (in various formats)
-    def _plot_direction_surface(self, surf_type, style, x, y, zoom_width=8,
-                            scale_fact=4.5, color='black', colorbar = True):
+    def _plot_direction_surface(self, land, surf_type, style, x, y,
+        zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
         #get the correct surface
         if surf_type == 'move':
             surf = self._move_surf
@@ -888,7 +885,7 @@ class Species(OD):
         else:
             #display the movement-surface raster
             lyr_num = surf.lyr_num
-            self.land[lyr_num]._plot(zoom_width = zoom_width, x = x, y = y)
+            land[lyr_num]._plot(zoom_width = zoom_width, x = x, y = y)
 
             if style == 'circ_hist':
                 v, a = np.histogram(r.choice(surf.surf[y,
@@ -1065,7 +1062,7 @@ def _make_species(land, name, idx, spp_params, burn=False):
     #use the remaining init_params to set the carrying-capacity raster (K)
     _make_K(spp, land, **init_params)
     #set initial environment values
-    spp._set_e()
+    spp._set_e(land)
     #set initial coords and cells
     spp._set_coords_and_cells()
     #set the kd_tree
@@ -1076,7 +1073,7 @@ def _make_species(land, name, idx, spp_params, burn=False):
         [ind._set_z(spp.gen_arch) for ind in spp.values()]
 
     #make density_grid
-    spp._set_dens_grids()
+    spp._set_dens_grids(land)
 
     #make movement surface, if needed
     if spp._move:
@@ -1119,9 +1116,9 @@ def _make_species(land, name, idx, spp_params, burn=False):
     #will undergo landscape change, then create a _SpeciesChanger object for it
     if ('change' in spp_params.keys()
         or (spp._move_surf is not None
-        and spp._move_surf.lyr_num in spp.land._changer.change_info.keys())
+        and spp._move_surf.lyr_num in land._changer.change_info.keys())
         or (spp._disp_surf is not None
-        and spp._disp_surf.lyr_num in spp.land._changer.change_info.keys())):
+        and spp._disp_surf.lyr_num in land._changer.change_info.keys())):
         #grab the change params (or None, if 
         if 'change' in spp_params.keys():
             ch_params = spp_params.change

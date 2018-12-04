@@ -121,9 +121,6 @@ class _LandscapeChanger(_Changer):
         #set the type-label of the changer
         self.type = 'land'
 
-        #pointer to the model to which this Changer belongs
-        self.mod = mod
-
         #create an empty dict to hold all the basic change info
         #(end_rast, timesteps) for each layer that will change (so that
         #other objects, such as movement_surfaces, can access this

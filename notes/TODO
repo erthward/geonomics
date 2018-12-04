@@ -2,7 +2,12 @@
 
         5 double-check and think through all attributes that are subject to change at some point during runtime (esp. the Species.land attribute, which seems like a nightmare and should probably actually be passed through as function arguments rather than set as an attribute)
                 - LOOK AT ALL ATTRIBUTES IN ALL ALL CLASSES AND SEE WHICH ARE MUTABLE AND LIKELY TO CHANGE, THEN THINK THROUGH POSSIBLE IMPLICATIONS/PROBLEMS AND CONSIDER IF I NEED TO CHANGE
-        
+                        - Landscape has a mod attribute that points to the Model it belongs to, and which is used inside the lyr_change fns (see ops.change._get_lyr_change_fn)
+                        - check if phenotypes calculated after a Trait has gotten a new mutation are correctly being calculated including that new mutation (or else figure out a way to extend the loci array, rather than reassigning it, as is done in genome.Trait._set_loci; but looks like arrays essentially can't be extended without copying, so maybe just use a set for them instead? although all of this may be unnecessary if there is no problem being caused the reassignment of the loci attribute each time a mutation occurs)
+                        - finish picking through all classes in genome, individual, species, community, and landsacpe (i.e the structs directory)
+
+        5 should a dominance value be randomly drawn for a new trait mutation, or just let the mutation fall onto whatever dominance value was already at that previously neutral locus from the start?
+
         5 decide whether or not to add a switch determining whether movement surafces are calculated up front, before model is run, or are calculated during the model run (b/c of the memory/compute time ttrade-off)
 
         5 ASK IAN: draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr

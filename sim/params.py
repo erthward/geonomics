@@ -255,7 +255,7 @@ LYR_CHANGE_EVENT_PARAMS = '''
                     %i: {
                         #array or file for final raster of event, or directory
                         #of files for each stepwise change in event
-                        'change_rast':         '/PATH/TO/FILE.EXT',
+                        'change_rast':      '/PATH/TO/FILE.EXT',
                         #starting timestep of event
                         'start_t':          49,
                         #ending timestep of event
@@ -401,7 +401,7 @@ GENOME_PARAMS = '''
                     #num of loci
                     'L':                        100,
                     #num of chromosomes
-                    'l_c':                      [75, 25],
+                    'l_c':                      [100],
                     #genome-wide per-base neutral mut rate (0 to disable)
                     'mu_neut':                  1e-9,
                     #genome-wide per-base deleterious mut rate (0 to disable)
@@ -517,9 +517,9 @@ SPP_DEM_CHANGE_EVENT_PARAMS = '''
                             #'cyclical', 'custom'}
                             'kind':             'monotonic',
                             #starting timestep
-                            'start_t':            49,
+                            'start_t':          49,
                             #ending timestep
-                            'end_t':              99,
+                            'end_t':            99,
                             #rate, for monotonic change
                             'rate':             1.02,
                             #interval of changes, for stochastic change
@@ -568,13 +568,13 @@ ITS_PARAMS = '''
         ###############################
         'its': {
             #num iterations
-            'n_its': 3,
+            'n_its':            2,
             #whether to randomize Landscape each iteration
-            'rand_landscape':    False,
+            'rand_landscape':   False,
             #whether to randomize Community each iteration
-            'rand_comm':    False,
+            'rand_comm':        False,
             #whether to burn in each iteration
-            'repeat_burn':  False,
+            'repeat_burn':      False,
             }, # <END> 'iterations'
 '''
 
@@ -600,7 +600,7 @@ DATA_PARAMS = '''
                 #when to collect data
                 'when':                 None,
                 #whether to save current Layers when data is collected
-                'include_landscape':         False,
+                'include_landscape':    False,
                 #whether to include fixed loci in VCF files
                 'include_fixed_sites':  False,
                 },

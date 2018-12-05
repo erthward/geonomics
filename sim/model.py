@@ -97,19 +97,10 @@ class Model:
         self.land = self._make_landscape()
         self.comm = self._make_community()
 
-        #update the land's Landscape.mod attribute
-        #(NOTE: added this attribute so that the lyr_change_fns created by
-        #ops/change can access the approp. Species objects to run their calc_K
-        #methods, even in multiple iterations of a Model when the Communities
-        #are refreshed, because putting pointers to the Species themselves in
-        #Landscape._is_K winds up breaking after the first iteration because
-        #the closures cotinue to point to the first iteration's Species)
-        self.land.mod = self
-
-        #and make the self._never_run attribute False,
+        #and make the self._never_been_run attribute False,
         #to prevent the land and community from being reset
         #on the very first iteration
-        self._never_run = True
+        self._never_been_run = True
 
         #make a data._DataCollector object for the self.collecter attribute
         #if necessary
@@ -395,10 +386,6 @@ class Model:
                                     'iteration %i...\n\n') % self.it)
             self.land = self._make_landscape()
 
-        #update the Landscape.mod attribute, so that it points to
-        #the current Model
-        self.land.mod = self
-
     #method to wrap around Species._calc_K
     def _calc_K(self, spp_idx, land):
         self.comm[spp_idx]._calc_K(land)
@@ -471,11 +458,11 @@ class Model:
         #deepcopy the original landscape and comm if necessary
         #(if told not to randomize landscape and not at the beginning
         #of the initial iteration), else randomly generate new
-        if not self._never_run:
+        if not self._never_been_run:
             self._reset_landscape(rand_landscape)
             self._reset_community(rand_comm)
         else:
-            self._never_run = False
+            self._never_been_run = False
 
         #reset the self.burn_t and self.t attributes to -1
         self._reset_t()
@@ -510,8 +497,8 @@ class Model:
         if self._verbose:
             print('Creating the main function queue...\n\n')
         self.main_fn_queue = self._make_fn_queue(burn = False)
-
-
+        
+        
     #method to create the simulation functionality, as a function queue 
     #NOTE: (creates the list of functions that will be run by
     #self.run_burn_timestep or self.run_main_timestep,
@@ -558,6 +545,11 @@ class Model:
             #add land._make_change method
             if self.land._changer is not None:
                 queue.append(self._make_land_change)
+                #add Species._calc_K methods (which will update all Species' K
+                #rasters, in case landscape change has changed the Layers
+                #they're based on
+                for spp in self.comm.values():
+                    queue.append(lambda: spp._calc_K(self.land))
             #add spp._make_change methods
             for spp in self.comm.values():
                 if spp._changer is not None:
@@ -695,6 +687,7 @@ class Model:
         #verbose output
         if self._verbose:
             print('Running main model, iteration %i...\n\n' % self.it)
+
         #check if any species is starting out extinct (which would happen if it
         #went extinct in the burn-in), and if so, then skip main mode
         if np.any([spp.extinct for spp in self.comm.values()]):
@@ -703,6 +696,11 @@ class Model:
                     "the burn-in. Cannot run main phase for "
                     "iteration %i.\n\n") % self.it)
             return
+
+        #check each species has enough mutable loci
+        for spp in self.comm.values():
+            genome._check_enough_mutable_loci(spp, self.burn_T, self.T)
+
         #loop over the timesteps, running the run_main function repeatedly
         for t in range(self.T):
             #run a main timestep

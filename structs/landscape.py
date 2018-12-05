@@ -155,9 +155,6 @@ class Landscape(dict):
         self.res = res
         self.ulc = ulc
         self.prj = prj
-        #an attribute to serve as a pointer
-        #to the Model object to which this land belongs
-        self.mod = mod
         #And check that the Layers' res, ulc, and prj values are equal to 
         #the Landscape's values
         assert np.all([lyr.res == self.res for lyr in self.values(

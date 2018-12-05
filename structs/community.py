@@ -44,7 +44,6 @@ import numpy as np
 #for enabling interactions between species (i.e. species) further down the road
 class Community(dict):
     def __init__(self, land, spps):
-        self.land = land
         self.update(spps)
         self.n_spps = len(spps)
         self.t = -1 #counter for timesteps (starts at -1, to indicate that the

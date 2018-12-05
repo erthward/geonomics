@@ -413,7 +413,7 @@ class Species(OD):
         self._set_coords_and_cells()
 
         # do mutation if necessary
-        if self.mutate:
+        if self.mutate and not burn:
             mutation._do_mutation(keys_list, self, log = self.mut_log)
 
 

@@ -89,9 +89,9 @@ params = {
                         #starting timestep of event
                         'start_t':          49,
                         #ending timestep of event
-                        'end_t':            69,
+                        'end_t':            99,
                         #number of stepwise changes in event
-                        'n_steps':          3,
+                        'n_steps':          5,
                         }, # <END> event 0
 
                     }, # <END> 'change'
@@ -215,7 +215,7 @@ params = {
                     #num of loci
                     'L':                        100,
                     #num of chromosomes
-                    'l_c':                      [75, 25],
+                    'l_c':                      [100],
                     #genome-wide per-base neutral mut rate (0 to disable)
                     'mu_neut':                  1e-9,
                     #genome-wide per-base deleterious mut rate (0 to disable)
@@ -241,6 +241,38 @@ params = {
                     #whether to save mutation logs
                     'mut_log':                  False,
 
+                    'traits': {
+
+                        ###########################
+                        ####trait 0 parameters ####
+                        ###########################
+                        #trait name (TRAIT NAMES MUST BE UNIQUE!)
+                        'trait_0': {
+                            #trait-selection Layer name
+                            'layer':                'layer_0',
+                            #polygenic selection coefficient
+                            'phi':                  0.05,
+                            #number of loci underlying trait
+                            'n_loci':               10,
+                            #mutation rate at loci underlying trait
+                            'mu':                   1e-9,
+                            #mean of distr of effect sizes
+                            'alpha_distr_mu' :      0,
+                            #variance of distr of effect size
+                            'alpha_distr_sigma':    0.5,
+                            #curvature of fitness function
+                            'gamma':                1,
+                            #whether the trait is universally advantageous
+                            'univ_adv':             False
+                            }, # <END> trait 0
+
+
+    #### NOTE: Individual Traits' sections can be copy-and-pasted (and
+    #### assigned distinct keys and names), to create additional Traits.
+
+
+                        }, # <END> 'traits'
+
                     }, # <END> 'gen_arch'
 
 
@@ -260,11 +292,11 @@ params = {
                             #'cyclical', 'custom'}
                             'kind':             'monotonic',
                             #starting timestep
-                            'start_t':            20,
+                            'start_t':            49,
                             #ending timestep
-                            'end_t':              30,
+                            'end_t':              99,
                             #rate, for monotonic change
-                            'rate':             1.15,
+                            'rate':             1.02,
                             #interval of changes, for stochastic change
                             'interval':         1,
                             #distr, for stochastic change {'uniform', 'normal'}
@@ -294,11 +326,11 @@ params = {
                     ##################################
                     'life_hist': {
                         #life-history parameter to change
-                        'R': {
+                        '<life_hist_param>': {
                             #list of timesteps
-                            'timesteps':        [3,8],
+                            'timesteps':        [],
                             #list of values
-                            'vals':             [0.75, 0.45],
+                            'vals':             [],
                                 }
 
 
@@ -342,7 +374,7 @@ params = {
         ###############################
         'its': {
             #num iterations
-            'n_its': 3,
+            'n_its': 2,
             #whether to randomize Landscape each iteration
             'rand_landscape':    False,
             #whether to randomize Community each iteration
@@ -352,6 +384,83 @@ params = {
             }, # <END> 'iterations'
 
 
+        ####################################
+        #### data-collection parameters ####
+        ####################################
+        'data': {
+            'sampling': {
+                #sampling scheme {'all', 'random', 'point', 'transect'}
+                'scheme':               'random',
+                #sample size at each point, for point & transect sampling
+                'n':                    250,
+                #coords of collection points, for point sampling
+                'points':               None,
+                #coords of transect endpoints, for transect sampling
+                'transect_endpoints':   None,
+                #num points along transect, for transect sampling
+                'n_transect_points':    None,
+                #collection radius around points, for point & transect sampling
+                'radius':               None,
+                #when to collect data
+                'when':                 None,
+                #whether to save current Layers when data is collected
+                'include_landscape':         False,
+                #whether to include fixed loci in VCF files
+                'include_fixed_sites':  True,
+                },
+            'format': {
+                #format for genetic data {'vcf', 'fasta'}
+                'gen_format':           ['vcf', 'fasta'],
+                #format for vector geodata {'csv', 'shapefile', 'geojson'}
+                'geo_vect_format':      'csv',
+                #format for raster geodata {'geotiff', 'txt'}
+                'geo_rast_format':      'geotiff',
+                },
+            }, #<END> 'data'
+
+
+        #####################################
+        #### stats-collection parameters ####
+        #####################################
+        'stats': {
+            #number of individs at time t
+            'Nt': {
+                #whether to calculate
+                'calc':     True,
+                #calculation frequency (in timesteps)
+                'freq':     1,
+                },
+            #heterozgosity
+            'het': {
+                #whether to calculate
+                'calc':     True,
+                #calculation frequency (in timesteps)
+                'freq':     5,
+                #whether to mean across sampled individs
+                'mean': False,
+                },
+            #minor allele freq
+            'maf': {
+                #whether to calculate
+                'calc':     True,
+                #calculation frequency (in timesteps)
+                'freq':     5,
+                },
+            #mean fitness
+            'mean_fit': {
+                #whether to calculate
+                'calc':     True,
+                #calculation frequency (in timesteps)
+                'freq':     5,
+                },
+            #linkage disequilibirum
+            'ld': {
+                #whether to calculate
+                'calc':     False,
+                #calculation frequency (in timesteps)
+                'freq':     100,
+                },
+            }, # <END> 'stats'
 
         } # <END> 'model'
 

@@ -420,8 +420,7 @@ def _format_vcf(sample, gen_arch, include_fixed_sites=False):
     #template data row
     #TODO: UPDATE/CHANGE THE INFO AND FORMAT PORTIONS OF THIS TEMPLATE,
     #AFTER I DECIDE ON THEIR CONTENTS (above)
-    data_row = ('%i\t%i\t.\tA\tT\t1000\tPASS\t'
-        'MID=216754706;S=0;DOM=0.5;PO=1;GO=118200;MT=1;DP=1000\tGT\t%s\n')
+    data_row = ('%i\t%i\t.\tA\tT\t1000\tPASS\t%s\tGT\t%s\n')
         #NOTE: this has 2 integer slots, then 1 string slot for:
             #- chrom number (NOTE: unpythonically, starts from 1)
             #- locus number (NOTE: reported cumulative from locus 0,
@@ -438,14 +437,16 @@ def _format_vcf(sample, gen_arch, include_fixed_sites=False):
 
     #and get all individuals' genomic data in a 'samplome' object (a 3-d array)
     samplome = np.array([sample[i].genome for i in inds])
+    
+    #get all segregating sites
+    max_val = 2 * len(sample)
+    segs = np.where(samplome.sum(axis = 2).sum(axis = 0) > 0)[0]
+    segs2 = np.where(samplome.sum(axis = 2).sum(axis = 0) < max_val)[0]
+    segs = sorted(list(set(segs).intersection(set(segs2))))
 
-    #get loci of all segregating sites, if not_include_fixed_sites
+    #if not_include_fixed_sites, include only the segregating sites in the VCF 
     if not include_fixed_sites:
-        #get segregating sites
-        max_val = 2 * len(sample)
-        segs = np.where(samplome.sum(axis = 2).sum(axis = 0) > 0)[0]
-        segs2 = np.where(samplome.sum(axis = 2).sum(axis = 0) < max_val)[0]
-        loci = sorted(list(set(segs).intersection(set(segs2))))
+        loci = segs
     #or else get all loci
     else:
         loci = range(gen_arch.L)
@@ -459,8 +460,11 @@ def _format_vcf(sample, gen_arch, include_fixed_sites=False):
         genotypes = samplome[:,locus,:]
         genotypes = '\t'.join(['%i|%i' % (genotypes[i,0],
                 genotypes[i,1]) for i in range(np.shape(genotypes)[0])])
+        #get an indicator for whether the site is segregating or fixed
+        seg = locus in segs
+        seg_dict = {True: 'SEG', False: 'FIX'}
 
-        rows = rows + data_row % (chroms[n], locus, genotypes)
+        rows = rows + data_row % (chroms[n], locus, seg_dict[seg], genotypes)
 
     #get the date
     now = datetime.datetime.now()

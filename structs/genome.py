@@ -142,6 +142,10 @@ class GenomicArchitecture:
         if self.traits is not None:
             mus = mus + [trt.mu for trt in self.traits.values()]
         self._mu_tot = sum(mus)
+        #attribute that will be replaced with the estimated total number of
+        #mutations per iteration, once it's estimated at the end of the first
+        #burn-in
+        self._est_tot_muts_per_it = None
         self._mut_fns = self._make_mut_fns_dict()
         #set ._planned_muts to None, for now (this is not yet implemented,
         #but thinking about it
@@ -191,20 +195,6 @@ class GenomicArchitecture:
         if self.traits[trait_num].n_loci == 1:
             alpha = np.abs(alpha)
         return(alpha)
-
-    #method for drawing new trait or deleterious loci (for a mutation)
-    #from the currently neutral loci
-    def _draw_mut_loci(self):
-        loci = r.choice([*self._mutable_loci])
-        #TODO: SHOULD I INCLUDE HERE A STATEMENT THAT CHECKS
-        #IF len(gen_arch._mutable_loci) IS <= SOME SMALL
-        #VALUE, AND IF SO FINDS FIXED SITES IN THE SPECIES AND ADDS
-        #THEM TO IT??? (so that I'm not running that time-intensive
-        #procedure often, but to make sure I'm almost certain not
-        #to run out of mutable sites (unless I by chance draw more 
-        #mutations in the next turn than there are remaining mutables))
-        #DOES THIS IMPLY ANY STRANGE, POTENTIALLY PROBLEMATIC POPGEN ARTEFACTS?
-        return(loci)
 
     #method for drawing new deleterious mutational fitness effects
     def _draw_delet_s(self):
@@ -606,6 +596,32 @@ def _draw_genome(genomic_architecture):
     return(new_genome)
 
 
+#check whether a GenomicArchitecture has enough mutable loci to provide for all
+#the mutations expected during a Model run (i.e. iteration)
+def _check_enough_mutable_loci(spp, burn_T, T):
+    #grab the estimated total number of muts per iteration, if it's already 
+    #been estimated
+    if spp.gen_arch._est_tot_muts_per_it is not None:
+        n_muts = spp.gen_arch._est_tot_muts_per_it
+    #otherwise estimate it, then store it at spp.gen_arch._est_tot_muts_per_it
+    else:
+        n_muts = mutation._calc_estimated_total_mutations(spp, burn_T, T)
+        spp.gen_arch._est_tot_muts_per_it = n_muts
+    neut_loci_remaining = spp.gen_arch.L - len(spp.gen_arch.nonneut_loci)
+    #throw error if n_muts is greater than the number of available mutable loci
+    if n_muts > neut_loci_remaining:
+        raise ValueError(("Before a Model is run, Geonomics sets aside a set "
+            "of loci where mutations can occur (known as 'mutable loci'). "
+            "The mutation rates in this parameterization imply that at least "
+            "%i mutable loci will be needed to provide space for all "
+            "mutations expected over the course of the each Model iteration, "
+            "but only %i non-neutral loci are available. "
+            "Either the mutation rates must be reduced, the runtime of "
+            "each iteration must be reduced, the genome length must be "
+            "increased, or some combination thereof.") % (n_muts,
+            neut_loci_remaining))
+
+
 #function to reset genomes after burn-in
 def _set_genomes(spp, burn_T, T):
     #use mean n_births at tail end of burn-in to estimate number of mutations,
@@ -613,10 +629,12 @@ def _set_genomes(spp, burn_T, T):
     #of that length to go into the spp.gen_arch._mutable_loci attribute
     n_muts = mutation._calc_estimated_total_mutations(spp, burn_T, T)
     #add a small number if n_muts evaluates to 0
+    neut_loci_remaining = spp.gen_arch.L - len(spp.gen_arch.nonneut_loci)
     if n_muts == 0:
-        neut_loci_remaining = spp.gen_arch.L - len(spp.gen_arch.nonneut_loci)
         n_muts = min(int(np.ceil(0.1 * neut_loci_remaining)),
                                                     neut_loci_remaining)
+    n_muts = min(n_muts, neut_loci_remaining)
+
     #skip this step and force the neutral mutation rate to 0, if there are no
     #neutral loci in the genome as it was configured
     if len(spp.gen_arch.neut_loci) == 0:

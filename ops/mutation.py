@@ -73,7 +73,7 @@ def _do_neutral_mutation(spp, offspring, locus=None, individ=None):
 def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None):
     #choose a new locus, if not provided
     if locus is None:
-        locus = spp.gen_arch._draw_mut_loci()
+        locus = r.choice([*spp.gen_arch._mutable_loci])
         assert locus in spp.gen_arch._mutable_loci, ('The locus provided '
                                     'is not in spp.gen_arch.mutable_loci.')
     #remove the locus from the mutable_loci and neut_loci sets
@@ -167,4 +167,6 @@ def _do_mutation(offspring, spp, log=None):
                 with open(log, 'a') as f:
                     f.write(log_msg)
             print(log_msg)
+            mut_loci_exhausted = False
+
 

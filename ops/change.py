@@ -199,6 +199,7 @@ class _SpeciesChanger(_Changer):
         #that affect its lyr
         move_surf_change_fns = []
         if (spp._move_surf is not None
+            and land._changer is not None
             and spp._move_surf.lyr_num in land._changer.change_info.keys()):
             #if so, grab that lyr's land change params and create a
             #move_surf_series with them, to be 
@@ -219,7 +220,7 @@ class _SpeciesChanger(_Changer):
         #that affect its lyr
         disp_surf_change_fns = []
         if (spp._disp_surf is not None
-            and land is not None
+            and land._changer is not None
             and spp._disp_surf.lyr_num in land._changer.change_info.keys()):
             #if so, grab that lyr's land change params and create a
             #disp_surf_series with them, to be 
@@ -536,9 +537,6 @@ def _make_custom_lyr_series(lyr_dict):
 def _get_lyr_change_fn(lyr_num, new_lyr_rast):
     def fn(changer, land, lyr_num = lyr_num, new_lyr_rast = new_lyr_rast):
         land._set_raster(lyr_num, new_lyr_rast)
-        #update associated Species' K rasters if necessary
-        if len(land[lyr_num]._is_K) > 0:
-            [land.mod._calc_K(spp, land) for spp in land[lyr_num]._is_K]
     return(fn)
 
 

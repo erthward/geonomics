@@ -7,9 +7,9 @@ import copy
 
 
 
-class GenomicsTestCases(unittest.TestCase):
+class GeonomicsTestCases(unittest.TestCase):
     """
-    Unit tests for genomics.py.
+    Unit tests for geonomics.py.
     """
     def make_params_file_test(self):
         try:

@@ -23,8 +23,8 @@ Documentation:        URL
 '''
 
 #geonomics imports
-from sim import model
-from sim import params as par
+import sim.model
+import sim.params
 from structs import landscape, genome, individual, species, community
 
 #other imports
@@ -260,7 +260,7 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=None,
                     "%s.") % (n, invalid_keys)
                 raise ValueError(err_msg)
 
-    par._make_parameters_file(filepath = filepath, layers = layers,
+    sim.params._make_parameters_file(filepath = filepath, layers = layers,
                                 species = species, data = data,
                                 stats = stats)
 
@@ -354,7 +354,7 @@ def read_parameters_file(filepath):
 
 
     #now read the file in as a ParametersDict object
-    params = par._read(filepath)
+    params = sim.params._read(filepath)
     return(params)
 
 
@@ -480,11 +480,11 @@ def make_model(parameters=None):
                 "filepath that was provided. The following error was raised: "
                 "\n\t%s\n\n") % e)
 
-    elif str(type(parameters)) == "<class '__main__.Parameters_Dict'>":
+    elif isinstance(parameters, sim.params.ParametersDict):
         pass
     try:
         name = parameters.model.name
-        mod = model.Model(name, parameters)
+        mod = sim.model.Model(name, parameters)
         return(mod)
     except Exception as e:
             traceback.print_exc(file = sys.stdout)

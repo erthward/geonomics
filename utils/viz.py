@@ -51,16 +51,16 @@ def _plot_rasters(land, lyr_num=None, colorbar=True,
     #if just a numpy.ndarray or a Layer (not a Landscape object) is
     #provided, or if just a single raster is desired, grab
     #the raster into a list
-    if str(type(land)) == "<class 'numpy.ndarray'>":
+    if isinstance(land, np.ndarray):
         rasters = [land]
         if lyr_name is not None:
             lyr_names = [lyr_name]
         else:
             lyr_names = ['n/a']
-    elif str(type(land)) == "<class 'structs.landscape.Layer'>":
+    elif isinstance(land, gnx.landscape.Layer):
         rasters = [land.rast]
         lyr_names = [land.name]
-    elif str(type(land)) == "<class 'structs.landscape.Landscape'>":
+    elif isinstance(land, gnx.landscape.Landscape):
         if lyr_num is not None:
             rasters = [land[lyr_num].rast]
             lyr_names = [land[lyr_num].name]
@@ -138,8 +138,7 @@ def _plot_points(points, lyr_num=None, color='black',
             cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
         elif type(pt_cmap) == str:
             cmap = getattr(plt.cm, pt_cmap)
-        elif str(type(pt_cmap)) == ("<class 'matplotlib.colors."
-                                            "LinearSegmentedColormap'>"):
+        elif isinstance(pt_cmap, LinearSegmentedColormap):
             cmap = pt_cmap
         plt.scatter(x, y, s=size, c=color, cmap=cmap, linewidth=linewidth,
                 edgecolor=edge_color, alpha=alpha, vmin = vmin, vmax = vmax)

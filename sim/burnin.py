@@ -21,14 +21,13 @@ from ops import mating
 
 
 def _test_adf_threshold(spp, num_timesteps_back, p_val=0.05):
-    return adf(spp.Nt[-num_timesteps_back:])[1] < p_val
+    result = adf(spp.Nt[-num_timesteps_back:])[1] < p_val
+    return result
 
 
 def _test_t_threshold(spp, num_timesteps_back, p_val=0.05):
     num_timesteps_back += num_timesteps_back % 2
-    return tt(spp.Nt[int(-num_timesteps_back): int(-num_timesteps_back/2)],
+    result = tt(spp.Nt[int(-num_timesteps_back): int(-num_timesteps_back/2)],
                                 spp.Nt[int(-num_timesteps_back/2):])[1] >0.05
-
-
-
+    return result
 

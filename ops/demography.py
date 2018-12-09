@@ -61,7 +61,7 @@ class _DebugPlotter:
                 fig = plt.gcf()
             plt.subplot(self.subplot)
             plt.title(varname)
-            self.spp.plot(self.land, 1, size = 8, hide_land = True)
+            self.spp._plot(land = self.land, lyr_num = 0, size = 8, hide_land = True)
             plt.imshow(var, interpolation = 'nearest', cmap = 'terrain')
             plt.colorbar()
             self.subplot += 1
@@ -175,12 +175,15 @@ def _calc_d(N_d, N, d_min, d_max):
     d = N_d/N
     #fix infinties and NaNs and negatives if they arise
     #(they occur where N ==0)
-    d[np.isinf(d)] = 0
-    d[np.isnan(d)] = 0
-    d[d<0] = 0
     #constrain to the min and max d values
-    d[d<d_min] = d_min
-    d[d>d_max] = d_max
+    d = np.clip(a = d, a_min = d_min, a_max = d_max)
+
+    #NOTE: DEH: 12-08-18: Got rid of the infinity check, because it was
+    #coercing all infinities to 0, but in many cases infinities should actually
+    #have been 1s, so it created numerous problems that just clipping to d_min
+    #and d_max takes care of anyhow; commented out the NaN check below, but not
+    #entirely clear that I don't need it...
+    #d[np.isnan(d)] = 0
     return d
 
 
@@ -298,6 +301,7 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
 
     #calc d (raster of probabilities of density-dependent death)
     d = _calc_d(N_d = N_d, N = N, d_min = spp.d_min, d_max = spp.d_max)
+
     #run checks on d
     if asserts:
         assert d.min() >= 0, 'd.min() is %0.2f, at %s' % (d.min(),

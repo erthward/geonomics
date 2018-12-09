@@ -1,3 +1,6 @@
+# IDEAS / TO-DO
+- add any helper functions for manually resetting the landscape rasters of a model after it's created but before it's run?
+- add any functions for stipulating 'island'-type landscapes?
 - problems with closures, and mutable and/or reassigned attributes could still arise, even though I went through all classes and closures and double-checked for any obvious possible problems, and got rid of any attributes that pointed to big, changing classes (e.g. Landscape.mod, which pointed to Model)
 - make "run_default_model" into more of a vignette (which stops and plots things along the way; and possibly which takes different arguments to demonstrate a simple model, a model with selection,
           a model with landscape change, etc)

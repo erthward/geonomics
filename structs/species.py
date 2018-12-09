@@ -294,7 +294,7 @@ class Species(OD):
         #################
 
     #method to calculate and set self.K
-    def _calc_K(self, land):
+    def _set_K(self, land):
         self.K = land[self.K_layer].rast * self.K_factor
 
     #method to set self.N
@@ -1029,7 +1029,7 @@ def _make_K(spp, land, K_layer, K_factor):
     #any kandscape changes)
     K_layer._is_K.append(spp.idx)
     #now calculate and set the K raster
-    spp._calc_K(land)
+    spp._set_K(land)
 
 
 def _make_species(land, name, idx, spp_params, burn=False):
@@ -1117,8 +1117,10 @@ def _make_species(land, name, idx, spp_params, burn=False):
     #will undergo landscape change, then create a _SpeciesChanger object for it
     if ('change' in spp_params.keys()
         or (spp._move_surf is not None
+        and land._changer is not None
         and spp._move_surf.lyr_num in land._changer.change_info.keys())
         or (spp._disp_surf is not None
+        and land._changer is not None
         and spp._disp_surf.lyr_num in land._changer.change_info.keys())):
         #grab the change params (or None, if 
         if 'change' in spp_params.keys():

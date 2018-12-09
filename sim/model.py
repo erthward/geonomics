@@ -386,9 +386,9 @@ class Model:
                                     'iteration %i...\n\n') % self.it)
             self.land = self._make_landscape()
 
-    #method to wrap around Species._calc_K
-    def _calc_K(self, spp_idx, land):
-        self.comm[spp_idx]._calc_K(land)
+    #method to wrap around Species._set_K
+    def _set_K(self, spp_idx, land):
+        self.comm[spp_idx]._set_K(land)
 
     #method to wrap around community._make_community
     def _make_community(self):
@@ -545,11 +545,11 @@ class Model:
             #add land._make_change method
             if self.land._changer is not None:
                 queue.append(self._make_land_change)
-                #add Species._calc_K methods (which will update all Species' K
+                #add Species._set_K methods (which will update all Species' K
                 #rasters, in case landscape change has changed the Layers
                 #they're based on
                 for spp in self.comm.values():
-                    queue.append(lambda: spp._calc_K(self.land))
+                    queue.append(lambda: self._set_K(spp.idx, self.land))
             #add spp._make_change methods
             for spp in self.comm.values():
                 if spp._changer is not None:

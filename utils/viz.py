@@ -57,10 +57,12 @@ def _plot_rasters(land, lyr_num=None, colorbar=True,
             lyr_names = [lyr_name]
         else:
             lyr_names = ['n/a']
-    elif isinstance(land, gnx.landscape.Layer):
+    #elif isinstance(land, gnx.landscape.Layer):
+    elif "Layer" in str(type(land)):
         rasters = [land.rast]
         lyr_names = [land.name]
-    elif isinstance(land, gnx.landscape.Landscape):
+    #elif isinstance(land, gnx.landscape.Landscape):
+    elif "Landscape" in str(type(land)):
         if lyr_num is not None:
             rasters = [land[lyr_num].rast]
             lyr_names = [land[lyr_num].name]

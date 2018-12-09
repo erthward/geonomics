@@ -303,7 +303,7 @@ class _DataCollector:
         sample = [i for i,v in spp.items() if self.pts_buff.contains(
                                                         Point(v.x, v.y))]
         if len(sample) > self.n:
-            sample = _get_random_sample(individuals = sample)
+            sample = self._get_random_sample(individuals = sample)
         return(sample)
 
 

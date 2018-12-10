@@ -191,12 +191,15 @@ RAND_LYR_PARAMS = '''
 DEFINED_LYR_PARAMS = '''
                     #parameters for a 'defined'-type Layer
                     'defined': {
+                        #raster to use for the Layer
+                        'rast':                   np.ones((20,20)),
                         #point coordinates
                         'pts':                    None,
                         #point values
                         'vals':                   None,
-                        #interpolation method ('linear', 'cubic', or 'nearest')
-                        'interp_method':          'cubic',
+                        #interpolation method {None, 'linear', 'cubic',
+                        #'nearest'}
+                        'interp_method':          None,
 
                         }, # <END> 'defined'
 '''
@@ -324,9 +327,9 @@ SPP_PARAMS = '''
                     #maximum age
                     'max_age':                      None,
                     #min P(death) (MUST BE 0<=d_min<=1)
-                    'd_min':                        0.01,
+                    'd_min':                        0,
                     #max P(death) (MUST BE 0<=d_max<=1)
-                    'd_max':                        0.99,
+                    'd_max':                        1,
                     #width of window used to estimate local pop density
                     'density_grid_window_width':    None,
                     }, # <END> 'mortality'
@@ -402,6 +405,8 @@ GENOME_PARAMS = '''
                     'L':                        100,
                     #num of chromosomes
                     'l_c':                      [100],
+                    #whether starting allele frequencies should be fixed at 0.5
+                    'start_p_fixed':            True,
                     #genome-wide per-base neutral mut rate (0 to disable)
                     'mu_neut':                  1e-9,
                     #genome-wide per-base deleterious mut rate (0 to disable)
@@ -464,9 +469,9 @@ TRT_PARAMS = '''
                             #mutation rate at loci underlying trait
                             'mu':                   1e-9,
                             #mean of distr of effect sizes
-                            'alpha_distr_mu' :      0,
+                            'alpha_distr_mu' :      0.1,
                             #variance of distr of effect size
-                            'alpha_distr_sigma':    0.5,
+                            'alpha_distr_sigma':    0,
                             #curvature of fitness function
                             'gamma':                1,
                             #whether the trait is universally advantageous

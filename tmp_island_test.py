@@ -1,9 +1,13 @@
+import geonomics as gnx
+
 import numpy as np
 from copy import deepcopy
-import geonomics as gnx
+import shutil
 import os
 import vcf
 import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
 
 def make_island_landscape(n, w, d):
     """
@@ -24,14 +28,28 @@ def make_island_landscape(n, w, d):
     island_labels = deepcopy(land)
     for ulc in island_ul_corners:
         island_labels[ulc:ulc+w, ulc:ulc+w] = (ulc/(w+d)+1)/n
+    return land, island_labels 
 
-    return land, island_labels
+def calc_Fst(f0, f1):
+    if f0 == f1:
+        Fst = 0
+    else:
+        Ht = 2 * ((f0 + f1)/2) * (1- (f0+f1)/2)
+        Hs = (f0 * (1-f0)) + (f1 * (1-f1))
+        Fst = (Ht - Hs)/Ht
+    return Fst
 
 def test_island_model():
     #define island number, width, and diagonal distance
     n = 6
     w = 6
     d = 6
+    #define the data directory, and remove it if it already exists (so that we
+    #don't create multiple output data files in the same directory and break the
+    #assertions below)
+    data_dir = './GEONOMICS_mod-island_params/'
+    if os.path.isdir(data_dir):
+        shutil.rmtree(data_dir)
     #create a Model from the params file
     print('\n\nMaking model...\n\n')
     mod = gnx.make_model('./test/validation/island/island_params.py')
@@ -71,20 +89,27 @@ def test_island_model():
         #record individuals' current island locations
         #(i.e. their second habitat values)
         old_vals = [i[1] for i in mod.comm[0]._get_e()]
-        old_island_labels = dict(zip([*mod.comm[0]],
-            [island_vals[i] for i in old_vals]))
         assert 0 not in old_vals, ("It appears "
             "some individuals landed in the 'sea' during the "
             "previous timestep and didn't die!")
+        old_island_labels = dict(zip([*mod.comm[0]],
+            [island_vals[i] for i in old_vals]))
         mod.walk(mode = 'main', T = 1, verbose = True)
         #record the number of individuals whose island numbers
         #changed (i.e. who migrated this timestep)
         new_vals = [i[1] for i in mod.comm[0]._get_e()]
+        try:
+            assert 0 not in new_vals, ("It appears "
+                "some individuals landed in the 'sea' during "
+                "this timestep and didn't die!")
+        except Exception as e:
+            inds_and_new_vals = {i.idx: i.e[1] for i in mod.comm[0].values()}
+            inds = [k for k,v in inds_and_new_vals if v == 0]
+            mod.plot(0,0,individs = inds)
+            print(e)
+            raise ValueError
         new_island_labels = dict(zip([*mod.comm[0]],
             [island_vals[i] for i in new_vals]))
-        assert 0 not in new_vals, ("It appears "
-            "some individuals landed in the 'sea' during "
-            "this timestep and didn't die!")
         not_newborns = [ind for ind in [
             *old_island_labels] if ind in [*new_island_labels]]
         #get number of individuals who underwent each of the possible
@@ -105,19 +130,16 @@ def test_island_model():
     N_est = np.mean(mod.comm[0].Nt)/n
 
     #for each subdirectory
-    data_dir = './GEONOMICS_mod-island_params/'
     for subdir in os.listdir(data_dir):
         files = os.listdir(os.path.join(data_dir, subdir, 'spp-spp_0'))
         #read in VCF
         vcf_file = [f for f in files if os.path.splitext(f)[1] == '.vcf']
-        print(vcf_file)
         assert len(vcf_file) == 1
         vcf_file = vcf_file[0]
         vcf_reader = vcf.Reader(open(os.path.join(
             data_dir, subdir, 'spp-spp_0', vcf_file), 'r'))
         #read in CSV
         csv_file = [f for f in files if os.path.splitext(f)[1] == '.csv']
-        print(csv_file)
         assert len(csv_file) == 1
         csv_file = csv_file[0]
         csv= pd.read_csv(os.path.join(data_dir, subdir, 'spp-spp_0', csv_file))
@@ -136,7 +158,7 @@ def test_island_model():
                 for isl_num, isl_list in island_lists.items():
                     cts_allele_1 = []
                     for ind in isl_list:
-                        ct_allele_1 = sum([int(i) for i in rec.genotype(
+                        ct_allele_1 = sum([int(base) for base in rec.genotype(
                             str(ind)).data.GT.split('|')])
                         cts_allele_1.append(ct_allele_1)
                     #divide the count of the 1 allele in each island pop by
@@ -152,27 +174,95 @@ def test_island_model():
         #and use mean migrations rates for all pairs of islands to calculate
         #expected Fst, by: Fst = 1/(4*N_e*m + 1)
         pop_pairs = set([tuple(sorted(list(i))) for i in migs.keys()])
-        Fst = {}
+        Fst_var = {}
+        Fst_HsHt = {}
         exp_Fst = {}
         for pop_pair in pop_pairs:
-            Fst_list = []
+            Fst_var_list = []
+            Fst_HsHt_list = []
             for loc in freq.keys():
                 pop_freqs = freq[loc]
                 f0 = pop_freqs[pop_pair[0]]
                 f1 = pop_freqs[pop_pair[1]]
                 mean_f = np.mean([f0, f1])
                 var_f = np.var([f0,f1])
-                Fst_val = var_f/mean_f
+                Fst_var_val = var_f/mean_f
                 #if both pops have a freq of 0, division by 0 creates nan,
                 #so replace with Fst = 0
-                if np.isnan(Fst_val):
-                    Fst_val = 0
-                Fst_list.append(Fst_val)
-            mean_Fst = np.mean(Fst_list)
-            Fst[pop_pair] = mean_Fst
+                if np.isnan(Fst_var_val):
+                    Fst_var_val = 0
+                Fst_var_list.append(Fst_var_val)
+                Fst_HsHt_val = calc_Fst(f0, f1)
+                Fst_HsHt_list.append(Fst_HsHt_val)
+            mean_Fst_var = np.mean(Fst_var_list)
+            mean_Fst_HsHt = np.mean(Fst_HsHt_list)
+            Fst_var[pop_pair] = mean_Fst_var
+            Fst_HsHt[pop_pair] = mean_Fst_HsHt
             mig_rates = [migs[pop_pair], migs[pop_pair[::-1]]]
             tot_mig_rate = np.sum(mig_rates)
             exp_Fst[pop_pair] = 1/((4*tot_mig_rate) + 1)
 
-    return mod, migs, freq, Fst, exp_Fst, N_est
+        #plot the results
+        fig = plt.figure()
+        plt.suptitle(("Validations test #2: 1-d island model"
+            "\n%i timesteps") % mod.params.model.T)
+        ax = fig.add_subplot(121)
+        mod.plot(0,0)
+        ax.set_title('Islands and their subpopulations')
+        plt.xlabel('Landscape x')
+        plt.ylabel('Landscape y')
+        plt.title
+        ax = fig.add_subplot(122)
+        ax.set_title('IBD between island subpopulations')
+        x = []
+        Fst_HsHt_y = [] 
+        Fst_var_y = [] 
+        exp_Fst_y = []
+        for pop_pair in pop_pairs:
+            x.append(np.abs(pop_pair[0] - pop_pair[1]))
+            Fst_HsHt_y.append(Fst_HsHt[pop_pair])
+            Fst_var_y.append(Fst_var[pop_pair])
+            exp_Fst_y.append(exp_Fst[pop_pair])
+        plt.plot(x, Fst_HsHt_y, 'or')
+        plt.plot(x, Fst_var_y, 'og')
+        plt.plot(x, exp_Fst_y, 'ob')
+        plt.xlabel('Pairwise interisland distance (scaled)')
+        plt.ylabel('Pairwise genetic distance ($F_{ST}$)') 
+        plt.gca().legend(labels = ['$F_{ST}=\\frac{H_{T} - H_{S}}{H_{T}}$',
+                                   '$F_{ST}=\\frac{var(p)}{mean(p)}$',
+                                   '$E[F_{ST}]=\\frac{1}{1+4Nm}$'],
+                         loc = 'best',
+                         fontsize = 'medium')
+        x = np.array(x).reshape((len(x), 1))
+        Fst_HsHt_y = np.array(Fst_HsHt_y).reshape((len(Fst_HsHt_y), 1))
+        Fst_var_y = np.array(Fst_var_y).reshape((len(Fst_var_y), 1))
+        exp_Fst_y = np.array(exp_Fst_y).reshape((len(exp_Fst_y), 1))
+        line_preds_x = np.linspace(1,5,1000).reshape((1000,1))
+        #run and plot linear regressions for each, with alpha = 0.01
+        marker_codes = ['-r', '-g', '-b']
+        colors = ['red', 'green', 'blue']
+        names = ['Fst=Ht-Hs/Ht', 'Fst=var(p)/mean(p)', 'Fst=1/(4Nm + 1)']
+        for n, data in enumerate([Fst_HsHt_y, Fst_var_y, exp_Fst_y]):
+            est = sm.OLS(data, x).fit()
+            line_preds = est.predict(line_preds_x)
+            plt.plot(line_preds_x, line_preds, marker_codes[n])
+            r2 = est.rsquared
+            p = est.pvalues[0]
+            plt.text(line_preds_x[100], line_preds[100]+0.07, 'r=%0.3f' % r2,
+                color = colors[n])
+            plt.text(line_preds_x[100], line_preds[100]+0.05, 'p=%0.3f' % p,
+                color = colors[n])
+            plt.ylim(0,1.05)
+            #validate the results on basis of linear regression coefficient and
+            #p-value
+            assert p < 0.01, (("Regression test for %s at 0.01 significance "
+                "level.") % names[n])
+            assert est.params[0] > 0, (("Coefficient for %s was not "
+                "positive.") % names[n])
+        plt.show()
+
+        print('\nValidation test successful.\n')
+        
+    return mod, migs, freq, Fst_var, Fst_HsHt, exp_Fst, N_est
+
 

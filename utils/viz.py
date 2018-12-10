@@ -27,6 +27,7 @@ import numpy.random as r
 import random
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 from collections import Counter as C
 from operator import itemgetter as ig
 from shapely import geometry as g
@@ -131,7 +132,6 @@ def _plot_points(points, lyr_num=None, color='black',
     #plot the points, as stipulated by arguments
     if pt_cmap is not None:
         if pt_cmap == 'terrain': 
-            from matplotlib.colors import LinearSegmentedColormap
             colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
             # colors to match matplotlib colormap 'terrain' palette
             #extremes, but with hybrid a mix of the extremes

@@ -122,9 +122,8 @@ def _calc_fitness(spp, trait_num=None):
 def _calc_prob_death(spp, d):
     #get the fitness values
     w = _calc_fitness(spp)
-    #[death_probs.update({i: 1-(1-d[i])*w}) for i, w in W.items()];
     death_probs = 1-(1-d)*w
-    assert (death_probs > 0).all() and (death_probs < 1).all(), ("Some "
+    assert (death_probs >= 0).all() and (death_probs <= 1).all(), ("Some "
                                 "fitness values outside the 0-to-1 range.")
     return(death_probs)
 

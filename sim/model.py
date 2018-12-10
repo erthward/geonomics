@@ -1013,9 +1013,9 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         assert trt_num is not None, ("None is not a valid value for the "
             "'trait' arguemnt.")
         #feed args into spp._plot_phenotype
-        spp._plot_phenotype(trait=trait, lyr_num=lyr_num, individs=individs,
-            text=text, size=size, text_size=text_size, edge_color=edge_color,
-            text_color=text_color, colorbar=colorbar,
+        spp._plot_phenotype(trait=trait, lyr_num=lyr_num, land=self.land,
+            individs=individs, text=text, size=size, text_size=text_size,
+            edge_color=edge_color, text_color=text_color, colorbar=colorbar,
             im_interp_method=im_interp_method, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
         #add spp name
@@ -1043,10 +1043,10 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #get the trt_num, which CAN be None for plot_fitness
         trt_num = self._get_trt_num(spp, trait)
         #feed args into spp._plot_fitness
-        spp._plot_fitness(trt_num=trt_num, lyr_num=lyr_num, individs=individs,
-            text=text, size=size, text_size=text_size, edge_color=edge_color,
-            text_color=text_color, fit_cmap=fit_cmap, colorbar=colorbar,
-            im_interp_method=im_interp_method, alpha=alpha,
+        spp._plot_fitness(trt_num=trt_num, lyr_num=lyr_num, land = self.land,
+            individs=individs, text=text, size=size, text_size=text_size,
+            edge_color=edge_color, text_color=text_color, fit_cmap=fit_cmap,
+            colorbar=colorbar, im_interp_method=im_interp_method, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
         #add spp name
         plt.suptitle(spp.name)

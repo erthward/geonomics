@@ -188,8 +188,20 @@ class GenomicArchitecture:
 
     #method for drawing an effect size for one or many loci 
     def _draw_trait_alpha(self, trait_num, n=1):
-        alpha = r.normal(self.traits[trait_num].alpha_distr_mu,
-                            self.traits[trait_num].alpha_distr_sigma, n)
+        mu = self.traits[trait_num].alpha_distr_mu
+        sigma = self.traits[trait_num].alpha_distr_sigma
+        #use mu value as the fixed effect size, with alternating
+        #positive/negative values, if sigma is 0
+        if sigma == 0:
+            pos_neg = np.ones((self.traits[trait_num].n_loci))
+            #set all odd items to -1
+            for n in range(len(pos_neg)):
+                if n%2 != 0:
+                    pos_neg[n] = -1
+            alpha = pos_neg * mu
+        else:
+            alpha = r.normal(self.traits[trait_num].alpha_distr_mu,
+                self.traits[trait_num].alpha_distr_sigma, n)
         #set all effects to positive if the trait is monogenic
         #(because effects will be added to 0)
         if self.traits[trait_num].n_loci == 1:
@@ -492,7 +504,10 @@ def _make_genomic_architecture(spp_params, land):
     #draw locus-wise 1-allele frequencies, unless provided in 
     #custom gen-arch file
     if gen_arch_file is None:
-        p = _draw_allele_freqs(g_params.L)
+        if g_params.start_p_fixed:
+            p = np.array([0.5]*g_params.L) 
+        else:
+            p = _draw_allele_freqs(g_params.L)
     else:
         p = gen_arch_file['p'].values
 

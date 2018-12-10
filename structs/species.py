@@ -679,6 +679,7 @@ class Species(OD):
         if not text:
             text = None
         #set the plt_lims
+        print(type(land))
         plt_lims = viz._get_plt_lims(land, x, y, zoom_width)
         #plot the layer(s)
         if hide_land:
@@ -755,17 +756,18 @@ class Species(OD):
 
     # method for plotting individuals colored by their phenotypes
     #for a given trait
-    def _plot_phenotype(self, trait, lyr_num=None, individs=None, text=False,
-            size=25, text_size = 9, edge_color='black', text_color='black',
-            colorbar=True, im_interp_method='nearest', alpha=1,
-                       zoom_width=None, x=None, y=None):
+    def _plot_phenotype(self, trait, lyr_num=None, land = None,
+            individs=None, text=False, size=25, text_size = 9,
+            edge_color='black', text_color='black', colorbar=True,
+            im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
+            y=None):
 
         z = OD(zip([*self], self._get_z()[:,trait]))
         if individs is not None:
             z = {i:v for i,v in z.items() if i in individs}
 
-        self._plot(lyr_num = lyr_num, individs = individs, text = text,
-            color = list(z.values()), pt_cmap = 'terrain',
+        self._plot(lyr_num = lyr_num, land = land, individs = individs,
+            text = text, color = list(z.values()), pt_cmap = 'terrain',
             edge_color = edge_color, text_color = text_color,
             colorbar = colorbar, size = size, text_size = text_size,
             im_interp_method = im_interp_method, alpha = alpha,
@@ -774,11 +776,11 @@ class Species(OD):
 
     # method for plotting individuals colored by their overall fitnesses,
     #or by their fitnesses for a single trait (if trait is not None)
-    def _plot_fitness(self, lyr_num=None, trt_num=None, individs=None,
-            text=False, size=100, text_size = 9, edge_color='black',
-            text_color='black', fit_cmap = 'RdYlGn', colorbar=True,
-            im_interp_method='nearest', alpha=1, zoom_width=None,
-                                                    x=None, y=None):
+    def _plot_fitness(self, lyr_num=None, land=None, trt_num=None,
+            individs=None, text=False, size=100, text_size = 9,
+            edge_color='black', text_color='black', fit_cmap = 'RdYlGn',
+            colorbar=True, im_interp_method='nearest', alpha=1,
+            zoom_width=None, x=None, y=None):
 
         #return messages if species does not have genomes or traits
         if self.gen_arch is None:
@@ -827,7 +829,7 @@ class Species(OD):
         if trt_num is not None:
             #plot the outer (phenotype) circles
             self._plot_phenotype(trait = trt_num, lyr_num = lyr_num,
-                individs = individs, text = False, size = size,
+                land = land, individs = individs, text = False, size = size,
                 text_size = text_size, edge_color=edge_color,
                 text_color = text_color, colorbar = colorbar,
                 im_interp_method = im_interp_method, alpha = alpha,
@@ -835,8 +837,8 @@ class Species(OD):
             #make size smaller for the next layer of inner (fitness) circles
             size = round(0.2*size)
 
-        self._plot(lyr_num = lyr_num, individs = individs, text = text,
-                color = list(w.values()), pt_cmap = cmap,
+        self._plot(lyr_num = lyr_num, land = land, individs = individs,
+                text = text, color = list(w.values()), pt_cmap = cmap,
                 edge_color = edge_color, text_color = text_color,
                 colorbar = colorbar, size = size, text_size = text_size,
                 im_interp_method = im_interp_method, alpha = alpha,

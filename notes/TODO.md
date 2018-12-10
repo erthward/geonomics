@@ -3,6 +3,15 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 check whether the Layers' rasters are in fact always checked/coerced to 0 <= e <= 1
+
+        5 change the data-writing function so that each z and e value gets dumped into its own column, by trait and layer name
+
+        5 add parameters to 'defined'-type Layer, so that just a straight-up np.array can be fed in and used as the Layer's raster
+                - And add to the docs the explanation that folks, if they want, can import packages and add additional prep code/etc prior to the `params = {` line in the params file!
+
+        5 double-check what the T/F 'sex' param in species.mating is actually doing!
+
         6 decide whether or not to add a switch determining whether movement surafces are calculated up front, before model is run, or are calculated during the model run (b/c of the memory/compute time ttrade-off)
 
         5 better burn-in functions for determining stable spatial distribution of individuals across timesteps?

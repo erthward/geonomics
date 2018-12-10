@@ -306,7 +306,7 @@ def _make_random_lyr(dim, n_pts, interp_method="cubic", num_hab_types=2,
     return I
 
 
-def _make_defined_lyr(dim, pts, vals, interp_method="cubic",
+def _make_defined_lyr(dim, rast, pts, vals, interp_method="cubic",
                                                     num_hab_types=2):
     #pts should be provided as n-by-2 Numpy array, vals as a 1-by-n Numpy array
 
@@ -329,27 +329,30 @@ def _make_defined_lyr(dim, pts, vals, interp_method="cubic",
     # NOTE: if discrete habitat patches desired, values should still
     #be fed in as proportions, and will then be multipled by
     #num_hab_types to develop habitat class values
-    if interp_method == 'nearest':
-        vals = vals * (num_hab_types - 1)
+    if rast is not None:
+        I = rast
+    else:
+        if interp_method == 'nearest':
+            vals = vals * (num_hab_types - 1)
 
-    max_dim = max(dim)
-    grid_x, grid_y = np.mgrid[1:max_dim:complex("%ij" % max_dim),
-                              1:max_dim:complex("%ij" % max_dim)]
-    I = interpolate.griddata(pts, vals, (grid_x, grid_y), method=interp_method)
-    if interp_method == 'nearest':
-    # i.e., if being used to generate random habitat patches...
-        I = I.round().astype(float)
-    if interp_method == 'cubic':
-        # transform to constrain all values to 0 <= val <= 1
-        I = I + abs(I.min()) + (
-                0.01 * r.rand())
-            # NOTE: adding a small jitter to keep values from
-            #reaching == 0 or == 1,
-        # as would likely be the case with linear interpolation
-        I = I / (I.max() + (0.01 * r.rand()))
-    #use the dim tuple to subset an approriate size if dim not equal
-    if dim[0] != dim[1]:
-        I = I[:dim[0], :dim[1]]
+        max_dim = max(dim)
+        grid_x, grid_y = np.mgrid[1:max_dim:complex("%ij" % max_dim),
+                                  1:max_dim:complex("%ij" % max_dim)]
+        I = interpolate.griddata(pts, vals, (grid_x, grid_y), method=interp_method)
+        if interp_method == 'nearest':
+        # i.e., if being used to generate random habitat patches...
+            I = I.round().astype(float)
+        if interp_method == 'cubic':
+            # transform to constrain all values to 0 <= val <= 1
+            I = I + abs(I.min()) + (
+                    0.01 * r.rand())
+                # NOTE: adding a small jitter to keep values from
+                #reaching == 0 or == 1,
+            # as would likely be the case with linear interpolation
+            I = I / (I.max() + (0.01 * r.rand()))
+        #use the dim tuple to subset an approriate size if dim not equal
+        if dim[0] != dim[1]:
+            I = I[:dim[0], :dim[1]]
     return I
 
 

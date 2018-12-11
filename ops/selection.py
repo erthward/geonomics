@@ -120,8 +120,8 @@ def _calc_fitness(spp, trait_num=None):
 #at that cell, the phenotype(s) of the trait(s) for the individuals found
 #there, and the selection coefficient(s) on the trait(s)
 def _calc_prob_death(spp, d):
-    #get the fitness values
-    w = _calc_fitness(spp)
+    #get the fitness values (while also setting all individ.fit attributes)
+    w = spp._calc_fitness()
     death_probs = 1-(1-d)*w
     assert (death_probs >= 0).all() and (death_probs <= 1).all(), ("Some "
                                 "fitness values outside the 0-to-1 range.")

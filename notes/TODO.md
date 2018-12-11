@@ -3,6 +3,8 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 decide whether to add a data output parameter/option, and a format, for saving the genomic architecture for a trait (to be able to afterward check non-neutral loci, etc)
+
         5 check whether the Layers' rasters are in fact always checked/coerced to 0 <= e <= 1
 
         5 change the data-writing function so that each z and e value gets dumped into its own column, by trait and layer name

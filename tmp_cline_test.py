@@ -60,7 +60,18 @@ for it_dir in its_dirs:
             glms[loc] = glm_results
         except Exception as e:
             print(e)
-
+    
+    #grab all pvalues
+    pvals = {loc:glm.pvalues[0] for loc, glm glms.items()} 
+    loc = []
+    pval = []
+    for l, p, in pvals.items():
+        loc.append(l)
+        #divide by number of loci, as a simple correction for mutliple-testing
+        pval.append(p/genotypes.shape[1])
+    res = pd.DataFrame.from_dict({'loc':loc, 'pval':pval})
+    #sort ascending, so that most significant loci should appear at top of res
+    res = res.sort_values(by = 'pval')
 
 #ANALYSIS IDEAS:
 

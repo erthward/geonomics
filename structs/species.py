@@ -679,7 +679,6 @@ class Species(OD):
         if not text:
             text = None
         #set the plt_lims
-        print(type(land))
         plt_lims = viz._get_plt_lims(land, x, y, zoom_width)
         #plot the layer(s)
         if hide_land:

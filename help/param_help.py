@@ -42,7 +42,7 @@ from copy import deepcopy
 
 
 
-def plot_movement(spp, num_timesteps, lyr_num=None, params=None,
+def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
         direction_distr_mu=None, direction_distr_kappa=None,
         distance_distr_mu=None, distance_distr_sigma=None, move_surf=None,
         subset_spp=None, color='black', color_by_individ=False, size=10):
@@ -50,9 +50,9 @@ def plot_movement(spp, num_timesteps, lyr_num=None, params=None,
     '''
     Useful for visual exploration of the movement parameters.
     Either provide a params dictionary with the necessary
-    information in it, or provide the necessary parameters piecemeal. 
+    information in it, or provide the necessary parameters piecemeal.
     '''
-    
+
     #assert that either a params dict was provided or parameters were
     #stipulated
     assert (params is not None
@@ -126,20 +126,20 @@ def plot_movement(spp, num_timesteps, lyr_num=None, params=None,
     colors = [plt.cm.Accent(i) for i in np.linspace(0, 0.9, 9)]
 
     #plot the species at its starting locations
-    toy_spp._plot(lyr_num=lyr_num, color = 'white', size = 10)
+    toy_spp._plot(lyr_num=lyr_num, land = land, color = 'white', size = 10)
 
     #set the new_x and new_y objects to the current locations, before for loop
     #that will iteratively update them to the newer locations after movement
     new_x = [ind.x for ind in toy_spp.values()]
     new_y = [ind.y for ind in toy_spp.values()]
-    
+
     #loop for the number of timesteps, iteratively moving individuals and
     #plotting the vectors between their previous and new positions
     for t in range(num_timesteps):
         old_x = [x for x in new_x]
         old_y = [y for y in new_y]
 
-        toy_spp._do_movement()
+        toy_spp._do_movement(land)
 
         new_x = [ind.x for ind in toy_spp.values()]
         new_y = [ind.y for ind in toy_spp.values()]
@@ -150,7 +150,7 @@ def plot_movement(spp, num_timesteps, lyr_num=None, params=None,
                 scalex = False, scaley = False, linewidth = linewidths[t],
                 color = colors[i%len(colors)],
                 alpha = 0.5) for i in range(len(old_x))];
-        
+
         #or else plot without individuals colored differently
         else:
             mpl.pyplot.plot((old_x, new_x), (old_y, new_y), '-',

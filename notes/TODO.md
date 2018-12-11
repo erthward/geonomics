@@ -3,6 +3,11 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 other validations tests?
+                - bottleneck model?
+                - model of selective sweep with linkage?
+                    (landscape is all 1s, trait has a single locus with p = 0 at start, with a bunch of loci tightly linked around it with starting p = 0.5; then loop numerous iterations of the model and for each model introduce the mutation at a certain timestep; collect genetic data from multiple timesteps, and plot results of outlier test of some sort, expecting to see sweep signature surrounding the mutated locus whenever it's not lost)
+
         5 decide whether to add a data output parameter/option, and a format, for saving the genomic architecture for a trait (to be able to afterward check non-neutral loci, etc)
 
         5 check whether the Layers' rasters are in fact always checked/coerced to 0 <= e <= 1

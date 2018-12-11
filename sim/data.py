@@ -136,7 +136,7 @@ class _DataCollector:
         assert type(self.when in (list, float, int, type(None)))
         #if it's a list, make sure no values are greater than final timestep
         if type(self.when) is list:
-            assert ([n < self.T for n in self.when]).all(), (' Values '
+            assert np.array([n < self.T for n in self.when]).all(), (' Values '
                 'provided for sampling times must be less than total '
                 'model run-time.')
         #if it's a float, int, or None
@@ -437,7 +437,7 @@ def _format_vcf(sample, gen_arch, include_fixed_sites=False):
 
     #and get all individuals' genomic data in a 'samplome' object (a 3-d array)
     samplome = np.array([sample[i].genome for i in inds])
-    
+
     #get all segregating sites
     max_val = 2 * len(sample)
     segs = np.where(samplome.sum(axis = 2).sum(axis = 0) > 0)[0]

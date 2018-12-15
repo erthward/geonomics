@@ -8,6 +8,8 @@
                 - model of selective sweep with linkage?
                     (landscape is all 1s, trait has a single locus with p = 0 at start, with a bunch of loci tightly linked around it with starting p = 0.5; then loop numerous iterations of the model and for each model introduce the mutation at a certain timestep; collect genetic data from multiple timesteps, and plot results of outlier test of some sort, expecting to see sweep signature surrounding the mutated locus whenever it's not lost)
 
+        5 change polygenic baseline phenotype to 0 also
+
         5 decide whether to add a data output parameter/option, and a format, for saving the genomic architecture for a trait (to be able to afterward check non-neutral loci, etc)
 
         5 check whether the Layers' rasters are in fact always checked/coerced to 0 <= e <= 1
@@ -23,10 +25,8 @@
 
         5 better burn-in functions for determining stable spatial distribution of individuals across timesteps?
 
-        5 ASK IAN: draws of effect sizes for trait mutations should actually come froma strictly positive distribution and then multiplied by a random -1 or +1 (and that distr
-          should be able to have its draws fixed at mu when sigma == 0) ---> THEN UPDATE THE DOCS!
-
         5 not at all sure that a gamma is the right distribution for drawing the deleterious mutations' effects
+                - explain that trait mutations are normal distributon (and why) but that deleterious mtuations are gamma (based on the lit)
 
         5 consider adding a generalized function for making a distribution's draw be a function of phenotype, then apply that to movement, dispersal, fecundity, etc?
 

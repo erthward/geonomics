@@ -8,10 +8,10 @@ class CommandTest(unittest.TestCase):
     """
 
     def test_command1(self):
-        print("Function 1 is being running")
+        print("Function 1 is being run.")
 
     def test_command2(self):
-        print("Function 2 is being running")
+        print("Function 2 is being run.")
 
 if __name__ == '__main__':
     unittest.main()

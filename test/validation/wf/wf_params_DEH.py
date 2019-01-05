@@ -38,7 +38,7 @@ params = {
     ##############
         'main': {
             #y,x (a.k.a. i,j) dimensions of the Landscape
-            'dim':                      (50,50),
+            'dim':                      (10,10),
             #resolution of the Landscape
             'res':                      (1,1),
             #upper-left corner of the Landscape
@@ -65,7 +65,7 @@ params = {
                     #parameters for a 'defined'-type Layer
                     'defined': {
                         #raster to use for the Layer
-                        'rast':                   np.ones((50,50)),
+                        'rast':                   np.ones((10,10)),
                         #point coordinates
                         'pts':                    None,
                         #point values
@@ -109,11 +109,11 @@ params = {
 
                 'init': {
                     #starting number of individs
-                    'N':                2000,
+                    'N':                800,
                     #carrying-capacity Layer name
                     'K_layer':          'layer_0',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         4,
+                    'K_factor':         1,
                     }, # <END> 'init'
 
             #######################################
@@ -130,13 +130,13 @@ params = {
                     #whether P(birth) should be weighted by parental dist
                     'distweighted_birth':       False,
                     #intrinsic growth rate
-                    'R':                        2,
+                    'R':                        10,
                     #intrinsic birth rate (MUST BE 0<=b<=1)
                     'b':                        1,
                     #expectation of distr of n offspring per mating pair
                     'n_births_distr_lambda':    2,
                     #radius of mate-search area
-                    'mating_radius':            50,
+                    'mating_radius':            15,
                     }, # <END> 'mating'
 
             ##########################################
@@ -166,11 +166,11 @@ params = {
                     #concentration of distr of movement direction
                     'direction_distr_kappa':    0,
                     #mean of distr of movement distance
-                    'distance_distr_mu':        50,
+                    'distance_distr_mu':        20,
                     #variance of distr of movement distance
                     'distance_distr_sigma':     1,
                     #mean of distr of dispersal distance
-                    'dispersal_distr_mu':       50,
+                    'dispersal_distr_mu':       20,
                     #variance of distr of dispersal distance
                     'dispersal_distr_sigma':    1,
                     },    # <END> 'movement'
@@ -190,7 +190,7 @@ params = {
                     #whether starting allele frequencies should be fixed at 0.5
                     'start_p_fixed':            True,
                     #genome-wide per-base neutral mut rate (0 to disable)
-                    'mu_neut':                  1e-9,
+                    'mu_neut':                  0,
                     #genome-wide per-base deleterious mut rate (0 to disable)
                     'mu_delet':                 0,
                     #shape of distr of deleterious effect sizes
@@ -237,7 +237,7 @@ params = {
 ###############
     'model': {
         #total Model runtime (in timesteps)
-        'T':            500,
+        'T':            100,
         #min burn-in runtime (in timesteps)
         'burn_T':       30,
         #seed number

@@ -16,6 +16,8 @@
 
         5 change the data-writing function so that each z and e value gets dumped into its own column, by trait and layer name
 
+        5 use the PyTricks email from 18/12/2018 to make all my check-elements-in-a-list-equal calls faster
+
         5 add parameters to 'defined'-type Layer, so that just a straight-up np.array can be fed in and used as the Layer's raster
                 - And add to the docs the explanation that folks, if they want, can import packages and add additional prep code/etc prior to the `params = {` line in the params file!
 
@@ -25,8 +27,7 @@
 
         5 better burn-in functions for determining stable spatial distribution of individuals across timesteps?
 
-        5 not at all sure that a gamma is the right distribution for drawing the deleterious mutations' effects
-                - explain that trait mutations are normal distributon (and why) but that deleterious mtuations are gamma (based on the lit)
+        5 explain that trait mutations are normal distributon (and why) but that deleterious mtuations are gamma (based on the lit)
 
         5 consider adding a generalized function for making a distribution's draw be a function of phenotype, then apply that to movement, dispersal, fecundity, etc?
 

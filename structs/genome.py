@@ -660,8 +660,14 @@ def _set_genomes(spp, burn_T, T):
         spp.gen_arch.mu_delet = 0
         for trt in spp.gen_arch.traits.values():
             trt.mu = 0
+    #or just outright skip this step if the parameterization included only
+    #mutation rates of 0
+    elif spp.gen_arch._mu_tot == 0:
+        pass
+    #otherwise choose and update mutable loci
     else:
         muts = set(r.choice([*spp.gen_arch.neut_loci], n_muts, replace = False))
+        print(muts)
         spp.gen_arch._mutable_loci.update(muts)
         #set those loci's p values to 0 (i.e. non-segregating)
         spp.gen_arch.p[np.array([*muts])] = 0

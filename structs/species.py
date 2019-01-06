@@ -597,7 +597,7 @@ class Species(OD):
             ig = itemgetter(*individs)
             coords = ig(dict(zip([*self], coords)))
         if as_float == True:
-            coords = np.float32(coords)
+            coords = np.float64(coords)
         else:
             coords = np.int32(np.floor(coords))
         #make sure it's at least 2d (in case a single individual is requested)

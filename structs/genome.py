@@ -505,7 +505,7 @@ def _make_genomic_architecture(spp_params, land):
     #custom gen-arch file
     if gen_arch_file is None:
         if g_params.start_p_fixed:
-            p = np.array([0.5]*g_params.L) 
+            p = np.array([0.5]*g_params.L)
         else:
             p = _draw_allele_freqs(g_params.L)
     else:

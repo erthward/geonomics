@@ -13,7 +13,7 @@ if os.path.isdir(data_dir):
     shutil.rmtree(data_dir)
 
 
-mod = gnx.make_model('./test/validation/cline/cline_params/py')
+mod = gnx.make_model('./test/validation/cline/cline_params.py')
 #landscape and community will not be randomized between iterations, so I can
 #just extract the non-neutral loci now
 nonneutral_loci = mod.comm[0].gen_arch.traits[0].loci
@@ -60,9 +60,9 @@ for it_dir in its_dirs:
             glms[loc] = glm_results
         except Exception as e:
             print(e)
-    
+
     #grab all pvalues
-    pvals = {loc:glm.pvalues[0] for loc, glm glms.items()} 
+    pvals = {loc:glm.pvalues[0] for loc, glm in glms.items()} 
     loc = []
     pval = []
     for l, p, in pvals.items():

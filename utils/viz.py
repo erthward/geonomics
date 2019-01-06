@@ -131,7 +131,7 @@ def _plot_points(points, lyr_num=None, color='black',
 
     #plot the points, as stipulated by arguments
     if pt_cmap is not None:
-        if pt_cmap == 'terrain': 
+        if pt_cmap == 'terrain':
             colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
             # colors to match matplotlib colormap 'terrain' palette
             #extremes, but with hybrid a mix of the extremes

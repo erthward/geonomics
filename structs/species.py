@@ -776,7 +776,9 @@ class Species(OD):
     # method for plotting individuals colored by their overall fitnesses,
     #or by their fitnesses for a single trait (if trait is not None)
     def _plot_fitness(self, lyr_num=None, land=None, trt_num=None,
-            individs=None, text=False, size=100, text_size = 9,
+            individs=None, text=False, phenotype_text=False,
+            phenotype_text_color='black', fitness_text=False,
+            fitness_text_color='#333333', size=100, text_size = 9,
             edge_color='black', text_color='black', fit_cmap = 'RdYlGn',
             colorbar=True, im_interp_method='nearest', alpha=1,
             zoom_width=None, x=None, y=None):
@@ -842,6 +844,21 @@ class Species(OD):
                 colorbar = colorbar, size = size, text_size = text_size,
                 im_interp_method = im_interp_method, alpha = alpha,
                 zoom_width = zoom_width, x = x, y = y)
+
+        #plot phenotype text (works only if plotting a specific trait)
+        if phenotype_text and trt_num is not None:
+            for ind in self.values():
+                plt.text(ind.x-0.5, ind.y-0.5, '%0.2f' % ind.z[trt_num],
+                    color = phenotype_text_color, size = text_size)
+
+        #plot fitness text
+        if fitness_text:
+            offset_from_phenotype_text = 0.001*max(self._land_dim)
+            for ind in self.values():
+                plt.text(ind.x-0.5+offset_from_phenotype_text,
+                         ind.y-0.5+offset_from_phenotype_text,
+                         '%0.2f' % ind.fit, color = fitness_text_color,
+                         size = text_size)
 
         #and make a colorbar for the fitness values 
         viz._make_fitness_cbar(make_cbar_fn, min_fit)

@@ -51,9 +51,9 @@ def _calc_phenotype(ind, gen_arch, trait):
     #value), to get phenotype
     if n_loci > 1:
         phenotype = 0.5 + sum(genotype*alpha)
-    #else if monogenic, then divide genotype by 2 to get phenotype 
+    #else if monogenic, then mean genotype = phenotype
     else:
-        phenotype = genotype[0]/2
+        phenotype = genotype[0]
     return(phenotype)
 
 

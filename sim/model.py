@@ -1023,7 +1023,9 @@ BE EXPECTED WHEN RUN WITH Model.walk.
 
     #wrapper around Species._plot_fitness
     def plot_fitness(self, spp, trait=None, lyr=None, individs=None,
-            text=False, size=25, text_size = 9, edge_color='black',
+            text=False, phenotype_text=False, phenotype_text_color='black',
+            fitness_text=False, fitness_text_color='black',
+            size=100, text_size = 9, edge_color='black',
             text_color='black', fit_cmap='RdYlGn', colorbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
             y=None):
@@ -1044,9 +1046,12 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         trt_num = self._get_trt_num(spp, trait)
         #feed args into spp._plot_fitness
         spp._plot_fitness(trt_num=trt_num, lyr_num=lyr_num, land = self.land,
-            individs=individs, text=text, size=size, text_size=text_size,
-            edge_color=edge_color, text_color=text_color, fit_cmap=fit_cmap,
-            colorbar=colorbar, im_interp_method=im_interp_method, alpha=alpha,
+            individs=individs, text=text, phenotype_text=phenotype_text,
+            phenotype_text_color=phenotype_text_color,
+            fitness_text=fitness_text, fitness_text_color=fitness_text_color,
+            size=size, text_size=text_size, edge_color=edge_color,
+            text_color=text_color, fit_cmap=fit_cmap, colorbar=colorbar,
+            im_interp_method=im_interp_method, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
         #add spp name
         plt.suptitle(spp.name)

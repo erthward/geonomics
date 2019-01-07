@@ -222,6 +222,9 @@ class GenomicArchitecture:
         #number of loci to be assigned
         if mutational == False:
             n = self.traits[trait_num].n_loci
+            assert n <= self.L, ("The number of loci parameterized for "
+                "trait number %i ('n_loci') is greater than the length "
+                "of the genome!")
         #otherwise, assign a single locus
         else:
             n = 1

@@ -1,6 +1,7 @@
 import geonomics as gnx
 
 import os
+import re
 import shutil
 import pandas as pd
 import statsmodels.api as sm
@@ -27,15 +28,16 @@ for it_dir in its_dirs:
     files_dir = os.path.join(data_dir, it_dir, 'spp-spp_0')
     files = os.listdir(files_dir)
     vcf_file = [f for f in files if os.path.splitext(f)[1] == '.vcf']
-    assert len(vcf_file) == 1
+    assert len(vcf_file) == 1, 'More than one VCF file!'
     vcf_file = vcf_file[0]
     vcf_reader = vcf.Reader(open(os.path.join(files_dir, vcf_file), 'r'))
-    csv_file = [f for f in files if os.path.splitext(f)[1] == '.csv']
-    assert len(csv_file) == 1
+    csv_file = [f for f in files if re.search('spp_0\.csv$', f)]
+    assert len(csv_file) == 1, 'More than one CSV file!'
     csv_file = csv_file[0]
     csv = pd.read_csv(os.path.join(files_dir, csv_file))
     #grab all individuals' genotypes into an n_individs x n_loci array
-    genotypes = np.ones((len(csv), spp.gen_arch.L))*99
+    genotypes = np.ones((len(csv),
+        mod.params.comm.species['spp_0'].gen_arch.L))*99
     try:
         for loc in range(genotypes.shape[1]):
             rec = next(vcf_reader)
@@ -46,6 +48,8 @@ for it_dir in its_dirs:
     except StopIteration:
         pass
     assert 99 not in genotypes
+    #get the non-neutral locus
+    nonneut_loc = mod.comm[0].gen_arch.traits[0].loci[0]
     glms = {}
     #parse the csv's 'e' column
     csv['env'] = [float(row.split(',')[0].lstrip('[')) for row in csv.e]
@@ -62,7 +66,7 @@ for it_dir in its_dirs:
             print(e)
 
     #grab all pvalues
-    pvals = {loc:glm.pvalues[0] for loc, glm in glms.items()} 
+    pvals = {loc:glm.pvalues[0] for loc, glm in glms.items()}
     loc = []
     pval = []
     for l, p, in pvals.items():
@@ -73,13 +77,39 @@ for it_dir in its_dirs:
     #sort ascending, so that most significant loci should appear at top of res
     res = res.sort_values(by = 'pval')
 
+#print non-neutral locus and top 25 test results
+print('NON-NEUTRAL LOCUS: %i' % nonneut_loc)
+print(res.head(25))
+
+#plot all fitted clines
+x_to_predict = mod.land[0].rast[0,:].reshape((50,1))
+x_to_plot_for_predicted = np.linspace(0.5,49.5,50)
+fig = plt.figure()
+plt.suptitle('Fitted clines for all loci\n(non-neutral locus in red)')
+plt.xlabel('Distance along cline (plotted beneath)')
+ax = fig.add_subplot(1,1,1)
+plt.ylim((0,50))
+plt.imshow(mod.land[0].rast, cmap = 'terrain', interpolation = 'nearest')
+ax2 = ax.twinx()
+#plt.axis('equal')
+plt.ylabel(('Genotypes predicted by logit GLM\n'
+    '(0.0 = 0|0; 0.5 = 0|1; 1.0 = 1|1'))
+plt.xlim((0,50))
+plt.ylim((0,1))
+for loc, glm in glms.items():
+    colors = {True: 'red', False: 'black'}
+    y_predicted = glm.predict(x_to_predict)
+    plt.plot(x_to_plot_for_predicted, y_predicted, '-',
+        color= colors[loc == nonneut_loc])
+    pvals = {loc:glm.pvalues[0] for loc, glm in glms.items()}
+
 #ANALYSIS IDEAS:
 
 #try to pick out the correct (i.e. non-neutral) loci as outliers in a GLM
-spp = mod.comm[0]
-for locus in range(spp.gen_arch.L):
-    logit_model = sm.GLM(gen_data[locus], env_data,
-        family=sm.families.Binomial())
+#spp = mod.comm[0]
+#for locus in range(spp.gen_arch.L):
+#    logit_model = sm.GLM(genotypes[:,locus], csv['env'],
+#        family=sm.families.Binomial())
 
 
 #also test hypothesis that mean fitness incrases and plateaus over model time

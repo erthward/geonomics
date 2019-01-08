@@ -260,9 +260,9 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=None,
                     "%s.") % (n, invalid_keys)
                 raise ValueError(err_msg)
 
-    sim.params._make_parameters_file(filepath = filepath, layers = layers,
-                                species = species, data = data,
-                                stats = stats)
+    sim.params._make_parameters_file(filepath=filepath, layers=layers,
+                                species=species, data=data,
+                                stats=stats)
 
 
 #wrapper around params.read
@@ -493,28 +493,29 @@ def make_model(parameters=None):
                 "The following error was raised: \n\t%s\n\n") % e)
 
 
-#convenience function for creating a parameters-file for, instantiating, and
-#running the default model
+# convenience function for creating a parameters-file for, instantiating, and
+# running the default model
 def run_default_model():
-    #get filenames before creating the default params file
+    # get filenames before creating the default params file
     filenames = set(os.listdir('.'))
-    #make the default params file
+    # make the default params file
     make_parameters_file()
-    #get filenames after creating the default params file
+    # get filenames after creating the default params file
     new_filenames = set(os.listdir('.'))
-    #take set-difference to get the new file (better than just calling
-    #make_model without any arguments, since there's no guarantee that there
-    #wasn't already a params file in this directory
+    # take set-difference to get the new file (better than just calling
+    # make_model without any arguments, since there's no guarantee that there
+    # wasn't already a params file in this directory
     filename = [*new_filenames - filenames][0]
-    #create the default model
+    # create the default model
     mod = make_model(parameters = filename)
-    #run the default model in verbose mode
+    # run the default model in verbose mode
     mod.run(verbose = True)
 
-#wrapper around landscape.make_landscape
+
+# wrapper around landscape.make_landscape
 def make_landscape(params):
-    landscape = landscape._make_landscape(params)
-    return landscape
+    land = landscape._make_landscape(params)
+    return land
 
 
 #wrapper around genome.make_genomic_architecture

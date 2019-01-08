@@ -266,6 +266,8 @@ params = {
                             'alpha_distr_mu' :      0,
                             #variance of distr of effect size
                             'alpha_distr_sigma':    0.5,
+                            #max alpha value
+                            'max_alpha':            None,
                             #curvature of fitness function
                             'gamma':                1,
                             #whether the trait is universally advantageous

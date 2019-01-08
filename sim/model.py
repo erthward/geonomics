@@ -1027,8 +1027,8 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             fitness_text=False, fitness_text_color='black',
             size=100, text_size = 9, edge_color='black',
             text_color='black', fit_cmap='RdYlGn', colorbar=True,
-            im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
-            y=None):
+            fitness_colorbar=True, im_interp_method='nearest',
+            alpha=1, zoom_width=None, x=None, y=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
         #get the spp
@@ -1051,6 +1051,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             fitness_text=fitness_text, fitness_text_color=fitness_text_color,
             size=size, text_size=text_size, edge_color=edge_color,
             text_color=text_color, fit_cmap=fit_cmap, colorbar=colorbar,
+            fitness_colorbar=fitness_colorbar,
             im_interp_method=im_interp_method, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
         #add spp name

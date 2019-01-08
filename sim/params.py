@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#params.py
+# params.py
 
 '''
 ##########################################
@@ -472,6 +472,8 @@ TRT_PARAMS = '''
                             'alpha_distr_mu' :      0.1,
                             #variance of distr of effect size
                             'alpha_distr_sigma':    0,
+                            #max allowed magnitude for an alpha value
+                            'max_alpha_mag':        None,
                             #curvature of fitness function
                             'gamma':                1,
                             #whether the trait is universally advantageous

@@ -780,8 +780,8 @@ class Species(OD):
             phenotype_text_color='black', fitness_text=False,
             fitness_text_color='#333333', size=100, text_size = 9,
             edge_color='black', text_color='black', fit_cmap = 'RdYlGn',
-            colorbar=True, im_interp_method='nearest', alpha=1,
-            zoom_width=None, x=None, y=None):
+            colorbar=True, fitness_colorbar=True, im_interp_method='nearest',
+            alpha=1, zoom_width=None, x=None, y=None):
 
         #return messages if species does not have genomes or traits
         if self.gen_arch is None:
@@ -861,7 +861,8 @@ class Species(OD):
                          size = text_size)
 
         #and make a colorbar for the fitness values 
-        viz._make_fitness_cbar(make_cbar_fn, min_fit)
+        if fitness_colorbar:
+            viz._make_fitness_cbar(make_cbar_fn, min_fit)
 
     #method to plot a species' allele frequencies
     def _plot_allele_frequencies(self):

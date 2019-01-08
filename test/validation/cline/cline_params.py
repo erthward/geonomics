@@ -273,7 +273,7 @@ params = {
                             #trait-selection Layer name
                             'layer':                'layer_0',
                             #polygenic selection coefficient
-                            'phi':                  0.1,
+                            'phi':                  0.01,
                             #number of loci underlying trait
                             'n_loci':               1,
                             #mutation rate at loci underlying trait
@@ -282,6 +282,8 @@ params = {
                             'alpha_distr_mu' :      0.5,
                             #variance of distr of effect size
                             'alpha_distr_sigma':    0,
+                            #max alpha value
+                            'max_alpha_mag':        None,
                             #curvature of fitness function
                             'gamma':                1,
                             #whether the trait is universally advantageous
@@ -318,7 +320,7 @@ params = {
 ###############
     'model': {
         #total Model runtime (in timesteps)
-        'T':            100,
+        'T':            2500,
         #min burn-in runtime (in timesteps)
         'burn_T':       60,
         #seed number

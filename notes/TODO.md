@@ -3,6 +3,11 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 MAKE FINAL DECISION ABOUT HOW IMPLEMENT MONO vs POLYGENIC TRAITS! Because if I made 0 the base phenotype for mono and poly, then poly individuals could overshoot z = 1.0 but
+          could never undershoot z = 0.0; however, if I leave mono baseline at 0 and poly baseline at 0.5, and then a mono trait undergoes mutation, then from one timestep to the next
+          and individ with genotype 1|1 at the originally monogenic trait-locus would go from having phenotype 1.0 before the mutation to 1.5 after the timestep (because ops.selection
+          uses traits[n_trait].n_loci to determine how to calculate the phenotype for each trait!
+
         5 other validations tests?
                 - bottleneck model?
                 - model of selective sweep with linkage?

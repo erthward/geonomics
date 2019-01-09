@@ -51,6 +51,9 @@ import pandas as pd
 def make_parameters_file(filepath=None, layers=1, species=1, data=None,
         stats=None):
     """
+    make_parameters_file(filepath=None, layers=1, species=1, data=None,
+                         stats=None)
+
     Create a new parameters file.
 
     Write to disk a new, template parameters file. The file will contain the

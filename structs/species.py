@@ -661,7 +661,7 @@ class Species(OD):
     #on top of a layer (or landscape)
     def _plot(self, lyr_num=None, land=None, hide_land=False, individs=None,
             text=False, color='black', edge_color='face', text_color='black',
-            colorbar=True, size=25, text_size=9, im_interp_method='nearest',
+            cbar=True, size=25, text_size=9, im_interp_method='nearest',
             land_cmap='terrain', pt_cmap=None, alpha=False,
             zoom_width=None, x=None, y=None, vmin = None, vmax = None):
         #convert individs to a list (in case comes in as a numpy array)
@@ -685,7 +685,7 @@ class Species(OD):
             pass
         else:
             viz._plot_rasters(land, lyr_num = lyr_num,
-                colorbar = colorbar, im_interp_method = im_interp_method,
+                cbar = cbar, im_interp_method = im_interp_method,
                                     cmap = land_cmap, plt_lims = plt_lims)
         #and plot the individuals
         viz._plot_points(coords, lyr_num = lyr_num, color = color,
@@ -723,7 +723,7 @@ class Species(OD):
     # method for plotting individuals colored by their genotype at a locus
     def _plot_genotype(self, locus, lyr_num=None, individs=None,
             text=False, size=25, text_size = 9, edge_color='black',
-            text_color='black', colorbar=True, im_interp_method='nearest',
+            text_color='black', cbar=True, im_interp_method='nearest',
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
 
         if by_dominance == True:
@@ -747,7 +747,7 @@ class Species(OD):
             if len(genotype_individs) >= 1:
                 self._plot(lyr_num = lyr_num, individs = genotype_individs,
                     text = text, color = colors[n], edge_color = edge_color,
-                    text_color = text_color, colorbar = colorbar,
+                    text_color = text_color, cbar = cbar,
                     size = size, text_size = text_size,
                     im_interp_method = im_interp_method, alpha = alpha,
                     zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1)
@@ -757,7 +757,7 @@ class Species(OD):
     #for a given trait
     def _plot_phenotype(self, trait, lyr_num=None, land = None,
             individs=None, text=False, size=25, text_size = 9,
-            edge_color='black', text_color='black', colorbar=True,
+            edge_color='black', text_color='black', cbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
             y=None):
 
@@ -768,7 +768,7 @@ class Species(OD):
         self._plot(lyr_num = lyr_num, land = land, individs = individs,
             text = text, color = list(z.values()), pt_cmap = 'terrain',
             edge_color = edge_color, text_color = text_color,
-            colorbar = colorbar, size = size, text_size = text_size,
+            cbar = cbar, size = size, text_size = text_size,
             im_interp_method = im_interp_method, alpha = alpha,
             zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1)
 
@@ -780,7 +780,7 @@ class Species(OD):
             phenotype_text_color='black', fitness_text=False,
             fitness_text_color='#333333', size=100, text_size = 9,
             edge_color='black', text_color='black', fit_cmap = 'RdYlGn',
-            colorbar=True, fitness_colorbar=True, im_interp_method='nearest',
+            cbar=True, fitness_cbar=True, im_interp_method='nearest',
             alpha=1, zoom_width=None, x=None, y=None):
 
         #return messages if species does not have genomes or traits
@@ -832,7 +832,7 @@ class Species(OD):
             self._plot_phenotype(trait = trt_num, lyr_num = lyr_num,
                 land = land, individs = individs, text = False, size = size,
                 text_size = text_size, edge_color=edge_color,
-                text_color = text_color, colorbar = colorbar,
+                text_color = text_color, cbar = cbar,
                 im_interp_method = im_interp_method, alpha = alpha,
                 zoom_width = zoom_width, x = x, y = y)
             #make size smaller for the next layer of inner (fitness) circles
@@ -841,7 +841,7 @@ class Species(OD):
         self._plot(lyr_num = lyr_num, land = land, individs = individs,
                 text = text, color = list(w.values()), pt_cmap = cmap,
                 edge_color = edge_color, text_color = text_color,
-                colorbar = colorbar, size = size, text_size = text_size,
+                cbar = cbar, size = size, text_size = text_size,
                 im_interp_method = im_interp_method, alpha = alpha,
                 zoom_width = zoom_width, x = x, y = y)
 
@@ -861,7 +861,7 @@ class Species(OD):
                          size = text_size)
 
         #and make a colorbar for the fitness values 
-        if fitness_colorbar:
+        if fitness_cbar:
             viz._make_fitness_cbar(make_cbar_fn, min_fit)
 
     #method to plot a species' allele frequencies
@@ -881,7 +881,7 @@ class Species(OD):
 
     #method for plotting the movement surface (in various formats)
     def _plot_direction_surface(self, land, surf_type, style, x, y,
-        zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
+        zoom_width=8, scale_fact=4.5, color='black', cbar = True):
         #get the correct surface
         if surf_type == 'move':
             surf = self._move_surf

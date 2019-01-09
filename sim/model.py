@@ -929,7 +929,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     #different color with a legend!
     def plot(self, spp=None, lyr=None, hide_land=False, individs=None,
             text=False, color='black', edge_color='face', text_color='black',
-            colorbar=True, size=25, text_size=9, im_interp_method='nearest',
+            cbar=True, size=25, text_size=9, im_interp_method='nearest',
             land_cmap='terrain', pt_cmap=None, alpha=False,
              zoom_width=None, x=None, y=None, vmin=None, vmax=None):
         #get the lyr num
@@ -937,7 +937,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #if no spp provided, then call Landscape._plot
         if (spp is None or
             (spp is not None and len(self.comm[self._get_spp_num(spp)])) == 0):
-            self.land._plot(lyr_num=lyr_num, colorbar=colorbar, cmap=land_cmap,
+            self.land._plot(lyr_num=lyr_num, cbar=cbar, cmap=land_cmap,
                 im_interp_method=im_interp_method, x=x, y=y,
                 zoom_width=zoom_width, vmin=vmin, vmax=vmax)
         #or else plot the spp
@@ -947,7 +947,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             #feed args into spp._plot
             spp._plot(lyr_num=lyr_num, land = self.land, hide_land=hide_land,
                 individs=individs, text=text, color=color, edge_color=edge_color,
-                text_color=text_color, colorbar=colorbar, size=size,
+                text_color=text_color, cbar=cbar, size=size,
                 text_size=text_size, im_interp_method=im_interp_method,
                 land_cmap=land_cmap, pt_cmap=pt_cmap, alpha=alpha,
                 zoom_width=zoom_width, x=x, y=y, vmin=vmin, vmax=vmax)
@@ -972,7 +972,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     #wrapper around Species._plot_genotype
     def plot_genotype(self, spp, locus, lyr=None, by_dominance=False,
             individs=None, text=False, size=25, text_size = 9,
-            edge_color='black', text_color='black', colorbar=True,
+            edge_color='black', text_color='black', cbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
             y=None):
         #get the lyr num
@@ -982,7 +982,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #feed args into spp._plot_genotype
         spp._plot_genotype(locus=locus, lyr_num=lyr_num, individs=individs,
             text=text, size=size, text_size=text_size, edge_color=edge_color,
-            text_color=text_color, colorbar=colorbar,
+            text_color=text_color, cbar=cbar,
             im_interp_method=im_interp_method, alpha=alpha,
             by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y)
         #add spp name
@@ -992,7 +992,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     #for a given trait
     def plot_phenotype(self, spp, trait, lyr=None, individs=None,
             text=False, size=25, text_size = 9, edge_color='black',
-            text_color='black', colorbar=True, im_interp_method='nearest',
+            text_color='black', cbar=True, im_interp_method='nearest',
             alpha=1, zoom_width=None, x=None, y=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
@@ -1015,7 +1015,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #feed args into spp._plot_phenotype
         spp._plot_phenotype(trait=trait, lyr_num=lyr_num, land=self.land,
             individs=individs, text=text, size=size, text_size=text_size,
-            edge_color=edge_color, text_color=text_color, colorbar=colorbar,
+            edge_color=edge_color, text_color=text_color, cbar=cbar,
             im_interp_method=im_interp_method, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
         #add spp name
@@ -1026,8 +1026,8 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             text=False, phenotype_text=False, phenotype_text_color='black',
             fitness_text=False, fitness_text_color='black',
             size=100, text_size = 9, edge_color='black',
-            text_color='black', fit_cmap='RdYlGn', colorbar=True,
-            fitness_colorbar=True, im_interp_method='nearest',
+            text_color='black', fit_cmap='RdYlGn', cbar=True,
+            fitness_cbar=True, im_interp_method='nearest',
             alpha=1, zoom_width=None, x=None, y=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
@@ -1050,8 +1050,8 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             phenotype_text_color=phenotype_text_color,
             fitness_text=fitness_text, fitness_text_color=fitness_text_color,
             size=size, text_size=text_size, edge_color=edge_color,
-            text_color=text_color, fit_cmap=fit_cmap, colorbar=colorbar,
-            fitness_colorbar=fitness_colorbar,
+            text_color=text_color, fit_cmap=fit_cmap, cbar=cbar,
+            fitness_cbar=fitness_cbar,
             im_interp_method=im_interp_method, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
         #add spp name
@@ -1073,21 +1073,21 @@ BE EXPECTED WHEN RUN WITH Model.walk.
 
     #wrapper around Species._plot_direction_surface for _move_surf
     def plot_movement_surface(self, spp, style, x, y, zoom_width=8,
-                            scale_fact=4.5, color='black', colorbar = True):
+                            scale_fact=4.5, color='black', cbar = True):
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
-            color=color, colorbar=colorbar)
+            color=color, cbar=cbar)
 
     #wrapper around Species._plot_direciton_surface for _disp_surf
     def plot_dispersal_surface(self, spp, style, x, y, zoom_width=8,
-                            scale_fact=4.5, color='black', colorbar = True):
+                            scale_fact=4.5, color='black', cbar = True):
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
-            color=color, colorbar=colorbar)
+            color=color, cbar=cbar)
 
     #wrapper around Species._plot_direction_surface
     def _plot_direction_surface(self, surf_type, spp, style, x, y,
-        zoom_width=8, scale_fact=4.5, color='black', colorbar = True):
+        zoom_width=8, scale_fact=4.5, color='black', cbar = True):
 
         """
         The 'style' argument can take the following values:
@@ -1115,7 +1115,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #call the fn
         spp._plot_direction_surface(land = self.land, surf_type=surf_type,
             style=style, x=x, y=y, zoom_width=zoom_width,
-            scale_fact=scale_fact, color=color, colorbar=colorbar)
+            scale_fact=scale_fact, color=color, cbar=cbar)
 
     #wrapper around Species._plot_demographic_pyramid
     def plot_demographic_pyramid(self, spp):

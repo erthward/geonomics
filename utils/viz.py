@@ -42,12 +42,12 @@ import sys
 # -----------------------------------#
 ######################################
 
-def _plot_rasters(land, lyr_num=None, colorbar=True,
+def _plot_rasters(land, lyr_num=None, cbar=True,
         im_interp_method='nearest', cmap='terrain', plt_lims=None,
         vmin=0, vmax=1, lyr_name = None):
     #if a figure is already open, force colorbar to False
     if plt.get_fignums() and plt.gcf().get_axes():
-        colorbar = False
+        cbar = False
 
     #if just a numpy.ndarray or a Layer (not a Landscape object) is
     #provided, or if just a single raster is desired, grab
@@ -95,7 +95,7 @@ def _plot_rasters(land, lyr_num=None, colorbar=True,
         #and their colorbars, if requested (but for only the first
         #two rasters maximum, since the second and onward share
         #the same palette)
-        if colorbar and n < 2:
+        if cbar and n < 2:
             cbar_max_bound = max(rasters[n].max(),
                 [1 if vmax is None else vmax][0])
             cbar_bounds = np.linspace(0, cbar_max_bound, 51)

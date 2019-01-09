@@ -1,8 +1,10 @@
+#!/usr/bin/python
+# tmp_divergence_test.py
+
 import geonomics as gnx
 
 import os
 import shutil
-import numpy as np
 import matplotlib.pyplot as plt
 
 # set total runtime for each selection coefficient's model
@@ -86,12 +88,15 @@ for phi in phis:
 
 # define fn to calculate the expected allele-frequency trajectories
 # (using migration-selection balance eqxn, pg. 308 Hartl & Clark)
-# ('f' refers to allele frequency; 'in' and 'out' refer to freqencies
-# inside or outside the population for which delta_q is being calculated)
-def mig_sel_bal(s, f0_in, f1_in, f1_out, m_in, m_out, h=0.5):
-    delta_q = ((-s * f0_in * f1_in * (f1_in + h * (f0_in - f1_in))) / (
-                1 - (s * f1_in * (2 * h * f0_in + f1_in)))) + (
-                    m_in * f1_out) - (m_out * f1_in)
+# (p and q are 0- and 1-allele frequencies in the focal population,
+# i.e. the population for which delta_q is being calculated;
+# q_star is the 1-allele frequency in the other population)
+# NOTE: assumes HWE, rarity of recessive allele, and 'sufficiently weak'
+# selection
+def mig_sel_bal(s, p, q, q_star, m_in, m_out, h=0.5):
+    delta_q = ((-1*s * p * q * (q + (h * (p - q)))) / (
+                1 - (s * q * (2 * h * p + q)))) + (
+                    m_in * q_star) - (m_out * q)
     return delta_q
 
 
@@ -102,59 +107,60 @@ for phi in phis:
     # create data structure to store expected allele freq trajectories for
     # each half of the environment for this phi
     expected_this_phi = {0: [], 1: []}
-    # for each allele
-    for allele in [*expected_this_phi]:
-        # generate the 2-tuple keys to use to get in- and out-migration
-        # rates for this allele's half of the environment from the
-        # migration_rates dict
-        m_in_key = (allele, int(allele == 0))
-        m_out_key = m_in_key[::-1]
-        # append the starting allele freq for this allele's half of the
-        # environment as the starting point for the expectation trajectory
-        expected_this_phi[allele].append(allele_freqs[phi][allele][0])
-        # for each additional timestep
-        for t in range(T):
+    # append the starting allele freq for each allele's half of the
+    # environment as the starting point for the expectation trajectory
+    [expected_this_phi[allele].append(
+            allele_freqs[phi][allele][0]) for allele in (0, 1)]
+    for t in range(T):
+        for allele in [*expected_this_phi]:
             # get the current 0- and 1-allele freqs for this allele's half
             # of the environment
-            curr_f1_in = allele_freqs[phi][allele][t + 1]
-            curr_f0_in = 1 - curr_f1_in
+            curr_f1 = expected_this_phi[allele][t]
+            curr_f0 = 1 - curr_f1
             # get the current f1 freq in the other half of the environment
-            curr_f1_out = allele_freqs[phi][int(allele == 0)][t + 1]
+            curr_f1_star = expected_this_phi[int(allele == 0)][t]
+            curr_f0_star = 1 - curr_f1_star
             # get the previous step's rate of migrations of individuals
             # into this allele's half of the environment
-            #curr_m_in = np.mean(migration_rates[phi][m_in_key])
-            curr_m_in = migration_rates[phi][m_in_key][t]
+            curr_m_1_0 = migration_rates[phi][(1, 0)][t]
             # get the previous step's rate of migration of individuals
             # out of this allele's half of the environment
-            #curr_m_out = np.mean(migration_rates[phi][m_out_key])
-            curr_m_out = migration_rates[phi][m_out_key][t]
-            # TODO: REASON THIS OUT AND FIX COMMENT!
+            curr_m_0_1 = migration_rates[phi][(0, 1)][t]
+            params = [curr_f1, curr_f0, curr_f1_star, curr_m_1_0,
+                      curr_m_0_1, phi]
+            for param in params:
+                assert 0 <= param <= 1, ("Param outside the 0-1 range! Here"
+                                         " are all params: %s") % str(params)
+            # set selection coefficient and calculate expected allele freq
+            # changes and resulting 1-allele frequencies correctly
             if allele == 0:
-                s = -1*phi #* int(allele == 0)
+                expected_delta_q = mig_sel_bal(s=phi, p=curr_f0,
+                                               q=curr_f1,
+                                               q_star=curr_f1_star,
+                                               m_in=curr_m_1_0,
+                                               m_out=curr_m_0_1)
+                expected_delta_1 = expected_delta_q
             else:
-                s = phi
-            # use those param values to calculated the expected change in
-            # freq of the 1-allele in this allele's half of the environment
-            expected_delta_q = mig_sel_bal(s=s, f0_in=curr_f0_in,
-                                           f1_in=curr_f1_in,
-                                           f1_out=curr_f1_out,
-                                           m_in=curr_m_in,
-                                           m_out=curr_m_out)
+                expected_delta_q = mig_sel_bal(s=phi, p=curr_f1,
+                                               q=curr_f0,
+                                               q_star=curr_f0_star,
+                                               m_in=curr_m_0_1,
+                                               m_out=curr_m_1_0)
+                expected_delta_1 = -1*expected_delta_q
             # add the expected change in 1-allele freq to the previous
             # timestep's 1-allele freq to get the expected freq for this
             # timestep
-            if allele == 0:
-                expected_this_phi[allele].append(
-                    expected_this_phi[allele][t] - expected_delta_q)
-            else:
-                expected_this_phi[allele].append(
-                    expected_this_phi[allele][t] - expected_delta_q)
+            expected_this_phi[allele].append(
+                    expected_this_phi[allele][t] + expected_delta_1)
     # store the expected allele frequencies for this phi
     expected_allele_freqs[phi] = expected_this_phi
 
-# plot observed versus expected allele frequencies
+# plot observed versus expected allele frequencies for all phi values
 fig = plt.figure()
-plt.suptitle('Allele-frequency divergence in constrasting environments')
+ax = fig.add_subplot(121)
+ax.set_title(('Allele-frequency divergence in constrasting environments;'
+              '\nobserved (markers) versus predicted (lines);'
+              '%i timesteps, ~1400 individuals') % T)
 plt.xlabel('time')
 plt.ylabel('frequency of 1 allele')
 plt.ylim((0, 1))
@@ -168,9 +174,19 @@ for n, phi in enumerate(phis):
         plt.plot(range(len(allele_freqs[phi][allele])),
                  allele_freqs[phi][allele], markers[n],
                  color=colors[allele], markeredgecolor='black',
-                 markersize=10)
-        # plot expected allele frequencies
+                 markersize=8, markeredgewidth=0.5)
+ax.legend(labels=['phi = %0.3f; allele %i beneficial' % (
+          phi, n % 2) for phi in phis for n in (0, 1)],
+          loc='best', fontsize='medium')
+# plot expected allele frequencies
+for n, phi in enumerate(phis):
+    for allele in (0, 1):
         plt.plot(range(len(expected_allele_freqs[phi][allele])),
                  expected_allele_freqs[phi][allele], lines[n],
                  color=line_colors[allele], linewidth=1)
+
+ax2 = fig.add_subplot(122)
+ax2.set_title(('Population, colored by phenotype (outer circle) '
+              'and fitness (inner circle)'))
+mod.plot_fitness(0, 0, 0, fitness_cbar=False)
 plt.show()

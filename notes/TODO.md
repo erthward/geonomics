@@ -42,6 +42,8 @@
 
         5 add type annotation to all functions
 
+        5 fix/debug all unit tests
+
         5 write lots of checks on the types of all the data in the params file, with informative errors
 
         2 finalize nice string representations for all classes

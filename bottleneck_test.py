@@ -74,7 +74,7 @@ plt.ylabel("frequency of '1' allele")
 plt.xlim((0, mod.T))
 plt.ylim((0, 1))
 for loc, traj in allele_freqs.items():
-    plt.plot(timesteps, traj, '--')
+    plt.plot(timesteps, traj, '--', linewidth=1)
 ax2 = fig.add_subplot(212)
 plt.title('population size')
 plt.xlabel('time')
@@ -89,8 +89,8 @@ plt.plot(range(mod.T), spp.Nt[-mod.T:], '-k')
 # the lines at the following timesteps (50 and 55),
 # which are the first timeteps in which the events have an effect
 # on the number of individuals)
-plt.plot([50, 50], [0, max(spp.Nt)], '--r')
-#plt.plot([55, 55], [0, max(spp.Nt)], '--r')
+plt.plot([94, 94], [0, max(spp.Nt)], '--r')
+plt.plot([114, 114], [0, max(spp.Nt)], '--r')
 
 
 # estimate effective population size using harmonic and arithmetic means

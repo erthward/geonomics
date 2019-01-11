@@ -200,9 +200,9 @@ params = {
                     #scale of distr of deleterious effect sizes
                     'delet_alpha_distr_scale':  0.2,
                     #alpha of distr of recomb rates
-                    'r_distr_alpha':            1000,
+                    'r_distr_alpha':            1000000,
                     #beta of distr of recomb rates
-                    'r_distr_beta':             9000,
+                    'r_distr_beta':             19000000,
                     #whether loci should be dominant (for allele '1')
                     'dom':                      False,
                     #whether to allow pleiotropy
@@ -226,7 +226,7 @@ params = {
                             #trait-selection Layer name
                             'layer':                'layer_0',
                             #polygenic selection coefficient
-                            'phi':                  0.05,
+                            'phi':                  0.15,
                             #number of loci underlying trait
                             'n_loci':               1,
                             #mutation rate at loci underlying trait

@@ -913,7 +913,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
 
     #method to use the self._data_collector object to sample and write data
     def write_data(self):
-        self._data_collector._write_data(self.comm, self.it)
+        self._data_collector._write_data(self.comm, self.land, self.it)
 
     #method to use the self._stats_collector object to sample and write data
     def calc_stats(self):

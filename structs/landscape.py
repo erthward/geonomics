@@ -169,6 +169,13 @@ class Landscape(dict):
             )]), ("Not all Layers have the same projection (attribute 'prj') "
             "as the 'prj' value being used to create the Landscape "
             "object that should contain them.")
+        #check that all layers' values are constrained to 0 <= x <= 1
+        for lyr in lyrs.values():
+            assert np.all(0 <= lyr.rast), ("Layer '%s' contains values "
+                                           "less than 0.") %(lyr.name)
+            assert np.all(lyr.rast <= 1), ("Layer '%s' contains values "
+                                           "greater than 1.") %(lyr.name)
+
 
         #create a changer attribute (defaults to None, but will later be set
         #to an ops.change.LandscapeChanger object if params call for it)
@@ -457,6 +464,17 @@ def _make_landscape(mod, params, num_hab_types=2):
         for n in file_lyr_params['lyr_nums']:
             lyrs[n] = file_lyrs[n]
 
+        #set all other layers in the lyrs dict to have the same res, ulc,
+        #and prj (because they all were not read in from file, whereas all
+        #file-based layers were, and their res, ulc, and prj values were
+        #already checked for equality, so we make the strong assumption
+        #that the user wants the remaining non-file layers to be represented
+        #by the same res, ulc, and prj values)
+        for lyr_name in [*lyrs]:
+            lyrs[lyr_name].res = res
+            lyrs[lyr_name].ulc = ulc
+            lyrs[lyr_name].prj = prj
+
     #create the land object
     land = Landscape(lyrs, res=res, ulc=ulc, prj=prj, mod=mod)
 
@@ -485,16 +503,16 @@ def _make_landscape(mod, params, num_hab_types=2):
 def _get_file_rasters(land_dim, names, lyr_nums, filepaths,
                                             scale_min_vals, scale_max_vals):
     assert len(lyr_nums)==len(filepaths), ('Parameters provide a '
-        'different number of GIS raster files to read in than of layer '
-                                                'numbers to set them to .')
+                                           'different number of GIS raster '
+                                           'files to read in than of layer '
+                                           'numbers to set them to.')
     res = []
     ulc = []
     prj = []
     rasters = []
     lyrs = []
     for n,filepath in enumerate(filepaths):
-        #get the array, dim, res, upper-left corner, and projection from
-        #io.read_raster
+        #get array, dim, res, ulc, and prj from io.read_raster
         rast_array, rast_dim, rast_res, rast_ulc, rast_prj = io._read_raster(
             filepath, land_dim)
         #check that the dimensions are right

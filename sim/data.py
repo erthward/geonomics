@@ -36,7 +36,8 @@ from numpy import random as r
 import os, sys
 import datetime
 import re
-from shapely.geometry import Point, MultiPolygon
+from shapely.geometry import Point
+from shapely.ops import cascaded_union
 import pandas as pd
 import geopandas as gpd
 from itertools import chain
@@ -112,9 +113,9 @@ class _DataCollector:
 
         #create the point buffers, if either 'transect' or 'point' is the 
         #chosen sampling scheme
-        self.pts_buff = None
+        self.pts_area = None
         if sampling_params.scheme in ['transect', 'point']:
-            self.pts_buff = _make_point_buffers(self.pts,
+            self.pts_area = _make_point_buffers(self.pts,
                                         sampling_params.radius)
 
         #get the 'include_landscape' param (defaults False)
@@ -200,7 +201,7 @@ class _DataCollector:
     #data and then write the data (if write_intermittent == True) if it's
     #the right timestep
     #TODO: CONSIDER NOMENCLATURE CHANGE HERE AND IN CLASS NAME!
-    def _write_data(self, community, iteration):
+    def _write_data(self, community, land, iteration):
 
         #if this timestep is scheduled for sampling
         if community.t == self.next_t:
@@ -277,7 +278,7 @@ class _DataCollector:
             #write the raster, if necessary
             if self.rast_format is not None:
                 #for each Layer
-                for lyr in community.land.values():
+                for lyr in land.values():
                     #get the raster filename
                     filename = 'mod-%s_it-%i_t-%i_lyr-%s.%s' % (
                         self.model_name, iteration, self.next_t, lyr.name,
@@ -299,8 +300,8 @@ class _DataCollector:
 
 
     def _get_point_sample(self, spp):
-        #TODO: check if this should to be sped up any more
-        sample = [i for i,v in spp.items() if self.pts_buff.contains(
+        #TODO: check if this should be sped up any more
+        sample = [i for i,v in spp.items() if self.pts_area.contains(
                                                         Point(v.x, v.y))]
         if len(sample) > self.n:
             sample = self._get_random_sample(individuals = sample)
@@ -365,10 +366,10 @@ def _get_transect_points(endpoints, n):
 
 #a function to make shapely geometry buffers around a set of points
 def _make_point_buffers(points, radius):
-    pts = [Point(p[0], p[1]) for p in points]
+    pts = [Point(*p) for p in points]
     buffs = [p.buffer(radius) for p in pts]
-    buff_poly = MultiPolygon(buffs)
-    return(buff_poly)
+    cu = cascaded_union(buffs)
+    return(cu)
 
 
 def _format_fasta(sample):

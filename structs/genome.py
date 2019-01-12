@@ -704,7 +704,6 @@ def _set_genomes(spp, burn_T, T):
     # otherwise choose and update mutable loci
     else:
         muts = set(r.choice([*spp.gen_arch.neut_loci], n_muts, replace=False))
-        print(muts)
         spp.gen_arch._mutable_loci.update(muts)
         # set those loci's p values to 0 (i.e. non-segregating)
         spp.gen_arch.p[np.array([*muts])] = 0

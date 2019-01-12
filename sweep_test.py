@@ -75,8 +75,7 @@ mod.walk(50, 'main', True)
 # create the figure and first Axes instance
 fig = plt.figure()
 ax1 = fig.add_subplot(231)
-plt.title(('Population at beginning of sweep,\ncolored by phenotype (outer '
-           'circles) and fitness (inner circles)'))
+ax1.set_title('Population at beginning of sweep\n(colored by phenotype)')
 
 # keep reintroducing a mutant and running for 100 timesteps, until
 # mutant establishes
@@ -113,7 +112,7 @@ while not sweeping_allele_established:
     if sweeping_allele_established:
         print('\n\nMUTANT ESTABLISHED.\n')
     else:
-        print('\n\nMutant lost...\n')
+        print('\n\nMutation lost...\n')
 
     # increment lapsed_t
     lapsed_t += 50
@@ -162,17 +161,19 @@ plt.title('Mean fitness across model time')
 ax4.plot(range(len(mean_fit)), mean_fit)
 ax4.set_xlabel('model time')
 ax4.set_ylabel('mean fitness')
-ax4.set_ylim((1 - mod.comm[0].traits[0].phi[0], 1.0))
+ax4.set_ylim((1 - mod.comm[0].gen_arch.traits[0].phi, 1.0))
 ax5 = fig.add_subplot(235)
 plt.title(('Nucleotide diversity 100 timesteps into sweep\n(calculated in '
           '11-locus '))
 ax5.plot(range(mod.comm[0].gen_arch.L), pi[0])
+ax5.plot([50, 50], [0, 1], '--r')
 ax5.set_xlabel('genomic_position')
 ax5.set_ylabel('$\\Pi$')
 ax6 = fig.add_subplot(236)
 plt.title(('Nucleotide diversity at end of sweep\n(calculated in 11-locus '
           'windows)'))
 ax6.plot(range(mod.comm[0].gen_arch.L), pi[1])
+ax6.plot([50, 50], [0, 1], '--r')
 ax6.set_xlabel('genomic_position')
 ax6.set_ylabel('$\\Pi$')
 pi_min_lim = 0.95 * min([val for sublist in pi for val in sublist])

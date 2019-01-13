@@ -174,7 +174,8 @@ def _calc_d(N_d, N, d_min, d_max):
     #numerical artefacts that an inappropriate
     d = N_d/N
     #fix infinties and NaNs and negatives if they arise
-    #(they occur where N ==0)
+    #(they occur where N ==0 or where N_d == 0)
+    d[np.isnan(d)] = 0 
     #constrain to the min and max d values
     d = np.clip(a = d, a_min = d_min, a_max = d_max)
 
@@ -196,7 +197,7 @@ def _do_mortality(spp, death_probs):
 
 
 def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
-    births_before_deaths = False, asserts = False, debug = False):
+    births_before_deaths = False, asserts = True, debug = False):
     '''Generalized function for implementation population dynamics.
     Will carry out one round of mating and death, according to parameterization
     laid out in params dict (which were grabbed as Species attributes).

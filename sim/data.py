@@ -285,7 +285,7 @@ class _DataCollector:
                                     self.file_extension_dict[self.rast_format])
                     filepath = os.path.join(dirname, filename)
                     #and write it to disk
-                    lyr._write_raster(filepath, self.rast_format)
+                    lyr.write_raster(filepath, self.rast_format)
 
             #update self.next_t to the next timestep to be sampled
             self._set_next_t()

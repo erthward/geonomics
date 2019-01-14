@@ -89,16 +89,17 @@ plt.plot(range(mod.T), spp.Nt[-mod.T:], '-k')
 # the lines at the following timesteps (50 and 55),
 # which are the first timeteps in which the events have an effect
 # on the number of individuals)
-plt.plot([94, 94], [0, max(spp.Nt)], '--r')
-plt.plot([114, 114], [0, max(spp.Nt)], '--r')
+ts = mod.params.comm.species['spp_0'].change.dem[0].timesteps
+plt.plot([ts[0]] * 2, [0, max(spp.Nt)], '--r')
+plt.plot([ts[1]] * 2, [0, max(spp.Nt)], '--r')
 
 
 # estimate effective population size using harmonic and arithmetic means
-N_e_harm = 1 / ((1 / len(spp.Nt)) * sum([1 / N for N in spp.Nt]))
-N_e_arit = np.mean(spp.Nt)
+Ne_harm = 1 / ((1 / len(spp.Nt)) * sum([1 / N for N in spp.Nt]))
+Ne_arit = np.mean(spp.Nt)
 # estimate mean times to fixation for pops with each N_e, for loci starting at
 # p = q = 0.5 (according to W-F model)
-t_fix_harm = 2.776 * N_e_harm
-t_fix_arit = 2.776 * N_e_arit
+t_fix_harm = 2.776 * Ne_harm
+t_fix_arit = 2.776 * Ne_arit
 # TODO: compare both expected times to fixation to the mean time
 # to fixation in the simulation

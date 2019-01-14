@@ -235,21 +235,21 @@ params = {
                             #'cyclical', 'custom'}
                             'kind':             'custom',
                             #starting timestep
-                            'start_t':          49,
+                            'start_t':          None,
                             #ending timestep
-                            'end_t':            54,
+                            'end_t':            None,
                             #rate, for monotonic change
-                            'rate':             1.02,
+                            'rate':             None,
                             #interval of changes, for stochastic change
-                            'interval':         1,
+                            'interval':         None,
                             #distr, for stochastic change {'uniform', 'normal'}
-                            'distr':            'uniform',
+                            'distr':            None,
                             #num cycles, for cyclical change
-                            'n_cycles':         1,
+                            'n_cycles':         None,
                             #min & max sizes, for stochastic & cyclical change
-                            'size_range':       (0.5, 1.5),
+                            'size_range':       None,
                             #list of timesteps, for custom change
-                            'timesteps':        [94,95],
+                            'timesteps':        [99, 149],
                             #list of sizes, for custom change
                             'sizes':            [0.3, 1],
                             }, # <END> event 0
@@ -286,7 +286,7 @@ params = {
 ###############
     'model': {
         #total Model runtime (in timesteps)
-        'T':            200,
+        'T':            2500,
         #min burn-in runtime (in timesteps)
         'burn_T':       30,
         #seed number

@@ -94,11 +94,11 @@ class Layer:
         io._write_txt_array(filepath, self)
 
     #method for plotting the layer
-    def _plot(self, colorbar=True, im_interp_method='nearest',
+    def _plot(self, cbar=True, im_interp_method='nearest',
             cmap = 'terrain', x=None, y=None, zoom_width=None,
             vmin=None, vmax=None):
         plt_lims = viz._get_plt_lims(self, x, y, zoom_width)
-        viz._plot_rasters(self, colorbar = colorbar,
+        viz._plot_rasters(self, cbar = cbar,
             im_interp_method = im_interp_method, cmap = cmap,
             plt_lims = plt_lims, vmin = vmin, vmax = vmax)
 
@@ -233,11 +233,11 @@ class Landscape(dict):
             verbose = verbose)
 
     #method to plot the landscape (or just a certain lyr)
-    def _plot(self, lyr_num=None, colorbar=True, cmap='terrain',
+    def _plot(self, lyr_num=None, cbar=True, cmap='terrain',
             im_interp_method='nearest', x=None, y=None,
             zoom_width=None, vmin=None, vmax=None):
         plt_lims = viz._get_plt_lims(self, x, y, zoom_width)
-        viz._plot_rasters(self, lyr_num = lyr_num, colorbar = colorbar,
+        viz._plot_rasters(self, lyr_num = lyr_num, cbar = cbar,
             im_interp_method = im_interp_method, cmap = cmap,
             plt_lims = plt_lims, vmin = vmin, vmax = vmax)
 

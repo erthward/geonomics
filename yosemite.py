@@ -7,6 +7,7 @@ import utils.spatial as spt
 import numpy as np
 import utils.io as io
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 
 
 # little fn to calculate a habitat raster that's 1 at the center of env-var's
@@ -19,6 +20,36 @@ def calc_hab_rast(tmp, l_lim=7, u_lim=12):
     # hab = (hab - hab.min()) / (hab.max() - hab.min())
     return(hab)
 
+
+def calc_neighborhood_mean_phenotype(mod, window_width=8):
+    # array to store each cell's mean phenotype value
+    mean_z = np.ones(mod.land.dim)
+    # calc half-window_width
+    hww = int(window_width / 2)
+    # loop over cells
+    for i in range(mod.land.dim[1]):
+        for j in range(mod.land.dim[0]):
+            # get window around each cell
+            i_min = max(i - hww, 0)
+            i_max = min(i + hww, mod.land.dim[1])
+            j_min = max(j - hww, 0)
+            j_max = min(j + hww, mod.land.dim[0])
+            # get all phenotypes in the window
+            zs_in_window = [i.z for i in mod.comm[0].values(
+                ) if ((i_min <= int(i.y) <= i_max) and (
+                    j_min <= int(i.x) <= j_max))]
+            # average the window's phenotypes and add to mean_z
+            # NOTE: if there are no individuals in the window then a NaN is
+            # returned
+            mean_z[i, j] = np.mean(zs_in_window)
+
+    return mean_z
+
+
+# create colormap to match the phenotype colors
+colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
+z_cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
+z_cmap.set_bad(color='black')
 
 print('\nPREPARING MODEL...\n\n')
 
@@ -55,45 +86,74 @@ params.landscape.layers['tmp'].change[0]['change_rast'] = fut_tmp
 # create the model
 mod = gnx.make_model(params)
 
+# set plotting params
+ms = 6
+
 # burn in, then plot starting population, on both rasters
 mod.walk(20000, 'burn')
 fig = plt.figure()
-ax1 = fig.add_subplot(231)
+ax1 = fig.add_subplot(331)
 ax1.set_title('starting population\n(genotypes randomly assigned)')
-mod.plot_phenotype(0, 0, 0, size=8)
-ax4 = fig.add_subplot(234)
-mod.plot_phenotype(0, 0, 1, size=8)
+mod.plot_phenotype(0, 0, 0, size=ms)
+ax4 = fig.add_subplot(334)
+mod.plot_phenotype(0, 0, 1, size=ms)
+ax7 = fig.add_subplot(337)
+plt.imshow(calc_neighborhood_mean_phenotype(mod), cmap=z_cmap)
+plt.scatter(x=[i.x for i in mod.comm[0].values()],
+            y=[i.y for i in mod.comm[0].values()],
+            c=[i.z[0] for i in mod.comm[0].values()],
+            s=ms, cmap=z_cmap, linewidth=0.5, edgecolor='black',
+            alpha=1, vmin=0, vmax=1)
+
 
 # walk for 500 timesteps, then plot again, before climate change starts
 mod.walk(500)
-ax2 = fig.add_subplot(232)
+ax2 = fig.add_subplot(332)
 ax2.set_title('after 500 timesteps,\n(before climate change begins)')
-mod.plot_phenotype(0, 0, 0, size=8)
-ax5 = fig.add_subplot(235)
-mod.plot_phenotype(0, 0, 1, size=8)
+mod.plot_phenotype(0, 0, 0, size=ms)
+ax5 = fig.add_subplot(335)
+mod.plot_phenotype(0, 0, 1, size=ms)
+ax8 = fig.add_subplot(338)
+plt.imshow(calc_neighborhood_mean_phenotype(mod), cmap=z_cmap)
+plt.scatter(x=[i.x for i in mod.comm[0].values()],
+            y=[i.y for i in mod.comm[0].values()],
+            c=[i.z[0] for i in mod.comm[0].values()],
+            s=ms, cmap=z_cmap, linewidth=0.5, edgecolor='black',
+            alpha=1, vmin=0, vmax=1)
+
 
 # walk for 1000 more timesteps, then plot again,
 # at end of climate-change period
 mod.walk(1000)
-ax3 = fig.add_subplot(233)
+ax3 = fig.add_subplot(333)
 ax3.set_title('after 1500 timesteps\n(at end of period of climate change)')
-mod.plot_phenotype(0, 0, 0, size=8)
-plt.colorbar()
-ax6 = fig.add_subplot(236)
-mod.plot_phenotype(0, 0, 1, size=8)
-plt.colorbar()
+plt.imshow(mod.land[0].rast, cmap='terrain')
+cbar = plt.colorbar()
+cbar.set_label('environment', rotation=270)
+mod.plot_phenotype(0, 0, 0, size=ms)
+ax6 = fig.add_subplot(336)
+mod.plot_phenotype(0, 0, 1, size=ms)
+ax9 = fig.add_subplot(339)
+plt.imshow(calc_neighborhood_mean_phenotype(mod), cmap=z_cmap)
+plt.scatter(x=[i.x for i in mod.comm[0].values()],
+            y=[i.y for i in mod.comm[0].values()],
+            c=[i.z[0] for i in mod.comm[0].values()],
+            s=ms, cmap=z_cmap, linewidth=0.5, edgecolor='black',
+            alpha=1, vmin=0, vmax=1)
+cbar = plt.colorbar()
+cbar.set_label('phenotype', rotation=270)
 fig.suptitle(('Evolutionary response of 100-locus additive trait to climate '
               'change in Yosemite region, N = ~14300 individuals\n'
               'row 1: temperature rasters (i.e. selective environment); '
-              'row 2: habitat quality rasters (i.e. carrying capacity)'))
+              'row 2: habitat quality rasters (i.e. carrying capacity);\n'
+              'row 3: raster of neighborhood-meaned phenotypes'))
 ax1.set_ylabel('temperature rasters')
 ax4.set_ylabel('habitat rasters')
+ax7.set_ylabel('neighborhood-meaned phenotype')
 
-# TODO: 
-    # add colorbars for phenotype and for rasters
-    # create some interpolated/rasterized map of mean phenotye 
-
-
+# TODO:
+# add colorbars for phenotype and for rasters
+# create some interpolated/rasterized map of mean phenotye
 
 plt.show()
 

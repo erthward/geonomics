@@ -335,9 +335,9 @@ def test_island_model():
                     'generation)'))
                 plt.gca().legend(labels = ['mean inter-island migration rate'],
                     loc = 7, fontsize = 'medium')
-                est = sm.OLS(tot_mig_rate_y, np.hstack((x, x**2))).fit()
-                line_preds = est.predict(np.hstack((line_preds_x, line_preds_x**2)))
-                plt.plot(line_preds_x, line_preds, '-', color = 'black')
+                est = sm.OLS(np.log(tot_mig_rate_y), np.log(x)).fit()
+                line_preds = est.predict(np.log(line_preds_x))
+                plt.plot(line_preds_x, np.e**line_preds, '-', color = 'black')
                 r2 = est.rsquared
                 p = est.pvalues[0]
                 plt.text(line_preds_x[100], line_preds[100]+0.07, 'r=%0.3f' % r2,
@@ -347,7 +347,7 @@ def test_island_model():
                 ylim((0, 1.1*max(tot_mig_rate_y)))
                 plt.show()
 
-    #plot pop sizes over time
+    # plot pop sizes over time
     fig2 = plt.figure()
     plt.suptitle('Population size over time, by island')
     plt.xlabel('t')
@@ -357,25 +357,31 @@ def test_island_model():
         plt.plot(range(len(v)), v, '-', color = colors[k])
     plt.show()
 
-    #plot Fst values for all timesteps
+    # plot Fst values for all timesteps
     fig3 = plt.figure()
+    ax = fig3.add_subplot(111)
     plt.suptitle('Fst over model time, colored by inter-island distance')
-    plt.xlabel('t')
-    plt.ylabel('Fst')
+    ax.set_xlabel('t')
+    ax.set_ylabel('Fst')
     colors = ['#8baee5', '#4580e0', '#0056e2']
-    cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N = 50)
-    colors = cmap(np.linspace(0,1,5))
+    cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
+    colors = cmap(np.linspace(0, 1, 5))
     x = sorted(all_Fst_HsHt.keys())
+    max_Fsts = []
     for pop_pair in pop_pairs:
         y = [all_Fst_HsHt[t][pop_pair] for t in x]
-        plt.plot(x, y, color = colors[np.abs(pop_pair[0] - pop_pair[1])-1],
-            linewidth = 3)
-    plt.ylim((0, 1.1))
-    plt.xlim((0, 1.1*max(x)))
-
+        max_Fsts.append(max(y))
+        ax.plot(x, y, color=colors[np.abs(pop_pair[0] - pop_pair[1])-1],
+                linewidth=3)
+    ax.set_ylim((0, 1.1 * max(max_Fsts)))
+    ax.set_xlim((0, 1.1*max(x)))
+    ax.legend(labels=[str(i) for i in range(1, n)], loc='best',
+              title='Inter-island distance', fontsize='medium')
 
     print('\nValidation test successful.\n')
 
-    #return mod, migs, freq, Fst_var, Fst_HsHt, exp_Fst, N_est, tot_mig_rate_y, x
+    # return mod, migs, freq, Fst_var, Fst_HsHt, exp_Fst, N_est,
+    # tot_mig_rate_y, x
     return
 
+test_island_model()

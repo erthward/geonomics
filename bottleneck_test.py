@@ -75,13 +75,6 @@ plt.xlim((0, mod.T))
 plt.ylim((0, 1))
 for loc, traj in allele_freqs.items():
     plt.plot(timesteps, traj, '--', linewidth=1)
-ax2 = fig.add_subplot(212)
-plt.title('population size')
-plt.xlabel('time')
-plt.ylabel('population size')
-plt.xlim((0, mod.T))
-plt.ylim((0, 1.1*max(spp.Nt)))
-plt.plot(range(mod.T), spp.Nt[-mod.T:], '-k')
 # add lines for start and end of the bottleneck event
 # (dem-change events take place as changes in the carrying-capacity rasters
 # at the ends of their scheduled timesteps, after pop dynamics have happened,
@@ -90,6 +83,16 @@ plt.plot(range(mod.T), spp.Nt[-mod.T:], '-k')
 # which are the first timeteps in which the events have an effect
 # on the number of individuals)
 ts = mod.params.comm.species['spp_0'].change.dem[0].timesteps
+plt.plot([ts[0]] * 2, [0, max(spp.Nt)], '--r')
+plt.plot([ts[1]] * 2, [0, max(spp.Nt)], '--r')
+ax2 = fig.add_subplot(212)
+plt.title('population size')
+plt.xlabel('time')
+plt.ylabel('population size')
+plt.xlim((0, mod.T))
+plt.ylim((0, 1.1*max(spp.Nt)))
+plt.plot(range(mod.T), spp.Nt[-mod.T:], '-k')
+# add lines for start and end of the bottleneck event
 plt.plot([ts[0]] * 2, [0, max(spp.Nt)], '--r')
 plt.plot([ts[1]] * 2, [0, max(spp.Nt)], '--r')
 

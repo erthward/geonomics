@@ -74,7 +74,7 @@ mod.walk(50, 'main', True)
 
 # create the figure and first Axes instance
 fig = plt.figure()
-ax1 = fig.add_subplot(231)
+ax1 = fig.add_subplot(241)
 ax1.set_title('Population at beginning of sweep\n(colored by phenotype)')
 
 # keep reintroducing a mutant and running for 100 timesteps, until
@@ -96,7 +96,7 @@ while not sweeping_allele_established:
     mod.comm[0][individ].genome[nonneut_loc, chromatid] = 1
 
     # plot the beginning of the sweep, with the mutant individual
-    plt.gca()
+    plt.cla()
     mod.plot_phenotype(0, 0, 0, size=10)
     ax1.plot(mod.comm[0][individ].x - 0.5, mod.comm[0][individ].y - 0.5, 'ow')
 
@@ -126,7 +126,7 @@ for _ in range(10):
     # calclate and store mean fitness
     mean_fit.append(calc_mean_fit(mod))
     print('\tallele_freq = %0.3f' % calc_nonneut_loc_freq(mod))
-ax2 = fig.add_subplot(232)
+ax2 = fig.add_subplot(242)
 plt.title('Population 200 timesteps into sweep')
 mod.plot_phenotype(0, 0, 0, size=10)
 
@@ -147,7 +147,7 @@ while not fixed:
     fixed = nonneut_loc_freq == 1
 
 # plot status after sweep is complete
-ax3 = fig.add_subplot(233)
+ax3 = fig.add_subplot(243)
 plt.title('Population after sweep has completed (t = %i)' % (
                                                 mod.t - lapsed_t + 50 + 50))
 mod.plot_phenotype(0, 0, 0, size=10)
@@ -155,30 +155,49 @@ mod.plot_phenotype(0, 0, 0, size=10)
 # calculate and store ending nucleotide diversity
 pi.append(calc_pi(mod))
 
+# walk model 500 more timesteps, then plot status
+mod.walk(500, verbose=True)
+ax4 = fig.add_subplot(244)
+plt.title('Population 500 timesteps after sweep has completed (t = %i)' % (
+                                                mod.t - lapsed_t + 50 + 550))
+mod.plot_phenotype(0, 0, 0, size=10)
+
+# calculate and store nucleotide diversity again
+pi.append(calc_pi(mod))
+
 # plot stats
-ax4 = fig.add_subplot(234)
+ax5 = fig.add_subplot(245)
 plt.title('Mean fitness across model time')
-ax4.plot(range(len(mean_fit)), mean_fit)
-ax4.set_xlabel('model time')
-ax4.set_ylabel('mean fitness')
-ax4.set_ylim((1 - mod.comm[0].gen_arch.traits[0].phi, 1.0))
-ax5 = fig.add_subplot(235)
+ax5.plot(np.linspace(0, mod.t, len(mean_fit)), mean_fit)
+ax5.set_xlabel('model time')
+ax5.set_ylabel('mean fitness')
+ax5.set_ylim((1 - mod.comm[0].gen_arch.traits[0].phi, 1.0))
+ax6 = fig.add_subplot(246)
 plt.title(('Nucleotide diversity 100 timesteps into sweep\n(calculated in '
-          '11-locus '))
-ax5.plot(range(mod.comm[0].gen_arch.L), pi[0])
-ax5.plot([50, 50], [0, 1], '--r')
-ax5.set_xlabel('genomic_position')
-ax5.set_ylabel('$\\Pi$')
-ax6 = fig.add_subplot(236)
-plt.title(('Nucleotide diversity at end of sweep\n(calculated in 11-locus '
-          'windows)'))
-ax6.plot(range(mod.comm[0].gen_arch.L), pi[1])
+          '11-locus windows'))
+ax6.plot(range(mod.comm[0].gen_arch.L), pi[0])
 ax6.plot([50, 50], [0, 1], '--r')
 ax6.set_xlabel('genomic_position')
 ax6.set_ylabel('$\\Pi$')
+ax7 = fig.add_subplot(247)
+plt.title(('Nucleotide diversity at end of sweep\n(calculated in 11-locus '
+          'windows)'))
+ax7.plot(range(mod.comm[0].gen_arch.L), pi[1])
+ax7.plot([50, 50], [0, 1], '--r')
+ax7.set_xlabel('genomic_position')
+ax7.set_ylabel('$\\Pi$')
+ax8 = fig.add_subplot(248)
+plt.title(('Nucleotide diversity 500 timesteps after end of sweep\n'
+           '(calculated in 11-locus windows)'))
+ax8.plot(range(mod.comm[0].gen_arch.L), pi[2])
+ax8.plot([50, 50], [0, 1], '--r')
+ax8.set_xlabel('genomic_position')
+ax8.set_ylabel('$\\Pi$')
 pi_min_lim = 0.95 * min([val for sublist in pi for val in sublist])
 pi_max_lim = 1.05 * max([val for sublist in pi for val in sublist])
-ax5.set_ylim((pi_min_lim, pi_max_lim))
 ax6.set_ylim((pi_min_lim, pi_max_lim))
+ax7.set_ylim((pi_min_lim, pi_max_lim))
+ax8.set_ylim((pi_min_lim, pi_max_lim))
+
 plt.show()
 print('Sweep complete')

@@ -66,7 +66,7 @@ def _do_neutral_mutation(spp, offspring, locus=None, individ=None):
     #in the individual
     chrom = r.binomial(1,0.5)
     #then mutate this individual at this locus
-    spp[individ].genome[locus,chrom] = 1
+    spp[individ].g[locus,chrom] = 1
     return(individ, locus)
 
 
@@ -88,7 +88,7 @@ def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None):
     #TODO: Need to check that the individual provided is among the list of
     #offspring? Or make offspring an optional arg too?
     #create the mutation
-    spp[individ].genome[locus,r.binomial(1, 0.5)] = 1
+    spp[individ].g[locus,r.binomial(1, 0.5)] = 1
     #return the locus and individual
     return(locus, individ)
 

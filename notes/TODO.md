@@ -3,17 +3,30 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 should I allow r_distr_alpha to have a value and r_distr_beta to be None, thus fixing all recomb rates at the alpha's value?? this is of course getting far from the alpha/beta meaning coming from the beta distr parameterization, so might want to change their names in that case and then just explain in the docs?
+
+        5 add a 'mating_interval' argument, to define the number of timesteps between mating events? or is this meaningless really?
+
+        5 change 'iterations' to 'runs' across the package and docs
+
+        5 add argument to the mod.plot functions that allows it to take an axes instance and plot there!
+
+        5 for packaging, based on picking through numpy and pandas, it looks as though I need to import all my top-level stuff that I want users to access publicly/easily in my main __init__.py, but then import specific functions/classes where needed within the submodules using "from geonomics.<module> import submodule". See, for example, a comparison of numpy/__init__.py's from . import linalg statement and then the specific import statements in numpy/linalg/linalg.py
+                - BUT STILL NOT SURE IF I NEED THE __init__.py FILES IN ALL MY MODULES' SUBDIRECTORIES...
+                - looks like now I have a bunch of duplicated, unnecessary, and undesired stuff that is accessible from gnx.<...> once I import (e.g. I don't want gnx.C, gnx.f, gnx.structs; and I think gnx.sys is okay, by comparison with np.sys and pd.np.sys, but I don't want both gnx.sys and gnx.species.sys, nor gnx.np and gnx.species.np and gnx.individual.np, etc...) ---> how import things like numpy in one place at top of package, then get access everywhere else??? have to replace import sys with import genomics.sys in species.py, for example??
+
+        5 only implement the recombination paths thing if recombination rates < 0.5 are present??
+
+        5 fix recombination-rate draws, which throw an 'a <= 0' (i.e. alpha <= 0) error if the user sets r_distr_alpha = 0 in the params
+
         5 consider changing the ParametersDict class to be something more formally structured, rather than the currently implemented dyanmic-attribute dict, because if users (including myself, having already made this mistake...) try to use gnx.read_parameters_file() to create a params object, then edit it manually in a script before running mod = gnx.make_model(), if they set the dict's attributes using dot notation (i.e. dict.key) then it actually creates a separate attribute than if they set the dict's attributes using classic dict['key'] notation, and this could wind up being a HUGE problem...
 
         5 MAKE FINAL DECISION ABOUT HOW IMPLEMENT MONO vs POLYGENIC TRAITS! Because if I made 0 the base phenotype for mono and poly, then poly individuals could overshoot z = 1.0 but
           could never undershoot z = 0.0; however, if I leave mono baseline at 0 and poly baseline at 0.5, and then a mono trait undergoes mutation, then from one timestep to the next
           and individ with genotype 1|1 at the originally monogenic trait-locus would go from having phenotype 1.0 before the mutation to 1.5 after the timestep (because ops.selection
           uses traits[n_trait].n_loci to determine how to calculate the phenotype for each trait!
-
-        5 other validations tests?
-                - bottleneck model?
-                - model of selective sweep with linkage?
-                    (landscape is all 1s, trait has a single locus with p = 0 at start, with a bunch of loci tightly linked around it with starting p = 0.5; then loop numerous iterations of the model and for each model introduce the mutation at a certain timestep; collect genetic data from multiple timesteps, and plot results of outlier test of some sort, expecting to see sweep signature surrounding the mutated locus whenever it's not lost)
+        
+        3 maybe add a plot_recombinants method, to get a nice simple visual of recombination (with vertical lines on top of any arbitrary list of loci, if provided as an extra argument)
 
         5 change polygenic baseline phenotype to 0 also
 

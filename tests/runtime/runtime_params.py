@@ -1,4 +1,4 @@
-#wf_params.py
+#runtime_params.py
 
 import numpy as np
 
@@ -38,7 +38,7 @@ params = {
     ##############
         'main': {
             #y,x (a.k.a. i,j) dimensions of the Landscape
-            'dim':                      (10,10),
+            'dim':                      (50,50),
             #resolution of the Landscape
             'res':                      (1,1),
             #upper-left corner of the Landscape
@@ -65,7 +65,7 @@ params = {
                     #parameters for a 'defined'-type Layer
                     'defined': {
                         #raster to use for the Layer
-                        'rast':                   np.ones((10,10)),
+                        'rast':                   np.ones((50,50)),
                         #point coordinates
                         'pts':                    None,
                         #point values
@@ -128,15 +128,17 @@ params = {
                     #ratio of males to females
                     'sex_ratio':                1/1,
                     #whether P(birth) should be weighted by parental dist
-                    'distweighted_birth':       False,
+                    'dist_weighted_birth':       False,
                     #intrinsic growth rate
                     'R':                        10,
                     #intrinsic birth rate (MUST BE 0<=b<=1)
                     'b':                        1,
                     #expectation of distr of n offspring per mating pair
-                    'n_births_distr_lambda':    2,
+                    'n_births_distr_lambda':    1,
+                    #whether n births should be fixed at n_births_dist_lambda
+                    'n_births_fixed':           False,
                     #radius of mate-search area
-                    'mating_radius':            15,
+                    'mating_radius':            3,
                     }, # <END> 'mating'
 
             ##########################################
@@ -145,7 +147,7 @@ params = {
 
                 'mortality'     : {
                     #maximum age
-                    'max_age':                      1,
+                    'max_age':                      None,
                     #min P(death) (MUST BE 0<=d_min<=1)
                     'd_min':                        0,
                     #max P(death) (MUST BE 0<=d_max<=1)
@@ -162,15 +164,15 @@ params = {
                     #whether or not the species is mobile
                     'move':                     True,
                     #mode of distr of movement direction
-                    'direction_distr_mu':       1,
+                    'direction_distr_mu':       0,
                     #concentration of distr of movement direction
                     'direction_distr_kappa':    0,
                     #mean of distr of movement distance
-                    'distance_distr_mu':        20,
+                    'distance_distr_mu':        1,
                     #variance of distr of movement distance
                     'distance_distr_sigma':     1,
                     #mean of distr of dispersal distance
-                    'dispersal_distr_mu':       20,
+                    'dispersal_distr_mu':       1,
                     #variance of distr of dispersal distance
                     'dispersal_distr_sigma':    1,
                     },    # <END> 'movement'
@@ -184,9 +186,9 @@ params = {
                     #file defining custom genomic arch
                     'gen_arch_file':            None,
                     #num of loci
-                    'L':                        100,
+                    'L':                        1000,
                     #num of chromosomes
-                    'l_c':                      [100],
+                    'l_c':                      [1000],
                     #whether starting allele frequencies should be fixed at 0.5
                     'start_p_fixed':            True,
                     #genome-wide per-base neutral mut rate (0 to disable)
@@ -237,9 +239,9 @@ params = {
 ###############
     'model': {
         #total Model runtime (in timesteps)
-        'T':            100,
+        'T':            1000,
         #min burn-in runtime (in timesteps)
-        'burn_T':       30,
+        'burn_T':       60,
         #seed number
         'num':          None,
 
@@ -256,42 +258,6 @@ params = {
             #whether to burn in each iteration
             'repeat_burn':      False,
             }, # <END> 'iterations'
-
-
-        ####################################
-        #### data-collection parameters ####
-        ####################################
-        'data': {
-            'sampling': {
-                #sampling scheme {'all', 'random', 'point', 'transect'}
-                'scheme':               'all',
-                #sample size at each point, for point & transect sampling
-                'n':                    None,
-                #coords of collection points, for point sampling
-                'points':               None,
-                #coords of transect endpoints, for transect sampling
-                'transect_endpoints':   None,
-                #num points along transect, for transect sampling
-                'n_transect_points':    None,
-                #collection radius around points, for point & transect sampling
-                'radius':               None,
-                #when to collect data
-                'when':                 [0,9,19,29,39,49,59,69,79,89,99],
-                #whether to save current Layers when data is collected
-                'include_landscape':    False,
-                #whether to include fixed loci in VCF files
-                'include_fixed_sites':  False,
-                },
-            'format': {
-                #format for genetic data {'vcf', 'fasta'}
-                'gen_format':           ['vcf', 'fasta'],
-                #format for vector geodata {'csv', 'shapefile', 'geojson'}
-                'geo_vect_format':      'csv',
-                #format for raster geodata {'geotiff', 'txt'}
-                'geo_rast_format':      'geotiff',
-                },
-            }, #<END> 'data'
-
 
         } # <END> 'model'
 

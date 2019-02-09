@@ -24,8 +24,10 @@ Documentation:        URL
 ##########################################
 '''
 #geonomics imports
-from utils import viz, io, spatial as spt
-from ops import change
+from geonomics.utils.viz import _get_plt_lims, _plot_rasters
+from geonomics.utils.io import _write_geotiff, _write_txt_array, _read_raster
+from geonomics.utils.spatial import _scale_raster, _make_nlmpy_raster
+from geonomics.ops.change import _LandscapeChanger
 
 #other imports
 import numpy as np
@@ -87,18 +89,18 @@ class Layer:
 
     #method for writing the layer's raster to a geotiff raster file
     def _write_geotiff(self, filepath):
-        io._write_geotiff(filepath, self)
+        _write_geotiff(filepath, self)
 
     #method for writing the layer's raster to a numpy txt array
     def _write_txt_array(self, filepath):
-        io._write_txt_array(filepath, self)
+        _write_txt_array(filepath, self)
 
     #method for plotting the layer
     def _plot(self, cbar=True, im_interp_method='nearest',
             cmap = 'terrain', x=None, y=None, zoom_width=None,
             vmin=None, vmax=None):
-        plt_lims = viz._get_plt_lims(self, x, y, zoom_width)
-        viz._plot_rasters(self, cbar = cbar,
+        plt_lims = _get_plt_lims(self, x, y, zoom_width)
+        _plot_rasters(self, cbar = cbar,
             im_interp_method = im_interp_method, cmap = cmap,
             plt_lims = plt_lims, vmin = vmin, vmax = vmax)
 
@@ -236,8 +238,8 @@ class Landscape(dict):
     def _plot(self, lyr_num=None, cbar=True, cmap='terrain',
             im_interp_method='nearest', x=None, y=None,
             zoom_width=None, vmin=None, vmax=None):
-        plt_lims = viz._get_plt_lims(self, x, y, zoom_width)
-        viz._plot_rasters(self, lyr_num = lyr_num, cbar = cbar,
+        plt_lims = _get_plt_lims(self, x, y, zoom_width)
+        _plot_rasters(self, lyr_num = lyr_num, cbar = cbar,
             im_interp_method = im_interp_method, cmap = cmap,
             plt_lims = plt_lims, vmin = vmin, vmax = vmax)
 
@@ -432,7 +434,7 @@ def _make_landscape(mod, params, num_hab_types=2):
             #get the params
             nlmpy_params = init_params[lyr_type]
             #make the nlm
-            lyr_rast = spt._make_nlmpy_raster(nlmpy_params)
+            lyr_rast = _make_nlmpy_raster(nlmpy_params)
             #check that its dimensions match those of the Landscape
             assert lyr_rast.shape == dim, ("The dimensions of the NLM "
                 "created appear to differ from the Landscape dims: "
@@ -494,7 +496,7 @@ def _make_landscape(mod, params, num_hab_types=2):
                 "but found %i Layers matching Layer name "
                 "'%s'.") % (len(lyr_num), k)
             lyr_num_change_params[lyr_num[0]] = v
-        land._changer = change._LandscapeChanger(land, lyr_num_change_params,
+        land._changer = _LandscapeChanger(land, lyr_num_change_params,
             mod = mod)
 
     return land
@@ -513,7 +515,7 @@ def _get_file_rasters(land_dim, names, lyr_nums, filepaths,
     lyrs = []
     for n,filepath in enumerate(filepaths):
         #get array, dim, res, ulc, and prj from io.read_raster
-        rast_array, rast_dim, rast_res, rast_ulc, rast_prj = io._read_raster(
+        rast_array, rast_dim, rast_res, rast_ulc, rast_prj = _read_raster(
             filepath, land_dim)
         #check that the dimensions are right
         assert rast_dim == land_dim, ('Variable land_dim and the dimensions '
@@ -529,7 +531,7 @@ def _get_file_rasters(land_dim, names, lyr_nums, filepaths,
         if scale_max_vals[n] is None:
             scale_max_vals[n] == rast_array.max()
         #scale the raster to 0<=x<=1
-        rast_array, scale_min, scale_max = spt._scale_raster(rast_array,
+        rast_array, scale_min, scale_max = _scale_raster(rast_array,
                 min_inval = scale_min_vals[n], max_inval = scale_max_vals[n])
         #add the rast_array to the rast_arrays list
         rasters.append(rast_array)

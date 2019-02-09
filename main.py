@@ -23,9 +23,14 @@ Documentation:        URL
 '''
 
 #geonomics imports
-import sim.model
-import sim.params
-from structs import landscape, genome, individual, species, community
+from geonomics.sim.model import Model
+from geonomics.sim.params import _read_params_file, _make_params_file
+from geonomics.structs.landscape import _make_landscape
+from geonomics.structs.genome import _make_genomic_architecture
+from geonomics.structs.individual import _make_individual
+from geonomics.structs.species import _make_species
+from geonomics.structs.community import _make_community
+from geonomics.structs import landscape, genome, individual, species, community
 
 #other imports
 import re
@@ -263,9 +268,8 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=None,
                     "%s.") % (n, invalid_keys)
                 raise ValueError(err_msg)
 
-    sim.params._make_parameters_file(filepath=filepath, layers=layers,
-                                species=species, data=data,
-                                stats=stats)
+    _make_params_file(filepath=filepath, layers=layers, species=species,
+                      data=data, stats=stats)
 
 
 #wrapper around params.read
@@ -357,7 +361,7 @@ def read_parameters_file(filepath):
 
 
     #now read the file in as a ParametersDict object
-    params = sim.params._read(filepath)
+    params = _read_params_file(filepath)
     return(params)
 
 
@@ -467,7 +471,8 @@ def make_model(parameters=None):
                 "following error was thrown: %s") % e)
 
     assert ( (type(parameters) is str and os.path.isfile(parameters))
-        or str(type(parameters)) == "<class 'sim.params.ParametersDict'>"),(
+        or str(type(
+            parameters)) == "<class 'geonomics.sim.params.ParametersDict'>"),(
         "If the 'parameters' argument is provided, its value must be either a "
         "string pointing to a valid Geonomics parameters file or an object of "
         "the ParametersDict class. If it is not provided, the current working "
@@ -483,11 +488,12 @@ def make_model(parameters=None):
                 "filepath that was provided. The following error was raised: "
                 "\n\t%s\n\n") % e)
 
-    elif isinstance(parameters, sim.params.ParametersDict):
+    #elif isinstance(parameters, geonomics.sim.params.ParametersDict):
+    else:
         pass
     try:
         name = parameters.model.name
-        mod = sim.model.Model(name, parameters)
+        mod = Model(name, parameters)
         return(mod)
     except Exception as e:
             traceback.print_exc(file = sys.stdout)
@@ -497,33 +503,35 @@ def make_model(parameters=None):
 
 
 # convenience function for creating a parameters-file for, instantiating, and
-# running the default model
-def run_default_model():
-    # get filenames before creating the default params file
-    filenames = set(os.listdir('.'))
+# running the default model, plotting the result, then returning the Model
+# object
+def run_default_model(delete_params_file=True):
     # make the default params file
-    make_parameters_file()
-    # get filenames after creating the default params file
-    new_filenames = set(os.listdir('.'))
-    # take set-difference to get the new file (better than just calling
-    # make_model without any arguments, since there's no guarantee that there
-    # wasn't already a params file in this directory
-    filename = [*new_filenames - filenames][0]
+    filename = 'GEONOMICS_default_model_params.py'
+    make_parameters_file(filename)
     # create the default model
     mod = make_model(parameters = filename)
     # run the default model in verbose mode
     mod.run(verbose = True)
+    # plot the results
+    mod.plot(0,0,0)
+    # get rid of the params file it created
+    if delete_params_file:
+        os.remove(os.path.join('.', filename))
+    # return the model, in case someone wants to mess with/introspect it
+    # afterwards
+    return mod
 
 
 # wrapper around landscape.make_landscape
 def make_landscape(params):
-    land = landscape._make_landscape(params)
+    land = _make_landscape(params)
     return land
 
 
 #wrapper around genome.make_genomic_architecture
 def make_genomic_architecture(params, landscape):
-    gen_arch = genome.make_genomic_architecture(params, landscape)
+    gen_arch = _make_genomic_architecture(params, landscape)
     return gen_arch
 
 
@@ -545,7 +553,7 @@ def make_individual(idx, genomic_architecture=None, new_genome=None, dim=None,
             "provided (i.e. 'dim' must not be None) or a parental centerpoint "
             "from which to disperse the individual must be provided (i.e. "
             "'parental_centerpoint' must not be None).")
-    ind = individual.make_individual(idx = idx, offspring = False,
+    ind = _make_individual(idx = idx, offspring = False,
             dim = dim, genomic_architecture = genomic_architecture,
             new_genome = new_genome, sex = sex,
             parental_centerpoint = parental_centerpoint, age = age,
@@ -556,13 +564,13 @@ def make_individual(idx, genomic_architecture=None, new_genome=None, dim=None,
 #wrapper around species.make_species
     #burn can be True (i.e. then the individuals will have a [[0,0]] genome)
 def make_species(landscape, spp_params, burn=False):
-    spp = species.make_species(landscape, spp_params, burn = burn)
+    spp = _make_species(landscape, spp_params, burn = burn)
     return(spp)
 
 
 #wrapper around community.make_comunity
     #burn can be True (i.e. then the individuals will have a [[0,0]] genome)
 def make_community(landscape, params, burn=False):
-    comm = community.make_community(landscape, params, burn = burn)
+    comm = _make_community(landscape, params, burn = burn)
     return comm
 

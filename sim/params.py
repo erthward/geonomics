@@ -22,7 +22,7 @@ Documentation:            URL
 '''
 
 #geonomics imports
-from utils import _str_repr_ as _sr_
+from geonomics.utils._str_repr_ import _get_str_spacing
 
 #other imports
 import os, time, datetime
@@ -62,7 +62,7 @@ PARAMS = '''# %s
       ## : ::::  ::                    ::::  : ::    :::::::: : ::  :   ##
      ##GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS##
     ##GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS    ##
-    ##GG     EEEE OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS##
+    ##GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS##
     ##GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS##
     ##GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS##
      ##GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS##
@@ -308,13 +308,15 @@ SPP_PARAMS = '''
                     #ratio of males to females
                     'sex_ratio':                1/1,
                     #whether P(birth) should be weighted by parental dist
-                    'distweighted_birth':       False,
+                    'dist_weighted_birth':       False,
                     #intrinsic growth rate
                     'R':                        0.5,
                     #intrinsic birth rate (MUST BE 0<=b<=1)
                     'b':                        0.2,
                     #expectation of distr of n offspring per mating pair
                     'n_births_distr_lambda':    1,
+                    #whether n births should be fixed at n_births_dist_lambda
+                    'n_births_fixed':           True,
                     #radius of mate-search area
                     'mating_radius':            10,
                     }, # <END> 'mating'
@@ -342,7 +344,7 @@ SPP_PARAMS = '''
                     #whether or not the species is mobile
                     'move':                     True,
                     #mode of distr of movement direction
-                    'direction_distr_mu':       1,
+                    'direction_distr_mu':       0,
                     #concentration of distr of movement direction
                     'direction_distr_kappa':    0,
                     #mean of distr of movement distance
@@ -575,7 +577,7 @@ ITS_PARAMS = '''
         ###############################
         'its': {
             #num iterations
-            'n_its':            2,
+            'n_its':            1,
             #whether to randomize Landscape each iteration
             'rand_landscape':   False,
             #whether to randomize Community each iteration
@@ -688,7 +690,7 @@ class _DynAttrDict(dict):
 #i.e indexable by dot notation and responsive to tab completion)
 class ParametersDict(_DynAttrDict):
     def __init__(self, params):
-        params_dict = _make_parameters_dict(params)
+        params_dict = _make_params_dict(params)
         self.update(params)
 
     #re-enable deepcopy, because the class inherits from a dict
@@ -701,7 +703,7 @@ class ParametersDict(_DynAttrDict):
         type_str = str(type(self))
         #get the model name str
         name_str = "Model name:%s%s"
-        name_str = name_str % (_sr_._get_spacing(name_str), self.model.name)
+        name_str = name_str % (_get_str_spacing(name_str), self.model.name)
         #concatenate the strings
         tot_str = '\n'.join([type_str, name_str])
         return tot_str
@@ -979,7 +981,7 @@ def _make_model_params_strs(section, arg=None):
 
 
 #function to create a default params file, to be filled in by the user
-def _make_parameters_file(filepath=None, layers=1, species=1, data=None,
+def _make_params_file(filepath=None, layers=1, species=1, data=None,
         stats=None):
     '''<see docstring in gnx.make_parameters_file>'''
     lyrs_params_str = _make_lyrs_params_str(lyrs = layers)
@@ -1026,7 +1028,7 @@ def _make_parameters_file(filepath=None, layers=1, species=1, data=None,
 #function to recurse over the params dictionary 
 #and return it as a Parameters_Dict object (i.e. a
 #dict with k:v pairs as dynamic attributes)
-def _make_parameters_dict(params):
+def _make_params_dict(params):
     for k, v in params.items():
         method_names = ['clear', 'copy', 'fromkeys', 'get', 'items', 'keys',
                         'pop', 'popitem', 'setdefault', 'update', 'values']
@@ -1035,13 +1037,13 @@ def _make_parameters_dict(params):
             'Please edit name.\n\tNOTE: It holds the following value:'
             '\n%s' % (str(k), str(v)))
         if isinstance(v, dict):
-            params[k] = _make_parameters_dict(params[k])
+            params[k] = _make_params_dict(params[k])
     params = _DynAttrDict(params)
     return(params)
 
 
 #read a params file and return a ParametersDict object
-def _read(filepath):
+def _read_params_file(filepath):
     #get the filename (minus path and extension) as the model name
     name = os.path.splitext(os.path.split(filepath)[-1])[0]
     #create a namespace to read the params dict into

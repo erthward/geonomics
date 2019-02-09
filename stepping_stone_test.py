@@ -49,14 +49,15 @@ def test_island_model():
     w = 6
     d = 6
     #define the data directory, and remove it if it already exists (so that we
-    #don't create multiple output data files in the same directory and break the
-    #assertions below)
-    data_dir = './GEONOMICS_mod-island_params/'
+    #don't create multiple output data files in the same
+    #directory and break the assertions below)
+    data_dir = './GEONOMICS_mod-stepping_stone_params/'
     if os.path.isdir(data_dir):
         shutil.rmtree(data_dir)
     #create a Model from the params file
     print('\n\nMaking model...\n\n')
-    mod = gnx.make_model('./test/validation/island/island_params.py')
+    mod = gnx.make_model(('./geonomics/tests/validation/stepping_stone/'
+                          'stepping_stone_params.py'))
     #replace Layer 0's raster with an island raster (6 islands, each 6
     #cells wide and 6 cells diagonally spaced), and Layer 1's raster
     #with a raster containing island labels
@@ -267,7 +268,7 @@ def test_island_model():
             #plot the results, if this is the final timestep
             if step == max(timesteps):
                 fig = plt.figure()
-                plt.suptitle(("Validations test #2: 1-d island model"
+                plt.suptitle(("Validations test #2: stepping-stone model"
                     "\n%i timesteps") % mod.params.model.T)
                 ax = fig.add_subplot(121)
                 mod.plot(0,0)
@@ -277,6 +278,7 @@ def test_island_model():
                 plt.title
                 ax = fig.add_subplot(122)
                 ax.set_title('IBD between island subpopulations')
+                ax.set_xlim(0,6)
                 x = []
                 Fst_HsHt_y = []
                 Fst_var_y = []
@@ -293,9 +295,9 @@ def test_island_model():
                 plt.plot(x, exp_Fst_y, 'ob')
                 ax.set_xlabel('Pairwise interisland distance (scaled)')
                 ax.set_ylabel('Pairwise genetic distance ($F_{ST}$)')
-                plt.gca().legend(labels = ['$F_{ST}=\\frac{H_{T} - H_{S}}{H_{T}}$',
-                                           '$F_{ST}=\\frac{var(p)}{mean(p)}$',
-                                           '$E[F_{ST}]=\\frac{1}{1+4Nm}$'],
+                ax.legend(labels=['$F_{ST}=\\frac{H_{T} - H_{S}}{H_{T}}$',
+                                         '$F_{ST}=\\frac{var(p)}{mean(p)}$',
+                                         '$E[F_{ST}]=\\frac{1}{1+4Nm}$'],
                                  loc = 'best',
                                  fontsize = 'medium')
                 x = np.array(x).reshape((len(x), 1))
@@ -349,20 +351,19 @@ def test_island_model():
 
     # plot pop sizes over time
     fig2 = plt.figure()
-    plt.suptitle('Population size over time, by island')
-    plt.xlabel('t')
-    plt.ylabel('pop size (N)')
+    plt.suptitle('Population size and Fst, over model time')
+    ax1 = fig2.add_subplot(121)
+    ax2.set_title('Population size, colored by island')
+    ax2.set_xlabel('t')
+    ax2.set_ylabel('pop size (N)')
     colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
     for k, v in pop_sizes.items():
-        plt.plot(range(len(v)), v, '-', color = colors[k])
-    plt.show()
-
+        ax2.plot(range(len(v)), v, '-', color = colors[k])
     # plot Fst values for all timesteps
-    fig3 = plt.figure()
-    ax = fig3.add_subplot(111)
-    plt.suptitle('Fst over model time, colored by inter-island distance')
-    ax.set_xlabel('t')
-    ax.set_ylabel('Fst')
+    ax2 = fig2.add_subplot(122)
+    ax2.set_title('Fst, colored by inter-island distance')
+    ax2.set_xlabel('t')
+    ax2.set_ylabel('Fst')
     colors = ['#8baee5', '#4580e0', '#0056e2']
     cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
     colors = cmap(np.linspace(0, 1, 5))
@@ -371,12 +372,13 @@ def test_island_model():
     for pop_pair in pop_pairs:
         y = [all_Fst_HsHt[t][pop_pair] for t in x]
         max_Fsts.append(max(y))
-        ax.plot(x, y, color=colors[np.abs(pop_pair[0] - pop_pair[1])-1],
+        ax2.plot(x, y, color=colors[np.abs(pop_pair[0] - pop_pair[1])-1],
                 linewidth=3)
-    ax.set_ylim((0, 1.1 * max(max_Fsts)))
-    ax.set_xlim((0, 1.1*max(x)))
-    ax.legend(labels=[str(i) for i in range(1, n)], loc='best',
+    ax2.set_ylim((0, 1.1 * max(max_Fsts)))
+    ax2.set_xlim((0, 1.1*max(x)))
+    ax2.legend(labels=[str(i) for i in range(1, n)], loc='best',
               title='Inter-island distance', fontsize='medium')
+    plt.show()
 
     print('\nValidation test successful.\n')
 

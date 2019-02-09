@@ -26,8 +26,7 @@ Documentation:        URL
 '''
 
 #geonomics imports
-from structs import landscape
-from ops import mating, selection
+from geonomics.ops.selection import _calc_prob_death
 
 #other imports
 import numpy as np
@@ -340,7 +339,7 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
     #then use the d raster and individuals' fitnesses to calculate
     #per-individual probabilities of death
     if with_selection:
-        death_probs = selection._calc_prob_death(spp, death_probs)
+        death_probs = _calc_prob_death(spp, death_probs)
     #run checks on death_probs
     if asserts:
         assert np.alltrue(death_probs >= 0)

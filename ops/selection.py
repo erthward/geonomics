@@ -39,7 +39,7 @@ def _calc_phenotype(ind, gen_arch, trait):
     n_loci = trait.n_loci
     alpha = trait.alpha
     #get the mean genotype array
-    genotype = np.mean(ind.genome[trait.loci], axis = 1)
+    genotype = np.mean(ind.g[trait.loci], axis = 1)
     #use dominance, if required (to save considerable compute time otherwise)
     if gen_arch._use_dom:
         #get the dominance values
@@ -89,7 +89,7 @@ def _calc_fitness_deleterious_mutations(spp):
     #diploid genotypes for each of the deleterious loci in the cols
     #(0, 1, or 2, to facilitate the fitness math, because s values
     #(i.e. selection coefficients) are expressed per allele)
-    deletome = np.sum(np.stack([ind.genome[[*spp.gen_arch.delet_loci.keys(
+    deletome = np.sum(np.stack([ind.g[[*spp.gen_arch.delet_loci.keys(
                                     )],:] for ind in spp.values()]), axis = 2)
     fit = 1 - np.multiply(deletome, np.array(
                                         [*spp.gen_arch.delet_loci.values()]))

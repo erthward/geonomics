@@ -27,7 +27,8 @@ Documentation:            URL
 '''
 
 #geonmics imports
-from utils import io
+from geonomics.utils.io import (_write_csv, _write_shapefile, _write_geojson,
+                                _write_file)
 
 #other imports
 import numpy as np
@@ -63,9 +64,9 @@ class _DataCollector:
                             'geotiff': 'tif'
                             }
 
-        self.write_geodata_fn_dict = {'csv': io._write_csv,
-                            'shapefile': io._write_shapefile,
-                            'geojson': io._write_geojson,
+        self.write_geodata_fn_dict = {'csv': _write_csv,
+                            'shapefile': _write_shapefile,
+                            'geojson': _write_geojson,
                             }
 
         #set model name and T
@@ -343,7 +344,7 @@ class _DataCollector:
 
 
     def _write_gendata(self, filepath, gen_data):
-        io._write_file(filepath, gen_data)
+        _write_file(filepath, gen_data)
 
 
     def _write_geodata(self, filepath, data_format, sample):
@@ -392,7 +393,7 @@ def _format_fasta(sample):
                                             'sex', 'z', 'e']))
             individ_row1 = individ_row1 % replace
             individ_row2 = ''.join([str(
-                            base) for base in individ.genome[:,hap]]) + '\n'
+                            base) for base in individ.g[:,hap]]) + '\n'
 
             file_text = file_text + individ_row1 + individ_row2
 
@@ -437,7 +438,7 @@ def _format_vcf(sample, gen_arch, include_fixed_sites=False):
     chroms = np.cumsum(gen_arch.l_c)
 
     #and get all individuals' genomic data in a 'samplome' object (a 3-d array)
-    samplome = np.array([sample[i].genome for i in inds])
+    samplome = np.array([sample[i].g for i in inds])
 
     #get all segregating sites
     max_val = 2 * len(sample)

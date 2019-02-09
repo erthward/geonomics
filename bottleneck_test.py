@@ -19,7 +19,7 @@ if os.path.isdir(data_dir):
     shutil.rmtree(data_dir)
 
 # make and run model
-mod = gnx.make_model('./test/validation/bottleneck/bottleneck_params.py')
+mod = gnx.make_model('./geonomics/tests/validation/bottleneck/bottleneck_params.py')
 mod.run(verbose=True)
 
 # for each iteration
@@ -74,7 +74,7 @@ plt.ylabel("frequency of '1' allele")
 plt.xlim((0, mod.T))
 plt.ylim((0, 1))
 for loc, traj in allele_freqs.items():
-    plt.plot(timesteps, traj, '--', linewidth=1)
+    plt.plot(timesteps, traj, '-k', linewidth=1, alpha=0.5)
 # add lines for start and end of the bottleneck event
 # (dem-change events take place as changes in the carrying-capacity rasters
 # at the ends of their scheduled timesteps, after pop dynamics have happened,

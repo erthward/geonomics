@@ -22,9 +22,6 @@ Documentation:              URL
 ##########################################
 '''
 
-#geonomics imports
-from structs import genome
-
 #other imports
 from scipy.spatial import cKDTree
 import numpy as np
@@ -154,12 +151,11 @@ def _find_mates(spp, sex=False, repro_age=None,
     return mates
 
 
-def _draw_n_births(num_pairs, n_births_distr_lambda, fecundity=1):
+def _draw_n_births(num_pairs, n_births_distr_lambda):
     #NOTE: subtracting nearly 1 from the lambda, then adding 1 to the drawn
     #value, guarantees that at least 1 offspring will be born for each pair
     #chosen to mate
-    num_births = r.poisson((n_births_distr_lambda * fecundity) - 0.999999,
-                                                                num_pairs)
+    num_births = r.poisson((n_births_distr_lambda), num_pairs)
     num_births = np.clip(num_births, a_min = 1, a_max = None)
     return num_births
 
@@ -168,7 +164,7 @@ def _draw_n_births(num_pairs, n_births_distr_lambda, fecundity=1):
 def _do_mating_sngl_offspr(spp, pair, recomb_paths):
     # generate a gamete for each member of mating pair, stack, and transpose
     new_genome = np.vstack(
-      [spp[ind].genome.flatten()[recomb_paths.pop()] for ind in pair]).T
+      [spp[ind].g.flatten()[recomb_paths.pop()] for ind in pair]).T
     return new_genome
 
 

@@ -3,6 +3,7 @@
 
 '''Functions for testing burn-in stationarity.'''
 
+# other imports
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy import random as r
@@ -11,10 +12,6 @@ from scipy.spatial import cKDTree
 from scipy.stats import ttest_rel as tt
 from statsmodels.tsa.stattools import adfuller as adf
 from sklearn.preprocessing import normalize
-
-from structs import landscape
-from ops import mating
-
 
 #TODO: Add more and/or different tests? This is a basic test so far, based
 #only on gross population size (not spatial distribution)

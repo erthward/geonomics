@@ -24,9 +24,12 @@ Documentation:        URL
 '''
 
 #geonomics imports
-from structs import landscape, community, genome
-from sim import burnin, data, stats
-from utils import _str_repr_ as _sr_
+from geonomics.structs.landscape import _make_landscape
+from geonomics.structs.community import _make_community
+from geonomics.structs.genome import _set_genomes, _check_enough_mutable_loci
+from geonomics.sim.data import _DataCollector
+from geonomics.sim.stats import _StatsCollector
+from geonomics.utils._str_repr_ import _get_str_spacing
 
 #other imports
 import numpy as np
@@ -149,22 +152,22 @@ class Model:
         type_str = str(type(self))
         #get model name string
         name_str = "Model name:%s%s"
-        name_str = name_str % (_sr_._get_spacing(name_str), self.name)
+        name_str = name_str % (_get_str_spacing(name_str), self.name)
         #get strings for the numbers of its, burn-in timesteps, main timesteps
         n_its_str = "Number of iterations:%s%i"
-        n_its_str = n_its_str % (_sr_._get_spacing(n_its_str), self.n_its)
+        n_its_str = n_its_str % (_get_str_spacing(n_its_str), self.n_its)
         burn_t_str= "Number of burn-in timesteps (minimum):%s%i"
-        burn_t_str = burn_t_str % (_sr_._get_spacing(burn_t_str), self.burn_T)
+        burn_t_str = burn_t_str % (_get_str_spacing(burn_t_str), self.burn_T)
         main_t_str = "Number of main timesteps:%s%i"
-        main_t_str = main_t_str % (_sr_._get_spacing(main_t_str), self.T)
+        main_t_str = main_t_str % (_get_str_spacing(main_t_str), self.T)
         #get strings for land and comm
         comm_str = "Species:"
-        spp_strs = ["%s %i: '%s'" % (_sr_._get_spacing(""),
+        spp_strs = ["%s %i: '%s'" % (_get_str_spacing(""),
             i, spp.name) for i, spp in self.comm.items()]
         spp_strs[0] = comm_str + spp_strs[0][len(comm_str):]
         comm_str = '\n'.join(spp_strs)
         land_str = "Layers:"
-        lyr_strs = ["%s %i: '%s'" % (_sr_._get_spacing(""),
+        lyr_strs = ["%s %i: '%s'" % (_get_str_spacing(""),
             i, lyr.name) for i, lyr in self.land.items()]
         lyr_strs[0] = land_str + lyr_strs[0][len(land_str):]
         land_str = '\n'.join(lyr_strs)
@@ -175,7 +178,7 @@ class Model:
         else:
             stat_strs = [""]
         stats_str = "Stats collected:%s{%s}"
-        stats_str = stats_str % (_sr_._get_spacing(stats_str),
+        stats_str = stats_str % (_get_str_spacing(stats_str),
                                                     ', '.join(stat_strs))
         #get strings for the geo and gen data to be collected
         if self._data_collector is not None:
@@ -188,10 +191,10 @@ class Model:
             geo_data_strs = [""]
             gen_data_strs = [""]
         geo_data_str = "Geo-data collected:%s{%s}"
-        geo_data_str = geo_data_str % (_sr_._get_spacing(geo_data_str),
+        geo_data_str = geo_data_str % (_get_str_spacing(geo_data_str),
                                         ', '.join(geo_data_strs))
         gen_data_str = "Gen-data collected:%s{%s}"
-        gen_data_str = gen_data_str % (_sr_._get_spacing(gen_data_str),
+        gen_data_str = gen_data_str % (_get_str_spacing(gen_data_str),
                                         ', '.join(gen_data_strs))
         #join all the strings together
         tot_str = '\n'.join([type_str, name_str, land_str, comm_str,
@@ -355,7 +358,7 @@ class Model:
 
     #method to wrap around landscape._make_landscape
     def _make_landscape(self):
-        land = landscape._make_landscape(mod = self, params = self.params)
+        land = _make_landscape(mod = self, params = self.params)
         return(land)
 
     #a method to reset the land as necessary
@@ -392,7 +395,7 @@ class Model:
 
     #method to wrap around community._make_community
     def _make_community(self):
-        comm = community._make_community(self.land, self.params, burn = True)
+        comm = _make_community(self.land, self.params, burn = True)
         return(comm)
 
     #a method to reset the community (recopying or regenerating as necessary)
@@ -422,7 +425,7 @@ class Model:
 
     #method to make a data._DataCollector object for this model
     def _make_data_collector(self):
-        data_collector = data._DataCollector(self.name, self.params)
+        data_collector = _DataCollector(self.name, self.params)
         return data_collector
 
 
@@ -434,7 +437,7 @@ class Model:
 
     #method to make a stats._StatsCollector object for this model
     def _make_stats_collector(self):
-        stats_collector = stats._StatsCollector(self.name, self.params)
+        stats_collector = _StatsCollector(self.name, self.params)
         return stats_collector
 
 
@@ -497,8 +500,8 @@ class Model:
         if self._verbose:
             print('Creating the main function queue...\n\n')
         self.main_fn_queue = self._make_fn_queue(burn = False)
-        
-        
+
+
     #method to create the simulation functionality, as a function queue 
     #NOTE: (creates the list of functions that will be run by
     #self.run_burn_timestep or self.run_main_timestep,
@@ -561,9 +564,6 @@ class Model:
             if self._stats_collector is not None:
                 queue.append(self.calc_stats)
 
-            #TODO depending how I integrate the Stats module, 
-            #add stats functions to this queue too
-
         #add the burn-in function if need be
         if burn:
             queue.append(self._check_comm_burned)
@@ -607,7 +607,7 @@ class Model:
                             if self._verbose:
                                 print(('Assigning genomes for '
                                     'species "%s"...\n\n') % spp.name)
-                            genome._set_genomes(spp, self.burn_T, self.T)
+                            _set_genomes(spp, self.burn_T, self.T)
                     #and then set the reassign_genomes attribute to False, so
                     #that they won'r get reassigned again during this iteration
                     self.reassign_genomes = False
@@ -699,7 +699,7 @@ class Model:
 
         #check each species has enough mutable loci
         for spp in self.comm.values():
-            genome._check_enough_mutable_loci(spp, self.burn_T, self.T)
+            _check_enough_mutable_loci(spp, self.burn_T, self.T)
 
         #loop over the timesteps, running the run_main function repeatedly
         for t in range(self.T):

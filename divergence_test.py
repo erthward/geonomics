@@ -41,7 +41,7 @@ for phi in phis:
     migration_rates_this_phi = {(0, 1): [], (1, 0): []}
     # update it for the starting allele frequencies
     for allele in (0, 1):
-        allele_counts = [sum(i.genome[nonneut_loc,
+        allele_counts = [sum(i.g[nonneut_loc,
                              :]) for i in mod.comm[0].values(
                              ) if i.e[0] == allele]
         allele_freq = sum(allele_counts) / (2 * len(allele_counts))
@@ -54,7 +54,7 @@ for phi in phis:
         mod.walk(1, verbose=True)
         # get allele frequencies for each half of the environment
         for allele in (0, 1):
-            allele_counts = [sum(i.genome[nonneut_loc,
+            allele_counts = [sum(i.g[nonneut_loc,
                                  :]) for i in mod.comm[0].values(
                                  ) if i.e[0] == allele]
             allele_freq = sum(allele_counts) / (2 * len(allele_counts))
@@ -87,7 +87,7 @@ for phi in phis:
 
 
 # define fn to calculate the expected allele-frequency trajectories
-# (using migration-selection balance eqxn, pg. 308 Hartl & Clark)
+# (using migration-selection balance eqxn, Eqxn: 6.25, pg. 308 Hartl & Clark)
 # (p and q are 0- and 1-allele frequencies in the focal population,
 # i.e. the population for which delta_q is being calculated;
 # q_star is the 1-allele frequency in the other population)

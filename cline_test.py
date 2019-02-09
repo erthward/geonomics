@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# cline_test.py
 import geonomics as gnx
 
 import os
@@ -11,12 +13,12 @@ import vcf
 
 #set the data directory, and delete it if it already exists (so that we don't
 #create mutliple, conflicting sets of data files)
-data_dir = './GEONOMICS_mod-cline_params'
+data_dir = './geonomics/GEONOMICS_mod-cline_params'
 if os.path.isdir(data_dir):
     shutil.rmtree(data_dir)
 
 
-mod = gnx.make_model('./test/validation/cline/cline_params.py')
+mod = gnx.make_model('./geonomics/tests/validation/cline/cline_params.py')
 #landscape and community will not be randomized between iterations, so I can
 #just extract the non-neutral loci now
 nonneutral_loci = mod.comm[0].gen_arch.traits[0].loci

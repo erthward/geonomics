@@ -10,9 +10,18 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
 
+# a little fn to calculate a future-temperate raster from the 30-year normals
+# raster
+def calc_fut_tmp(tmp, increment=2):
+    fut_tmp = abs(tmp - tmp.max())
+    fut_tmp = fut_tmp/fut_tmp.max()
+    fut_tmp = tmp + increment + (increment * fut_tmp)
+    return fut_tmp
+
+
 # little fn to calculate a habitat raster that's 1 at the center of env-var's
 # range and drops toward 0 at extremes
-def calc_hab_rast(tmp, l_lim=7, u_lim=12):
+def calc_hab_rast(tmp, l_lim=7, u_lim=11):
     hab = np.ones(tmp.shape)
     hab[tmp < l_lim] = (1 - (tmp[tmp < l_lim] - l_lim) / (tmp.min() - l_lim))
     hab[tmp > u_lim] = (1 - (u_lim - tmp[tmp > u_lim]) / (u_lim - tmp.max()))

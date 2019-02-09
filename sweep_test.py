@@ -12,7 +12,7 @@ from itertools import combinations
 def calc_pi(mod, window_width=5):
     print("\nCalculating nucleotide diversity (WILL TAKE A FEW MINUTES)\n")
     # make speciome
-    speciome = np.stack([i.genome for i in mod.comm[0].values()])
+    speciome = np.stack([i.g for i in mod.comm[0].values()])
     # create data structure to store pi value for each genomic window
     pi_vals = []
     # for each locus
@@ -51,7 +51,7 @@ def calc_mean_fit(mod):
 
 def calc_nonneut_loc_freq(mod):
     nonneut_loc_freq = np.mean(np.vstack(
-                [i.genome[nonneut_loc, :] for i in mod.comm[0].values()]))
+                [i.g[nonneut_loc, :] for i in mod.comm[0].values()]))
     return nonneut_loc_freq
 
 
@@ -60,7 +60,7 @@ mean_fit = []
 pi = []
 
 # build the model
-mod = gnx.make_model('./test/validation/sweep/sweep_params.py')
+mod = gnx.make_model('./geonomics/tests/validation/sweep/sweep_params.py')
 # set the non-neutral locus to the central locus (i.e. 50, in a 101-length
 # genomic arch.), then set the starting 1-allele freq of the
 # non-neutral allele to 0
@@ -93,7 +93,7 @@ while not sweeping_allele_established:
     print('\n=================\nINTRODUCING MUTATION\n')
     individ = np.random.choice([*mod.comm[0]])
     chromatid = np.random.binomial(1, 0.5, 1)
-    mod.comm[0][individ].genome[nonneut_loc, chromatid] = 1
+    mod.comm[0][individ].g[nonneut_loc, chromatid] = 1
 
     # plot the beginning of the sweep, with the mutant individual
     plt.cla()
@@ -131,7 +131,7 @@ plt.title('Population 200 timesteps into sweep')
 mod.plot_phenotype(0, 0, 0, size=10)
 
 # walk until mutant fixed
-nonneut_loc_freq = np.mean(np.vstack([i.genome[nonneut_loc,
+nonneut_loc_freq = np.mean(np.vstack([i.g[nonneut_loc,
                                                :] for i in mod.comm[
                                                                 0].values()]))
 fixed = nonneut_loc_freq == 1
@@ -142,23 +142,23 @@ while not fixed:
     mean_fit.append(calc_mean_fit(mod))
     # check if fixed
     nonneut_loc_freq = np.mean(np.vstack(
-                               [i.genome[nonneut_loc,
+                               [i.g[nonneut_loc,
                                          :] for i in mod.comm[0].values()]))
     fixed = nonneut_loc_freq == 1
 
 # plot status after sweep is complete
 ax3 = fig.add_subplot(243)
-plt.title('Population after sweep has completed (t = %i)' % (
+ax3.set_title('Population after sweep\nhas completed (t = %i)' % (
                                                 mod.t - lapsed_t + 50 + 50))
 mod.plot_phenotype(0, 0, 0, size=10)
 
 # calculate and store ending nucleotide diversity
 pi.append(calc_pi(mod))
 
-# walk model 500 more timesteps, then plot status
-mod.walk(500, verbose=True)
+# walk model 2500 more timesteps, then plot status
+mod.walk(2500, verbose=True)
 ax4 = fig.add_subplot(244)
-plt.title('Population 500 timesteps after sweep has completed (t = %i)' % (
+ax4.set_title('Population 2500 timesteps after sweep\nhas completed (t = %i)' % (
                                                 mod.t - lapsed_t + 50 + 550))
 mod.plot_phenotype(0, 0, 0, size=10)
 
@@ -178,21 +178,21 @@ plt.title(('Nucleotide diversity 100 timesteps into sweep\n(calculated in '
 ax6.plot(range(mod.comm[0].gen_arch.L), pi[0])
 ax6.plot([50, 50], [0, 1], '--r')
 ax6.set_xlabel('genomic_position')
-ax6.set_ylabel('$\\Pi$')
+ax6.set_ylabel('nucleotide diversity')
 ax7 = fig.add_subplot(247)
 plt.title(('Nucleotide diversity at end of sweep\n(calculated in 11-locus '
           'windows)'))
 ax7.plot(range(mod.comm[0].gen_arch.L), pi[1])
 ax7.plot([50, 50], [0, 1], '--r')
 ax7.set_xlabel('genomic_position')
-ax7.set_ylabel('$\\Pi$')
+ax7.set_ylabel('nucleotide diversity')
 ax8 = fig.add_subplot(248)
-plt.title(('Nucleotide diversity 500 timesteps after end of sweep\n'
+plt.title(('Nucleotide diversity 2500 timesteps after end of sweep\n'
            '(calculated in 11-locus windows)'))
 ax8.plot(range(mod.comm[0].gen_arch.L), pi[2])
 ax8.plot([50, 50], [0, 1], '--r')
 ax8.set_xlabel('genomic_position')
-ax8.set_ylabel('$\\Pi$')
+ax8.set_ylabel('nucleotide diversity')
 pi_min_lim = 0.95 * min([val for sublist in pi for val in sublist])
 pi_max_lim = 1.05 * max([val for sublist in pi for val in sublist])
 ax6.set_ylim((pi_min_lim, pi_max_lim))

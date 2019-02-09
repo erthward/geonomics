@@ -52,7 +52,7 @@ s_vonmises.b = np.inf
 # -----------------------------------#
 ######################################
 
-def _move(spp):
+def _do_movement(spp):
     #get individuals' coordinates (soon to be their old coords, so 
     #'old_x' and 'old_y')
     old_x, old_y = [a.flatten() for a in np.split(spp._get_coords(),
@@ -95,7 +95,7 @@ def _move(spp):
     [ind._set_pos(x, y) for ind, x, y in zip(spp.values(), new_x, new_y)];
 
 
-def _disperse(spp, land_dim, parent_midpoint_x, parent_midpoint_y,
+def _do_dispersal(spp, land_dim, parent_midpoint_x, parent_midpoint_y,
         dispersal_distr_mu, dispersal_distr_sigma, mu_dir = 0, kappa_dir = 0):
     within_landscape = False
     while within_landscape == False:

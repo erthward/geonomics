@@ -26,8 +26,9 @@ Documentation:            URL
 '''
 
 #geonomics imports
-from utils import io
-from ops import selection
+from geonomics.utils.io import (_append_array2d_to_array_stack,
+                                _append_row_to_csv, _write_dict_to_csv)
+from geonomics.ops.selection import _calc_fitness
 
 #other imports
 import numpy as np
@@ -187,11 +188,11 @@ class _StatsCollector:
     #wrapper around io.append_array2d_to_array_stack
     #TODO WHAT TO DO WITH t IN THIS CASE?? CAN'T ADD TO txt 3D ARRAY FILE
     def _write_array_to_stack(self, filepath, array, t):
-        io._append_array2d_to_array_stack(filepath, array)
+        _append_array2d_to_array_stack(filepath, array)
 
     #wrapper around io.append_row_to_csv
     def _write_row_to_csv(self, filepath, array, t):
-        io._append_row_to_csv(filepath, array, t)
+        _append_row_to_csv(filepath, array, t)
 
     #use io._write_dict_to_csv to write to disk all "other stats", i.e. 
     #all stats that collect only a single value per species per timestep
@@ -206,7 +207,7 @@ class _StatsCollector:
             #they all have the same filepath, so just grab the first
             filepath = [*spp_stats.values()][0]['filepath']
             #write to disk
-            io._write_dict_to_csv(filepath, data_dict)
+            _write_dict_to_csv(filepath, data_dict)
 
     #method to write stats to files, in the appropriate directory (by model
     #and iteration number), and with the appropriate spp names in the filenames
@@ -441,7 +442,7 @@ def _calc_maf(spp):
 def _calc_mean_fitness(spp):
     #calculate the mean fitness, if this species has traits
     if spp.gen_arch.traits is not None:
-        mean_fit = np.mean(selection._calc_fitness(spp))
+        mean_fit = np.mean(_calc_fitness(spp))
     #or else return NaN
     else:
         mean_fit = np.nan
@@ -451,6 +452,6 @@ def _calc_mean_fitness(spp):
 #helper function for creating a 3-d array of all individuals' genotypes
 #(a 'speciome')
 def _get_speciome(spp):
-    speciome = np.stack([ind.genome for ind in spp.values()])
+    speciome = np.stack([ind.g for ind in spp.values()])
     return(speciome)
 

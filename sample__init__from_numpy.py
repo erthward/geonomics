@@ -6,7 +6,7 @@
 Geonomics
 #########
 
-An individual-based, spatially explicit, forward-time, and highly
+An agent-based, spatially explicit, forward-time, and highly
 customizable landscape-genomics simulator written in Python.
 
 The package provides:

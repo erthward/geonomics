@@ -26,10 +26,17 @@ Documentation:             URL
 '''
 
 #geonomics imports
-from utils import viz, spatial as spt
-from structs import genome, landscape, individual
-from ops import movement, mating, selection, mutation, demography, change
-from sim import burnin
+from geonomics.utils import viz, spatial as spt
+from geonomics.structs.genome import _make_genomic_architecture
+from geonomics.structs.landscape import Layer
+from geonomics.structs.individual import Individual, _make_individual
+from geonomics.ops.movement import _do_movement, _do_dispersal
+from geonomics.ops.mating import _find_mates, _draw_n_births, _do_mating
+from geonomics.ops.selection import _calc_fitness
+from geonomics.ops.mutation import _do_mutation
+from geonomics.ops.demography import _do_pop_dynamics, _calc_logistic_soln
+from geonomics.ops.change import _SpeciesChanger
+from geonomics.sim import burnin
 
 #other imports
 import numpy as np
@@ -322,13 +329,14 @@ class Species(OD):
     #method to move all individuals simultaneously, and sample
     #their new locations' environment
     def _do_movement(self, land):
-        movement._move(self)
+        _do_movement(self)
         self._set_e(land)
         self._set_coords_and_cells()
 
     #function for finding all the mating pairs in a species
     def _find_mating_pairs(self):
-        mating_pairs = mating._find_mates(self)
+        mating_pairs = _find_mates(
+                            self, dist_weighted_birth=self.dist_weighted_birth)
         return mating_pairs
 
     #function for executing mating for a species
@@ -336,7 +344,11 @@ class Species(OD):
 
         #draw the number of births for each pair, and append
         #total births to self.n_births list
-        n_births = mating._draw_n_births(len(
+        if self.n_births_fixed:
+            n_births = np.array(
+                            [self.n_births_distr_lambda] * len(mating_pairs))
+        else:
+            n_births = _draw_n_births(len(
                                     mating_pairs), self.n_births_distr_lambda)
         total_births = sum(n_births)
         self.n_births.append(total_births)
@@ -355,7 +367,7 @@ class Species(OD):
         if not burn and self.gen_arch is not None:
             recomb_paths = self.gen_arch._recomb_paths._get_paths(
                                                             total_births*2)
-            new_genomes = mating._do_mating(self, mating_pairs,
+            new_genomes = _do_mating(self, mating_pairs,
                                                     n_births, recomb_paths)
 
         for n_pair, pair in enumerate(mating_pairs):
@@ -371,7 +383,7 @@ class Species(OD):
                 #get the next offspring_key
                 offspring_key = offspring_keys.pop()
 
-                offspring_x, offspring_y = movement._disperse(self,
+                offspring_x, offspring_y = _do_dispersal(self,
                     self._land_dim, parent_midpoint_x, parent_midpoint_y,
                     self.dispersal_distr_mu, self.dispersal_distr_sigma)
 
@@ -396,7 +408,7 @@ class Species(OD):
                     new_genome = None
 
                 #create the new individual
-                self[offspring_key] = individual.Individual(
+                self[offspring_key] = Individual(
                     idx = offspring_key, age = age, new_genome = new_genome,
                                 x = offspring_x, y = offspring_y, sex = sex)
 
@@ -414,7 +426,7 @@ class Species(OD):
 
         # do mutation if necessary
         if self.mutate and not burn:
-            mutation._do_mutation(keys_list, self, log = self.mut_log)
+             _do_mutation(keys_list, self, log = self.mut_log)
 
 
     #method to do species dynamics
@@ -425,7 +437,7 @@ class Species(OD):
         burn = not self.burned
         #then carry out the pop-dynamics, with selection as set above, and save
         #result, which will be True iff spp has gone extinct
-        extinct = demography._do_pop_dynamics(self, land,
+        extinct = _do_pop_dynamics(self, land,
             with_selection = with_selection, burn = burn)
         if extinct:
             #set self.extinct equal to True, so that the iteration will end
@@ -472,7 +484,7 @@ class Species(OD):
             dens = (dens - dens.min()) / norm_factor
         #return as layer, if necessary
         if as_layer == True:
-            dens = landscape.Layer(dens, 'density', 'density', self._land_dim)
+            dens = Layer(dens, 'density', 'density', self._land_dim)
         #set self.N attribute, if necessary
         if set_N:
             self._set_N(dens)
@@ -487,7 +499,7 @@ class Species(OD):
         else:
             ig = itemgetter(*individs)
             inds_to_set = ig(self)
-            if type(inds_to_set) is individual.Individual:
+            if isinstance(inds_to_set, individual.Individual):
                 inds_to_set = (inds_to_set,)
         hab = [ind._set_e([lyr.rast[int(ind.y), int(
             ind.x)] for lyr in land.values()]) for ind in inds_to_set]
@@ -542,8 +554,7 @@ class Species(OD):
             individs = [*self]
 
         if biallelic:
-            return {i: self[i].genome[locus,
-                                        :] for i in [*self] if i in individs}
+            return {i: self[i].g[locus, :] for i in [*self] if i in individs}
 
         else:
             if by_dominance == True:
@@ -551,7 +562,7 @@ class Species(OD):
             else:
                 d = 0
             genotypes = np.array(
-              [ind.genome[locus] for i, ind in self.items() if i in individs])
+              [ind.g[locus] for i, ind in self.items() if i in individs])
             genotypes = np.mean(genotypes, axis = 1)
             genotypes = np.clip(genotypes * (1 + d), a_min = None, a_max = 1)
             return dict(zip(individs, genotypes))
@@ -582,7 +593,7 @@ class Species(OD):
         return fits
 
     def _calc_fitness(self, trait_num = None, set_fit = True):
-        fit = selection._calc_fitness(self, trait_num = trait_num)
+        fit = _calc_fitness(self, trait_num = trait_num)
         #set individuals' fitness attributes, if indicated
         if set_fit:
             self._set_fit(fit)
@@ -991,7 +1002,7 @@ class Species(OD):
     def _plot_pop_growth(self):
         T = range(len(self.Nt))
         x0 = self.Nt[0] / self.K.sum()
-        plt.plot(T, [demography._calc_logistic_soln(x0, self.R,
+        plt.plot(T, [_calc_logistic_soln(x0, self.R,
                                 t) * self.K.sum() for t in T], color='red')
         plt.plot(T, self.Nt, color='blue')
         plt.xlabel('t')
@@ -1059,7 +1070,7 @@ def _make_species(land, name, idx, spp_params, burn=False):
     if 'gen_arch' in spp_params.keys():
         g_params = spp_params.gen_arch
         #make genomic_architecture
-        gen_arch = genome._make_genomic_architecture(spp_params = spp_params,
+        gen_arch = _make_genomic_architecture(spp_params = spp_params,
                                                                 land = land)
     else:
         gen_arch = None
@@ -1071,7 +1082,7 @@ def _make_species(land, name, idx, spp_params, burn=False):
     for ind_idx in range(N):
         # use individual.create_individual to simulate individuals
         #and add them to the species
-        ind = individual._make_individual(idx = ind_idx, offspring = False,
+        ind = _make_individual(idx = ind_idx, offspring = False,
                 dim = land.dim, genomic_architecture = gen_arch, burn = burn)
         inds[ind_idx] = ind
 
@@ -1147,7 +1158,7 @@ def _make_species(land, name, idx, spp_params, burn=False):
         else:
             ch_params = None
         #make _SpeciesChanger and set it to the spp's changer attribute
-        spp._changer = change._SpeciesChanger(spp, ch_params, land = land)
+        spp._changer = _SpeciesChanger(spp, ch_params, land = land)
 
     return spp
 

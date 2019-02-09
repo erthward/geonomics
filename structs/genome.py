@@ -25,7 +25,7 @@ Documentation:            URL
 '''
 
 # geonomics imports
-from ops import mutation
+from geonomics.ops import mutation
 
 # other imports
 import numpy as np
@@ -177,8 +177,10 @@ class GenomicArchitecture:
     # to occur in a given timestep
     def _draw_mut_types(self, num):
         type_dict = {'neut': self.mu_neut,
-                     'delet': self.mu_delet,
-                     **{'t%i' % (k): v.mu for k, v in self.traits.items()}}
+                     'delet': self.mu_delet}
+        if self.traits is not None:
+            [type_dict.update(item) for item in {'t%i' % (
+                            k): v.mu for k, v in self.traits.items()}.items()]
         types = []
         probs = []
         for k, v in type_dict.items():
@@ -279,7 +281,7 @@ class GenomicArchitecture:
 
     # method for plotting all allele frequencies for the species
     def _plot_allele_frequencies(self, spp):
-        speciome = np.stack([ind.genome for ind in spp.values()])
+        speciome = np.stack([ind.g for ind in spp.values()])
         freqs = speciome.sum(axis=2).sum(axis=0) / (2*speciome.shape[0])
         plt.plot(range(self.L), self.p, ':r')
         plt.plot(range(self.L), freqs, '-b')
@@ -333,6 +335,23 @@ def _make_traits(traits_params, land):
     # params to create the trait dict
     traits = {n: Trait(n, k_v[0], **k_v[1]) for n, k_v in enumerate(
                                                         params_copy.items())}
+    # for all monogenic traits, if the trait doesn't already have a 0 mutation
+    # rate then coerce it to 0
+    # NOTE: this is the because there is a good reason to use 0 as the 
+    # baseline phenotype for monogenic traits but 0.5 as the baseline
+    # for multilocus traits (to preserve symmetry of ability for individuals
+    # to have phenotypes beyond 0 and 1 for a multilocus trait and thus
+    # experience stabilizing selection within their optimal habitat), but
+    # this means that there would be a huge problem if a monogenic trait
+    # underwent an adaptive mutation and became polyenic bceause all of the
+    # individuals' phenotypes would suddenly have to be recalculated and would
+    # suddenly completely change
+    for n, trt in traits.items():
+        if trt.n_loci == 1:
+            if trt.mu != 0:
+                print(("\nWARNING: coercing Trait %i ('%s') to a 0 mutation "
+                      "rate because it is monogenic."))
+                trt.mu = 0
     return(traits)
 
 
@@ -708,7 +727,7 @@ def _set_genomes(spp, burn_T, T):
         # set those loci's p values to 0 (i.e. non-segregating)
         spp.gen_arch.p[np.array([*muts])] = 0
     # now reassign genotypes to all individuals, using gen_arch.p
-    [ind._set_genome(_draw_genome(spp.gen_arch)) for ind in spp.values()]
+    [ind._set_g(_draw_genome(spp.gen_arch)) for ind in spp.values()]
     # and then reset the individuals' phenotypes
     if spp.gen_arch.traits is not None:
         [ind._set_z(spp.gen_arch) for ind in spp.values()]

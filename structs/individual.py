@@ -24,8 +24,9 @@ Documentation:            URL
 '''
 
 #geonomics imports
-from structs import genome
-from ops import movement, selection
+from geonomics.structs.genome import _draw_genome
+from geonomics.ops.movement import _do_dispersal
+from geonomics.ops.selection import _calc_phenotype
 
 #other imports
 import numpy as np
@@ -42,7 +43,7 @@ class Individual:
     def __init__(self, idx, x, y, age=0, new_genome=None, sex=None):
         self.idx = idx
         #individual's x-ploid genome
-        self.genome = new_genome
+        self.g = new_genome
         #x and y coords
         self.x = float(x)
         self.y = float(y)
@@ -84,7 +85,7 @@ class Individual:
 
     #set the individual's phenotype (attribute z) for all traits
     def _set_z(self, genomic_architecture):
-        self.z = [selection._calc_phenotype(self, genomic_architecture,
+        self.z = [_calc_phenotype(self, genomic_architecture,
             trait) for trait in genomic_architecture.traits.values()]
 
     #set the individual's fitness
@@ -92,8 +93,8 @@ class Individual:
         self.fit = fit
 
     #set the individual's genome
-    def _set_genome(self, genome):
-        self.genome = genome
+    def _set_g(self, genome):
+        self.g = genome
 
 
 ######################################
@@ -124,7 +125,7 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
     #set the x,y location of the individual
     if offspring:
         #get a starting position from the parental_centerpoint
-        x,y = movement._disperse(parental_centerpoint)
+        x,y = _do_dispersal(parental_centerpoint)
     else:
         #randomly assign individual a valid starting location
         y,x = r.rand(2)*dim
@@ -141,7 +142,7 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
         if not offspring:
             #if this is not for the burn-in, draw a proper genome
             if not burn:
-                new_genome = genome._draw_genome(genomic_architecture)
+                new_genome = _draw_genome(genomic_architecture)
             #otherwise, just a dummy genome
             else:
                 new_genome = np.atleast_2d([0,0])

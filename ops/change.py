@@ -22,8 +22,8 @@ Documentation:        URL
 ##########################################
 '''
 #geonomics imports
-from utils import spatial as spt
-from utils import io
+from geonomics.utils import spatial as spt
+from geonomics.utils import io
 
 #other imports
 import numpy as np

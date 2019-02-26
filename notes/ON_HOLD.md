@@ -1,4 +1,5 @@
 # IDEAS / TO-DO
+- add functionality to model male dispersal of gametes (i.e. sperm/pollen) for modeling of plants, etc
 - add any helper functions for manually resetting the landscape rasters of a model after it's created but before it's run?
 - add any functions for stipulating 'island'-type landscapes?
 - problems with closures, and mutable and/or reassigned attributes could still arise, even though I went through all classes and closures and double-checked for any obvious possible problems, and got rid of any attributes that pointed to big, changing classes (e.g. Landscape.mod, which pointed to Model)

@@ -891,13 +891,21 @@ class Species(OD):
 
 
     #method for plotting the movement surface (in various formats)
-    def _plot_direction_surface(self, land, surf_type, style, x, y,
+    def _plot_direction_surface(self, land, surf_type, style, x=None, y=None,
         zoom_width=8, scale_fact=4.5, color='black', cbar = True):
         #get the correct surface
         if surf_type == 'move':
             surf = self._move_surf
         elif surf_type == 'disp':
             surf == self._disp_surf
+
+        # get all x's and y's, if x and y are None
+        if x is None and y is None:
+            x = [*range(land.dim[0])]
+            y = [*range(land.dim[1])]
+        else:
+            x = [x]
+            y = [y]
         #check if the surface is none
         if surf is None:
             print(('This Species appears to have no _%sSurface. '
@@ -910,27 +918,36 @@ class Species(OD):
                    "'vect', 'circ_draws'"))
             return
         elif style == 'hist':
+            x = x[0]
+            y = y[0]
             plt.hist(r.choice(surf.surf[y,x,:], size = 10000,
                         replace = True), bins=100, density=True, alpha=0.5)
 
         else:
             #display the movement-surface raster
             lyr_num = surf.lyr_num
-            land[lyr_num]._plot(zoom_width = zoom_width, x = x, y = y)
+            land[lyr_num]._plot(zoom_width = zoom_width, x=np.mean(x),
+                                y=np.mean(y))
 
             if style == 'circ_hist':
-                v, a = np.histogram(r.choice(surf.surf[y,
-                                x,:], replace = True, size = 7500), bins=15)
-                v = v / float(v.sum())
-                a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
-                xs = [np.cos(a[n]) * 0.5 for n in range(len(a))]
-                ys = [np.sin(a[n]) * 0.5 for n in range(len(a))]
-                xs = np.array(xs) * v * scale_fact
-                ys = np.array(ys) * v * scale_fact
-                [plt.plot((x, (x + xs[n])), (y, (y + ys[n])), linewidth=2,
-                                        color=color) for n in range(len(xs))]
+                for x_val in x:
+                    for y_val in y:
+                        v, a = np.histogram(r.choice(surf.surf[y_val,
+                            x_val,:], replace = True, size = 7500), bins=15)
+                        v = v / float(v.sum())
+                        a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
+                        xs = [np.cos(a[n]) * 0.5 for n in range(len(a))]
+                        ys = [np.sin(a[n]) * 0.5 for n in range(len(a))]
+                        xs = np.array(xs) * v * scale_fact
+                        ys = np.array(ys) * v * scale_fact
+                        [plt.plot((x_val, (x_val + xs[n])),
+                                  (y_val, (y_val + ys[n])),
+                                  linewidth=2,
+                                  color=color) for n in range(len(xs))]
 
             elif style == 'circ_draws':
+                x = x[0]
+                y = y[0]
                 pts = [(np.cos(a), np.sin(a)) for a in r.choice(
                     surf.surf[y,x,:], size = 1000, replace = True)]
                 plt.scatter([pt[0] * 0.5 + x for pt in pts], [pt[

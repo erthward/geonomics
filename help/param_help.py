@@ -21,9 +21,6 @@ Documentation:              URL
 ##########################################
 '''
 
-#geonomics imports
-from ops import movement
-
 #other imports
 import numpy as np
 from numpy.random import vonmises, lognormal

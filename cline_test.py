@@ -9,11 +9,20 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
 import vcf
+
+# set some plotting params
+img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
+                      'img/final/')
+ax_fontdict = {'fontsize': 12,
+               'name': 'Bitstream Vera Sans'}
+ttl_fontdict = {'fontsize': 15,
+                'name': 'Bitstream Vera Sans'}
 
 #set the data directory, and delete it if it already exists (so that we don't
 #create mutliple, conflicting sets of data files)
-data_dir = './geonomics/GEONOMICS_mod-cline_params'
+data_dir = './GEONOMICS_mod-cline_params'
 if os.path.isdir(data_dir):
     shutil.rmtree(data_dir)
 
@@ -25,7 +34,7 @@ nonneutral_loci = mod.comm[0].gen_arch.traits[0].loci
 mod.run(verbose = True)
 
 #define a function for the classic tanh cline
-def tanh_cline(x, c, w): 
+def tanh_cline(x, c, w):
     p = 0.5 * (1 + np.tanh(((2*(x-c))/w)))
     return p
 
@@ -48,6 +57,7 @@ for it_dir in its_dirs:
         mod.params.comm.species['spp_0'].gen_arch.L))*99
     try:
         for loc in range(genotypes.shape[1]):
+            print('Calculating genotypes for locus %i' % loc)
             rec = next(vcf_reader)
             for n, ind in enumerate(csv['idx']):
                 genotype = sum([int(base) for base in rec.genotype(
@@ -105,19 +115,21 @@ print(res.head(25))
 
 #plot all fitted clines
 x_to_plot_for_predicted = np.linspace(0.5,49.5,50)
-fig = plt.figure()
-plt.suptitle(('Adaptation to a cline\n(monogenic trait with phi = s = 0.01,'
-              '2500 timesteps'))
-#plt.xlabel('Distance along cline (plotted beneath)')
-ax = fig.add_subplot(1,2,1)
-ax.set_title('Fitted tanh clines for all loci\n(non-neutral locus in red)')
+plt.rcParams['figure.figsize'] = [6,6]
+fig1 = plt.figure()
+#plt.suptitle(('Adaptation to a cline\n(monogenic trait with phi = s = 0.01,'
+#              '2500 timesteps'))
+plt.xlabel('Distance along cline')
+ax = fig1.add_subplot(111)
+#ax.set_title('Fitted tanh clines for all loci\n(non-neutral locus in red)',
+#             fontdict=ttl_fontdict)
 plt.xlim((0,50))
 plt.ylim((0,50))
 #ax.set_aspect('equal')
 ax.get_xaxis().set_ticks([])
 ax.get_yaxis().set_ticks([])
 plt.ylabel(('Genotypes predicted by logit GLM\n'
-    '(0.0 = 0|0; 0.5 = 0|1; 1.0 = 1|1'))
+    '(0.0 = 0|0; 0.5 = 0|1; 1.0 = 1|1'), fontdict=ax_fontdict)
 plt.imshow(mod.land[0].rast, cmap = 'terrain', interpolation = 'nearest')
 ax2 = ax.twinx()
 #ax2.set_aspect('equal')
@@ -130,11 +142,16 @@ for loc, y_prediction in tanh_predictions.items():
         linetypes[loc == nonneut_loc],
         linewidth = linewidths[loc == nonneut_loc],
         color= colors[loc == nonneut_loc])
+plt.show()
+plt.savefig(os.path.join(img_dir, 'CLINE_fitted_clines.pdf'))
 
-ax3 = fig.add_subplot(1,2,2)
-ax3.set_title(('Final population,\ncolored by phenotype (outer circle) and '
-               'fitness (inner circle)'))
-mod.plot_fitness(0,0,0, fitness_colorbar=False)
+fig2 = plt.figure()
+ax3 = fig2.add_subplot(111)
+#ax3.set_title(('Final population,\ncolored by phenotype (outer circle) and '
+#               'fitness (inner circle)'), fontdict=ttl_fontdict)
+mod.plot_fitness(0,0,0, fitness_cbar=False)
+plt.show()
+plt.savefig(os.path.join(img_dir, 'CLINE_pop_plot.pdf'))
 
 #ANALYSIS IDEAS:
 

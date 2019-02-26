@@ -2,10 +2,30 @@
 --------------------------------------------------------------------------------------
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
+        
+        5 add ability for life-history and demographic params to evolve: here's an idea of how:
+                - 1) allow users to specify a trait name for the parameter, instead of a value
+                - 2) then allow draws based on those parameters to be made based on phenotypes in some way (e.g. individual's phenotypes, or mean of parents, or mean of population, etc)
+                - 3) also could define a function that makes it possible for a user to specify at the top of their params file a mapping of phenotypic values onto parameter values, then feed THAT in as the value for the parameter in the params file, rather than feeding in either a fixed value or just a phenotype name
 
-        5 should I allow r_distr_alpha to have a value and r_distr_beta to be None, thus fixing all recomb rates at the alpha's value?? this is of course getting far from the alpha/beta meaning coming from the beta distr parameterization, so might want to change their names in that case and then just explain in the docs?
+        5 change the new, ad hoc recombination method so that it ignores not just locus 1
+but instead all loci that are 0.5?? or else it needs to throw an error if a model has >1 chromosome
 
-        5 add a 'mating_interval' argument, to define the number of timesteps between mating events? or is this meaningless really?
+        5 in Yosemite example in methods paper:
+                -perhaps run two or a few distinct scenarios (maybe where the species varies in mobility), to see if potential to adapt depends on movement (and hence on gene flow capacity)?
+                - or perhaps run the same model twice, with the difference being that the environmental change takes place over 1000 timesteps in the first model, but only 100 in the second?
+
+ 
+
+
+        5 Try rerunning the selective sweep model for a few diff parameterizations again, now that I've changed the recombination implementation to be diff when recomb rate is homogeneous across genome
+
+        5 write up the runtime-analysis section of the draft, and add the fig
+        
+        5 I allowed r_distr_alpha to have a value and r_distr_beta to be None, thus fixing all recomb rates at the alpha's value. But this is of course getting far from the alpha/beta meaning coming from the beta distr parameterization, so might want to change their names in that case and then just explain in the docs???
+
+        5 add a 'mating_interval' argument, to define the number of timesteps between mating events? or is this meaningless really (because just allows multiple movement timesteps and
+          mortality events between mating, which is sort of equivalent to moving and dying once by a different (and unknown!) set of params)?
 
         5 change 'iterations' to 'runs' across the package and docs
 

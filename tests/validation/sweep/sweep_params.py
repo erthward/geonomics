@@ -202,9 +202,9 @@ params = {
                     #scale of distr of deleterious effect sizes
                     'delet_alpha_distr_scale':  0.2,
                     #alpha of distr of recomb rates
-                    'r_distr_alpha':            1000000,
+                    'r_distr_alpha':            None,
                     #beta of distr of recomb rates
-                    'r_distr_beta':             19000000,
+                    'r_distr_beta':             None,
                     #whether loci should be dominant (for allele '1')
                     'dom':                      False,
                     #whether to allow pleiotropy
@@ -215,6 +215,7 @@ params = {
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    'allow_ad_hoc_recomb':      True,
                     #whether to save mutation logs
                     'mut_log':                  False,
 

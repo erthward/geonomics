@@ -4,8 +4,17 @@
 import geonomics as gnx
 
 import os
+import numpy as np
 import shutil
 import matplotlib.pyplot as plt
+
+# set some plotting params
+img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
+           'img/final/')
+ax_fontdict = {'fontsize': 12,
+               'name': 'Bitstream Vera Sans'}
+ttl_fontdict = {'fontsize': 15,
+                'name': 'Bitstream Vera Sans'}
 
 # set total runtime for each selection coefficient's model
 T = 1000
@@ -26,7 +35,8 @@ migration_rates = {}
 # frequencies in both halves of the environment
 for phi in phis:
     # create the model
-    mod = gnx.make_model('./test/validation/divergence/divergence_params.py')
+    mod = gnx.make_model(('./geonomics/tests/validation/divergence/'
+                         'divergence_params.py'))
     mod.comm[0].gen_arch.traits[0].phi = phi
     # landscape and community will not be randomized between iterations,
     # so I can just extract the non-neutral loci now
@@ -41,8 +51,8 @@ for phi in phis:
     migration_rates_this_phi = {(0, 1): [], (1, 0): []}
     # update it for the starting allele frequencies
     for allele in (0, 1):
-        allele_counts = [sum(i.g[nonneut_loc,
-                             :]) for i in mod.comm[0].values(
+        allele_counts = [np.sum(
+            i.g[nonneut_loc, :]) for i in mod.comm[0].values(
                              ) if i.e[0] == allele]
         allele_freq = sum(allele_counts) / (2 * len(allele_counts))
         allele_freqs_this_phi[allele].append(allele_freq)
@@ -54,8 +64,8 @@ for phi in phis:
         mod.walk(1, verbose=True)
         # get allele frequencies for each half of the environment
         for allele in (0, 1):
-            allele_counts = [sum(i.g[nonneut_loc,
-                                 :]) for i in mod.comm[0].values(
+            allele_counts = [np.sum(
+                i.g[nonneut_loc, :]) for i in mod.comm[0].values(
                                  ) if i.e[0] == allele]
             allele_freq = sum(allele_counts) / (2 * len(allele_counts))
             allele_freqs_this_phi[allele].append(allele_freq)
@@ -156,13 +166,14 @@ for phi in phis:
     expected_allele_freqs[phi] = expected_this_phi
 
 # plot observed versus expected allele frequencies for all phi values
+plt.rcParams['figure.figsize'] = [8, 6]
 fig = plt.figure()
-ax = fig.add_subplot(121)
-ax.set_title(('Allele-frequency divergence in constrasting environments;'
-              '\nobserved (markers) versus predicted (lines);'
-              '%i timesteps, ~1400 individuals') % T)
-plt.xlabel('time')
-plt.ylabel('frequency of 1 allele')
+ax = fig.add_subplot(111)
+# ax.set_title(('Allele-frequency divergence in constrasting environments;'
+#              '\nobserved (markers) versus predicted (lines);'
+#              '%i timesteps, ~1400 individuals') % T)
+plt.xlabel('time', fontdict=ax_fontdict)
+plt.ylabel('frequency of 1 allele', fontdict=ax_fontdict)
 plt.ylim((0, 1))
 markers = ['o', 'P', '*']
 lines = ['-', '--', ':']
@@ -174,7 +185,7 @@ for n, phi in enumerate(phis):
         plt.plot(range(len(allele_freqs[phi][allele])),
                  allele_freqs[phi][allele], markers[n],
                  color=colors[allele], markeredgecolor='black',
-                 markersize=8, markeredgewidth=0.5)
+                 markersize=4, markeredgewidth=0.5)
 ax.legend(labels=['phi = %0.3f; allele %i beneficial' % (
           phi, n % 2) for phi in phis for n in (0, 1)],
           loc='best', fontsize='medium')
@@ -184,9 +195,13 @@ for n, phi in enumerate(phis):
         plt.plot(range(len(expected_allele_freqs[phi][allele])),
                  expected_allele_freqs[phi][allele], lines[n],
                  color=line_colors[allele], linewidth=1)
+plt.show()
+plt.savefig(os.path.join(img_dir, 'DIVERGENCE_allele_freqs.pdf'))
 
-ax2 = fig.add_subplot(122)
-ax2.set_title(('Population, colored by phenotype (outer circle) '
-              'and fitness (inner circle)'))
+plt.rcParams['figure.figsize'] = [6, 6]
+fig2 = plt.figure()
+# ax2.set_title(('Population, colored by phenotype (outer circle) '
+#              'and fitness (inner circle)'))
 mod.plot_fitness(0, 0, 0, fitness_cbar=False)
 plt.show()
+plt.savefig(os.path.join(img_dir, 'DIVERGENCE_pop_plot.pdf'))

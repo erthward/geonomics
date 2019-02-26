@@ -182,7 +182,7 @@ RAND_LYR_PARAMS = '''
                         #number of random points
                         'n_pts':                        500,
                         #interpolation method {'linear', 'cubic', 'nearest'}
-                        'interp_method':                'cubic',
+                        'interp_method':                'linear',
 
                         }, # <END> 'random'
 '''
@@ -291,7 +291,7 @@ SPP_PARAMS = '''
                     #starting number of individs
                     'N':                250,
                     #carrying-capacity Layer name
-                    'K_layer':          'layer_0',
+                    'K_layer':          'lyr_0',
                     #multiplicative factor for carrying-capacity layer
                     'K_factor':         1,
                     }, # <END> 'init'
@@ -366,7 +366,7 @@ SPP_PARAMS = '''
 MOVE_SURF_PARAMS = '''
                     'move_surf'     : {
                         #move-surf Layer name
-                        'layer':                'layer_0',
+                        'layer':                'lyr_0',
                         #whether to use mixture distrs
                         'mixture':              True,
                         #concentration of distrs
@@ -380,7 +380,7 @@ MOVE_SURF_PARAMS = '''
 DISP_SURF_PARAMS = '''
                     'disp_surf'     : {
                         #disp-surf Layer name
-                        'layer':                'layer_0',
+                        'layer':                'lyr_0',
                         #whether to use mixture distrs
                         'mixture':              True,
                         #concentration of distrs
@@ -431,6 +431,8 @@ GENOME_PARAMS = '''
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    #whether to generate recombination paths at each timestep
+                    'allow_ad_hoc_recomb':       False,
                     #whether to save mutation logs
                     'mut_log':                  False,
 %s
@@ -463,7 +465,7 @@ TRT_PARAMS = '''
                         #trait name (TRAIT NAMES MUST BE UNIQUE!)
                         %s: {
                             #trait-selection Layer name
-                            'layer':                'layer_0',
+                            'layer':                'lyr_0',
                             #polygenic selection coefficient
                             'phi':                  0.05,
                             #number of loci underlying trait
@@ -735,7 +737,7 @@ def _make_lyrs_params_str(lyrs=1):
             #add no change params (i.e. a zero-length string)
             change_params = ''
             #create the lyr_params str
-            lyr_params_str = LYR_PARAMS % ("'layer_%i'" % i, i,
+            lyr_params_str = LYR_PARAMS % ("'lyr_%i'" % i, i,
                                                type_params, change_params, i)
             #append it to the list
             lyrs_params_list.append(lyr_params_str)
@@ -794,7 +796,7 @@ def _make_lyrs_params_str(lyrs=1):
             if change_params != '':
                 change_params = change_params % (i, events_params)
             #create the lyr_params str for this Layer
-            lyr_params_str = LYR_PARAMS % ("'layer_%i'" % i, i,
+            lyr_params_str = LYR_PARAMS % ("'lyr_%i'" % i, i,
                                                type_params, change_params, i)
             #append it to the list
             lyrs_params_list.append(lyr_params_str)

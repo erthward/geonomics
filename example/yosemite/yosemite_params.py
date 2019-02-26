@@ -78,7 +78,7 @@ params = {
                     #parameters for a 'file'-type Layer
                     'file': {
                         #</path/to/file>.<ext>
-                        'filepath': ('./example/yosemite/'
+                        'filepath': ('./geonomics/example/yosemite/'
                                      'yosemite_30yr_normals_90x90.tif'),
                         #minimum value to use to rescale the Layer to [0,1]
                         'scale_min_val':                None,
@@ -307,6 +307,7 @@ params = {
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
                     'mut_log':                  False,
 

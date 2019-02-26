@@ -237,6 +237,7 @@ params = {
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
                     'mut_log':                  False,
 
@@ -262,7 +263,7 @@ params = {
 ###############
     'model': {
         #total Model runtime (in timesteps)
-        'T':            5000,
+        'T':            3000,
         #min burn-in runtime (in timesteps)
         'burn_T':       80,
         #seed number
@@ -305,7 +306,7 @@ params = {
                 #whether to save current Layers when data is collected
                 'include_landscape':    False,
                 #whether to include fixed loci in VCF files
-                'include_fixed_sites':  False,
+                'include_fixed_sites':  True,
                 },
             'format': {
                 #format for genetic data {'vcf', 'fasta'}

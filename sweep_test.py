@@ -7,10 +7,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter as C
 from itertools import combinations
+import os
+
+# set some plotting params
+img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
+           'img/final/')
+ax_fontdict = {'fontsize': 12,
+               'name': 'Bitstream Vera Sans'}
+ttl_fontdict = {'fontsize': 15,
+                'name': 'Bitstream Vera Sans'}
 
 
 def calc_pi(mod, window_width=5):
-    print("\nCalculating nucleotide diversity (WILL TAKE A FEW MINUTES)\n")
+    print("\nCalculating nucleotide diversity (WILL TAKE A WHILE)...\n")
     # make speciome
     speciome = np.stack([i.g for i in mod.comm[0].values()])
     # create data structure to store pi value for each genomic window
@@ -99,6 +108,7 @@ while not sweeping_allele_established:
     plt.cla()
     mod.plot_phenotype(0, 0, 0, size=10)
     ax1.plot(mod.comm[0][individ].x - 0.5, mod.comm[0][individ].y - 0.5, 'ow')
+    ax1.set_title('Just after beginning of sweep', fontdict=ttl_fontdict)
 
     # walk 50 timesteps
     for _ in range(5):
@@ -111,6 +121,8 @@ while not sweeping_allele_established:
     sweeping_allele_established = nonneut_loc_freq > 0.05
     if sweeping_allele_established:
         print('\n\nMUTANT ESTABLISHED.\n')
+        # calculate and store ending nucleotide diversity
+        pi.append(calc_pi(mod))
     else:
         print('\n\nMutation lost...\n')
 
@@ -131,9 +143,8 @@ plt.title('Population 200 timesteps into sweep')
 mod.plot_phenotype(0, 0, 0, size=10)
 
 # walk until mutant fixed
-nonneut_loc_freq = np.mean(np.vstack([i.g[nonneut_loc,
-                                               :] for i in mod.comm[
-                                                                0].values()]))
+nonneut_loc_freq = np.mean(np.vstack(
+                        [i.g[nonneut_loc, :] for i in mod.comm[0].values()]))
 fixed = nonneut_loc_freq == 1
 while not fixed:
     mod.walk(10, verbose=True)
@@ -142,8 +153,7 @@ while not fixed:
     mean_fit.append(calc_mean_fit(mod))
     # check if fixed
     nonneut_loc_freq = np.mean(np.vstack(
-                               [i.g[nonneut_loc,
-                                         :] for i in mod.comm[0].values()]))
+                        [i.g[nonneut_loc, :] for i in mod.comm[0].values()]))
     fixed = nonneut_loc_freq == 1
 
 # plot status after sweep is complete
@@ -158,8 +168,8 @@ pi.append(calc_pi(mod))
 # walk model 2500 more timesteps, then plot status
 mod.walk(2500, verbose=True)
 ax4 = fig.add_subplot(244)
-ax4.set_title('Population 2500 timesteps after sweep\nhas completed (t = %i)' % (
-                                                mod.t - lapsed_t + 50 + 550))
+ax4.set_title('Population 2500 timesteps after sweep\nhas '
+              'completed (t = %i)' % (mod.t - lapsed_t + 50 + 550))
 mod.plot_phenotype(0, 0, 0, size=10)
 
 # calculate and store nucleotide diversity again
@@ -167,37 +177,55 @@ pi.append(calc_pi(mod))
 
 # plot stats
 ax5 = fig.add_subplot(245)
-plt.title('Mean fitness across model time')
-ax5.plot(np.linspace(0, mod.t, len(mean_fit)), mean_fit)
-ax5.set_xlabel('model time')
-ax5.set_ylabel('mean fitness')
-ax5.set_ylim((1 - mod.comm[0].gen_arch.traits[0].phi, 1.0))
+ax5.plot(range(mod.comm[0].gen_arch.L), pi[0])
+ax5.plot([50, 50], [0, 1], '--r')
+ax5.set_xlabel('genomic_position', fontdict=ax_fontdict)
+ax5.set_ylabel('nucleotide diversity', fontdict=ax_fontdict)
 ax6 = fig.add_subplot(246)
-plt.title(('Nucleotide diversity 100 timesteps into sweep\n(calculated in '
-          '11-locus windows'))
-ax6.plot(range(mod.comm[0].gen_arch.L), pi[0])
+# plt.title(('Nucleotide diversity 100 timesteps into sweep\n(calculated in '
+#          '11-locus windows'))
+ax6.plot(range(mod.comm[0].gen_arch.L), pi[1])
 ax6.plot([50, 50], [0, 1], '--r')
-ax6.set_xlabel('genomic_position')
-ax6.set_ylabel('nucleotide diversity')
+ax6.set_xlabel('genomic_position', fontdict=ax_fontdict)
+# ax6.set_ylabel('nucleotide diversity', fontdict=ax_fontdict)
 ax7 = fig.add_subplot(247)
-plt.title(('Nucleotide diversity at end of sweep\n(calculated in 11-locus '
-          'windows)'))
-ax7.plot(range(mod.comm[0].gen_arch.L), pi[1])
+# plt.title(('Nucleotide diversity at end of sweep\n(calculated in 11-locus '
+#          'windows)'))
+ax7.plot(range(mod.comm[0].gen_arch.L), pi[2])
 ax7.plot([50, 50], [0, 1], '--r')
-ax7.set_xlabel('genomic_position')
-ax7.set_ylabel('nucleotide diversity')
+ax7.set_xlabel('genomic_position', fontdict=ax_fontdict)
+# ax7.set_ylabel('nucleotide diversity', fontdict=ax_fontdict)
 ax8 = fig.add_subplot(248)
-plt.title(('Nucleotide diversity 2500 timesteps after end of sweep\n'
-           '(calculated in 11-locus windows)'))
-ax8.plot(range(mod.comm[0].gen_arch.L), pi[2])
+# plt.title(('Nucleotide diversity 2500 timesteps after end of sweep\n'
+#           '(calculated in 11-locus windows)'))
+ax8.plot(range(mod.comm[0].gen_arch.L), pi[3])
 ax8.plot([50, 50], [0, 1], '--r')
-ax8.set_xlabel('genomic_position')
-ax8.set_ylabel('nucleotide diversity')
+ax8.set_xlabel('genomic_position', fontdict=ax_fontdict)
+# ax8.set_ylabel('nucleotide diversity', fontdict=ax_fontdict)
 pi_min_lim = 0.95 * min([val for sublist in pi for val in sublist])
 pi_max_lim = 1.05 * max([val for sublist in pi for val in sublist])
+ax5.set_ylim((pi_min_lim, pi_max_lim))
 ax6.set_ylim((pi_min_lim, pi_max_lim))
 ax7.set_ylim((pi_min_lim, pi_max_lim))
 ax8.set_ylim((pi_min_lim, pi_max_lim))
 
+# add vertical space between the first and second rows of plots
+fig.subplots_adjust(hspace=.5)
+
 plt.show()
+plt.savefig(os.path.join(img_dir, 'SWEEP_pop_and_nuc_div.pdf'))
 print('Sweep complete')
+
+plt.rcParams['figure.figsize'] = [5.5, 4]
+fig2 = plt.figure()
+ax = fig2.add_subplot(111)
+# plt.title('Mean fitness across model time', fontdict=ttl_fontdict)
+ax.plot(np.linspace(0, mod.t, len(mean_fit)), mean_fit, '-', color='#D55E00')
+ax.set_xlabel('model time', fontdict=ax_fontdict)
+ax.set_ylabel('mean fitness', fontdict=ax_fontdict)
+ax.set_ylim(((1 - mod.comm[0].gen_arch.traits[0].phi)-0.05, 1.01))
+ax.set_xlim((0, mod.t))
+ax.set_yticks(np.linspace(0.8, 1.0, 5))
+
+plt.show()
+plt.savefig(os.path.join(img_dir, 'SWEEP_mean_fit.pdf'))

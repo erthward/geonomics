@@ -248,6 +248,7 @@ params = {
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    'allow_ad_hoc_recomb':      True,
                     #whether to save mutation logs
                     'mut_log':                  False,
 
@@ -308,7 +309,7 @@ params = {
 ###############
     'model': {
         #total Model runtime (in timesteps)
-        'T':            2500,
+        'T':            1500,
         #min burn-in runtime (in timesteps)
         'burn_T':       60,
         #seed number

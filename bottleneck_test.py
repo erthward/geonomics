@@ -12,6 +12,11 @@ import pandas as pd
 import vcf
 import matplotlib.pyplot as plt
 
+# set some plotting params
+img_dir = ('/home/drew/Desktop/stuff/berk/research/sim/methods_paper/'
+                     'img/final/')
+
+
 # set the data directory, and delete it if it already exists (so that we don't
 # create mutliple, conflicting sets of data files)
 data_dir = './GEONOMICS_mod-bottleneck_params'
@@ -95,6 +100,8 @@ plt.plot(range(mod.T), spp.Nt[-mod.T:], '-k')
 # add lines for start and end of the bottleneck event
 plt.plot([ts[0]] * 2, [0, max(spp.Nt)], '--r')
 plt.plot([ts[1]] * 2, [0, max(spp.Nt)], '--r')
+plt.show()
+plt.savefig(os.path.join(img_dir, 'BOTTLENECK_bottleneck_plot.pdf'))
 
 
 # estimate effective population size using harmonic and arithmetic means

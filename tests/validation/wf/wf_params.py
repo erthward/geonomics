@@ -186,7 +186,7 @@ params = {
                     #file defining custom genomic arch
                     'gen_arch_file':            None,
                     #num of loci
-                    'L':                        50,
+                    'L':                        25,
                     #num of chromosomes
                     'l_c':                      [50],
                     #whether starting allele frequencies should be fixed at 0.5
@@ -213,6 +213,7 @@ params = {
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
                     'mut_log':                  False,
 

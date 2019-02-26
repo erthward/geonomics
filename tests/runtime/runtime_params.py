@@ -38,7 +38,7 @@ params = {
     ##############
         'main': {
             #y,x (a.k.a. i,j) dimensions of the Landscape
-            'dim':                      (50,50),
+            'dim':                      (20,20),
             #resolution of the Landscape
             'res':                      (1,1),
             #upper-left corner of the Landscape
@@ -65,7 +65,7 @@ params = {
                     #parameters for a 'defined'-type Layer
                     'defined': {
                         #raster to use for the Layer
-                        'rast':                   np.ones((50,50)),
+                        'rast':                   np.ones((20,20)),
                         #point coordinates
                         'pts':                    None,
                         #point values
@@ -210,9 +210,10 @@ params = {
                     #custom fn for drawing recomb rates
                     'recomb_rate_custom_fn':    None,
                     #number of recomb paths to hold in memory
-                    'n_recomb_paths_mem':       int(1e4),
+                    'n_recomb_paths_mem':       int(2e5),
                     #total number of recomb paths to simulate
-                    'n_recomb_paths_tot':       int(1e5),
+                    'n_recomb_paths_tot':       int(6e5),
+                    'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
                     'mut_log':                  False,
 
@@ -239,9 +240,9 @@ params = {
 ###############
     'model': {
         #total Model runtime (in timesteps)
-        'T':            1000,
+        'T':            3,
         #min burn-in runtime (in timesteps)
-        'burn_T':       60,
+        'burn_T':       50,
         #seed number
         'num':          None,
 

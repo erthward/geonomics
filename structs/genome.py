@@ -33,9 +33,9 @@ import pandas as pd
 from numpy import random as r
 import matplotlib.pyplot as plt
 from collections import OrderedDict as OD
+import warnings
 import random
 import bitarray
-
 
 ######################################
 # -----------------------------------#
@@ -43,12 +43,20 @@ import bitarray
 # -----------------------------------#
 ######################################
 
+
 class _RecombinationPaths:
-    def __init__(self, recomb_paths):
+    def __init__(self, L, recomb_paths=None, fixed_r=None):
+        self._L = L
         self.recomb_paths = recomb_paths
+        self._fixed_r = fixed_r
+        self._gen_paths_ad_hoc = self.recomb_paths is None
 
     def _get_paths(self, n):
-        return(random.sample(self.recomb_paths, n))
+        if self._gen_paths_ad_hoc:
+            paths = _get_bitarray_subsetters_fixed_r(n, self._L, self._fixed_r)
+        else:
+            paths = random.sample(self.recomb_paths, n)
+        return paths
 
 
 class Trait:
@@ -116,6 +124,17 @@ class GenomicArchitecture:
         # The recombination-paths object will be assigned here; used to
         # speed up large quantities of binomial draws needed for recombination
         self._recomb_paths = None
+        # Get the allow_ad_hoc_recomb param, to determine whether or not to
+        # allow the model to simulate recombination paths ad hoc (rather than
+        # generate them at the beginning and then shuffle and draw from them
+        # during the model run)
+        # NOTE: this only works for homogeneous recombination across a genome
+        # NOTE: this is significantly slower than pre-
+        # generated recomb paths for combinations of large values of L (genome
+        # size) and large values of N (mean pop size), but it allows combos of
+        # very large values of those params to be run with less memory expense,
+        # and it models exact recombination, rather than approximating it
+        self._allow_ad_hoc_recomb = g_params.allow_ad_hoc_recomb
         # genome-wide neutral mutation rate
         self.mu_neut = g_params.mu_neut
         # a set to keep track of all loci that don't influence the
@@ -276,7 +295,8 @@ class GenomicArchitecture:
 
     # method for creating and assigning the r_lookup attribute
     def _make_recomb_paths(self):
-        self._recomb_paths = _RecombinationPaths(_make_recomb_paths_bitarrays(
+        self._recomb_paths = _RecombinationPaths(self.L,
+                                                 *_make_recomb_paths_bitarrays(
                                                                         self))
 
     # method for plotting all allele frequencies for the species
@@ -349,8 +369,8 @@ def _make_traits(traits_params, land):
     for n, trt in traits.items():
         if trt.n_loci == 1:
             if trt.mu != 0:
-                print(("\nWARNING: coercing Trait %i ('%s') to a 0 mutation "
-                      "rate because it is monogenic."))
+                warnings.warn(("Coercing Trait %i ('%s') to a "
+                               "0 mutation rate because it is monogenic."))
                 trt.mu = 0
     return(traits)
 
@@ -371,9 +391,21 @@ def _draw_r(g_params, recomb_rate_fn=None):
 
         # if either or both distribution parameters are None, then set all
         # recomb rates to 0.5
-        if (g_params.r_distr_alpha is None or g_params.r_distr_beta is None):
+        if (g_params.r_distr_alpha is None and g_params.r_distr_beta is None):
             recomb_array = np.array([0.5]*L)
-        # else draw the recombination rates
+        # or fix the recomb rates at r_distr_alpha if it has a numeric value
+        # but r_distr_beta is None
+        elif ((g_params.r_distr_alpha is not None)
+              and (g_params.r_distr_beta is None)):
+            recomb_array = np.array([g_params.r_distr_alpha]*L)
+        # or throw an error if r_distr_beta is non-None but alpha is None
+        elif ((g_params.r_distr_alpha is None)
+              and (g_params.r_distr_beta is not None)):
+            raise ValueError(("The genomic architecture's 'r_distr_beta' "
+                              "argument cannot have a numeric value if "
+                              "'r_distr_alpha' is None."))
+        # or if they both have numeric values, then draw the recombination
+        # rates from a beta distribution
         else:
             recomb_array = np.clip(r.beta(a=g_params.r_distr_alpha,
                                    b=g_params.r_distr_beta, size=L),
@@ -398,6 +430,22 @@ def _make_recombinants(r_lookup, n_recombinants):
                             replace=True) for i in range(len(r_lookup))])
     recombinants = np.cumsum(recombinants, axis=0) % 2
     return(recombinants)
+
+
+# method to simulate recombination for a genomic arch with a fixed recomb rate
+def _get_bitarray_subsetters_fixed_r(n, L, fixed_r):
+    # TODO: make this work for n individs at once!
+    indep_assort = r.binomial(n=1, p=0.5, size=n).reshape((n, 1))
+    n_recombs = r.binomial(n=n*(L-1), p=fixed_r)
+    sites = r.choice(a=range(n*(L-1)), size=n_recombs, replace=False)
+    recombs = np.zeros(n*(L-1))
+    recombs[sites] = 1
+    recombs = np.cumsum(recombs.reshape((n,L-1)), axis=1) % 2
+    paths = np.hstack((indep_assort, (recombs + indep_assort) % 2))
+    subsetters = [_make_bitarray_recomb_subsetter(path) for path in paths]
+    #conglom_subsetter = _make_bitarray_recomb_subsetter(paths.flatten())
+    #subsetters = [*np.array(conglom_subsetter).reshape((n, 2 * L))]
+    return subsetters
 
 
 def _make_recomb_array(g_params, recomb_values):
@@ -461,34 +509,72 @@ def _make_recomb_array(g_params, recomb_values):
 def _make_recomb_paths_bitarrays(genomic_architecture,
                                  lookup_array_size=10000,
                                  n_recomb_paths_tot=100000):
+    # only make bitarrays if recombination rates are heterogeneous
+    if (len(np.unique(genomic_architecture.r[1:])) > 1
+        or not genomic_architecture._allow_ad_hoc_recomb):
 
-    if genomic_architecture._n_recomb_paths_mem is not None:
-        lookup_array_size = genomic_architecture._n_recomb_paths_mem
+        if genomic_architecture._n_recomb_paths_mem is not None:
+            lookup_array_size = genomic_architecture._n_recomb_paths_mem
 
-    if genomic_architecture._n_recomb_paths_tot is not None:
-        n_recomb_paths_tot = genomic_architecture._n_recomb_paths_tot
+        if genomic_architecture._n_recomb_paths_tot is not None:
+            n_recomb_paths_tot = genomic_architecture._n_recomb_paths_tot
 
-    lookup_array = np.zeros((len(genomic_architecture.r), lookup_array_size),
-                            dtype=np.int8)
+        # raise a warning if the smallest recombination rate is smaller
+        # than the precision that can be modeled using the chosen number
+        # of recombination paths to be held in memory (i.e. n_recomb_paths_mem,
+        # in the params file; lookup_array_size in the arguments here)
+        if 1/lookup_array_size > min(genomic_architecture.r):
+            warnings.warn(("The number of recombination paths to be held in "
+                           "memory (i.e. parameter 'n_recomb_paths_mem' in the"
+                           " parameters file) provides for less precision in "
+                           "Geonomics' approximation of recombination rates "
+                           "than the minimum non-zero recombination rate "
+                           "stipulated in your genomic architecture. (The "
+                           "precision of this estimation is determined by "
+                           "1/n_recomb_paths_mem.) Consider either increasing "
+                           "n_recomb_paths_mem or increasing your minimum "
+                           "non-zero recombination rate."))
 
-    for i, rate in enumerate(genomic_architecture.r):
-        lookup_array[i, 0:int(round(lookup_array_size*rate))] = 1
+        lookup_array = np.zeros((len(genomic_architecture.r),
+                                 lookup_array_size), dtype=np.int8)
 
-    recomb_paths = _make_recombinants(lookup_array, n_recomb_paths_tot).T
-    bitarrays = tuple([_make_bitarray_recomb_subsetter(
+        for i, rate in enumerate(genomic_architecture.r):
+            # NOTE: taking the max of the count within lookup_array_size that
+            # represents the recombination rate and the integer of testing
+            # rate != 0 ensures that for every nonzero recombination rate
+            # we get at least a single recombination path that recombines
+            # at that locus
+            lookup_array[i, 0:max(int(round(lookup_array_size * rate)),
+                                  int(rate != 0))] = 1
+
+        recomb_paths = _make_recombinants(lookup_array, n_recomb_paths_tot).T
+        bitarrays = tuple([_make_bitarray_recomb_subsetter(
                                                     p) for p in recomb_paths])
 
-    return(bitarrays)
+        # and set fixed_r to None
+        fixed_r = None
+
+    # if recombination rates are homoegenous, then just return None for the
+    # bitarrays, and return the fixed recombination rate as fixed_r, because
+    # recombinants will be quickly generated on the fly
+    else:
+        fixed_r = np.unique(genomic_architecture.r)[0]
+        bitarrays = None
+
+    return bitarrays, fixed_r
 
 
 def _make_bitarray_recomb_subsetter(recomb_path):
-    ba = bitarray.bitarray(list(recomb_path.reshape((recomb_path.size,))))
-    ba_inv = bitarray.bitarray([*np.invert(ba)])
-    tot = []
-    for i in range(len(ba)):
-        tot.append(ba[i])
-        tot.append(ba_inv[i])
-    return(bitarray.bitarray(tot))
+    chrom1 = bitarray.bitarray([*recomb_path.reshape((recomb_path.size,))])
+    chrom0 = chrom1[:]
+    chrom0.invert()
+    #chrom0 = bitarray.bitarray([*np.invert(chrom1)])
+    # NOTE: This will create a binary subsetter than can be used to subset a
+    # 2 x L genome that's been flatted into a 1 x 2L vector (hence the
+    # intercalated use of ba and ba_inv)
+    subsetter = bitarray.bitarray([val for item in [*zip(
+                                            chrom0, chrom1)] for val in item])
+    return(subsetter)
 
 
 # build the genomic architecture
@@ -708,10 +794,9 @@ def _set_genomes(spp, burn_T, T):
     # skip this step and force the neutral mutation rate to 0, if there are no
     # neutral loci in the genome as it was configured
     if len(spp.gen_arch.neut_loci) == 0:
-        print(('#\n#\nWARNING: This species has been parameterized without any'
+        warnings.warn(('This species has been parameterized without any'
                ' neutral loci, leaving no place for mutations (neutral or not)'
-               ' to land. Thus all mutation rates will be forced to 0.'
-               '\n#\n#\n\n'))
+               ' to land. Thus all mutation rates will be forced to 0.'))
         spp.gen_arch.mu_neut = 0
         spp.gen_arch.mu_delet = 0
         for trt in spp.gen_arch.traits.values():

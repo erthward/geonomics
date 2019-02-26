@@ -952,7 +952,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                 land_cmap=land_cmap, pt_cmap=pt_cmap, alpha=alpha,
                 zoom_width=zoom_width, x=x, y=y, vmin=vmin, vmax=vmax)
             #add spp name
-            plt.suptitle(spp.name)
+            #plt.suptitle(spp.name)
 
     #wrapper around Species._plot_density
     def plot_density(self, spp, normalize=False, individs=None,
@@ -967,7 +967,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             text_color=text_color, size=size, text_size=text_size, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
         #add spp name
-        plt.suptitle(spp.name)
+        #plt.suptitle(spp.name)
 
     #wrapper around Species._plot_genotype
     def plot_genotype(self, spp, locus, lyr=None, by_dominance=False,
@@ -986,7 +986,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             im_interp_method=im_interp_method, alpha=alpha,
             by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y)
         #add spp name
-        plt.suptitle(spp.name)
+        #plt.suptitle(spp.name)
 
     #wrapper around Species._plot_phenotype
     #for a given trait
@@ -1019,7 +1019,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             im_interp_method=im_interp_method, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
         #add spp name
-        plt.suptitle(spp.name)
+        #plt.suptitle(spp.name)
 
     #wrapper around Species._plot_fitness
     def plot_fitness(self, spp, trait=None, lyr=None, individs=None,
@@ -1055,7 +1055,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             im_interp_method=im_interp_method, alpha=alpha,
             zoom_width=zoom_width, x=x, y=y)
         #add spp name
-        plt.suptitle(spp.name)
+        #plt.suptitle(spp.name)
 
     #wrapper around Species._plot_allele_frequencies
     def plot_allele_frequencies(self, spp):
@@ -1072,21 +1072,21 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         spp._plot_hist_fitness()
 
     #wrapper around Species._plot_direction_surface for _move_surf
-    def plot_movement_surface(self, spp, style, x, y, zoom_width=8,
+    def plot_movement_surface(self, spp, style, x=None, y=None, zoom_width=8,
                             scale_fact=4.5, color='black', cbar = True):
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, cbar=cbar)
 
     #wrapper around Species._plot_direciton_surface for _disp_surf
-    def plot_dispersal_surface(self, spp, style, x, y, zoom_width=8,
+    def plot_dispersal_surface(self, spp, style, x=None, y=None, zoom_width=8,
                             scale_fact=4.5, color='black', cbar = True):
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, cbar=cbar)
 
     #wrapper around Species._plot_direction_surface
-    def _plot_direction_surface(self, surf_type, spp, style, x, y,
+    def _plot_direction_surface(self, surf_type, spp, style, x=None, y=None,
         zoom_width=8, scale_fact=4.5, color='black', cbar = True):
 
         """

@@ -2,12 +2,21 @@
 # yosemite_example.py
 
 import geonomics as gnx
-import utils.spatial as spt
 
 import numpy as np
 import utils.io as io
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from matplotlib.colors import LinearSegmentedColormap
+import os
+
+# set some image params
+img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
+           'img/final/')
+ax_fontdict = {'fontsize': 12,
+               'name': 'Bitstream Vera Sans'}
+ttl_fontdict = {'fontsize': 15,
+                'name': 'Bitstream Vera Sans'}
 
 
 # a little fn to calculate a future-temperate raster from the 30-year normals
@@ -63,10 +72,12 @@ z_cmap.set_bad(color='black')
 print('\nPREPARING MODEL...\n\n')
 
 # read in the params
-params = gnx.read_parameters_file('./example/yosemite/yosemite_params.py')
+params = gnx.read_parameters_file(('./geonomics/example/yosemite/'
+                                   'yosemite_params.py'))
 
 # manually get the temperature raster
-tmp = io._read_raster('./example/yosemite/yosemite_30yr_normals_90x90.tif')[0]
+tmp = io._read_raster(('./geonomics/example/yosemite/'
+                       'yosemite_30yr_normals_90x90.tif'))[0]
 
 # calculate a future-change raster, where change is fastest at highest
 # elevations (2 Kelvin raster-wide, plus an additional fraction of 2 that is
@@ -89,7 +100,9 @@ params.landscape.layers['hab'].init.defined['rast'] = hab
 params.landscape.layers['hab'].change[0]['change_rast'] = fut_hab
 
 # scale the fut_tmp raster, then add it to the params
-fut_tmp, fut_min, fut_max = spt._scale_raster(fut_tmp, scale_min, scale_max)
+fut_tmp, fut_min, fut_max = gnx.utils.spatial._scale_raster(fut_tmp,
+                                                            scale_min,
+                                                            scale_max)
 params.landscape.layers['tmp'].change[0]['change_rast'] = fut_tmp
 
 # create the model
@@ -101,12 +114,14 @@ ms = 6
 # burn in, then plot starting population, on both rasters
 mod.walk(20000, 'burn')
 fig = plt.figure()
-ax1 = fig.add_subplot(331)
+gs = gridspec.GridSpec(3, 3)
+gs.update(wspace=0.1, hspace=0.1)
+ax1 = plt.subplot(gs[0, 0])
 ax1.set_title('starting population\n(genotypes randomly assigned)')
 mod.plot_phenotype(0, 0, 0, size=ms)
-ax4 = fig.add_subplot(334)
+ax4 = plt.subplot(gs[1, 0])
 mod.plot_phenotype(0, 0, 1, size=ms)
-ax7 = fig.add_subplot(337)
+ax7 = plt.subplot(gs[2, 0])
 plt.imshow(calc_neighborhood_mean_phenotype(mod), cmap=z_cmap)
 plt.scatter(x=[i.x for i in mod.comm[0].values()],
             y=[i.y for i in mod.comm[0].values()],
@@ -117,12 +132,12 @@ plt.scatter(x=[i.x for i in mod.comm[0].values()],
 
 # walk for 500 timesteps, then plot again, before climate change starts
 mod.walk(500)
-ax2 = fig.add_subplot(332)
+ax2 = plt.subplot(gs[0, 1])
 ax2.set_title('after 500 timesteps,\n(before climate change begins)')
 mod.plot_phenotype(0, 0, 0, size=ms)
-ax5 = fig.add_subplot(335)
+ax5 = plt.subplot(gs[1, 1])
 mod.plot_phenotype(0, 0, 1, size=ms)
-ax8 = fig.add_subplot(338)
+ax8 = plt.subplot(gs[2, 1])
 plt.imshow(calc_neighborhood_mean_phenotype(mod), cmap=z_cmap)
 plt.scatter(x=[i.x for i in mod.comm[0].values()],
             y=[i.y for i in mod.comm[0].values()],
@@ -134,15 +149,15 @@ plt.scatter(x=[i.x for i in mod.comm[0].values()],
 # walk for 1000 more timesteps, then plot again,
 # at end of climate-change period
 mod.walk(1000)
-ax3 = fig.add_subplot(333)
-ax3.set_title('after 1500 timesteps\n(at end of period of climate change)')
+ax3 = plt.subplot(gs[0, 2])
+ax3.set_title('after 1500 timesteps\n(after climate change)')
 plt.imshow(mod.land[0].rast, cmap='terrain')
 cbar = plt.colorbar()
 cbar.set_label('environment', rotation=270)
 mod.plot_phenotype(0, 0, 0, size=ms)
-ax6 = fig.add_subplot(336)
+ax6 = plt.subplot(gs[1, 2])
 mod.plot_phenotype(0, 0, 1, size=ms)
-ax9 = fig.add_subplot(339)
+ax9 = plt.subplot(gs[2, 2])
 plt.imshow(calc_neighborhood_mean_phenotype(mod), cmap=z_cmap)
 plt.scatter(x=[i.x for i in mod.comm[0].values()],
             y=[i.y for i in mod.comm[0].values()],
@@ -151,19 +166,19 @@ plt.scatter(x=[i.x for i in mod.comm[0].values()],
             alpha=1, vmin=0, vmax=1)
 cbar = plt.colorbar()
 cbar.set_label('phenotype', rotation=270)
-fig.suptitle(('Evolutionary response of 100-locus additive trait to climate '
-              'change in Yosemite region, N = ~14300 individuals\n'
-              'row 1: temperature rasters (i.e. selective environment); '
-              'row 2: habitat quality rasters (i.e. carrying capacity);\n'
-              'row 3: raster of neighborhood-meaned phenotypes'))
-ax1.set_ylabel('temperature rasters')
-ax4.set_ylabel('habitat rasters')
-ax7.set_ylabel('neighborhood-meaned phenotype')
+# fig.suptitle(('Evolutionary response of 100-locus additive trait to climate '
+#              'change in Yosemite region, N = ~14300 individuals\n'
+#              'row 1: temperature rasters (i.e. selective environment); '
+#              'row 2: habitat quality rasters (i.e. carrying capacity);\n'
+#              'row 3: raster of neighborhood-meaned phenotypes'))
+ax1.set_ylabel('temperature rasters', fontdict=ax_fontdict)
+ax4.set_ylabel('habitat rasters', fontdict=ax_fontdict)
+ax7.set_ylabel('neighborhood-meaned phenotype', fontdict=ax_fontdict)
 
 # TODO:
 # add colorbars for phenotype and for rasters
 # create some interpolated/rasterized map of mean phenotye
 
 plt.show()
-
+plt.savefig(os.path.join(img_dir, 'YOSEMITE_time_series.png'))
 # TODO run analyses?

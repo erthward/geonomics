@@ -1,11 +1,22 @@
 import geonomics as gnx
 
+
 from copy import deepcopy
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 orig_params = gnx.read_parameters_file(('./geonomics/tests/validation/wf'
                                         '/wf_params.py'))
+
+# set some image params
+img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
+           'img/final/')
+ax_fontdict = {'fontsize': 12,
+               'name': 'Bitstream Vera Sans'}
+ttl_fontdict = {'fontsize': 16,
+                'name': 'Bitstream Vera Sans'}
+
 
 K_factors = [10, 20, 30]
 mean_t_persist_list = []
@@ -26,10 +37,14 @@ def calc_harmonic_mean(Nt):
     return Ne_harm
 
 
+# change plot dimensions
+figsize = plt.rcParams['figure.figsize']
+plt.rcParams['figure.figsize'] = [figsize[0], 2.5*figsize[1]]
+
 fig = plt.figure()
-plt.suptitle(('1-allele trajectories in a Wright-Fisher approximation '
-              'with %i independent loci') % (
-                  orig_params.comm.species.spp_0.gen_arch.L))
+# plt.suptitle(('1-allele trajectories in a Wright-Fisher approximation '
+#              'with %i independent loci') % (
+#                  orig_params.comm.species.spp_0.gen_arch.L))
 max_x = 0
 mean_pop_sizes = []
 # NOTE: run through K_factors from greatest downward, to make it
@@ -78,18 +93,21 @@ for n, K_fact in enumerate(K_factors[::-1]):
 
     ax = fig.add_subplot(313-n)
     ax.set_title(("K-factor = %i; mean population size = %0.1f") % (
-        K_fact, mean_pop_size))
+        K_fact, mean_pop_size), fontdict=ttl_fontdict)
     if n == 1:
-        ax.set_ylabel("frequencies of '1' alleles for all loci", size=16)
+        ax.set_ylabel("frequency of '1' allele",
+                      fontdict=ax_fontdict)
     if n == 0:
-        ax.set_xlabel('model time (timesteps)', size=16)
+        ax.set_xlabel('model time (timesteps)', fontdict=ax_fontdict)
 
     max_x = max(max_x, mod.t)
     ax.set_xlim((0, max_x))
     plt.ylim(0, 1)
     for loc, freq_list in freqs.items():
-        ax.plot(range(len(freq_list)), freq_list, '-k', alpha=0.5)
+        ax.plot(range(len(freq_list)), freq_list, '-', alpha=0.6)
+plt.subplots_adjust(hspace=0.35)
 plt.show()
+plt.savefig(os.path.join(img_dir, 'WF_allele_trajectories.pdf'))
 
 # reverse the lists I had appended to, since I went through the K_factors in
 # reverse order
@@ -97,20 +115,23 @@ mean_pop_sizes = mean_pop_sizes[::-1]
 mean_t_persist_list = mean_t_persist_list[::-1]
 mean_pop_size_list = mean_pop_size_list[::-1]
 
+
+# change plot dimensions
+plt.rcParams['figure.figsize'] = [6, 6]
 fig2 = plt.figure()
-plt.suptitle(("Mean population size and mean persistence time,\nas a function "
-              "of K_factor (a linear proxy of population size),\nfor %i "
-              "independent, neutral loci") % mod.comm[0].gen_arch.L)
-ax21 = fig2.add_subplot(1, 2, 1)
-plt.title('Mean population size')
-plt.xlabel('K_factor')
-plt.ylabel('mean population size')
-plt.plot(K_factors, mean_pop_size_list)
-ax22 = fig2.add_subplot(1, 2, 2)
-plt.title(('Mean persistence time (observed, blue;'
-           ' vs. expected, red)'))
-plt.xlabel('mean population size')
-plt.ylabel('mean persistence time')
+# plt.suptitle(("Mean population size and mean persistence time,\nas a "
+#              "fn. of K_factor (a linear proxy of population size),\nfor %i "
+#              "independent, neutral loci") % mod.comm[0].gen_arch.L)
+# ax21 = fig2.add_subplot(1, 2, 1)
+# plt.title('Mean population size')
+# plt.xlabel('K_factor')
+# plt.ylabel('mean population size')
+# plt.plot(K_factors, mean_pop_size_list)
+# ax22 = fig2.add_subplot(1, 2, 2)
+# plt.title(('Mean persistence time (observed, blue;'
+#           ' vs. expected, red)'))
+plt.xlabel('mean population size', fontdict=ax_fontdict)
+plt.ylabel('mean persistence time (timesteps)', fontdict=ax_fontdict)
 # plot the data
 plt.plot(mean_pop_size_list, mean_t_persist_list, 'ob')
 # plot expected mean persistence according to W-F model
@@ -121,3 +142,5 @@ plt.plot(mean_pop_size_list, mean_t_persist_list, 'ob')
 # populations are approximating W-F populations but not perfectly, so most
 # likely N_t > N_e)
 plt.plot(mean_pop_size_list, [2.776*n for n in mean_pop_size_list], 'or')
+plt.savefig(os.path.join(img_dir, 'WF_mean_persist_vs_pop_size.pdf'))
+

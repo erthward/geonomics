@@ -8,6 +8,15 @@ import geonomics as gnx
 import numpy as np
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+import os
+
+# set some plotting params
+img_dir = ('/home/drew/Desktop/stuff/berk/research/sim/methods_paper/'
+                               'img/final/')
+ax_fontdict = {'fontsize': 20,
+                                                 'name': 'Bitstream Vera Sans'}
+ttl_fontdict = {'fontsize': 15,
+                                                'name': 'Bitstream Vera Sans'}
 
 
 # function for running and plotting genetic PCA
@@ -45,7 +54,7 @@ mod.walk(20000, 'burn')
 
 # plot genetic PCA before genomic evolution begins
 ax1 = fig.add_subplot(121)
-ax1.set_title('Before genomic evolution')
+#ax1.set_title('Before evolution')
 plot_genetic_PCA(mod.comm[0])
 
 # run model for T timesteps
@@ -53,10 +62,12 @@ mod.walk(T)
 
 # plot genetic PCA after 1/4T timesteps
 ax2 = fig.add_subplot(122)
-ax2.set_title('After %i timesteps' % T)
+#ax2.set_title('After %i timesteps' % T)
 plot_genetic_PCA(mod.comm[0])
 
 # add title
-plt.suptitle(('Neutral genomic evolution across complex landscape with '
-              '_MovementSurface,\n(for a ~%i-individual species with 100 '
-              'loci') % int(np.mean(mod.comm[0].Nt)))
+#plt.suptitle(('Neutral genomic evolution across complex landscape with '
+#              '_MovementSurface,\n(for a ~%i-individual species with 100 '
+#              'loci') % int(np.mean(mod.comm[0].Nt)))
+plt.show()
+plt.savefig(os.path.join(img_dir, 'PCA_before_after_plot.pdf'))

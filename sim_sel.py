@@ -1,13 +1,12 @@
 #!/usr/bin/python
-# two-trait_test.py
+# sim_sel.py
 
 import geonomics as gnx
 import matplotlib.pyplot as plt
 
 # RUN THE MODEL WITHOUT LINKAGE
 # make the model
-mod = gnx.make_model(('./geonomics/tests/validation/two-trait/'
-                      'two-trait_params.py'))
+mod = gnx.make_model('./geonomics/tests/examples/sim_sel/sim_sel.py')
 # run it
 mod.run(verbose=True)
 # plot the resulting species on top of each layer
@@ -20,7 +19,7 @@ ax1.set_title('trait_0')
 ax2.set_title('trait_1')
 plt.suptitle(('Resulting phenotypes for a species undergoing simultaneous '
               'selection on two, 10-locus traits\n'
-              'unlinked loci (recombination rates $=0.5$)\n'
+              'with unlinked loci (recombination rates $=0.5$)\n'
               '(each trait\'s phenotype '
               'plotted on top of the landscape layer that serve as the '
               'trait\'s selective force)\n'
@@ -29,8 +28,8 @@ plt.suptitle(('Resulting phenotypes for a species undergoing simultaneous '
 
 # RUN THE MODEL WITH LINKAGE
 # read in the parameters and change the recombination rate to 0.05
-params = gnx.read_parameters_file(('./geonomics/tests/validation/two-trait/'
-                                   'two-trait_params.py'))
+params = gnx.read_parameters_file(('./geonomics/examples/sim_sel/'
+                                   'sim_sel_params.py'))
 params['comm']['species']['spp_0']['gen_arch']['r_distr_alpha'] = 0.05
 params['comm']['species']['spp_0']['gen_arch']['r_distr_beta'] = 10000
 # make the model
@@ -47,7 +46,7 @@ ax1.set_title('trait_0')
 ax2.set_title('trait_1')
 plt.suptitle(('Resulting phenotypes for a species undergoing simultaneous '
               'selection on two, 10-locus traits\n'
-              'linked loci (recombination rates ~= 0.05)\n'
+              'with linked loci (recombination rates ~= 0.05)\n'
               '(each trait\'s phenotype '
               'plotted on top of the landscape layer that serve as the '
               'trait\'s selective force)\n'

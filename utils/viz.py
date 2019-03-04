@@ -23,17 +23,17 @@ Documentation:        URL
 '''
 
 import numpy as np
-import numpy.random as r
-import random
+# import numpy.random as r
+# import random
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-from collections import Counter as C
-from operator import itemgetter as ig
-from shapely import geometry as g
-from operator import itemgetter
-from operator import attrgetter
-import sys
+# from collections import Counter as C
+# from operator import itemgetter as ig
+# from shapely import geometry as g
+# from operator import itemgetter
+# from operator import attrgetter
+# import sys
 
 
 ######################################
@@ -42,59 +42,88 @@ import sys
 # -----------------------------------#
 ######################################
 
+def _choose_cmap(lyr_num):
+    cols = {0: 'coolwarm',
+            1: 'BrBG_r',
+            2: 'PRGn',
+            3: 'PiYG_r',
+            4: 'PuOr_r',
+            }
+    col = cols[lyr_num % len(cols)]
+    return col
+
+
 def _plot_rasters(land, lyr_num=None, cbar=True,
-        im_interp_method='nearest', cmap='terrain', plt_lims=None,
-        vmin=0, vmax=1, lyr_name = None):
-    #if a figure is already open, force colorbar to False
+                  im_interp_method='nearest', cmap=None, plt_lims=None,
+                  vmin=0, vmax=1, lyr_name=None, ticks=False, mask_rast=None):
+    # if a figure is already open, force colorbar to False
     if plt.get_fignums() and plt.gcf().get_axes():
         cbar = False
 
-    #if just a numpy.ndarray or a Layer (not a Landscape object) is
-    #provided, or if just a single raster is desired, grab
-    #the raster into a list
+    # if just a numpy.ndarray or a Layer (not a Landscape object) is
+    # provided, or if just a single raster is desired, grab
+    # the raster into a list
     if isinstance(land, np.ndarray):
         rasters = [land]
         if lyr_name is not None:
             lyr_names = [lyr_name]
         else:
             lyr_names = ['n/a']
-    #elif isinstance(land, gnx.landscape.Layer):
-    elif "Layer" in str(type(land)):
+        if lyr_num is not None:
+            cmaps = [_choose_cmap(lyr_num)]
+        else:
+            cmaps = [_choose_cmap(0)]
+    # elif isinstance(land, gnx.landscape.Layer):
+    elif 'Layer' in str(type(land)):
         rasters = [land.rast]
         lyr_names = [land.name]
-    #elif isinstance(land, gnx.landscape.Landscape):
-    elif "Landscape" in str(type(land)):
+        cmaps = [_choose_cmap(land.idx)]
+    # elif isinstance(land, gnx.landscape.Landscape):
+    elif 'Landscape' in str(type(land)):
         if lyr_num is not None:
             rasters = [land[lyr_num].rast]
             lyr_names = [land[lyr_num].name]
-        #else just create a list of all rasters
+            cmaps = [_choose_cmap(lyr_num)]
+        # else just create a list of all rasters
         else:
             rasters = [lyr.rast for lyr in land.values()]
             lyr_names = [lyr.name for lyr in land.values()]
-
-    if type(cmap) == str:
-        #get the requested cmap 
+            cmaps = [_choose_cmap(lyr.idx) for lyr in land.values()]
+    # plot all with the same cmap, if the cmap argument was provided
+    if isinstance(cmap, str):
+        # get the requested cmap
         cmap = getattr(plt.cm, cmap)
+        cmaps = [cmap] * len(rasters)
 
-    #create cmaps and alphas lists, in case multiple rasters are to be plotted
-    cmaps = [cmap] + ['bone'] * (len(rasters)-1)
+    # mask all arrays, and set cmaps' bad values to gray,
+    # if mask_rast is provided
+    if mask_rast is not None:
+        rasters = [np.ma.masked_where(np.isnan(mask_rast),
+                                      rast) for rast in rasters]
+        cmaps = [getattr(plt.cm, cm) for cm in cmaps]
+        [cm.set_bad('#8C8C8C') for cm in cmaps]
+
+    # create alphas list
     alphas = [1] + [0.5] * (len(rasters)-1)
-    #plot all the rasters...
+    # plot all the rasters...
     for n in range(len(rasters)):
-        #pull out the zoomed raster, if requested
-        #if zoom is not None:
+        # pull out the zoomed raster, if requested
+        # if zoom is not None:
         #    min_i, max_i = zoom[0]
         #    min_j, max_j = zoom[1]
         #    rasters[n] = np.array([row[
-                    #min_j:max_j] for row in rasters[n][min_i:max_i]])
+                    # min_j:max_j] for row in rasters[n][min_i:max_i]])
         plt.imshow(rasters[n], interpolation=im_interp_method, cmap=cmaps[n],
-                                vmin = vmin, vmax = vmax, alpha = alphas[n])
+                   vmin=vmin, vmax=vmax, alpha=alphas[n])
+        if not ticks:
+            plt.xticks([])
+            plt.yticks([])
         if plt_lims is not None:
             plt.xlim(plt_lims[0])
             plt.ylim(plt_lims[1])
-        #and their colorbars, if requested (but for only the first
-        #two rasters maximum, since the second and onward share
-        #the same palette)
+        # and their colorbars, if requested (but for only the first
+        # two rasters maximum, since the second and onward share
+        # the same palette)
         if cbar and n < 2:
             cbar_max_bound = max(rasters[n].max(),
                 [1 if vmax is None else vmax][0])
@@ -183,7 +212,7 @@ def _get_zoom_plt_lims(x, y, zoom_width):
     #get zoom-half-width
     zhw = zoom_width/2
     xlim = (x- zhw, x+zhw)
-    ylim = (y- zhw, y+zhw)
+    ylim = (y+ zhw, y-zhw)
     lims = (xlim, ylim)
     return(lims)
 
@@ -197,7 +226,7 @@ def _get_plt_lims(land=None, x=None, y=None, zoom_width=None):
 
 
 def _make_fitness_cmap_and_cbar_maker(min_val, max_val = 1,
-                        cmap = 'RdYlGn', max_cmap_len = 100, trt_num = None):
+                        cmap = 'gray', max_cmap_len = 5, trt_num = None):
     # define the colormap
     cmap = getattr(plt.cm, cmap)
     #extract all the colors into a list
@@ -205,22 +234,24 @@ def _make_fitness_cmap_and_cbar_maker(min_val, max_val = 1,
     #create new list, with the majority of the color range expressed for
     #the values between 1 and the min_val, then the remainder stretched
     #out between min_val and 0
-    top = np.int64(np.linspace(0,len(cmap_list)*0.15,max_cmap_len*0.8))
-    bot = np.int64(np.linspace(1+(len(cmap_list)*0.15),
-                                    len(cmap_list)-1, max_cmap_len*0.2))
-    new_cmap_inds = list(np.hstack((top,bot)))
+    #top = np.int64(np.linspace(0,len(cmap_list)*0.15,max_cmap_len*0.8))
+    #bot = np.int64(np.linspace(1+(len(cmap_list)*0.15),
+                                    #len(cmap_list)-1, max_cmap_len*0.2))
+    new_cmap_inds = np.int64(np.linspace(0, len(cmap_list), max_cmap_len))
+    #new_cmap_inds = list(np.hstack((top,bot)))
     new_cmap_inds = list(set(new_cmap_inds))
     new_cmap_list = [col for n,col in enumerate(
                                             cmap_list) if n in new_cmap_inds]
     # create the new map
-    cmap = cmap.from_list('Custom cmap', new_cmap_list, len(cmap_list))
+    #cmap = cmap.from_list('Custom cmap', new_cmap_list, len(cmap_list))
     # define the bin-boundaries 
-    lower_bounds = np.linspace(0,min_val,round((2*cmap.N/3)+1))[:-1]
-    upper_bounds = np.linspace(min_val, max_val,round(cmap.N/3))
-    bounds = np.hstack((lower_bounds, upper_bounds))
+    #lower_bounds = np.linspace(0,min_val,round((2*cmap.N/3)+1))[:-1]
+    #upper_bounds = np.linspace(min_val, max_val,round(cmap.N/3))
+    #bounds = np.hstack((lower_bounds, upper_bounds))
+    bounds = np.linspace(min_val, max_val, cmap.N)
     assert len(bounds) == cmap.N
     #normalize the colormap
-    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+    #norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
     #create ticks for the colorbar
     ticks_inds = np.int64(np.linspace(0, len(bounds)-1, 10))
     ticks = list(bounds[ticks_inds])
@@ -231,18 +262,18 @@ def _make_fitness_cmap_and_cbar_maker(min_val, max_val = 1,
     ticks = sorted(ticks)
     ticks = [round(tick, 2) for tick in ticks]
     if trt_num is None:
-        tick_labs = [('$1-\prod_{trait=1}^{t} \phi_{t} '
-            '\prod_{del.mut.=1}^{d} \phi_{d} = %0.2f$') % round(
-            min_val,2) if n == ind_closest else str(
-            tick) for n,tick in enumerate(ticks)]
+        tick_labs = [(' '*10 + 'min. fit. =\n' + ' ' * 10 + ('$1-\prod_'
+                      '{trait=1}^{t} \phi_{t} \prod_{del.mut.=1}'
+                      '^{d} \phi_{d}$\n')) if n == ind_closest else str(
+                        tick) for n, tick in enumerate(ticks)]
     else:
-        tick_labs = ['$1-\phi_{trait=%i} = %0.2f$' % (trt_num,
-            round(min_val,2)) if n == ind_closest else str(
-            tick) for n,tick in enumerate(ticks)]
+        tick_labs = [(' ' * 10 + 'min. fit. =\n' + ' ' * 10 + ('$1-\phi_'
+                    '{trait=%i}$\n')) % (trt_num) if n == ind_closest else str(
+                        tick) for n, tick in enumerate(ticks)]
     #create a function for making the colorbar, to be shipped out to and
     #called within species.Species.plot_fitness()
     def make_cbar(ax):
-        cbar = mpl.colorbar.ColorbarBase(ax, cmap=cmap, norm=norm,
+        cbar = mpl.colorbar.ColorbarBase(ax, cmap=cmap,
             spacing='proportional', ticks=ticks, boundaries=bounds,
             format='%1i')
         cbar.set_ticks(ticks)
@@ -254,10 +285,9 @@ def _make_fitness_cbar(make_cbar_fn, min_fit):
     ax1 = plt.gca()
     ax2 = fig.add_axes([0.84, 0.106, 0.02, 0.7774])
     make_cbar_fn(ax2)
-    ax2.plot([0,1],[round(min_fit,2)]*2, c = 'black', lw = 1)
+    #ax2.plot([0,1],[round(min_fit,2)]*2, c = 'black', lw = 1)
     ax2.set_title('fitness')
     title = ax2.title
     font = mpl.font_manager.FontProperties(family='sans-serif',
                                                 style='normal', size=10)
     title.set_font_properties(font)
-

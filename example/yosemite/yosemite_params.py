@@ -196,7 +196,7 @@ params = {
                     #carrying-capacity Layer name
                     'K_layer':          'hab',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         2,
+                    'K_factor':         0.5,
                     }, # <END> 'init'
 
             #######################################

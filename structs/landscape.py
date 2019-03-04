@@ -97,12 +97,13 @@ class Layer:
 
     #method for plotting the layer
     def _plot(self, cbar=True, im_interp_method='nearest',
-            cmap = 'terrain', x=None, y=None, zoom_width=None,
-            vmin=None, vmax=None):
+            cmap=None, x=None, y=None, zoom_width=None,
+            vmin=None, vmax=None, ticks=False, mask_rast=None):
         plt_lims = _get_plt_lims(self, x, y, zoom_width)
-        _plot_rasters(self, cbar = cbar,
-            im_interp_method = im_interp_method, cmap = cmap,
-            plt_lims = plt_lims, vmin = vmin, vmax = vmax)
+        _plot_rasters(self, cbar=cbar,
+            im_interp_method=im_interp_method, cmap=cmap,
+            plt_lims=plt_lims, vmin=vmin, vmax=vmax, ticks=ticks,
+            mask_rast=mask_rast)
 
 
     ################
@@ -235,13 +236,15 @@ class Landscape(dict):
             verbose = verbose)
 
     #method to plot the landscape (or just a certain lyr)
-    def _plot(self, lyr_num=None, cbar=True, cmap='terrain',
-            im_interp_method='nearest', x=None, y=None,
-            zoom_width=None, vmin=None, vmax=None):
+    def _plot(self, lyr_num=None, cbar=True, cmap=None,
+              im_interp_method='nearest', x=None, y=None,
+              zoom_width=None, vmin=None, vmax=None, ticks=False,
+              mask_rast=None):
         plt_lims = _get_plt_lims(self, x, y, zoom_width)
-        _plot_rasters(self, lyr_num = lyr_num, cbar = cbar,
-            im_interp_method = im_interp_method, cmap = cmap,
-            plt_lims = plt_lims, vmin = vmin, vmax = vmax)
+        _plot_rasters(self, lyr_num=lyr_num, cbar=cbar,
+                      im_interp_method=im_interp_method, cmap=cmap,
+                      plt_lims=plt_lims, vmin=vmin, vmax=vmax, ticks=ticks,
+                      mask_rast=mask_rast)
 
 
         ################

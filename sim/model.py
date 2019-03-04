@@ -930,8 +930,9 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     def plot(self, spp=None, lyr=None, hide_land=False, individs=None,
             text=False, color='black', edge_color='face', text_color='black',
             cbar=True, size=25, text_size=9, im_interp_method='nearest',
-            land_cmap='terrain', pt_cmap=None, alpha=False,
-             zoom_width=None, x=None, y=None, vmin=None, vmax=None):
+            land_cmap=None, pt_cmap=None, alpha=False, zoom_width=None,
+             x=None, y=None, vmin=None, vmax=None, ticks=False,
+             mask_rast=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
         #if no spp provided, then call Landscape._plot
@@ -939,7 +940,8 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             (spp is not None and len(self.comm[self._get_spp_num(spp)])) == 0):
             self.land._plot(lyr_num=lyr_num, cbar=cbar, cmap=land_cmap,
                 im_interp_method=im_interp_method, x=x, y=y,
-                zoom_width=zoom_width, vmin=vmin, vmax=vmax)
+                zoom_width=zoom_width, vmin=vmin, vmax=vmax, ticks=ticks,
+                mask_rast=mask_rast)
         #or else plot the spp
         else:
             #get the spp
@@ -950,7 +952,8 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                 text_color=text_color, cbar=cbar, size=size,
                 text_size=text_size, im_interp_method=im_interp_method,
                 land_cmap=land_cmap, pt_cmap=pt_cmap, alpha=alpha,
-                zoom_width=zoom_width, x=x, y=y, vmin=vmin, vmax=vmax)
+                zoom_width=zoom_width, x=x, y=y, vmin=vmin, vmax=vmax,
+                ticks=ticks, mask_rast=mask_rast)
             #add spp name
             #plt.suptitle(spp.name)
 
@@ -958,14 +961,15 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     def plot_density(self, spp, normalize=False, individs=None,
             text=False, color='black', edge_color='face',
             text_color='black', size=25, text_size = 9,
-            alpha=0.5, zoom_width=None, x=None, y=None):
+            alpha=0.5, zoom_width=None, x=None, y=None, ticks=False,
+            mask_rast=None):
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #feed args into spp._plot_density
         spp._plot_density(land = self.land, normalize=normalize,
             individs=individs, text=text, color=color, edge_color=edge_color,
             text_color=text_color, size=size, text_size=text_size, alpha=alpha,
-            zoom_width=zoom_width, x=x, y=y)
+            zoom_width=zoom_width, x=x, y=y, ticks=ticks, mask_rast=mask_rast)
         #add spp name
         #plt.suptitle(spp.name)
 
@@ -974,7 +978,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             individs=None, text=False, size=25, text_size = 9,
             edge_color='black', text_color='black', cbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
-            y=None):
+            y=None, ticks=False, mask_rast=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
         #get the spp
@@ -984,7 +988,8 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             text=text, size=size, text_size=text_size, edge_color=edge_color,
             text_color=text_color, cbar=cbar,
             im_interp_method=im_interp_method, alpha=alpha,
-            by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y)
+            by_dominance=by_dominance, zoom_width=zoom_width, x=x, y=y,
+            ticks=ticks, mask_rast=None)
         #add spp name
         #plt.suptitle(spp.name)
 
@@ -993,7 +998,8 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     def plot_phenotype(self, spp, trait, lyr=None, individs=None,
             text=False, size=25, text_size = 9, edge_color='black',
             text_color='black', cbar=True, im_interp_method='nearest',
-            alpha=1, zoom_width=None, x=None, y=None):
+            alpha=1, zoom_width=None, x=None, y=None, ticks=False,
+            mask_rast=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
         #get the spp
@@ -1017,7 +1023,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             individs=individs, text=text, size=size, text_size=text_size,
             edge_color=edge_color, text_color=text_color, cbar=cbar,
             im_interp_method=im_interp_method, alpha=alpha,
-            zoom_width=zoom_width, x=x, y=y)
+            zoom_width=zoom_width, x=x, y=y, ticks=ticks, mask_rast=mask_rast)
         #add spp name
         #plt.suptitle(spp.name)
 
@@ -1025,10 +1031,11 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     def plot_fitness(self, spp, trait=None, lyr=None, individs=None,
             text=False, phenotype_text=False, phenotype_text_color='black',
             fitness_text=False, fitness_text_color='black',
-            size=100, text_size = 9, edge_color='black',
-            text_color='black', fit_cmap='RdYlGn', cbar=True,
+            size=100, text_size=9, edge_color='black',
+            text_color='black', fit_cmap='gray', cbar=True,
             fitness_cbar=True, im_interp_method='nearest',
-            alpha=1, zoom_width=None, x=None, y=None):
+            alpha=1, zoom_width=None, x=None, y=None, ticks=False,
+            mask_rast=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
         #get the spp
@@ -1053,7 +1060,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             text_color=text_color, fit_cmap=fit_cmap, cbar=cbar,
             fitness_cbar=fitness_cbar,
             im_interp_method=im_interp_method, alpha=alpha,
-            zoom_width=zoom_width, x=x, y=y)
+            zoom_width=zoom_width, x=x, y=y, ticks=ticks, mask_rast=mask_rast)
         #add spp name
         #plt.suptitle(spp.name)
 
@@ -1073,21 +1080,27 @@ BE EXPECTED WHEN RUN WITH Model.walk.
 
     #wrapper around Species._plot_direction_surface for _move_surf
     def plot_movement_surface(self, spp, style, x=None, y=None, zoom_width=8,
-                            scale_fact=4.5, color='black', cbar = True):
+                            scale_fact=4.5, color='black', cbar = True,
+                              ticks=False, cmap='Greens_r', mask_rast=None):
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
-            color=color, cbar=cbar)
+            color=color, cbar=cbar, ticks=ticks, cmap=cmap,
+            mask_rast=mask_rast)
 
     #wrapper around Species._plot_direciton_surface for _disp_surf
     def plot_dispersal_surface(self, spp, style, x=None, y=None, zoom_width=8,
-                            scale_fact=4.5, color='black', cbar = True):
+                            scale_fact=4.5, color='black', cbar = True,
+                               ticks=False, cmap='Greens_r', mask_rast=None):
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
-            color=color, cbar=cbar)
+            color=color, cbar=cbar, ticks=ticks, cmap=cmap,
+            mask_rast=mask_rast)
 
     #wrapper around Species._plot_direction_surface
     def _plot_direction_surface(self, surf_type, spp, style, x=None, y=None,
-        zoom_width=8, scale_fact=4.5, color='black', cbar = True):
+                                zoom_width=8, scale_fact=4.5, color='black',
+                                cbar = True, ticks=False, cmap='Greens_r',
+                                mask_rast=None):
 
         """
         The 'style' argument can take the following values:
@@ -1105,17 +1118,18 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                 by position x,y; plot will be drawn inside the chosen cell
                 on the _ConductanceSurface raster.
             'vect':
-                Inside each cell of the _ConductanceSurface raster, plot the mean
-                direction vector of directions drawn from that cell's Von Mises
-                distribution.
+                Inside each cell of the _ConductanceSurface raster,
+                plot the mean direction vector of directions drawn
+                from that cell's Von Mises distribution.
 
         """
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        spp._plot_direction_surface(land = self.land, surf_type=surf_type,
+        spp._plot_direction_surface(land=self.land, surf_type=surf_type,
             style=style, x=x, y=y, zoom_width=zoom_width,
-            scale_fact=scale_fact, color=color, cbar=cbar)
+            scale_fact=scale_fact, color=color, cbar=cbar, ticks=ticks,
+            cmap=cmap, mask_rast=mask_rast)
 
     #wrapper around Species._plot_demographic_pyramid
     def plot_demographic_pyramid(self, spp):

@@ -23,6 +23,20 @@
                       ## :: ::    :::            ##
 
 
+import numpy as np
+env_left_half = np.hstack([np.atleast_2d(np.linspace(
+                0, 1, 40) + np.random.normal(
+                0, 0.05, 40)).T for _ in range(20)])
+env_right_half = np.hstack([np.atleast_2d(np.linspace(
+                0, 1, 40) + np.random.normal(
+                0, 0.05, 40)).T for _ in range(20)])
+env_right_half = np.flipud(env_right_half)
+env = np.hstack((env_left_half, env_right_half))
+env = np.clip(env, 0, 1)
+barrier = np.ones((40, 40))
+barrier[:, 18:22] = 0
+
+
 params = {
 ###############################################################################
 
@@ -36,7 +50,7 @@ params = {
     ##############
         'main': {
             #y,x (a.k.a. i,j) dimensions of the Landscape
-            'dim':                      (100,100),
+            'dim':                      (40,40),
             #resolution of the Landscape
             'res':                      (1,1),
             #upper-left corner of the Landscape
@@ -51,7 +65,7 @@ params = {
         'layers': {
 
             #layer name (LAYER NAMES MUST BE UNIQUE!)
-            'layer_0': {
+            'env': {
 
         #######################################
         #### layer num. 0: init parameters ####
@@ -59,28 +73,34 @@ params = {
 
                 #initiating parameters for this layer
                 'init': {
-                    #parameters for a 'file'-type Layer
-                    'file': {
-                        #</path/to/file>.<ext>
-                        'filepath': './geonomics/tests/validation/PCA/PCA_scape.txt',
-                        #minimum vlaue ot use to rescale the Layer to [0,1]
-                        'scale_min_val': None,
-                        #maximum vlaue ot use to rescale the Layer to [0,1]
-                        'scale_max_val': None,
-                        }, # <END> 'file'
+                    #parameters for a 'defined'-type Layer
+                    'defined': {
+                        'rast': env,
+                        'pts': None,
+                        'vals': None,
+                        'interp_method': None
+                        }, # <END> 'defined'
 
-                    ##parameters for a 'nlmpy'-type Layer
-                    #'nlmpy': {
-                    #    #nlmpy function to use to create this Layer
-                    #    'function':                     'mpd',
-                    #    #number of rows (MUST EQUAL LANDSCAPE DIMENSION y!)
-                    #    'nRow':                         50,
-                    #    #number of rows (MUST EQUAL LANDSCAPE DIMENSION y!)
-                    #    'nCol':                         50,
-                    #    #level of spatial autocorrelation in element values
-                    #    'h':                            0.25,
+                    }, # <END> 'init'
 
-                    #    }, # <END> 'nlmpy'
+                }, # <END> layer num. 0
+
+            #layer name (LAYER NAMES MUST BE UNIQUE!)
+            'barrier': {
+
+        #######################################
+        #### layer num. 1: init parameters ####
+        #######################################
+
+                #initiating parameters for this layer
+                'init': {
+                    #parameters for a 'defined'-type Layer
+                    'defined': {
+                        'rast': barrier,
+                        'pts': None,
+                        'vals': None,
+                        'interp_method': None
+                        }, # <END> 'defined'
 
                     }, # <END> 'init'
 
@@ -117,9 +137,9 @@ params = {
                     #starting number of individs
                     'N':                1000,
                     #carrying-capacity Layer name
-                    'K_layer':          'layer_0',
+                    'K_layer':          'barrier',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         0.5,
+                    'K_factor':         1.5
                     }, # <END> 'init'
 
             #######################################
@@ -183,7 +203,7 @@ params = {
                     'dispersal_distr_sigma':    0.5,
                     'move_surf'     : {
                         #move-surf Layer name
-                        'layer': 'layer_0',
+                        'layer': 'barrier',
                         #whether to use mixture distrs
                         'mixture': True,
                         #concentration of distrs
@@ -209,7 +229,7 @@ params = {
                     #whether starting allele frequencies should be fixed at 0.5
                     'start_p_fixed':            True,
                     #genome-wide per-base neutral mut rate (0 to disable)
-                    'mu_neut':                  1e-9,
+                    'mu_neut':                  0,
                     #genome-wide per-base deleterious mut rate (0 to disable)
                     'mu_delet':                 0,
                     #shape of distr of deleterious effect sizes
@@ -234,6 +254,40 @@ params = {
                     #whether to save mutation logs
                     'mut_log':                  False,
 
+                    'traits': {
+
+                        ###########################
+                        ####trait 0 parameters ####
+                        ###########################
+                        #trait name (TRAIT NAMES MUST BE UNIQUE!)
+                        'trait_0': {
+                            #trait-selection Layer name
+                            'layer':                'env',
+                            #polygenic selection coefficient
+                            'phi':                  0.05,
+                            #number of loci underlying trait
+                            'n_loci':               10,
+                            #mutation rate at loci underlying trait
+                            'mu':                   0,
+                            #mean of distr of effect sizes
+                            'alpha_distr_mu':      0.1,
+                            #variance of distr of effect size
+                            'alpha_distr_sigma':    0,
+                            #max alpha value
+                            'max_alpha_mag':        None,
+                            #curvature of fitness function
+                            'gamma':                1,
+                            #whether the trait is universally advantageous
+                            'univ_adv':             False
+                            }, # <END> trait 0
+
+
+    #### NOTE: Individual Traits' sections can be copy-and-pasted (and
+    #### assigned distinct keys and names), to create additional Traits.
+
+
+                        }, # <END> 'traits'
+
                     }, # <END> 'gen_arch'
 
 
@@ -257,7 +311,7 @@ params = {
 ###############
     'model': {
         #total Model runtime (in timesteps)
-        'T':            100,
+        'T':            1000,
         #min burn-in runtime (in timesteps)
         'burn_T':       30,
         #seed number
@@ -282,3 +336,5 @@ params = {
         } # <END> 'model'
 
     } # <END> params
+
+

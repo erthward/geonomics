@@ -1,4 +1,4 @@
-#two-trait_params.py
+#sim_sel_params.py
 import numpy as np
 from nlmpy import nlmpy
 
@@ -266,7 +266,7 @@ params = {
                     #scale of distr of deleterious effect sizes
                     'delet_alpha_distr_scale':  0.2,
                     #alpha of distr of recomb rates
-                    'r_distr_alpha':            None,
+                    'r_distr_alpha':            0.05,
                     #beta of distr of recomb rates
                     'r_distr_beta':             None,
                     #whether loci should be dominant (for allele '1')
@@ -279,6 +279,7 @@ params = {
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
                     'mut_log':                  False,
 
@@ -298,7 +299,7 @@ params = {
                             #mutation rate at loci underlying trait
                             'mu':                   0,
                             #mean of distr of effect sizes
-                            'alpha_distr_mu' :      0.5,
+                            'alpha_distr_mu' :      0.1,
                             #variance of distr of effect size
                             'alpha_distr_sigma':    0,
                             #max alpha value
@@ -323,7 +324,7 @@ params = {
                             #mutation rate at loci underlying trait
                             'mu':                   0,
                             #mean of distr of effect sizes
-                            'alpha_distr_mu' :      0.5,
+                            'alpha_distr_mu' :      0.1,
                             #variance of distr of effect size
                             'alpha_distr_sigma':    0,
                             #max alpha value

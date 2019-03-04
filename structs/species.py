@@ -673,8 +673,9 @@ class Species(OD):
     def _plot(self, lyr_num=None, land=None, hide_land=False, individs=None,
             text=False, color='black', edge_color='face', text_color='black',
             cbar=True, size=25, text_size=9, im_interp_method='nearest',
-            land_cmap='terrain', pt_cmap=None, alpha=False,
-            zoom_width=None, x=None, y=None, vmin = None, vmax = None):
+            land_cmap=None, pt_cmap=None, alpha=False, zoom_width=None,
+            x=None, y=None, vmin = None, vmax = None, ticks=False,
+            mask_rast=None):
         #convert individs to a list (in case comes in as a numpy array)
         if individs is not None and not isinstance(individs, list):
             individs = list(individs)
@@ -697,7 +698,8 @@ class Species(OD):
         else:
             viz._plot_rasters(land, lyr_num = lyr_num,
                 cbar = cbar, im_interp_method = im_interp_method,
-                                    cmap = land_cmap, plt_lims = plt_lims)
+                cmap = land_cmap, plt_lims = plt_lims, ticks=ticks,
+                mask_rast=mask_rast)
         #and plot the individuals
         viz._plot_points(coords, lyr_num = lyr_num, color = color,
                 edge_color = edge_color, text_color = text_color,
@@ -711,7 +713,8 @@ class Species(OD):
     def _plot_density(self, land, normalize=False, individs=None,
             text=False, color='black', edge_color='face',
             text_color='black', size=25, text_size = 9,
-            alpha=0.5, zoom_width=None, x=None, y=None):
+            alpha=0.5, zoom_width=None, x=None, y=None, ticks=False,
+            mask_rast=None):
         assert type(normalize) is bool, ("The 'normalize' argument takes "
             "a boolean value.\n")
         #update the species' coordinates and cells, in case it hasn't
@@ -721,10 +724,11 @@ class Species(OD):
         dens = self._calc_density(normalize = normalize)
         plt_lims = viz._get_plt_lims(land, x, y, zoom_width)
         if normalize:
-            viz._plot_rasters(dens, plt_lims = plt_lims, lyr_name = 'density')
+            viz._plot_rasters(dens, plt_lims = plt_lims, lyr_name = 'density',
+                              ticks=ticks, mask_rast=mask_rast)
         else:
             viz._plot_rasters(dens, plt_lims = plt_lims, vmax = dens.max(),
-                lyr_name = 'density')
+                lyr_name = 'density', ticks=ticks, mask_rast=mask_rast)
         self._plot(hide_land=True, individs = individs, text = text,
             color=color, edge_color = edge_color, text_color = text_color,
             size=size, text_size = text_size, alpha=alpha,
@@ -735,7 +739,8 @@ class Species(OD):
     def _plot_genotype(self, locus, lyr_num=None, individs=None,
             text=False, size=25, text_size = 9, edge_color='black',
             text_color='black', cbar=True, im_interp_method='nearest',
-            alpha=1, by_dominance=False, zoom_width=None, x=None, y=None):
+            alpha=1, by_dominance=False, zoom_width=None, x=None, y=None,
+            ticks=False, mask_rast=None):
 
         if by_dominance == True:
             genotypes = self._get_genotype(locus, by_dominance=True)
@@ -745,11 +750,10 @@ class Species(OD):
         if individs is not None:
             genotypes = {i:v for i,v in genotypes.items() if i in individs}
 
-        #colors to match mpl.cmap 'terrain' palette extremes,
-        #but with hybrid a mix of the extremes rather than the
-        #yellow at the middle of the palette, for nicer
-        #viewing: blue = [0,0], light blue = [0,1], white = [1,1]
-        colors = ['#3C22B4', '#80A6FF', '#FFFFFF']
+        # just assign black, gray, and white (since there's no reason
+        # necessarily that these should be mapped to a certain layer, the way
+        # phenotype should
+        colors = ['#000000', '#808080', '#FFFFFF']
 
         for n, genotype in enumerate([0.0, 0.5, 1.0]):
             genotype_individs = [i for i, g in genotypes.items(
@@ -761,38 +765,47 @@ class Species(OD):
                     text_color = text_color, cbar = cbar,
                     size = size, text_size = text_size,
                     im_interp_method = im_interp_method, alpha = alpha,
-                    zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1)
+                    zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1,
+                    ticks=ticks, mask_rast=mask_rast)
 
 
     # method for plotting individuals colored by their phenotypes
     #for a given trait
-    def _plot_phenotype(self, trait, lyr_num=None, land = None,
-            individs=None, text=False, size=25, text_size = 9,
+    def _plot_phenotype(self, trait, lyr_num=None, land=None,
+            individs=None, text=False, size=25, text_size=9,
             edge_color='black', text_color='black', cbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
-            y=None):
+            y=None, ticks=False, mask_rast=None):
 
-        z = OD(zip([*self], self._get_z()[:,trait]))
+        # get the trait's lyr_num, if no lyr_num provided
+        lyr_num = self.gen_arch.traits[trait].lyr_num
+
+        z = OD(zip([*self], self._get_z()[:, trait]))
         if individs is not None:
-            z = {i:v for i,v in z.items() if i in individs}
+            z = {i: v for i, v in z.items() if i in individs}
+
+        # get the correct cmap for this trait's layer
+        pt_cmap = viz._choose_cmap(self.gen_arch.traits[trait].lyr_num)
 
         self._plot(lyr_num = lyr_num, land = land, individs = individs,
-            text = text, color = list(z.values()), pt_cmap = 'terrain',
+            text = text, color = list(z.values()), pt_cmap = pt_cmap,
             edge_color = edge_color, text_color = text_color,
             cbar = cbar, size = size, text_size = text_size,
             im_interp_method = im_interp_method, alpha = alpha,
-            zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1)
+            zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1,
+            ticks=ticks, mask_rast=mask_rast)
 
 
     # method for plotting individuals colored by their overall fitnesses,
     #or by their fitnesses for a single trait (if trait is not None)
-    def _plot_fitness(self, lyr_num=None, land=None, trt_num=None,
+    def _plot_fitness(self, trt_num=None, lyr_num=None, land=None,
             individs=None, text=False, phenotype_text=False,
             phenotype_text_color='black', fitness_text=False,
             fitness_text_color='#333333', size=100, text_size = 9,
             edge_color='black', text_color='black', fit_cmap = 'RdYlGn',
             cbar=True, fitness_cbar=True, im_interp_method='nearest',
-            alpha=1, zoom_width=None, x=None, y=None):
+            alpha=1, zoom_width=None, x=None, y=None, ticks=False,
+            mask_rast=None):
 
         #return messages if species does not have genomes or traits
         if self.gen_arch is None:
@@ -804,9 +817,15 @@ class Species(OD):
                    "without traits.\n"))
             return
 
-        # get all individs' fitness values
+        # get the trait's lyr_num, if lyr_num wasn't provided but trt_num was
+        if trt_num is not None and lyr_num is None:
+            lyr_num = self.gen_arch.traits[trt_num].lyr_num
+
+        # get all individs' fitness values,
+        # and get appropriate colormap
         if trt_num is None:
             w = self._calc_fitness()
+            pt_cmap = 'Greys_r'
         else:
             w = self._calc_fitness(trait_num = trt_num)
 
@@ -845,16 +864,22 @@ class Species(OD):
                 text_size = text_size, edge_color=edge_color,
                 text_color = text_color, cbar = cbar,
                 im_interp_method = im_interp_method, alpha = alpha,
-                zoom_width = zoom_width, x = x, y = y)
+                zoom_width = zoom_width, x = x, y = y, ticks=ticks,
+                mask_rast=mask_rast)
             #make size smaller for the next layer of inner (fitness) circles
-            size = round(0.2*size)
+            size = round(0.15*size)
+            # get sizes for all individuals' inner-circle fitness points, if
+            # trt_num is not None
+            if trt_num is not None:
+                size = size * (1 - ((np.array([*w.values(
+                                            )]) - min_fit) / (1 - min_fit)))
 
-        self._plot(lyr_num = lyr_num, land = land, individs = individs,
-                text = text, color = list(w.values()), pt_cmap = cmap,
-                edge_color = edge_color, text_color = text_color,
-                cbar = cbar, size = size, text_size = text_size,
-                im_interp_method = im_interp_method, alpha = alpha,
-                zoom_width = zoom_width, x = x, y = y)
+        self._plot(lyr_num=lyr_num, land=land, individs=individs,
+                   text=text, color=list(w.values()), pt_cmap=cmap, size=size,
+                   edge_color=edge_color, text_color=text_color, cbar=cbar,
+                   text_size=text_size, im_interp_method=im_interp_method,
+                   alpha=alpha, zoom_width=zoom_width, x=x, y=y, ticks=ticks,
+                   mask_rast=mask_rast)
 
         #plot phenotype text (works only if plotting a specific trait)
         if phenotype_text and trt_num is not None:
@@ -892,7 +917,8 @@ class Species(OD):
 
     #method for plotting the movement surface (in various formats)
     def _plot_direction_surface(self, land, surf_type, style, x=None, y=None,
-        zoom_width=8, scale_fact=4.5, color='black', cbar = True):
+        zoom_width=8, scale_fact=4.5, color='black', cbar = True, ticks=False,
+        cmap='Greens_r', mask_rast=None):
         #get the correct surface
         if surf_type == 'move':
             surf = self._move_surf
@@ -908,8 +934,8 @@ class Species(OD):
             y = [y]
         #check if the surface is none
         if surf is None:
-            print(('This Species appears to have no _%sSurface. '
-                'Function not valid.') % ({
+            print(('Function not valid for a Species with no '
+                   '_%sSurface.') % ({
                 'move': 'Movement', 'disp': 'Dispersal'}[surf_type]))
             return
         elif style not in ['hist', 'circ_hist', 'vect', 'circ_draws']:
@@ -927,7 +953,8 @@ class Species(OD):
             #display the movement-surface raster
             lyr_num = surf.lyr_num
             land[lyr_num]._plot(zoom_width = zoom_width, x=np.mean(x),
-                                y=np.mean(y))
+                                y=np.mean(y), ticks=ticks, cmap=cmap,
+                                mask_rast=mask_rast)
 
             if style == 'circ_hist':
                 for x_val in x:

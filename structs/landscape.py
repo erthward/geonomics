@@ -54,8 +54,8 @@ class Layer:
     ### SPECIAL METHODS ###
     #######################
 
-    def __init__(self, rast, lyr_type, name, dim, res=(1,1),
-                 ulc = (0,0), prj=None, scale_min=0, scale_max=1):
+    def __init__(self, rast, lyr_type, name, dim, res=(1,1), ulc=(0,0),
+                 prj=None, coord_prec=0, scale_min=0, scale_max=1):
         self.idx = None
         self.type = lyr_type
         self.name = str(name)
@@ -69,6 +69,7 @@ class Layer:
         self.res = res
         self.ulc = ulc
         self.prj = prj
+        self.coord_prec = coord_prec
         self.rast = rast
         assert type(self.rast) == np.ndarray, "rast should be a numpy.ndarray"
         self._scale_min = scale_min
@@ -98,12 +99,35 @@ class Layer:
     #method for plotting the layer
     def _plot(self, cbar=True, im_interp_method='nearest',
             cmap=None, x=None, y=None, zoom_width=None,
-            vmin=None, vmax=None, ticks=False, mask_rast=None):
+            vmin=None, vmax=None, ticks=None, mask_rast=None):
         plt_lims = _get_plt_lims(self, x, y, zoom_width)
         _plot_rasters(self, cbar=cbar,
             im_interp_method=im_interp_method, cmap=cmap,
             plt_lims=plt_lims, vmin=vmin, vmax=vmax, ticks=ticks,
             mask_rast=mask_rast)
+
+    # method to get the tickmarks to use to plot the layer
+    def _get_coord_ticks(self):
+        x_tick_spacing = int(np.floor(self.dim[0] / 8))
+        y_tick_spacing = int(np.floor(self.dim[1] / 8))
+        x_tick_locs = [*range(0, self.dim[0], x_tick_spacing)]
+        y_tick_locs = [*range(0, self.dim[1], y_tick_spacing)]
+        x_tick_labs = [round(self.ulc[0] + i * self.res[0] + 0.5 * self.res[0],
+                             min(3, self.coord_prec)) for i in range(
+                                            0, self.dim[0], x_tick_spacing)]
+        #x_zfill_add = max([len(str(int(round(val)))) for val in x_tick_labs])
+        #x_tick_labs = [str(l)[::-1].zfill(self.coord_prec + x_zfill_add)[
+        #                                           ::-1] for l in x_tick_labs]
+        y_tick_labs = [round(self.ulc[1] - i * self.res[1] + 0.5 * self.res[1],
+                             min(3, self.coord_prec)) for i in range(
+                                            0, self.dim[1], y_tick_spacing)]
+        #y_zfill_add = max([len(str(int(round(val)))) for val in y_tick_labs])
+        #y_tick_labs = [str(l)[::-1].zfill(self.coord_prec + y_zfill_add)[
+        #                                           ::-1] for l in y_tick_labs]
+        # reverse the y-tick labels to account for orientation of plot
+        y_tick_labs = y_tick_labs[::-1]
+        return x_tick_locs, x_tick_labs, y_tick_locs, y_tick_labs
+
 
 
     ################
@@ -232,19 +256,46 @@ class Landscape(dict):
 
     #method to make landscape changes
     def _make_change(self, t, verbose=False):
-        self._changer._make_change(t = t, additional_args = {'land': self},
-            verbose = verbose)
+        self._changer._make_change(t=t, additional_args={'land': self},
+                                   verbose=verbose)
 
     #method to plot the landscape (or just a certain lyr)
     def _plot(self, lyr_num=None, cbar=True, cmap=None,
               im_interp_method='nearest', x=None, y=None,
-              zoom_width=None, vmin=None, vmax=None, ticks=False,
+              zoom_width=None, vmin=None, vmax=None, ticks=None,
               mask_rast=None):
         plt_lims = _get_plt_lims(self, x, y, zoom_width)
         _plot_rasters(self, lyr_num=lyr_num, cbar=cbar,
                       im_interp_method=im_interp_method, cmap=cmap,
                       plt_lims=plt_lims, vmin=vmin, vmax=vmax, ticks=ticks,
                       mask_rast=mask_rast)
+
+    # method to get the tickmarks to use to plot the landscape
+    def _get_coord_ticks(self):
+        try:
+            coord_prec = min([lyr.coord_prec for lyr in self.values(
+                            ) if lyr.coord_prec != 0])
+        except ValueError:
+            coord_prec = 0
+        x_tick_spacing = int(np.floor(self.dim[0] / 8))
+        y_tick_spacing = int(np.floor(self.dim[1] / 8))
+        x_tick_locs = [*range(0, self.dim[0], x_tick_spacing)]
+        y_tick_locs = [*range(0, self.dim[1], y_tick_spacing)]
+        x_tick_labs = [round(self.ulc[0] + i * self.res[0] + 0.5 * self.res[0],
+                             min(3, coord_prec)) for i in range(
+                                            0, self.dim[0], x_tick_spacing)]
+        #x_zfill_add = max([len(str(int(round(val)))) for val in x_tick_labs])
+        #x_tick_labs = [str(l)[::-1].zfill(coord_prec + x_zfill_add)[
+        #                                           ::-1] for l in x_tick_labs]
+        y_tick_labs = [round(self.ulc[1] - i * self.res[1] + 0.5 * self.res[1],
+                             min(3, coord_prec)) for i in range(
+                                            0, self.dim[1], y_tick_spacing)]
+        #y_zfill_add = max([len(str(int(round(val)))) for val in y_tick_labs])
+        #y_tick_labs = [str(l)[::-1].zfill(coord_prec + y_zfill_add)[
+        #                                           ::-1] for l in y_tick_labs]
+        # reverse the y-tick labels to account for orientation of plot
+        y_tick_labs = y_tick_labs[::-1]
+        return x_tick_locs, x_tick_labs, y_tick_locs, y_tick_labs
 
 
         ################
@@ -391,8 +442,12 @@ def _make_landscape(mod, params, num_hab_types=2):
     #file (because they will all be created after the loop over the lyrs, so
     #that it's simpler to check agreement among raster resolutions and 
     #registrations
-    file_lyr_params = {'names': [], 'lyr_nums':[], 'filepaths':[],
-                                'scale_min_vals':[], 'scale_max_vals':[]}
+    file_lyr_params = {'names': [],
+                       'lyr_nums': [],
+                       'filepaths': [],
+                       'scale_min_vals': [],
+                       'scale_max_vals': [],
+                       'coord_precs': []}
 
     #then loop over the lyrs in params.landscape.lyrs and create each one
     for n, (lyr_name, lyr_params) in enumerate(
@@ -464,7 +519,7 @@ def _make_landscape(mod, params, num_hab_types=2):
 
     #now set the necessary layers to their file rasters, if applicable
     if True in [len(v) > 0 for v in file_lyr_params.values()]:
-        file_lyrs, res, ulc, prj = _get_file_rasters(land_dim = dim,
+        file_lyrs, res, ulc, prj, = _get_file_rasters(land_dim = dim,
                                                       **file_lyr_params)
         for n in file_lyr_params['lyr_nums']:
             lyrs[n] = file_lyrs[n]
@@ -479,6 +534,11 @@ def _make_landscape(mod, params, num_hab_types=2):
             lyrs[lyr_name].res = res
             lyrs[lyr_name].ulc = ulc
             lyrs[lyr_name].prj = prj
+        [setattr(lyrs[n], 'coord_prec',
+                 v) for n, v in zip(file_lyr_params['lyr_nums'],
+                                    file_lyr_params['coord_precs'])]
+
+        lyrs[lyr_name].coord_prec = file_lyr_params['coord_precs'][lyr_name]
 
     #create the land object
     land = Landscape(lyrs, res=res, ulc=ulc, prj=prj, mod=mod)
@@ -505,8 +565,8 @@ def _make_landscape(mod, params, num_hab_types=2):
     return land
 
 
-def _get_file_rasters(land_dim, names, lyr_nums, filepaths,
-                                            scale_min_vals, scale_max_vals):
+def _get_file_rasters(land_dim, names, lyr_nums, filepaths, coord_precs,
+                      scale_min_vals, scale_max_vals):
     assert len(lyr_nums)==len(filepaths), ('Parameters provide a '
                                            'different number of GIS raster '
                                            'files to read in than of layer '
@@ -519,7 +579,7 @@ def _get_file_rasters(land_dim, names, lyr_nums, filepaths,
     for n,filepath in enumerate(filepaths):
         #get array, dim, res, ulc, and prj from io.read_raster
         rast_array, rast_dim, rast_res, rast_ulc, rast_prj = _read_raster(
-            filepath, land_dim)
+            filepath, coord_precs[n], land_dim)
         #check that the dimensions are right
         assert rast_dim == land_dim, ('Variable land_dim and the dimensions '
             'of the input raster %s appear to differ. Please clip %s to '

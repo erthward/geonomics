@@ -55,7 +55,7 @@ def _choose_cmap(lyr_num):
 
 def _plot_rasters(land, lyr_num=None, cbar=True,
                   im_interp_method='nearest', cmap=None, plt_lims=None,
-                  vmin=0, vmax=1, lyr_name=None, ticks=False, mask_rast=None):
+                  vmin=0, vmax=1, lyr_name=None, ticks=None, mask_rast=None):
     # if a figure is already open, force colorbar to False
     if plt.get_fignums() and plt.gcf().get_axes():
         cbar = False
@@ -73,11 +73,13 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
             cmaps = [_choose_cmap(lyr_num)]
         else:
             cmaps = [_choose_cmap(0)]
+        lyr_type = ''
     # elif isinstance(land, gnx.landscape.Layer):
     elif 'Layer' in str(type(land)):
         rasters = [land.rast]
         lyr_names = [land.name]
         cmaps = [_choose_cmap(land.idx)]
+        lyr_type = land.type
     # elif isinstance(land, gnx.landscape.Landscape):
     elif 'Landscape' in str(type(land)):
         if lyr_num is not None:
@@ -89,6 +91,8 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
             rasters = [lyr.rast for lyr in land.values()]
             lyr_names = [lyr.name for lyr in land.values()]
             cmaps = [_choose_cmap(lyr.idx) for lyr in land.values()]
+        lyr_types = [lyr.type for lyr in land.values()]
+        lyr_type = 'file' * ('file' in lyr_types)
     # plot all with the same cmap, if the cmap argument was provided
     if isinstance(cmap, str):
         # get the requested cmap
@@ -115,9 +119,17 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
                     # min_j:max_j] for row in rasters[n][min_i:max_i]])
         plt.imshow(rasters[n], interpolation=im_interp_method, cmap=cmaps[n],
                    vmin=vmin, vmax=vmax, alpha=alphas[n])
-        if not ticks:
+        print(ticks)
+        if ((lyr_type != 'file' and not ticks) or
+           (lyr_type == 'file' and ticks is False)):
             plt.xticks([])
             plt.yticks([])
+        else:
+            if lyr_type == 'file':
+                (x_tick_locs, x_tick_labs,
+                 y_tick_locs, y_tick_labs) = land._get_coord_ticks()
+                plt.xticks(x_tick_locs, x_tick_labs, rotation=90)
+                plt.yticks(y_tick_locs, y_tick_labs)
         if plt_lims is not None:
             plt.xlim(plt_lims[0])
             plt.ylim(plt_lims[1])

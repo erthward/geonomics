@@ -12,7 +12,6 @@ from sklearn.decomposition import PCA
 # import matplotlib as mpl
 import matplotlib.pyplot as plt
 import os
-import time
 
 # set some plotting params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
@@ -115,10 +114,6 @@ def calc_dists(species, dist_type='gen', env_lyrs=None):
 
 # make empty figure
 fig = plt.figure()
-
-#start timer
-start = time.time()
-
 # make model
 mod = gnx.make_model('./geonomics/example/IBD_IBE/IBD_IBE_params.py')
 
@@ -135,16 +130,11 @@ plot_genetic_PCA(mod.comm[0])
 
 # plot phenotypes before genomic evolution begins
 ax3 = fig.add_subplot(223)
-mask = np.ma.masked_where(mod.land[1].rast == 0, mod.land[1].rast)
 mod.plot_phenotype(0, 0, mask_rast=mask)
 [f((-0.5, 39.5)) for f in [plt.xlim, plt.ylim]]
 
 # run model for T timesteps
 mod.walk(T)
-
-#finish timer
-stop = time.time()
-tot_time = start - stop
 
 # plot genetic PCA after 1/4T timesteps
 ax2 = fig.add_subplot(222)
@@ -152,6 +142,7 @@ ax2.set_title('t = %i' % T)
 plot_genetic_PCA(mod.comm[0])
 
 # plot the individuals' phenotypes
+mask = np.ma.masked_where(mod.land[1].rast == 0, mod.land[1].rast)
 ax3 = fig.add_subplot(224)
 mod.plot_phenotype(0, 0, mask_rast=mask)
 [f((-0.5, 39.5)) for f in [plt.xlim, plt.ylim]]
@@ -183,6 +174,3 @@ ax2.set_ylabel('genetic distance')
 
 plt.show()
 plt.savefig(os.path.join(img_dir, 'IBD_IBE_scatter.png'))
-
-# print out time
-print("\n\nModel ran in %0.2f seconds." % tot_time)

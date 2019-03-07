@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 #from matplotlib.colors import LinearSegmentedColormap
 import os
+import time
 
 # set some image params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
@@ -19,24 +20,24 @@ ax_fontdict = {'fontsize': 12,
 ttl_fontdict = {'fontsize': 15,
                 'name': 'Bitstream Vera Sans'}
 
-# a little fn to calculate a future-temperate raster from the 30-year normals
-# raster
-def calc_fut_tmp(tmp, increment=2):
-    fut_tmp = abs(tmp - tmp.max())
-    fut_tmp = fut_tmp/fut_tmp.max()
-    fut_tmp = tmp + increment + (increment * fut_tmp)
-    return fut_tmp
-
-
-# little fn to calculate a habitat raster that's 1 at the center of env-var's
-# range and drops toward 0 at extremes
-def calc_hab_rast(tmp, l_lim=7, u_lim=11):
-    hab = np.ones(tmp.shape)
-    hab[tmp < l_lim] = (1 - (tmp[tmp < l_lim] - l_lim) / (tmp.min() - l_lim))
-    hab[tmp > u_lim] = (1 - (u_lim - tmp[tmp > u_lim]) / (u_lim - tmp.max()))
-    # hab = 1-abs(env_rast-0.5)
-    # hab = (hab - hab.min()) / (hab.max() - hab.min())
-    return(hab)
+## a little fn to calculate a future-temperate raster from the 30-year normals
+## raster
+#def calc_fut_tmp(tmp, increment=2):
+#    fut_tmp = abs(tmp - tmp.max())
+#    fut_tmp = fut_tmp/fut_tmp.max()
+#    fut_tmp = tmp + increment + (increment * fut_tmp)
+#    return fut_tmp
+#
+#
+## little fn to calculate a habitat raster that's 1 at the center of env-var's
+## range and drops toward 0 at extremes
+#def calc_hab_rast(tmp, l_lim=7, u_lim=11):
+#    hab = np.ones(tmp.shape)
+#    hab[tmp < l_lim] = (1 - (tmp[tmp < l_lim] - l_lim) / (tmp.min() - l_lim))
+#    hab[tmp > u_lim] = (1 - (u_lim - tmp[tmp > u_lim]) / (u_lim - tmp.max()))
+#    # hab = 1-abs(env_rast-0.5)
+#    # hab = (hab - hab.min()) / (hab.max() - hab.min())
+#    return(hab)
 
 
 def calc_neighborhood_mean_phenotype(mod, window_width=8):
@@ -72,39 +73,43 @@ z_cmap = mpl.cm.coolwarm
 
 print('\nPREPARING MODEL...\n\n')
 
+
+#start timer
+start = time.time()
+
 # read in the params
 params = gnx.read_parameters_file(('./geonomics/example/yosemite/'
                                    'yosemite_params.py'))
 
 # manually get the temperature raster
-tmp = io._read_raster(('./geonomics/example/yosemite/'
-                       'yosemite_30yr_normals_90x90.tif'))[0]
+#tmp = io._read_raster(('./geonomics/example/yosemite/'
+#                       'yosemite_30yr_normals_90x90.tif'))[0]
 
 # calculate a future-change raster, where change is fastest at highest
 # elevations (2 Kelvin raster-wide, plus an additional fraction of 2 that is
 # greatest at highest elevations)
-fut_tmp = abs(tmp - tmp.max())
-fut_tmp = fut_tmp/fut_tmp.max()
-fut_tmp = tmp + 2 + (2 * fut_tmp)
+#fut_tmp = abs(tmp - tmp.max())
+#fut_tmp = fut_tmp/fut_tmp.max()
+#fut_tmp = tmp + 2 + (2 * fut_tmp)
 
 # set the scale-min and scale-max values for the tmp layer
-scale_min = min(tmp.min(), fut_tmp.min())
-scale_max = max(tmp.max(), fut_tmp.max())
-params.landscape.layers['tmp'].init.file['scale_min_val'] = scale_min
-params.landscape.layers['tmp'].init.file['scale_max_val'] = scale_max
+#scale_min = min(tmp.min(), fut_tmp.min())
+#scale_max = max(tmp.max(), fut_tmp.max())
+#params.landscape.layers['tmp'].init.file['scale_min_val'] = scale_min
+#params.landscape.layers['tmp'].init.file['scale_max_val'] = scale_max
 
 # use tmp rasters to create start and end habitat rasters, and add to params
-hab = calc_hab_rast(tmp)
-fut_hab = calc_hab_rast(fut_tmp)
+#hab = calc_hab_rast(tmp)
+#fut_hab = calc_hab_rast(fut_tmp)
 # and add them to the params
-params.landscape.layers['hab'].init.defined['rast'] = hab
-params.landscape.layers['hab'].change[0]['change_rast'] = fut_hab
+#params.landscape.layers['hab'].init.defined['rast'] = hab
+#params.landscape.layers['hab'].change[0]['change_rast'] = fut_hab
 
 # scale the fut_tmp raster, then add it to the params
-fut_tmp, fut_min, fut_max = gnx.utils.spatial._scale_raster(fut_tmp,
-                                                            scale_min,
-                                                            scale_max)
-params.landscape.layers['tmp'].change[0]['change_rast'] = fut_tmp
+#fut_tmp, fut_min, fut_max = gnx.utils.spatial._scale_raster(fut_tmp,
+#                                                            scale_min,
+#                                                            scale_max)
+#params.landscape.layers['tmp'].change[0]['change_rast'] = fut_tmp
 
 # create the model
 mod = gnx.make_model(params)
@@ -170,7 +175,12 @@ plt.imshow(calc_neighborhood_mean_phenotype(mod), cmap=z_cmap)
 
 # walk for 1000 more timesteps, then plot again,
 # at end of climate-change period
-mod.walk(1000)
+mod.walk(100)
+
+#end timer
+stop = time.time()
+tot_time = stop-start
+
 ax3 = plt.subplot(gs[0, 2])
 plt.imshow(mod.land[0].rast, cmap='coolwarm')
 plt.scatter(x=[i.x for i in mod.comm[0].values()],
@@ -227,3 +237,6 @@ ax10.set_ylabel('neighborhood-meaned phenotype', fontdict=ax_fontdict)
 plt.show()
 plt.savefig(os.path.join(img_dir, 'YOSEMITE_time_series.png'))
 # TODO run analyses?
+
+# print out time
+print("\n\nModel ran in %0.2f seconds." % tot_time)

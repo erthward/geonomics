@@ -674,7 +674,7 @@ class Species(OD):
             text=False, color='black', edge_color='face', text_color='black',
             cbar=True, size=25, text_size=9, im_interp_method='nearest',
             land_cmap=None, pt_cmap=None, alpha=False, zoom_width=None,
-            x=None, y=None, vmin = None, vmax = None, ticks=False,
+            x=None, y=None, vmin = None, vmax = None, ticks=None,
             mask_rast=None):
         #convert individs to a list (in case comes in as a numpy array)
         if individs is not None and not isinstance(individs, list):
@@ -713,7 +713,7 @@ class Species(OD):
     def _plot_density(self, land, normalize=False, individs=None,
             text=False, color='black', edge_color='face',
             text_color='black', size=25, text_size = 9,
-            alpha=0.5, zoom_width=None, x=None, y=None, ticks=False,
+            alpha=0.5, zoom_width=None, x=None, y=None, ticks=None,
             mask_rast=None):
         assert type(normalize) is bool, ("The 'normalize' argument takes "
             "a boolean value.\n")
@@ -740,7 +740,7 @@ class Species(OD):
             text=False, size=25, text_size = 9, edge_color='black',
             text_color='black', cbar=True, im_interp_method='nearest',
             alpha=1, by_dominance=False, zoom_width=None, x=None, y=None,
-            ticks=False, mask_rast=None):
+            ticks=None, mask_rast=None):
 
         if by_dominance == True:
             genotypes = self._get_genotype(locus, by_dominance=True)
@@ -775,7 +775,7 @@ class Species(OD):
             individs=None, text=False, size=25, text_size=9,
             edge_color='black', text_color='black', cbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
-            y=None, ticks=False, mask_rast=None):
+            y=None, ticks=None, mask_rast=None):
 
         # get the trait's lyr_num, if no lyr_num provided
         lyr_num = self.gen_arch.traits[trait].lyr_num
@@ -804,7 +804,7 @@ class Species(OD):
             fitness_text_color='#333333', size=100, text_size = 9,
             edge_color='black', text_color='black', fit_cmap = 'RdYlGn',
             cbar=True, fitness_cbar=True, im_interp_method='nearest',
-            alpha=1, zoom_width=None, x=None, y=None, ticks=False,
+            alpha=1, zoom_width=None, x=None, y=None, ticks=None,
             mask_rast=None):
 
         #return messages if species does not have genomes or traits
@@ -917,7 +917,7 @@ class Species(OD):
 
     #method for plotting the movement surface (in various formats)
     def _plot_direction_surface(self, land, surf_type, style, x=None, y=None,
-        zoom_width=8, scale_fact=4.5, color='black', cbar = True, ticks=False,
+        zoom_width=8, scale_fact=4.5, color='black', cbar = True, ticks=None,
         cmap='Greens_r', mask_rast=None):
         #get the correct surface
         if surf_type == 'move':

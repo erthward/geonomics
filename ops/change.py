@@ -314,7 +314,8 @@ class _SpeciesChanger(_Changer):
 #function that takes a starting lyr, an ending lyr, a number of
 #timesteps, and a Model object, and returns a linearly interpolated
 #stack of rasters
-def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps):
+def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps,
+                     coord_prec=0):
 
     #TODO: FIGURE OUT HOW USER WOULD NEED TO ORDER THE FILES IN A DIRECTORY
     #FULL OF FILES, IN ORDER TO DICTATE THE TIME ORDER OF THEM
@@ -336,7 +337,8 @@ def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps):
         elif os.path.isfile(change_rast):
             #NOTE: this resets dim from the argument that was fed in
             change_rast, dim, res, ulc, prj = io._read_raster(change_rast,
-                dim = dim)
+                                                              coord_prec,
+                                                              dim=dim)
         #flatten the start and end rasters
         start = start_rast.flatten()
         end = change_rast.flatten()
@@ -375,7 +377,7 @@ def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps):
         #are equal, then set the prj, dim, ulc, and res values, and
         #set rasters equal to rast_series
         all_rasts = [io._read_raster(os.path.join(
-            change_rast, f), dim) for f in files]
+            change_rast, f), coord_prec, dim) for f in files]
         dim_cts = C([i[1] for i in all_rasts])
         assert len(dim_cts) == 1, ("The dimensions of "
             "all files in the directory provided for the 'change_rast' "
@@ -386,7 +388,7 @@ def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps):
             dim_cts.values())]))
         #NOTE: this resets dim from the argument that was fed in
         dim = all_rasts[0][1]
-        res_cts = C([i[2] for i in all_rasts])
+        res_cts = C([tuple([*i[2]]) for i in all_rasts])
         assert len(res_cts) == 1, ("The spatial resolutions of "
             "all files in the directory provided for the 'change_rast' "
             "parameter are not equal. Most files have resolution %s, but the "
@@ -395,7 +397,7 @@ def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps):
             str([files[k] for k,v in res_cts.items() if v != max(
             res_cts.values())]))
         res = all_rasts[0][2]
-        ulc_cts = C([i[3] for i in all_rasts])
+        ulc_cts = C([tuple([*i[3]]) for i in all_rasts])
         assert len(ulc_cts) == 1, ("The upper left corners of "
             "all files in the directory provided for the 'change_rast' "
             "parameter are not equal. Most files have upper left corner %s, "
@@ -482,7 +484,8 @@ def _make_conglom_lyr_series(land, lyr_num, change_params_one_lyr):
     #get the congolmerated lyr_series for all change events for this
     #layer
     all_lyr_series = [_make_lyr_series(land[lyr_num].rast, land.dim,
-        **v) for v in change_params_one_lyr.values()]
+                                       coord_prec=land[lyr_num].coord_prec,
+                                **v) for v in change_params_one_lyr.values()]
     #check that dim, res, ulc, and prj values are the same for each
     #change event
     assert len(set([i[1] for i in all_lyr_series]))==1, (""
@@ -490,24 +493,28 @@ def _make_conglom_lyr_series(land, lyr_num, change_params_one_lyr):
         "series with the same dimensions.  Resulting dimensions "
         "include: (%s).") % (lyr_num, ', '.join([*set(
         [i[1] for i in all_lyr_series])]))
-    assert len(set([i[2] for i in all_lyr_series]))==1, (""
+    assert len(set([tuple([*i[2]]) for i in all_lyr_series]))==1, (""
         "Not all change events for Layer number %i produce layer "
         "series with the same resolution.  Resulting resolutions "
         "include: (%s).") % (lyr_num, ', '.join([*set(
         [i[2] for i in all_lyr_series])]))
-    assert len(set([i[3] for i in all_lyr_series]))==1, (""
+    assert len(set([tuple([*i[3]]) for i in all_lyr_series]))==1, (""
         "Not all change events for Layer number %i produce layer "
         "series with the same upper-left corners.  Resulting "
         "upper-left corners include: (%s).") % (lyr_num, ', '.join([*set(
         [i[3] for i in all_lyr_series])]))
     assert len(set([i[4] for i in all_lyr_series]))==1, (""
         "Not all change events for Layer number %i produce layer "
-        "series with the same resolution.  Resulting resolutions "
+        "series with the same projection.  Resulting projections "
         "include: (%s).") % (lyr_num, ', '.join([*set(
         [i[4] for i in all_lyr_series])]))
     #take dim, res, ulc, and prj as single values
-    dim, res, ulc, prj = [[*set(
-        [i[n] for i in all_lyr_series])][0] for n in range(1,5)]
+    dim_res_ulc_prj_list = [[i[n] for i in all_lyr_series] for n in range(1,5)]
+    # NOTE: next line just coerces ndarrays to tuples, so that they can be
+    # hashed into a set in the following line
+    dim_res_ulc_prj_list = [[tuple([*i]) for i in item] if isinstance(
+        item[0], np.ndarray) else item for item in dim_res_ulc_prj_list]
+    dim, res, ulc, prj = [[*set(item)][0] for item in dim_res_ulc_prj_list]
     #check that dim, res, ulc, and prj match that of the land
     assert dim == land.dim, ('Dimensionality of lyr_series fed '
         'into _LandscapeChanger for Layer number %i does not '

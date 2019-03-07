@@ -931,7 +931,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             text=False, color='black', edge_color='face', text_color='black',
             cbar=True, size=25, text_size=9, im_interp_method='nearest',
             land_cmap=None, pt_cmap=None, alpha=False, zoom_width=None,
-             x=None, y=None, vmin=None, vmax=None, ticks=False,
+             x=None, y=None, vmin=None, vmax=None, ticks=None,
              mask_rast=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
@@ -961,7 +961,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     def plot_density(self, spp, normalize=False, individs=None,
             text=False, color='black', edge_color='face',
             text_color='black', size=25, text_size = 9,
-            alpha=0.5, zoom_width=None, x=None, y=None, ticks=False,
+            alpha=0.5, zoom_width=None, x=None, y=None, ticks=None,
             mask_rast=None):
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
@@ -978,7 +978,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             individs=None, text=False, size=25, text_size = 9,
             edge_color='black', text_color='black', cbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
-            y=None, ticks=False, mask_rast=None):
+            y=None, ticks=None, mask_rast=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
         #get the spp
@@ -998,7 +998,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     def plot_phenotype(self, spp, trait, lyr=None, individs=None,
             text=False, size=25, text_size = 9, edge_color='black',
             text_color='black', cbar=True, im_interp_method='nearest',
-            alpha=1, zoom_width=None, x=None, y=None, ticks=False,
+            alpha=1, zoom_width=None, x=None, y=None, ticks=None,
             mask_rast=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
@@ -1034,7 +1034,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             size=100, text_size=9, edge_color='black',
             text_color='black', fit_cmap='gray', cbar=True,
             fitness_cbar=True, im_interp_method='nearest',
-            alpha=1, zoom_width=None, x=None, y=None, ticks=False,
+            alpha=1, zoom_width=None, x=None, y=None, ticks=None,
             mask_rast=None):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
@@ -1081,7 +1081,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     #wrapper around Species._plot_direction_surface for _move_surf
     def plot_movement_surface(self, spp, style, x=None, y=None, zoom_width=8,
                             scale_fact=4.5, color='black', cbar = True,
-                              ticks=False, cmap='Greens_r', mask_rast=None):
+                              ticks=None, cmap='Greens_r', mask_rast=None):
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, cbar=cbar, ticks=ticks, cmap=cmap,
@@ -1090,7 +1090,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     #wrapper around Species._plot_direciton_surface for _disp_surf
     def plot_dispersal_surface(self, spp, style, x=None, y=None, zoom_width=8,
                             scale_fact=4.5, color='black', cbar = True,
-                               ticks=False, cmap='Greens_r', mask_rast=None):
+                               ticks=None, cmap='Greens_r', mask_rast=None):
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, cbar=cbar, ticks=ticks, cmap=cmap,
@@ -1099,7 +1099,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
     #wrapper around Species._plot_direction_surface
     def _plot_direction_surface(self, surf_type, spp, style, x=None, y=None,
                                 zoom_width=8, scale_fact=4.5, color='black',
-                                cbar = True, ticks=False, cmap='Greens_r',
+                                cbar = True, ticks=None, cmap='Greens_r',
                                 mask_rast=None):
 
         """

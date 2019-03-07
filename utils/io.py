@@ -88,7 +88,7 @@ _DEFAULT_PROJ = '''PROJCS["WGS 84 / Pseudo-Mercator",
     # Read #
     ########
 
-def _read_raster(filepath, dim=None):
+def _read_raster(filepath, coord_prec, dim=None):
     if os.path.splitext(filepath)[1].lower() == '.txt':
         rast = np.fromfile(filepath, sep = ' ')
         assert len(rast) == np.prod(dim), ('The raster read in from the .txt '
@@ -112,10 +112,12 @@ def _read_raster(filepath, dim=None):
                 #adfGeoTransform[3] /* top left y */
                 #adfGeoTransform[4] /* 0 */
                 #adfGeoTransform[5] /* n-s pixel resolution (negative value) */
-            res = tuple([i for n,i in enumerate(rast_file.GetGeoTransform(
-                                                            )) if n in [5,1]])
-            ulc = tuple([i for n,i in enumerate(rast_file.GetGeoTransform(
-                                                            )) if n in [0,3]])
+            res = tuple([i for n, i in enumerate(rast_file.GetGeoTransform(
+                                                            )) if n in [5, 1]])
+            res = np.round(res, coord_prec)
+            ulc = tuple([i for n, i in enumerate(rast_file.GetGeoTransform(
+                                                            )) if n in [0, 3]])
+            ulc = np.round(ulc, coord_prec)
             #get the projection as WKT
             prj = rast_file.GetProjection()
         else:

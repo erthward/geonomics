@@ -214,6 +214,8 @@ FILE_LYR_PARAMS = '''
                         'scale_min_val':                None,
                         #maximum value to use to rescale the Layer to [0,1]
                         'scale_max_val':                None,
+                        #decimal precision to use for coord-units (ulc & res)
+                        'coord_prec':                   5,
 
                         }, # <END> 'file'
 '''

@@ -55,11 +55,15 @@ def _choose_cmap(lyr_num):
 
 def _plot_rasters(land, lyr_num=None, cbar=True,
                   im_interp_method='nearest', cmap=None, plt_lims=None,
-                  vmin=0, vmax=1, lyr_name=None, ticks=None, mask_rast=None):
+                  vmin=None, vmax=None, lyr_name=None, ticks=None, mask_rast=None):
     # if a figure is already open, force colorbar to False
     if plt.get_fignums() and plt.gcf().get_axes():
         cbar = False
 
+    # create a list to hold all colobar ticks (and their min/max vals on the 0-1
+    # raster), and a list to hold all colorbar labels, if cbar == True
+    lyr_cbar_ticks = []
+    lyr_cbar_labs = []
     # if just a numpy.ndarray or a Layer (not a Landscape object) is
     # provided, or if just a single raster is desired, grab
     # the raster into a list
@@ -76,23 +80,44 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
         lyr_type = ''
     # elif isinstance(land, gnx.landscape.Layer):
     elif 'Layer' in str(type(land)):
-        rasters = [land.rast]
+        if land.type == 'file':
+            rasters = [land._get_rast_in_native_units()]
+        else:
+            rasters = [land.rast]
         lyr_names = [land.name]
         cmaps = [_choose_cmap(land.idx)]
         lyr_type = land.type
+        if cbar:
+            lyr_cbar_ticks.append(land._get_cbar_ticks_and_minmax_scaled_vals(
+                                                                             ))
+            lyr_cbar_labs.append(land.units)
     # elif isinstance(land, gnx.landscape.Landscape):
     elif 'Landscape' in str(type(land)):
         if lyr_num is not None:
-            rasters = [land[lyr_num].rast]
+            if land[lyr_num].type == 'file':
+                rasters = [land[lyr_num]._get_rast_in_native_units()]
+            else:
+                rasters = [land[lyr_num].rast]
             lyr_names = [land[lyr_num].name]
             cmaps = [_choose_cmap(lyr_num)]
+            lyr_cbar_ticks.append(
+                        land[lyr_num]._get_cbar_ticks_and_minmax_scaled_vals())
+            lyr_cbar_labs.append(land[lyr_num].units)
         # else just create a list of all rasters
         else:
-            rasters = [lyr.rast for lyr in land.values()]
+            rasters = [lyr.rast if (
+                lyr.type != 'file') else lyr._get_rast_in_native_units(
+                                                    ) for lyr in land.values()]
             lyr_names = [lyr.name for lyr in land.values()]
             cmaps = [_choose_cmap(lyr.idx) for lyr in land.values()]
+            [lyr_cbar_ticks.append(
+                land[lyr_num]._get_cbar_ticks_and_minmax_scaled_vals(
+                                                    )) for lyr_num in [*land]]
+            [lyr_cbar_labs.append(land[lyr_num].units) for lyr_num in [*land]]
+        # else just create a list of all rasters
         lyr_types = [lyr.type for lyr in land.values()]
         lyr_type = 'file' * ('file' in lyr_types)
+
     # plot all with the same cmap, if the cmap argument was provided
     if isinstance(cmap, str):
         # get the requested cmap
@@ -119,31 +144,43 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
                     # min_j:max_j] for row in rasters[n][min_i:max_i]])
         plt.imshow(rasters[n], interpolation=im_interp_method, cmap=cmaps[n],
                    vmin=vmin, vmax=vmax, alpha=alphas[n])
-        print(ticks)
         if ((lyr_type != 'file' and not ticks) or
            (lyr_type == 'file' and ticks is False)):
             plt.xticks([])
             plt.yticks([])
         else:
+            # add geo-coordinate ticks, if this is a raster from a file
             if lyr_type == 'file':
-                (x_tick_locs, x_tick_labs,
-                 y_tick_locs, y_tick_labs) = land._get_coord_ticks()
-                plt.xticks(x_tick_locs, x_tick_labs, rotation=90)
-                plt.yticks(y_tick_locs, y_tick_labs)
+                (x_ticks, x_tick_labs,
+                 y_ticks, y_tick_labs) = land._get_coord_ticks()
+                # format at ticklabels to the same decimal place
+                float_fmt = ('%0.' + str(max([len(str(n).split(
+                        '.')[1]) for n in x_tick_labs + y_tick_labs])) + 'f')
+                x_tick_labs = [float_fmt % n for n in x_tick_labs]
+                y_tick_labs = [float_fmt % n for n in y_tick_labs]
+                plt.xticks(x_ticks, x_tick_labs, rotation=90)
+                plt.yticks(y_ticks, y_tick_labs)
+                ax = plt.gca()
+                plt.xlabel('lon')
+                plt.ylabel('lat')
         if plt_lims is not None:
             plt.xlim(plt_lims[0])
             plt.ylim(plt_lims[1])
-        # and their colorbars, if requested (but for only the first
-        # two rasters maximum, since the second and onward share
-        # the same palette)
-        if cbar and n < 2:
-            cbar_max_bound = max(rasters[n].max(),
-                [1 if vmax is None else vmax][0])
-            cbar_bounds = np.linspace(0, cbar_max_bound, 51)
-            cbar = plt.colorbar(boundaries=cbar_bounds)
+        # and their colorbars, if requested
+        if cbar:
+            if len(lyr_cbar_ticks) == 0:
+                cbar_max_bound = max(rasters[n].max(),
+                    [1 if vmax is None else vmax][0])
+                cbar_bounds = np.linspace(0, cbar_max_bound, 51)
+                cbar = plt.colorbar(boundaries=cbar_bounds)
+            else:
+                cbar = plt.colorbar(ticks=np.linspace(lyr_cbar_ticks[n][1],
+                                                      lyr_cbar_ticks[n][2], 5))
+                cbar.ax.set_yticklabels(lyr_cbar_ticks[n][0])
+                cbar.set_label(lyr_cbar_labs[n], rotation=270,
+                                     labelpad=15, y=0.5)
             cbar.ax.set_title("layer: %s" % lyr_names[n])
-            ax = cbar.ax
-            title = ax.title
+            title = cbar.ax.title
             font = mpl.font_manager.FontProperties(family='sans-serif',
                                                    style='normal', size=10)
             title.set_font_properties(font)

@@ -3,6 +3,9 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 add a 'resist_surf' argument to movement_surface and dispersal_surface params,
+          which just subtracts the surface from 1 to invert from a conductance surface
+
         5 when a raster is read in from a raster file, save its real-unit ticklabels and real-unit environmtal value conversion factor as attributes of the landscape, for later use when plotting
         
         5 add ability for life-history and demographic params to evolve: here's an idea of how:

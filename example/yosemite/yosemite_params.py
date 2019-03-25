@@ -64,13 +64,15 @@ params = {
                     'file': {
                         #</path/to/file>.<ext>
                         'filepath': ('./geonomics/example/yosemite/'
-                                     'geonomics_yosemite_lyrs/tmp_1980-2010.tif'),
+                                     'yosemite_lyrs/tmp_1980-2010.tif'),
                         #minimum value to use to rescale the Layer to [0,1]
                         'scale_min_val':                -1.3700,
                         #maximum value to use to rescale the Layer to [0,1]
                         'scale_max_val':                19.8073,
                         #decimal precision to use for coord-units (ulc & res)
-                        'coord_prec':                   5,
+                        'coord_prec':                   8,
+                        #units of this file's variable
+                        'units':                    '$^∘C$',
 
                         }, # <END> 'file'
 
@@ -87,7 +89,7 @@ params = {
                         #array or file for final raster of event, or directory
                         #of files for each stepwise change in event
                         'change_rast': ('./geonomics/example/yosemite/'
-                                     'geonomics_yosemite_lyrs/tmp'),
+                                     'yosemite_lyrs/tmp'),
 
                         #starting timestep of event
                         'start_t':          509,
@@ -116,13 +118,15 @@ params = {
                     'file': {
                         #</path/to/file>.<ext>
                         'filepath': ('./geonomics/example/yosemite/'
-                                     'geonomics_yosemite_lyrs/sdm_1980-2010.tif'),
+                                     'yosemite_lyrs/sdm_1980-2010.tif'),
                         #minimum value to use to rescale the Layer to [0,1]
                         'scale_min_val':                0,
                         #maximum value to use to rescale the Layer to [0,1]
                         'scale_max_val':                1,
                         #decimal precision to use for coord-units (ulc & res)
-                        'coord_prec':                   5,
+                        'coord_prec':                   8,
+                        #units of this file's variable
+                        'units':                    'habitat suitability',
 
                         }, # <END> 'file'
 
@@ -139,7 +143,7 @@ params = {
                         #array or file for final raster of event, or directory
                         #of files for each stepwise change in event
                         'change_rast': ('./geonomics/example/yosemite/'
-                                     'geonomics_yosemite_lyrs/sdm'),
+                                     'yosemite_lyrs/sdm'),
 
                         #starting timestep of event
                         'start_t':          509,
@@ -241,11 +245,11 @@ params = {
                     #concentration of distr of movement direction
                     'direction_distr_kappa':    0,
                     #mean of distr of movement distance
-                    'distance_distr_mu':        0.5,
+                    'distance_distr_mu':        1.5,
                     #variance of distr of movement distance
                     'distance_distr_sigma':     0.5,
                     #mean of distr of dispersal distance
-                    'dispersal_distr_mu':       0.25,
+                    'dispersal_distr_mu':       0.75,
                     #variance of distr of dispersal distance
                     'dispersal_distr_sigma':    0.25,
                     'move_surf'     : {

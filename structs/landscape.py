@@ -55,7 +55,7 @@ class Layer:
     #######################
 
     def __init__(self, rast, lyr_type, name, dim, res=(1,1), ulc=(0,0),
-                 prj=None, coord_prec=0, scale_min=0, scale_max=1):
+                 prj=None, coord_prec=0, units='', scale_min=0, scale_max=1):
         self.idx = None
         self.type = lyr_type
         self.name = str(name)
@@ -70,6 +70,7 @@ class Layer:
         self.ulc = ulc
         self.prj = prj
         self.coord_prec = coord_prec
+        self.units = units
         self.rast = rast
         assert type(self.rast) == np.ndarray, "rast should be a numpy.ndarray"
         self._scale_min = scale_min
@@ -108,25 +109,32 @@ class Layer:
 
     # method to get the tickmarks to use to plot the layer
     def _get_coord_ticks(self):
-        x_tick_spacing = int(np.floor(self.dim[0] / 8))
-        y_tick_spacing = int(np.floor(self.dim[1] / 8))
-        x_tick_locs = [*range(0, self.dim[0], x_tick_spacing)]
-        y_tick_locs = [*range(0, self.dim[1], y_tick_spacing)]
-        x_tick_labs = [round(self.ulc[0] + i * self.res[0] + 0.5 * self.res[0],
-                             min(3, self.coord_prec)) for i in range(
-                                            0, self.dim[0], x_tick_spacing)]
-        #x_zfill_add = max([len(str(int(round(val)))) for val in x_tick_labs])
-        #x_tick_labs = [str(l)[::-1].zfill(self.coord_prec + x_zfill_add)[
-        #                                           ::-1] for l in x_tick_labs]
-        y_tick_labs = [round(self.ulc[1] - i * self.res[1] + 0.5 * self.res[1],
-                             min(3, self.coord_prec)) for i in range(
-                                            0, self.dim[1], y_tick_spacing)]
-        #y_zfill_add = max([len(str(int(round(val)))) for val in y_tick_labs])
-        #y_tick_labs = [str(l)[::-1].zfill(self.coord_prec + y_zfill_add)[
-        #                                           ::-1] for l in y_tick_labs]
-        # reverse the y-tick labels to account for orientation of plot
-        y_tick_labs = y_tick_labs[::-1]
-        return x_tick_locs, x_tick_labs, y_tick_locs, y_tick_labs
+        x_ticks = np.int64(np.round(np.linspace(0, self.dim[0]-1, 8)))
+        y_ticks = np.int64(np.round(np.linspace(0, self.dim[1]-1, 8)))
+        x_tick_labs = [round(self.ulc[0] + (self.res[0] * (loc + 0.5)),
+                             min(3, self.coord_prec)) for loc in x_ticks]
+        y_tick_labs = [round(self.ulc[1] + (self.res[1] * (loc + 0.5)),
+                             min(3, self.coord_prec)) for loc in y_ticks]
+        return x_ticks, x_tick_labs, y_ticks, y_tick_labs
+
+    # method for recovering a file-based raster's values expressed in its
+    # native units (i.e. undoing the 0-1 scaling)
+    def _get_rast_in_native_units(self):
+        native = (self.rast * (self._scale_max
+                               - self._scale_min)) + self._scale_min
+        return native
+
+    # method for getting colorbar ticks
+    def _get_cbar_ticks_and_minmax_scaled_vals(self):
+        if self.type == 'file':
+            rast = self._get_rast_in_native_units()
+            min_val = rast.min()
+            max_val = rast.max()
+        else:
+            min_val = self.rast.min()
+            max_val = self.rast.max()
+        ticks = np.round(np.linspace(min_val, max_val, 5), 3)
+        return ticks, min_val, max_val
 
 
 
@@ -270,33 +278,20 @@ class Landscape(dict):
                       plt_lims=plt_lims, vmin=vmin, vmax=vmax, ticks=ticks,
                       mask_rast=mask_rast)
 
-    # method to get the tickmarks to use to plot the landscape
+    # method to get the tickmarks to use to plot the layer
     def _get_coord_ticks(self):
         try:
             coord_prec = min([lyr.coord_prec for lyr in self.values(
                             ) if lyr.coord_prec != 0])
         except ValueError:
             coord_prec = 0
-        x_tick_spacing = int(np.floor(self.dim[0] / 8))
-        y_tick_spacing = int(np.floor(self.dim[1] / 8))
-        x_tick_locs = [*range(0, self.dim[0], x_tick_spacing)]
-        y_tick_locs = [*range(0, self.dim[1], y_tick_spacing)]
-        x_tick_labs = [round(self.ulc[0] + i * self.res[0] + 0.5 * self.res[0],
-                             min(3, coord_prec)) for i in range(
-                                            0, self.dim[0], x_tick_spacing)]
-        #x_zfill_add = max([len(str(int(round(val)))) for val in x_tick_labs])
-        #x_tick_labs = [str(l)[::-1].zfill(coord_prec + x_zfill_add)[
-        #                                           ::-1] for l in x_tick_labs]
-        y_tick_labs = [round(self.ulc[1] - i * self.res[1] + 0.5 * self.res[1],
-                             min(3, coord_prec)) for i in range(
-                                            0, self.dim[1], y_tick_spacing)]
-        #y_zfill_add = max([len(str(int(round(val)))) for val in y_tick_labs])
-        #y_tick_labs = [str(l)[::-1].zfill(coord_prec + y_zfill_add)[
-        #                                           ::-1] for l in y_tick_labs]
-        # reverse the y-tick labels to account for orientation of plot
-        y_tick_labs = y_tick_labs[::-1]
-        return x_tick_locs, x_tick_labs, y_tick_locs, y_tick_labs
-
+        x_ticks = np.int64(np.round(np.linspace(0, self.dim[0]-1, 8)))
+        y_ticks = np.int64(np.round(np.linspace(0, self.dim[1]-1, 8)))
+        x_tick_labs = [round(self.ulc[0] + (self.res[0] * (loc + 0.5)),
+                             min(3, coord_prec)) for loc in x_ticks]
+        y_tick_labs = [round(self.ulc[1] + (self.res[1] * (loc + 0.5)),
+                             min(3, coord_prec)) for loc in y_ticks]
+        return x_ticks, x_tick_labs, y_ticks, y_tick_labs
 
         ################
         #public methods#
@@ -447,7 +442,8 @@ def _make_landscape(mod, params, num_hab_types=2):
                        'filepaths': [],
                        'scale_min_vals': [],
                        'scale_max_vals': [],
-                       'coord_precs': []}
+                       'coord_precs': [],
+                       'unitss': []}
 
     #then loop over the lyrs in params.landscape.lyrs and create each one
     for n, (lyr_name, lyr_params) in enumerate(
@@ -519,7 +515,7 @@ def _make_landscape(mod, params, num_hab_types=2):
 
     #now set the necessary layers to their file rasters, if applicable
     if True in [len(v) > 0 for v in file_lyr_params.values()]:
-        file_lyrs, res, ulc, prj, = _get_file_rasters(land_dim = dim,
+        file_lyrs, res, ulc, prj, = _get_file_rasters(land_dim=dim,
                                                       **file_lyr_params)
         for n in file_lyr_params['lyr_nums']:
             lyrs[n] = file_lyrs[n]
@@ -566,7 +562,7 @@ def _make_landscape(mod, params, num_hab_types=2):
 
 
 def _get_file_rasters(land_dim, names, lyr_nums, filepaths, coord_precs,
-                      scale_min_vals, scale_max_vals):
+                      scale_min_vals, scale_max_vals, unitss):
     assert len(lyr_nums)==len(filepaths), ('Parameters provide a '
                                            'different number of GIS raster '
                                            'files to read in than of layer '
@@ -627,11 +623,11 @@ def _get_file_rasters(land_dim, names, lyr_nums, filepaths, coord_precs,
     ulc = ulc[0]
     prj = prj[0]
     #create lyrs from the rasters
-    lyrs = [Layer(rast, lyr_type = 'file', name = name, dim = land_dim,
-            res = res, ulc = ulc, prj = prj,
-            scale_min=scale_min, scale_max=scale_max) for lyr_num, name,
-            rast, scale_min, scale_max in zip(lyr_nums, names, rasters,
-            scale_min_vals, scale_max_vals)]
+    lyrs = [Layer(rast, lyr_type='file', name=name, dim=land_dim, res=res,
+                  ulc=ulc, prj=prj, scale_min=scale_min, scale_max=scale_max,
+                 units=units) for lyr_num, name,
+            rast, scale_min, scale_max, units in zip(lyr_nums, names, rasters,
+            scale_min_vals, scale_max_vals, unitss)]
     return(lyrs, res, ulc, prj)
 
 

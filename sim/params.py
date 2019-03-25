@@ -216,6 +216,8 @@ FILE_LYR_PARAMS = '''
                         'scale_max_val':                None,
                         #decimal precision to use for coord-units (ulc & res)
                         'coord_prec':                   5,
+                        #units of this file's variable
+                        'units':                        None,
 
                         }, # <END> 'file'
 '''

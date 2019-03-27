@@ -109,8 +109,8 @@ class Layer:
 
     # method to get the tickmarks to use to plot the layer
     def _get_coord_ticks(self):
-        x_ticks = np.int64(np.round(np.linspace(0, self.dim[0]-1, 8)))
-        y_ticks = np.int64(np.round(np.linspace(0, self.dim[1]-1, 8)))
+        x_ticks = np.int64(np.round(np.linspace(0, self.dim[1]-1, 8)))
+        y_ticks = np.int64(np.round(np.linspace(0, self.dim[0]-1, 8)))
         x_tick_labs = [round(self.ulc[0] + (self.res[0] * (loc + 0.5)),
                              min(3, self.coord_prec)) for loc in x_ticks]
         y_tick_labs = [round(self.ulc[1] + (self.res[1] * (loc + 0.5)),

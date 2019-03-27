@@ -671,11 +671,11 @@ class Species(OD):
     #method for plotting the species (or a subset of its individuals, by ID)
     #on top of a layer (or landscape)
     def _plot(self, lyr_num=None, land=None, hide_land=False, individs=None,
-            text=False, color='black', edge_color='face', text_color='black',
-            cbar=True, size=25, text_size=9, im_interp_method='nearest',
-            land_cmap=None, pt_cmap=None, alpha=False, zoom_width=None,
-            x=None, y=None, vmin = None, vmax = None, ticks=None,
-            mask_rast=None):
+              text=False, color='black', edge_color='face', text_color='black',
+              cbar=True, size=25, text_size=9, im_interp_method='nearest',
+              land_cmap=None, pt_cmap=None, alpha=False, zoom_width=None,
+              x=None, y=None, vmin=None, vmax=None, ticks=None,
+              mask_rast=None, animate=False):
         #convert individs to a list (in case comes in as a numpy array)
         if individs is not None and not isinstance(individs, list):
             individs = list(individs)
@@ -701,11 +701,14 @@ class Species(OD):
                 cmap = land_cmap, plt_lims = plt_lims, ticks=ticks,
                 mask_rast=mask_rast)
         #and plot the individuals
-        viz._plot_points(coords, lyr_num = lyr_num, color = color,
-                edge_color = edge_color, text_color = text_color,
-                size = size, text_size = text_size, alpha = alpha,
-                text = text, plt_lims = plt_lims, pt_cmap = pt_cmap,
-                                        vmin = vmin, vmax = vmax)
+        points = viz._plot_points(coords, lyr_num = lyr_num, color = color,
+                                  edge_color = edge_color,
+                                  text_color = text_color, size = size,
+                                  text_size = text_size, alpha = alpha,
+                                  text = text, plt_lims = plt_lims,
+                                  pt_cmap = pt_cmap, vmin = vmin, vmax = vmax,
+                                  animate=animate)
+        return points
 
 
     #method for plotting the species on top of its estimated
@@ -775,7 +778,7 @@ class Species(OD):
             individs=None, text=False, size=25, text_size=9,
             edge_color='black', text_color='black', cbar=True,
             im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
-            y=None, ticks=None, mask_rast=None):
+            y=None, ticks=None, mask_rast=None, animate=False):
 
         # get the trait's lyr_num, if no lyr_num provided
         lyr_num = self.gen_arch.traits[trait].lyr_num
@@ -787,13 +790,17 @@ class Species(OD):
         # get the correct cmap for this trait's layer
         pt_cmap = viz._choose_cmap(self.gen_arch.traits[trait].lyr_num)
 
-        self._plot(lyr_num = lyr_num, land = land, individs = individs,
-            text = text, color = list(z.values()), pt_cmap = pt_cmap,
-            edge_color = edge_color, text_color = text_color,
-            cbar = cbar, size = size, text_size = text_size,
-            im_interp_method = im_interp_method, alpha = alpha,
-            zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1,
-            ticks=ticks, mask_rast=mask_rast)
+        points = self._plot(lyr_num = lyr_num, land = land,
+                            individs = individs, text = text,
+                            color = list(z.values()), pt_cmap = pt_cmap,
+                            edge_color = edge_color, text_color = text_color,
+                            cbar = cbar, size = size, text_size = text_size,
+                            im_interp_method = im_interp_method, alpha = alpha,
+                            zoom_width = zoom_width, x = x, y = y, vmin = 0,
+                            vmax = 1, ticks=ticks, mask_rast=mask_rast,
+                            animate=animate)
+
+        return points
 
 
     # method for plotting individuals colored by their overall fitnesses,

@@ -709,12 +709,11 @@ class Model:
             if extinct:
                 break
 
+        ##################
+        # public methods #
+        ##################
 
-        ################
-        #public methods#
-        ################
-
-    #method to run the overall model
+    # method to run the overall model
     def run(self, verbose=False):
         """
         Run a Model.
@@ -755,26 +754,26 @@ class Model:
 
         """
 
-        #TODO: Add some handler for farming instances out to 
-        #different nodes, if available?
+        # TODO: Add some handler for farming instances out to
+        # different nodes, if available?
 
-        #set the self._verbose flag
+        # set the self._verbose flag
         self._verbose = verbose
 
-        #verbose output
+        # verbose output
         if self._verbose:
             print('\n\n' + '#' * self.__term_width__ + '\n\n')
             print('Running model "%s"...\n\n' % self.name)
 
-        #loop over all the iterations
+        # loop over all the iterations
         while len(self.its) > 0:
-            #do the next iteration
+            # do the next iteration
             try:
                 self._do_next_iteration()
             except Exception as e:
                 msg = ('XXXX\tAn error occurred during iteration %i, '
-                    'timestep %i.\n \tPLEASE COPY AND REPORT THE FOLLOWING, '
-                    'to help us debug Geonomics:\n')
+                       'timestep %i.\n \tPLEASE COPY AND REPORT THE FOLLOWING,'
+                       ' to help us debug Geonomics:\n')
                 if self.comm.burned:
                     msg = msg % (self.it, self.t)
                 else:
@@ -786,18 +785,17 @@ class Model:
                 print()
                 print('<>' * int(self.__term_width__/2) + '\n\n')
 
-        #verbose output
+        # verbose output
         if self._verbose:
             print('\n\nModel "%s" is complete.\n' % self.name)
             print('#' * self.__term_width__)
 
-        #set the _verbose flag back to False
+        # set the _verbose flag back to False
         self._verbose = False
 
-
-    #method to run the model interactively from the command line; named 'walk'
-    #to succinctly differentiate it from 'run'
-    def walk(self, T=1, mode='main', verbose=True):
+    # method to run the model interactively from the command line; named 'walk'
+    # to succinctly differentiate it from 'run'
+    def walk(self, T=1, mode='main', verbose=True, plot=False):
         """
         Walk through a Model (i.e. run it for a certain number of timesteps).
 
@@ -835,6 +833,19 @@ class Model:
             Whether or not to run the Model should provide written output.
             If True, formatted messages will be printed to STDOUT at each
             timestep. Defaults to True for `Model.walk`.
+        plot : {tuple of ints, bool}, optional
+            If a length-2 tuple of integers is provided, the Species indicated
+            by the first number will be plotted on the Landscape Layer
+            indicated by the second number at each timestep, in a dynamically
+            updating plot.
+            If a length-3 tuple of integers in provided, the Species indicated
+            by the first number will be plotted on the Landscape Layer
+            indicated by the second number at each timestep, colored by the
+            phenotypes of the trait indicated by the third number.
+            If just True, all Species will be plotted on top of a transparent
+            stack of all Landscape Layers.
+            (Note that this will slow down the execution of a model a bit,
+            because the plot will pause for 0.1 seconds after each timestep.)
 
         Returns
         -------
@@ -868,43 +879,82 @@ BE EXPECTED WHEN RUN WITH Model.walk.
 
         """
 
-        #validate T, and convert to int if a float fed (such as 1e6,
-        #to run burn-in to completion)
+        # validate T, and convert to int if a float fed (such as 1e6,
+        # to run burn-in to completion)
         assert isinstance(T, int) or isinstance(T, float), ("'T' must be "
-            "a numeric data type.")
+                                                            "a numeric data "
+                                                            "type.")
         if isinstance(T, float):
             T = int(T)
 
-        #throw an error and quit if mode == 'main' but the community is 
-        #not burned in
+        # throw an error and quit if mode == 'main' but the community is
+        # not burned in
         if mode == 'main' and not self.comm.burned:
             raise ValueError(("The Model.walk method cannot be run in 'main' "
-                "mode if the Model's Community has not yet been burned in "
-                "(i.e. if Model.comm.burned is False)."))
+                              "mode if the Model's Community has not yet "
+                              "been burned in (i.e. if Model.comm.burned "
+                              "is False)."))
 
-        #set the model's _verbose flag
+        # set the model's _verbose flag
         self._verbose = verbose
 
-        #if verbose, add a space below the command line prompt, for readability
+        # if verbose, add a space below the command line prompt,
+        # for readability
         if self._verbose:
             print('\n')
 
-        #run the model for the stipulated number of timesteps
+        # start plot, if plot == True
+        if plot not in (False, None):
+            if (isinstance(plot, tuple)
+               and sum([isinstance(i, int) for i in plot]) == len(plot)):
+                if len(plot) == 2:
+                    points = self.plot(plot[0], plot[1], animate=True)
+                elif len(plot) == 3:
+                    points = self.plot_phenotype(plot[0], plot[1], plot[2],
+                                                 animate=True)
+            elif plot is True:
+                points = self.plot(animate=True)
+            plt.ion()
+            plt.draw()
+            plt.pause(0.25)
+
+        # run the model for the stipulated number of timesteps
         for t in range(T):
-            #exit if burn-in is complete
+            # exit if burn-in is complete
             if mode == 'burn' and self.comm.burned:
-                #verbose output
+                # verbose output
                 if self._verbose:
                     print('Burn-in complete.\n\n')
                 break
-            #reset mode, if mode is 'burn' and there is no mod.burn_fn_queue
+            # reset mode, if mode is 'burn' and there is no mod.burn_fn_queue
             if mode == 'burn' and self.burn_fn_queue is None:
-                #verbose output
+                # verbose output
                 if self._verbose:
                     print(('No mod.burn_fn_queue was found. '
                           'Running mod.reset()...\n\n'))
                 self._reset()
-            extinct = self._do_timestep(mode = mode)
+            extinct = self._do_timestep(mode=mode)
+            # continue the plot, if plot == True
+            if plot not in (False, None):
+                if (isinstance(plot, tuple)
+                   and sum([isinstance(i,
+                                       int) for i in plot]) == len(plot)):
+                    points.remove()
+                    if len(plot) == 2:
+                        points = self.plot(plot[0], plot[1], animate=True)
+                    elif len(plot) == 3:
+                        points = self.plot_phenotype(plot[0], plot[1], plot[2],
+                                                     animate=True)
+                    plt.ion()
+                    plt.draw()
+                    plt.pause(0.1)
+                elif plot is True:
+                    [pts.remove() for pts in points]
+                    points = self.plot(animate=True)
+                    plt.ion()
+                    plt.draw()
+                    plt.pause(0.1)
+
             #end the iteration early if any species is extinct
             if extinct:
                 break
@@ -932,7 +982,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             cbar=True, size=25, text_size=9, im_interp_method='nearest',
             land_cmap=None, pt_cmap=None, alpha=False, zoom_width=None,
              x=None, y=None, vmin=None, vmax=None, ticks=None,
-             mask_rast=None):
+             mask_rast=None, animate=False):
         #get the lyr num
         lyr_num = self._get_lyr_num(lyr)
         #if no spp provided, then call Landscape._plot
@@ -942,20 +992,25 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                 im_interp_method=im_interp_method, x=x, y=y,
                 zoom_width=zoom_width, vmin=vmin, vmax=vmax, ticks=ticks,
                 mask_rast=mask_rast)
+            points = None
         #or else plot the spp
         else:
             #get the spp
             spp = self.comm[self._get_spp_num(spp)]
             #feed args into spp._plot
-            spp._plot(lyr_num=lyr_num, land = self.land, hide_land=hide_land,
-                individs=individs, text=text, color=color, edge_color=edge_color,
-                text_color=text_color, cbar=cbar, size=size,
-                text_size=text_size, im_interp_method=im_interp_method,
-                land_cmap=land_cmap, pt_cmap=pt_cmap, alpha=alpha,
-                zoom_width=zoom_width, x=x, y=y, vmin=vmin, vmax=vmax,
-                ticks=ticks, mask_rast=mask_rast)
+            points = spp._plot(lyr_num=lyr_num, land=self.land,
+                               hide_land=hide_land, individs=individs,
+                               text=text, color=color, edge_color=edge_color,
+                               text_color=text_color, cbar=cbar, size=size,
+                               text_size=text_size,
+                               im_interp_method=im_interp_method,
+                               land_cmap=land_cmap, pt_cmap=pt_cmap,
+                               alpha=alpha, zoom_width=zoom_width, x=x, y=y,
+                               vmin=vmin, vmax=vmax, ticks=ticks,
+                               mask_rast=mask_rast, animate=animate)
             #add spp name
             #plt.suptitle(spp.name)
+        return points
 
     #wrapper around Species._plot_density
     def plot_density(self, spp, normalize=False, individs=None,
@@ -993,18 +1048,19 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         #add spp name
         #plt.suptitle(spp.name)
 
-    #wrapper around Species._plot_phenotype
-    #for a given trait
+    # wrapper around Species._plot_phenotype
+    # for a given trait
     def plot_phenotype(self, spp, trait, lyr=None, individs=None,
-            text=False, size=25, text_size = 9, edge_color='black',
-            text_color='black', cbar=True, im_interp_method='nearest',
-            alpha=1, zoom_width=None, x=None, y=None, ticks=None,
-            mask_rast=None):
-        #get the lyr num
+                       text=False, size=25, text_size = 9, edge_color='black',
+                       text_color='black', cbar=True,
+                       im_interp_method='nearest', alpha=1, zoom_width=None,
+                       x=None, y=None, ticks=None, mask_rast=None,
+                       animate=False):
+        # get the lyr num
         lyr_num = self._get_lyr_num(lyr)
-        #get the spp
+        # get the spp
         spp = self.comm[self._get_spp_num(spp)]
-        #return messages if species does not have genomes or traits
+        # return messages if species does not have genomes or traits
         if spp.gen_arch is None:
             print(("Model.plot_phenotype is not valid for Species "
                 "without genomes.\n"))
@@ -1013,19 +1069,24 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             print(("Model.plot_phenotype is not valid for Species "
                 "without traits.\n"))
             return
-        #get the trt_num
+        # get the trt_num
         trt_num = self._get_trt_num(spp, trait)
-        #trt_num can't be None for plot_phenotype
+        # trt_num can't be None for plot_phenotype
         assert trt_num is not None, ("None is not a valid value for the "
             "'trait' arguemnt.")
-        #feed args into spp._plot_phenotype
-        spp._plot_phenotype(trait=trait, lyr_num=lyr_num, land=self.land,
-            individs=individs, text=text, size=size, text_size=text_size,
-            edge_color=edge_color, text_color=text_color, cbar=cbar,
-            im_interp_method=im_interp_method, alpha=alpha,
-            zoom_width=zoom_width, x=x, y=y, ticks=ticks, mask_rast=mask_rast)
+        # feed args into spp._plot_phenotype
+        points = spp._plot_phenotype(trait=trait, lyr_num=lyr_num,
+                                     land=self.land, individs=individs,
+                                     text=text, size=size, text_size=text_size,
+                                     edge_color=edge_color,
+                                     text_color=text_color, cbar=cbar,
+                                     im_interp_method=im_interp_method,
+                                     alpha=alpha, zoom_width=zoom_width,
+                                     x=x, y=y, ticks=ticks,
+                                     mask_rast=mask_rast, animate=animate)
         #add spp name
         #plt.suptitle(spp.name)
+        return points
 
     #wrapper around Species._plot_fitness
     def plot_fitness(self, spp, trait=None, lyr=None, individs=None,

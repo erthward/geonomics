@@ -187,9 +187,9 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
 
 
 def _plot_points(points, lyr_num=None, color='black',
-            edge_color='face', text_color='black', linewidth=0.5,
-            pt_cmap=None, size=25, text_size=9, alpha=False, text=None,
-            plt_lims=None, vmin=None, vmax=None):
+                 edge_color='face', text_color='black', linewidth=0.5,
+                 pt_cmap=None, size=25, text_size=9, alpha=False, text=None,
+                 plt_lims=None, vmin=None, vmax=None, animate=False):
     #get the x and y coordinates from the points (and subtract 0.5
     #to line the points up with the plt.imshow() grid of a
     #landscape raster; imshow plots each pixel centered on its 
@@ -220,11 +220,13 @@ def _plot_points(points, lyr_num=None, color='black',
             cmap = getattr(plt.cm, pt_cmap)
         elif isinstance(pt_cmap, LinearSegmentedColormap):
             cmap = pt_cmap
-        plt.scatter(x, y, s=size, c=color, cmap=cmap, linewidth=linewidth,
-                edgecolor=edge_color, alpha=alpha, vmin = vmin, vmax = vmax)
+        points = plt.scatter(x, y, s=size, c=color, cmap=cmap,
+                             linewidth=linewidth, edgecolor=edge_color,
+                             alpha=alpha, vmin=vmin, vmax=vmax)
     else:
-        plt.scatter(x, y, s=size, c=color, linewidth=linewidth,
-                edgecolor=edge_color, alpha=alpha, vmin = vmin, vmax = vmax)
+        points = plt.scatter(x, y, s=size, c=color, linewidth=linewidth,
+                             edgecolor=edge_color, alpha=alpha, vmin=vmin,
+                             vmax=vmax)
 
     #add text, if requested
     if text is not None:
@@ -248,6 +250,11 @@ def _plot_points(points, lyr_num=None, color='black',
         print(("plt_lims appears not to be a valid argument "
                "(i.e. a 2-tuple of 2-tuples)"))
 
+    #overwrite points with None, unless animate == True
+    if not animate:
+        points = None
+
+    return points
 
 def _get_lyr_plt_lims(land):
     #NOTE: these are set up so that 0,0 is in the upper-left corner

@@ -43,7 +43,7 @@ from matplotlib.colors import LinearSegmentedColormap
 ######################################
 
 def _choose_cmap(lyr_num):
-    cols = {0: 'coolwarm',
+    cols = {0: 'RdBu_r',
             1: 'BrBG_r',
             2: 'PRGn',
             3: 'PiYG_r',
@@ -55,13 +55,15 @@ def _choose_cmap(lyr_num):
 
 def _plot_rasters(land, lyr_num=None, cbar=True,
                   im_interp_method='nearest', cmap=None, plt_lims=None,
-                  vmin=None, vmax=None, lyr_name=None, ticks=None, mask_rast=None):
+                  vmin=None, vmax=None, lyr_name=None, ticks=None,
+                  mask_rast=None,  int_coords=False):
     # if a figure is already open, force colorbar to False
     if plt.get_fignums() and plt.gcf().get_axes():
         cbar = False
 
-    # create a list to hold all colobar ticks (and their min/max vals on the 0-1
-    # raster), and a list to hold all colorbar labels, if cbar == True
+    # create a list to hold all colobar ticks
+    # (and their min/max vals on the 0-1 raster),
+    # and a list to hold all colorbar labels, if cbar == True
     lyr_cbar_ticks = []
     lyr_cbar_labs = []
     # if just a numpy.ndarray or a Layer (not a Landscape object) is
@@ -78,6 +80,7 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
         else:
             cmaps = [_choose_cmap(0)]
         lyr_type = ''
+
     # elif isinstance(land, gnx.landscape.Layer):
     elif 'Layer' in str(type(land)):
         if land.type == 'file':
@@ -91,6 +94,8 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
             lyr_cbar_ticks.append(land._get_cbar_ticks_and_minmax_scaled_vals(
                                                                              ))
             lyr_cbar_labs.append(land.units)
+        # get the cell bounds
+        x_cell_bds, y_cell_bds = land._x_cell_bds, land._y_cell_bds
     # elif isinstance(land, gnx.landscape.Landscape):
     elif 'Landscape' in str(type(land)):
         if lyr_num is not None:
@@ -117,6 +122,13 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
         # else just create a list of all rasters
         lyr_types = [lyr.type for lyr in land.values()]
         lyr_type = 'file' * ('file' in lyr_types)
+        # get the cell bounds
+        x_cell_bds, y_cell_bds = land._x_cell_bds, land._y_cell_bds
+    # if integer-coordinates asked for, or land is a numpy array,
+    # get the cell-bounds from cell-number integers
+    if isinstance(land, np.ndarray) or int_coords:
+        x_cell_bds, y_cell_bds = [np.linspace(0,
+                                              dim, dim) for dim in land.shape]
 
     # plot all with the same cmap, if the cmap argument was provided
     if isinstance(cmap, str):
@@ -142,8 +154,11 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
         #    min_j, max_j = zoom[1]
         #    rasters[n] = np.array([row[
                     # min_j:max_j] for row in rasters[n][min_i:max_i]])
-        plt.imshow(rasters[n], interpolation=im_interp_method, cmap=cmaps[n],
-                   vmin=vmin, vmax=vmax, alpha=alphas[n])
+        plt.pcolormesh(x_cell_bds, y_cell_bds, rasters[n], cmap=cmaps[n],
+                       vmin=vmin, vmax=vmax, alpha=alphas[n])
+        plt.axis('scaled')
+        #plt.imshow(rasters[n], interpolation=im_interp_method, cmap=cmaps[n],
+        #           vmin=vmin, vmax=vmax, alpha=alphas[n])
         if ((lyr_type != 'file' and not ticks) or
            (lyr_type == 'file' and ticks is False)):
             plt.xticks([])
@@ -151,16 +166,16 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
         else:
             # add geo-coordinate ticks, if this is a raster from a file
             if lyr_type == 'file':
-                (x_ticks, x_tick_labs,
-                 y_ticks, y_tick_labs) = land._get_coord_ticks()
+            #    (x_ticks, x_tick_labs,
+            #     y_ticks, y_tick_labs) = land._get_coord_ticks()
                 # format at ticklabels to the same decimal place
-                float_fmt = ('%0.' + str(max([len(str(n).split(
-                        '.')[1]) for n in x_tick_labs + y_tick_labs])) + 'f')
-                x_tick_labs = [float_fmt % n for n in x_tick_labs]
-                y_tick_labs = [float_fmt % n for n in y_tick_labs]
-                plt.xticks(x_ticks, x_tick_labs, rotation=90)
-                plt.yticks(y_ticks, y_tick_labs)
-                ax = plt.gca()
+            #    float_fmt = ('%0.' + str(max([len(str(n).split(
+            #            '.')[1]) for n in x_tick_labs + y_tick_labs])) + 'f')
+            #    x_tick_labs = [float_fmt % n for n in x_tick_labs]
+            #    y_tick_labs = [float_fmt % n for n in y_tick_labs]
+            #    plt.xticks(x_ticks, x_tick_labs, rotation=90)
+            #    plt.yticks(y_ticks, y_tick_labs)
+            #    ax = plt.gca()
                 plt.xlabel('lon')
                 plt.ylabel('lat')
         if plt_lims is not None:
@@ -195,8 +210,8 @@ def _plot_points(points, lyr_num=None, color='black',
     #landscape raster; imshow plots each pixel centered on its 
     #index, but the points then plot on those indices, so wind up
     #shifted +0.5 on each axis
-    x = points[:, 0] - 0.5
-    y = points[:, 1] - 0.5
+    x = points[:, 0]
+    y = points[:, 1]
     #handle the alpha value as necessary
     if alpha == True and type(alpha) == bool:
         alpha = 0.6
@@ -258,8 +273,9 @@ def _plot_points(points, lyr_num=None, color='black',
 
 def _get_lyr_plt_lims(land):
     #NOTE: these are set up so that 0,0 is in the upper-left corner
-    xlim = (-1, land.dim[1])
-    ylim = (land.dim[0], -1)
+    xlim, ylim = [tuple(np.sort((land.ulc[i] - 0.5 * land.res[i],
+                                 land.ulc[i] + (land.dim[i] + 0.5) * land.res[
+                                                       i]))) for i in range(2)]
     lims = (xlim, ylim)
     return(lims)
 

@@ -71,6 +71,10 @@ class Layer:
         self.prj = prj
         self.coord_prec = coord_prec
         self.units = units
+        # attributes for arrays of cell-bounds coordinates, to be set when a
+        # Landscape is instantiated
+        self._x_cell_bds = None
+        self._y_cell_bds = None
         self.rast = rast
         assert type(self.rast) == np.ndarray, "rast should be a numpy.ndarray"
         self._scale_min = scale_min
@@ -188,8 +192,20 @@ class Landscape(dict):
         #set the resoultion (res; i.e. y,x cell sizes), upper-left corner
         #(ulc), and projection (prj) to the provided values
         self.res = res
+        # get the resolution ratio (for calculating individuals' movement
+        # distances on non-square-resolution rasters)
+        self._res_ratio = tuple(np.abs([val/max(self.res) for val in
+                                        self.res]))
         self.ulc = ulc
         self.prj = prj
+        # get arrays of grid-cell x and y bounds , for plotting
+        # with plt.pcolormesh
+        x_cell_bds, y_cell_bds = [np.linspace(self.ulc[i],
+                                              self.ulc[i] + (self.res[i] * (
+                                                             self.dim[i])),
+                                              self.dim[i]) for i in range(2)]
+        self._x_cell_bds = x_cell_bds
+        self._y_cell_bds = y_cell_bds
         #And check that the Layers' res, ulc, and prj values are equal to 
         #the Landscape's values
         assert np.all([lyr.res == self.res for lyr in self.values(
@@ -538,6 +554,10 @@ def _make_landscape(mod, params, num_hab_types=2):
 
     #create the land object
     land = Landscape(lyrs, res=res, ulc=ulc, prj=prj, mod=mod)
+
+    # set all Layers' cell-bounds attributes
+    [setattr(lyr, '_x_cell_bds', land._x_cell_bds) for lyr in land.values()]
+    [setattr(lyr, '_y_cell_bds', land._y_cell_bds) for lyr in land.values()]
 
     #grab the change parameters into a dictionary of
     #lyr_num:events:events_params hierarchical

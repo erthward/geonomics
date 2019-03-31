@@ -103,6 +103,10 @@ class Species(OD):
         #set other attributes
         self.name = str(name)
         self._land_dim = land.dim
+        self._land_res = land.res
+        self._land_res_ratio = land._res_ratio
+        self._land_ulc = land.ulc
+        self._land_prj = land.prj
         #attribute to keep track of iteration number this spp is being used for
         #(optional; will be set by the iteration.py module if called)
         self._it = None
@@ -376,15 +380,14 @@ class Species(OD):
             parent_midpoint_y = (self[pair[0]].y + self[pair[1]].y)/2
 
             n_offspring = n_births[n_pair]
-            n_gametes = 2 * n_offspring
 
             for n in range(n_offspring):
 
                 #get the next offspring_key
                 offspring_key = offspring_keys.pop()
 
-                offspring_x, offspring_y = _do_dispersal(self,
-                    self._land_dim, parent_midpoint_x, parent_midpoint_y,
+                offspring_x, offspring_y = _do_dispersal(
+                    self, parent_midpoint_x, parent_midpoint_y,
                     self.dispersal_distr_mu, self.dispersal_distr_sigma)
 
                 #set the age to 0
@@ -468,8 +471,8 @@ class Species(OD):
         assert type(normalize) is bool, ("The 'normalize' argument takes "
             "a boolean value.\n")
         #get species coordinates
-        x = self._get_x_coords()
-        y = self._get_y_coords()
+        x = self._get_xs()
+        y = self._get_ys()
         #calculate the density array
         dens = self._dens_grids._calc_density(x, y)
         #set min value to 0
@@ -602,40 +605,45 @@ class Species(OD):
     def _get_dom(self, locus):
         return {locus: self.gen_arch.h[locus]}
 
-    def _get_coords(self, individs = None, as_float = True):
+    def _get_coords(self, individs=None, as_float=True):
         coords = list(map(self._coord_attrgetter, self.values()))
         if individs is not None:
             ig = itemgetter(*individs)
             coords = ig(dict(zip([*self], coords)))
-        if as_float == True:
+        if as_float:
             coords = np.float64(coords)
         else:
             coords = np.int32(np.floor(coords))
-        #make sure it's at least 2d (in case a single individual is requested)
+        # make sure it's at least 2d (in case a single individual is requested)
         coords = np.atleast_2d(coords)
         return coords
 
+    def _get_plot_coords(self, individs=None, cell_coords=False):
+        coords = self._get_coords(individs=individs)
+        if not cell_coords:
+            coords[:, 0] = coords[:, 0] * self._land_res[0] + self._land_ulc[0]
+            coords[:, 1] = coords[:, 1] * self._land_res[1] + self._land_ulc[1]
+        return coords
 
-    def _get_cells(self, individs = None):
-        cells = self._get_coords(individs = individs, as_float = False)
+    def _get_cells(self, individs=None):
+        cells = self._get_coords(individs=individs, as_float=False)
         return cells
 
+    def _get_xs(self, individs=None):
+        coords = self._get_coords(individs=individs)
+        return coords[:, 0]
 
-    def _get_x_coords(self, individs=None):
-        coords = self._get_coords(individs = individs)
-        return coords[:,0]
+    def _get_ys(self, individs=None):
+        coords = self._get_coords(individs=individs)
+        return coords[:, 1]
 
-
-    def _get_y_coords(self, individs=None):
-        coords = self._get_coords(individs = individs)
-        return coords[:,1]
-
-    #method to return an n-length list of random individs;
-    #return individuals, or indices, as indicated
+    # method to return an n-length list of random individs;
+    # return individuals, or indices, as indicated
     def _get_random_individuals(self, n, return_format='index'):
-        assert return_format in ['index', 'individual'], ("Argument "
-            "return_format can take only 'index' or 'individual' "
-                                    "as values (defaults to 'index').")
+        assert return_format in [
+            'index', 'individual'], ("Argument return_format can take only "
+                                     "'index' or 'individual' as values "
+                                     "(defaults to 'index').")
         choices = choices = r.choice(list(range(len(self))), n)
         inds = np.array(list(self.keys()))[choices]
         if return_format=='individual':
@@ -675,20 +683,20 @@ class Species(OD):
               cbar=True, size=25, text_size=9, im_interp_method='nearest',
               land_cmap=None, pt_cmap=None, alpha=False, zoom_width=None,
               x=None, y=None, vmin=None, vmax=None, ticks=None,
-              mask_rast=None, animate=False):
-        #convert individs to a list (in case comes in as a numpy array)
+              mask_rast=None, animate=False, cell_coords=False):
+        # convert individs to a list (in case comes in as a numpy array)
         if individs is not None and not isinstance(individs, list):
             individs = list(individs)
-        #get coords
-        if individs is None:
-            coords = self.coords
-            if text:
+        # get coords
+        coords = self._get_plot_coords(individs=individs,
+                                       cell_coords=cell_coords)
+        # get text
+        if text:
+            if individs is None:
                 text = [*self]
-        else:
-            coords = self._get_coords(individs)
-            if text:
+            else:
                 text = individs
-        if not text:
+        else:
             text = None
         #set the plt_lims
         plt_lims = viz._get_plt_lims(land, x, y, zoom_width)
@@ -1133,8 +1141,9 @@ def _make_species(land, name, idx, spp_params, burn=False):
     for ind_idx in range(N):
         # use individual.create_individual to simulate individuals
         #and add them to the species
-        ind = _make_individual(idx = ind_idx, offspring = False,
-                dim = land.dim, genomic_architecture = gen_arch, burn = burn)
+        ind = _make_individual(idx=ind_idx, offspring=False,
+                               dim=land.dim, genomic_architecture=gen_arch,
+                               burn=burn)
         inds[ind_idx] = ind
 
     #create the species from those individuals

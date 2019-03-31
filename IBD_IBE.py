@@ -40,8 +40,8 @@ def plot_genetic_PCA(species):
     PC_colors = norm_PCs * 255
     # scatter all individuals on top of landscape, colored by the
     # RBG colors developed from the first 3 geonmic PCs
-    xs = mod.comm[0]._get_x_coords()
-    ys = mod.comm[0]._get_y_coords()
+    xs = mod.comm[0]._get_xs()
+    ys = mod.comm[0]._get_ys()
     # get environmental raster, with barrier masked out
     masked_env = deepcopy(mod.land[0].rast)
     masked_env[mod.land[1].rast == 0] = np.nan

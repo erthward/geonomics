@@ -63,7 +63,7 @@ params = {
                     #parameters for a 'file'-type Layer
                     'file': {
                         #</path/to/file>.<ext>
-                        'filepath': ('./geonomics/example/yosemite/'
+                        'filepath': ('./geonomics/examples/yosemite/'
                                      'yosemite_lyrs/tmp_1980-2010.tif'),
                         #minimum value to use to rescale the Layer to [0,1]
                         'scale_min_val':                -1.3700,
@@ -88,7 +88,7 @@ params = {
                     0: {
                         #array or file for final raster of event, or directory
                         #of files for each stepwise change in event
-                        'change_rast': ('./geonomics/example/yosemite/'
+                        'change_rast': ('./geonomics/examples/yosemite/'
                                      'yosemite_lyrs/tmp'),
 
                         #starting timestep of event
@@ -117,7 +117,7 @@ params = {
                     #parameters for a 'file'-type Layer
                     'file': {
                         #</path/to/file>.<ext>
-                        'filepath': ('./geonomics/example/yosemite/'
+                        'filepath': ('./geonomics/examples/yosemite/'
                                      'yosemite_lyrs/sdm_1980-2010.tif'),
                         #minimum value to use to rescale the Layer to [0,1]
                         'scale_min_val':                0,
@@ -142,7 +142,7 @@ params = {
                     0: {
                         #array or file for final raster of event, or directory
                         #of files for each stepwise change in event
-                        'change_rast': ('./geonomics/example/yosemite/'
+                        'change_rast': ('./geonomics/examples/yosemite/'
                                      'yosemite_lyrs/sdm'),
 
                         #starting timestep of event
@@ -190,7 +190,7 @@ params = {
                     #carrying-capacity Layer name
                     'K_layer':          'hab',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         3,
+                    'K_factor':         8,
                     }, # <END> 'init'
 
             #######################################

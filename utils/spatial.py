@@ -22,9 +22,9 @@ Documentation:        URL
 ##########################################
 '''
 
-#geonomics imports
+# geonomics imports
 
-#other imports
+# other imports
 import numpy as np
 import numpy.random as r
 import random
@@ -42,7 +42,7 @@ from scipy.spatial import cKDTree
 from shapely import geometry as g
 import warnings
 
-#optional imports
+# optional imports
 try:
     from nlmpy import nlmpy
 except Exception as e:
@@ -51,11 +51,11 @@ except Exception as e:
         "following error was raised:\n\t%s\n\n") % e)
 
 
-######################################
+# #####################################
 # -----------------------------------#
 # CLASSES ---------------------------#
 # -----------------------------------#
-######################################
+# #####################################
 
 class _DensityGrid:
     def __init__(self, dim, dim_om, window_width, gi, gj, cells, areas,
@@ -217,13 +217,13 @@ class _KDTree:
         return(dists, pairs)
 
 
-######################################
+# #####################################
 # -----------------------------------#
 # FUNCTIONS -------------------------#
 # -----------------------------------#
-######################################
+# #####################################
 
-#create strings from input cell coordinates
+# create strings from input cell coordinates
 def _make_cell_strings(gi, gj, dim_om):
     #get strings for both i and j cooridnates, zfilling to the
     #correct order-of-magnitude (of the larger land dimensions)
@@ -236,9 +236,9 @@ def _make_cell_strings(gi, gj, dim_om):
     return cells
 
 
-#make a density grid, based on the Landscape object, the chosen window-width, 
-#and the Boolean arguments dictating whether or not the grid's x- and y-
-#dimension cells should be centered on the land edges (i.e. 0 and dim[_])
+# make a density grid, based on the Landscape object, the chosen window-width, 
+# and the Boolean arguments dictating whether or not the grid's x- and y-
+# dimension cells should be centered on the land edges (i.e. 0 and dim[_])
 def _make_density_grid(land, ww, x_edge, y_edge):
 
     #half-window width
@@ -320,8 +320,8 @@ def _make_density_grid(land, ww, x_edge, y_edge):
     return grid
 
 
-#create 4 density grids, one for each offset (i.e. each
-#combination of offset by 0 and by 0.5*window_width)
+# create 4 density grids, one for each offset (i.e. each
+# combination of offset by 0 and by 0.5*window_width)
 def _make_density_grids(land, ww):
     #make a grid for each combo of Booleans for x_edge and y_edge
     g1 = _make_density_grid(land, ww, x_edge = True, y_edge = True)
@@ -332,7 +332,7 @@ def _make_density_grids(land, ww):
 
 
 # Function to generate a simulative Von Mises mixture distribution
-#sampler function
+# sampler function
 def _make_von_mises_mixture_sampler(neigh, dirs, vm_distr_kappa=12,
                                                     approx_len = 5000):
     # Returns a lambda function that is a quick and reliable way to simulate
@@ -372,8 +372,8 @@ def _make_von_mises_mixture_sampler(neigh, dirs, vm_distr_kappa=12,
 
 # Runs the Von Mises mixture sampler function (_make_von_mises_mixture_sampler)
 # or the Von Mises unimodal sampler function (make_von_mises_unimodal_sampler)
-#across the entire landscape and returns an array-like (list of lists) of the 
-#resulting lambda-function samplers
+# across the entire landscape and returns an array-like (list of lists) of the 
+# resulting lambda-function samplers
 def _make_conductance_surface(rast, mixture=True, approx_len=5000,
                                                         vm_distr_kappa=12):
     queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0],
@@ -406,7 +406,7 @@ def _make_conductance_surface(rast, mixture=True, approx_len=5000,
     return cond_surf
 
 
-#coarse wrapper around the nlmpy package
+# coarse wrapper around the nlmpy package
 def _make_nlmpy_raster(nlmpy_params):
     if 'nlmpy' in globals():
         #pop out the name of the function to be called
@@ -430,8 +430,8 @@ def _make_nlmpy_raster(nlmpy_params):
             "imported successfully."))
 
 
-#linearly scale a raster to 0 <= x <= 1, and return the min and max input vals
-#as well (for possible reversion)
+# linearly scale a raster to 0 <= x <= 1, and return the min and max input vals
+# as well (for possible reversion)
 def _scale_raster(rast, min_inval=None, max_inval=None, min_outval=0,
                                                                 max_outval=1):
     if min_inval is None:

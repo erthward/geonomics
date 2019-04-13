@@ -203,7 +203,8 @@ class Landscape(dict):
         x_cell_bds, y_cell_bds = [np.linspace(self.ulc[i],
                                               self.ulc[i] + (self.res[i] * (
                                                              self.dim[i])),
-                                              self.dim[i]) for i in range(2)]
+                                              self.dim[i] + 1) for i in range(
+                                                                            2)]
         self._x_cell_bds = x_cell_bds
         self._y_cell_bds = y_cell_bds
         #And check that the Layers' res, ulc, and prj values are equal to 

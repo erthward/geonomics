@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#param_help.py
+# param_help.py
 
 
 '''
@@ -21,28 +21,30 @@ Documentation:              URL
 ##########################################
 '''
 
-#other imports
+# other imports
 import numpy as np
 from numpy.random import vonmises, lognormal
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from copy import deepcopy
 
-#------------------------------------
+# ------------------------------------
 # CLASSES ---------------------------
-#------------------------------------
+# ------------------------------------
 
 
-#--------------------------------------
+# --------------------------------------
 # FUNCTIONS ---------------------------
-#--------------------------------------
+# --------------------------------------
 
 
 
 def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
-        direction_distr_mu=None, direction_distr_kappa=None,
-        distance_distr_mu=None, distance_distr_sigma=None, move_surf=None,
-        subset_spp=None, color='black', color_by_individ=False, size=10):
+                  direction_distr_mu=None, direction_distr_kappa=None,
+                  distance_distr_mu=None, distance_distr_sigma=None,
+                  move_surf=None, subset_spp=None, color='black',
+                  land_cmap='plasma', color_by_individ=True, size=10,
+                  ticks=True):
 
     '''
     Useful for visual exploration of the movement parameters.
@@ -116,19 +118,26 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
         toy_spp._set_coords_and_cells()
 
     #set the plotting linewidths to increase over runtime
-    linewidths = np.linspace(2,5, num = num_timesteps)
+    linewidths = np.linspace(1, 5, num=num_timesteps)
 
     #Create a colors list, to plot different-colored paths for individuals
     #colors = ['black', 'red', 'orange', 'yellow', 'green', 'blue', 'white']
-    colors = [plt.cm.Accent(i) for i in np.linspace(0, 0.9, 9)]
+    #colors = [plt.cm.Greys_r(i) for i in np.linspace(0, 0.9, 9)]
+    colors = ['#000000', '#2F4F4F', '#778899', '#696969', '#A9A9A9', '#C0C0C0']
+
+    # get list of order in which to plot individuals
+    ind_idx_list = [i.idx for i in toy_spp.values()]
+    ind_idx_list = sorted(ind_idx_list)
 
     #plot the species at its starting locations
-    toy_spp._plot(lyr_num=lyr_num, land = land, color = 'white', size = 10)
+    ind_colors = [colors[i % len(colors)] for i in range(len(ind_idx_list))]
+    toy_spp._plot(lyr_num=lyr_num, land=land, color=ind_colors, size=25,
+                  land_cmap=land_cmap, ticks=ticks)
 
     #set the new_x and new_y objects to the current locations, before for loop
     #that will iteratively update them to the newer locations after movement
-    new_x = [ind.x for ind in toy_spp.values()]
-    new_y = [ind.y for ind in toy_spp.values()]
+    new_x = [getattr(toy_spp[idx], 'x') for idx in ind_idx_list]
+    new_y = [getattr(toy_spp[idx], 'y') for idx in ind_idx_list]
 
     #loop for the number of timesteps, iteratively moving individuals and
     #plotting the vectors between their previous and new positions
@@ -138,11 +147,11 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
 
         toy_spp._do_movement(land)
 
-        new_x = [ind.x for ind in toy_spp.values()]
-        new_y = [ind.y for ind in toy_spp.values()]
+        new_x = [getattr(toy_spp[idx], 'x') for idx in ind_idx_list]
+        new_y = [getattr(toy_spp[idx], 'y') for idx in ind_idx_list]
 
         #plot with separate colors for each individual, if necessary
-        if color_by_individ == True:
+        if color_by_individ:
             [plt.plot((old_x[i], new_x[i]), (old_y[i], new_y[i]), '-',
                 scalex = False, scaley = False, linewidth = linewidths[t],
                 color = colors[i%len(colors)],
@@ -150,7 +159,7 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
 
         #or else plot without individuals colored differently
         else:
-            mpl.pyplot.plot((old_x, new_x), (old_y, new_y), '-',
+            plt.plot((old_x, new_x), (old_y, new_y), '-',
                 scalex = False, scaley = False, linewidth = linewidths[t],
                 color = color, alpha = 0.5)
 

@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 # import matplotlib as mpl
 import matplotlib.pyplot as plt
-import os
+# import os
 import time
 
 # set some plotting params
@@ -21,6 +21,7 @@ ax_fontdict = {'fontsize': 12,
                'name': 'Bitstream Vera Sans'}
 ttl_fontdict = {'fontsize': 15,
                 'name': 'Bitstream Vera Sans'}
+mark_size = 15
 
 
 # function for running and plotting genetic PCA
@@ -58,7 +59,7 @@ def plot_genetic_PCA(species):
     plt.scatter([x - 0.5 for x in xs],
                 [y - 0.5 for y in ys],
                 c=PC_colors/255.0,
-                s=25, edgecolors='black')
+                s=mark_size, edgecolors='black')
     # fix x and y limits
     [f([dim - 0.5 for dim in (0, mod.land.dim[0])]) for f in (plt.xlim,
                                                               plt.ylim)]
@@ -114,13 +115,13 @@ def calc_dists(species, dist_type='gen', env_lyrs=None):
 
 
 # make empty figure
-fig = plt.figure()
+fig = plt.figure(figsize=(9.25, 6.75))
 
-#start timer
+# start timer
 start = time.time()
 
 # make model
-mod = gnx.make_model('./geonomics/example/IBD_IBE/IBD_IBE_params.py')
+mod = gnx.make_model('./geonomics/examples/IBD_IBE/IBD_IBE_params.py')
 
 # define number of timesteps
 T = 1000
@@ -128,61 +129,59 @@ T = 1000
 # burn model in
 mod.walk(20000, 'burn')
 
-# plot genetic PCA before genomic evolution begins
-ax1 = fig.add_subplot(221)
+# plot genetic PCA before evolution begins
+ax1 = fig.add_subplot(321)
 ax1.set_title('t = 0')
 plot_genetic_PCA(mod.comm[0])
 
-# plot phenotypes before genomic evolution begins
-ax3 = fig.add_subplot(223)
+# plot phenotypes before evolution begins
+ax3 = fig.add_subplot(323)
 mask = np.ma.masked_where(mod.land[1].rast == 0, mod.land[1].rast)
-mod.plot_phenotype(0, 0, mask_rast=mask)
+mod.plot_phenotype(0, 0, mask_rast=mask, size=mark_size)
 [f((-0.5, 39.5)) for f in [plt.xlim, plt.ylim]]
 
 # run model for T timesteps
 mod.walk(T)
 
-#finish timer
+# finish timer
 stop = time.time()
 tot_time = start - stop
 
 # plot genetic PCA after 1/4T timesteps
-ax2 = fig.add_subplot(222)
+ax2 = fig.add_subplot(322)
 ax2.set_title('t = %i' % T)
 plot_genetic_PCA(mod.comm[0])
 
 # plot the individuals' phenotypes
-ax3 = fig.add_subplot(224)
-mod.plot_phenotype(0, 0, mask_rast=mask)
+ax4 = fig.add_subplot(324)
+mod.plot_phenotype(0, 0, mask_rast=mask, size=mark_size)
 [f((-0.5, 39.5)) for f in [plt.xlim, plt.ylim]]
 
-# add title
-# plt.suptitle(('Neutral genomic evolution across complex landscape with '
-#              '_MovementSurface,\n(for a ~%i-individual species with 100 '
-#              'loci') % int(np.mean(mod.comm[0].Nt)))
-plt.show()
-plt.savefig(os.path.join(img_dir, 'IBD_IBE_PCA.png'))
-
-
+# plot IBD and IBE
 spp_subset = {ind: mod.comm[0][ind] for ind in np.random.choice([*mod.comm[0]],
                                                                 100)}
 gen_dists = calc_dists(spp_subset)
 geo_dists = calc_dists(spp_subset, 'geo')
 env_dists = calc_dists(spp_subset, 'env', [0])
-fig2 = plt.figure()
-ax1 = fig2.add_subplot(121)
+ax5 = fig.add_subplot(325)
 plt.scatter(geo_dists, gen_dists, alpha=0.05, c='black')
-ax1.set_xlabel('geographic distance')
-ax1.set_ylabel('genetic distance')
-ax2 = fig2.add_subplot(122)
+ax5.set_title('IBD')
+ax5.set_xlabel('geographic distance')
+ax5.set_ylabel('genetic distance')
+# ax5.set_aspect('equal')
+ax6 = fig.add_subplot(326)
 plt.scatter(env_dists, gen_dists, alpha=0.05, c='black')
-ax2.set_xlabel('environmental distance')
-ax2.set_ylabel('genetic distance')
+ax6.set_title('IBD')
+ax6.set_xlabel('environmental distance')
+ax6.set_ylabel('genetic distance')
+# ax6.set_aspect('equal')
 
 # TODO: add regression line to each plot
-
+# fig.tight_layout()
+plt.subplots_adjust(left=0.04, bottom=0.07, right=0.98, top=0.96, wspace=0.07,
+                    hspace=0.16)
 plt.show()
-plt.savefig(os.path.join(img_dir, 'IBD_IBE_scatter.png'))
+# plt.savefig(os.path.join(img_dir, 'IBD_IBE.png'))
 
 # print out time
 print("\n\nModel ran in %0.2f seconds." % tot_time)

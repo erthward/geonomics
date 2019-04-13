@@ -2,7 +2,7 @@
 --------------------------------------------------------------------------------------
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
-
+        
         5 change 'mod' (which overwrites the modulus function) to 'model'
 
         5 catch and intelligently handle the ValueError: Sample larger than population or is negative error that is thrown when more offspring as created than a single load of the recomb_paths object

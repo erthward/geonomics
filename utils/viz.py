@@ -127,8 +127,8 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
     # if integer-coordinates asked for, or land is a numpy array,
     # get the cell-bounds from cell-number integers
     if isinstance(land, np.ndarray) or int_coords:
-        x_cell_bds, y_cell_bds = [np.linspace(0,
-                                              dim, dim) for dim in land.shape]
+        x_cell_bds, y_cell_bds = [np.linspace(0, dim,
+                                              dim+1) for dim in land.shape]
 
     # plot all with the same cmap, if the cmap argument was provided
     if isinstance(cmap, str):

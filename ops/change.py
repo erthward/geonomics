@@ -33,8 +33,6 @@ from operator import attrgetter as ag
 from collections import OrderedDict as OD
 from collections import Counter as C
 from copy import deepcopy
-import itertools as it
-from copy import deepcopy
 import os
 
 
@@ -311,14 +309,14 @@ class _SpeciesChanger(_Changer):
     # for _LandscapeChanger #
     #########################
 
-#function that takes a starting lyr, an ending lyr, a number of
-#timesteps, and a Model object, and returns a linearly interpolated
-#stack of rasters
-def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps,
+# function that takes a starting rast, its layer, an ending rast, a few
+# timestep arguments, and returns a linearly interpolated stack of rasters
+def _make_lyr_series(lyr, change_rast, start_t, end_t, n_steps,
                      coord_prec=0):
-
-    #TODO: FIGURE OUT HOW USER WOULD NEED TO ORDER THE FILES IN A DIRECTORY
-    #FULL OF FILES, IN ORDER TO DICTATE THE TIME ORDER OF THEM
+    start_rast = lyr.rast
+    dim = lyr.dim
+    scale_min = lyr._scale_min
+    scale_max = lyr._scale_max
 
     #get (rounded) evenly spaced timesteps at which to implement the changes
     timesteps = np.int64(np.round(np.linspace(start_t, end_t, n_steps)))
@@ -339,6 +337,18 @@ def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps,
             change_rast, dim, res, ulc, prj = io._read_raster(change_rast,
                                                               coord_prec,
                                                               dim=dim)
+            # scale the raster correctly
+            change_rast, scale_min_out, scale_max_out = spt._scale_raster(
+                                            change_rast, scale_min, scale_max)
+            assert (scale_min == scale_min_out
+                    and scale_max == scale_max_out), ("The scale_min and "
+                                                      "scale_max values "
+                                                      "returned from scaling "
+                                                      "the input change "
+                                                      "raster don't match "
+                                                      "those of Layer, to "
+                                                      "which the raster "
+                                                      "corresponds.") % lyr.idx
         #flatten the start and end rasters
         start = start_rast.flatten()
         end = change_rast.flatten()
@@ -416,6 +426,27 @@ def _make_lyr_series(start_rast, dim, change_rast, start_t, end_t, n_steps,
             prj_cts.values())]))
         prj = all_rasts[0][4]
         rast_series = [i[0] for i in all_rasts]
+        # rescale the rasters
+        rasts_and_scale_vals = [spt._scale_raster(
+                        rast, scale_min, scale_max) for rast in rast_series]
+        assert len(set([i[1] for i in rasts_and_scale_vals])) == 1, (
+            "More than one unique scale_min value was returned from rescaling "
+            "the directory of rasters provided for Layer %i.") % lyr.idx
+        assert len(set([i[2] for i in rasts_and_scale_vals])) == 1, (
+            "More than one unique scale_max value was returned from rescaling "
+            "the directory of rasters provided for Layer %i.") % lyr.idx
+        scale_min_out = rasts_and_scale_vals[0][1]
+        scale_max_out = rasts_and_scale_vals[0][2]
+        assert (scale_min == scale_min_out
+                and scale_max == scale_max_out), ("The scale_min and "
+                                                  "scale_max values "
+                                                  "returned from scaling "
+                                                  "the input change "
+                                                  "rasters don't match "
+                                                  "those of Layer %i, to "
+                                                  "which the raster "
+                                                  "corresponds.") % lyr.idx
+        rast_series = [i[0] for i in rasts_and_scale_vals]
         #try to get the timesteps from the filenames
         try:
             timesteps = [int(os.path.splitext(
@@ -483,7 +514,7 @@ def _make_conglom_lyr_series(land, lyr_num, change_params_one_lyr):
         "in time.") % lyr_num
     #get the congolmerated lyr_series for all change events for this
     #layer
-    all_lyr_series = [_make_lyr_series(land[lyr_num].rast, land.dim,
+    all_lyr_series = [_make_lyr_series(land[lyr_num],
                                        coord_prec=land[lyr_num].coord_prec,
                                 **v) for v in change_params_one_lyr.values()]
     #check that dim, res, ulc, and prj values are the same for each

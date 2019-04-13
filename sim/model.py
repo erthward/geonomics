@@ -842,8 +842,8 @@ class Model:
             by the first number will be plotted on the Landscape Layer
             indicated by the second number at each timestep, colored by the
             phenotypes of the trait indicated by the third number.
-            If just True, all Species will be plotted on top of a transparent
-            stack of all Landscape Layers.
+            If just True, the first Species (index 0) will be plotted
+            on top of a transparent stack of all Landscape Layers.
             (Note that this will slow down the execution of a model a bit,
             because the plot will pause for 0.1 seconds after each timestep.)
 
@@ -913,7 +913,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                     points = self.plot_phenotype(plot[0], plot[1], plot[2],
                                                  animate=True)
             elif plot is True:
-                points = self.plot(animate=True)
+                points = self.plot(spp=0, animate=True)
             plt.ion()
             plt.draw()
             plt.pause(0.25)
@@ -948,20 +948,20 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                     plt.ion()
                     plt.draw()
                     plt.pause(0.1)
-                elif plot is True:
+                elif plot in [True]:
                     [pts.remove() for pts in points]
-                    points = self.plot(animate=True)
+                    points = self.plot(spp=0, animate=True)
                     plt.ion()
                     plt.draw()
                     plt.pause(0.1)
 
-            #end the iteration early if any species is extinct
+            # end the iteration early if any species is extinct
             if extinct:
                 break
-        #reset self._verbose to False
+        # reset self._verbose to False
         self._verbose = False
 
-    #method to use the self._data_collector object to sample and write data
+    # method to use the self._data_collector object to sample and write data
     def write_data(self):
         self._data_collector._write_data(self.comm, self.land, self.it)
 
@@ -1140,18 +1140,20 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         spp._plot_hist_fitness()
 
     #wrapper around Species._plot_direction_surface for _move_surf
-    def plot_movement_surface(self, spp, style, x=None, y=None, zoom_width=8,
-                            scale_fact=4.5, color='black', cbar = True,
-                              ticks=None, cmap='Greens_r', mask_rast=None):
+    def plot_movement_surface(self, spp, style, x=None, y=None,
+                              zoom_width=None, scale_fact=4.5, color='black',
+                              cbar = True, ticks=None, cmap='plasma',
+                              mask_rast=None):
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, cbar=cbar, ticks=ticks, cmap=cmap,
             mask_rast=mask_rast)
 
     #wrapper around Species._plot_direciton_surface for _disp_surf
-    def plot_dispersal_surface(self, spp, style, x=None, y=None, zoom_width=8,
-                            scale_fact=4.5, color='black', cbar = True,
-                               ticks=None, cmap='Greens_r', mask_rast=None):
+    def plot_dispersal_surface(self, spp, style, x=None, y=None,
+                               zoom_width=None, scale_fact=4.5, color='black',
+                               cbar = True, ticks=None, cmap='plasma',
+                               mask_rast=None):
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, cbar=cbar, ticks=ticks, cmap=cmap,
@@ -1159,8 +1161,8 @@ BE EXPECTED WHEN RUN WITH Model.walk.
 
     #wrapper around Species._plot_direction_surface
     def _plot_direction_surface(self, surf_type, spp, style, x=None, y=None,
-                                zoom_width=8, scale_fact=4.5, color='black',
-                                cbar = True, ticks=None, cmap='Greens_r',
+                                zoom_width=None, scale_fact=4.5, color='black',
+                                cbar = True, ticks=None, cmap='plasma',
                                 mask_rast=None):
 
         """

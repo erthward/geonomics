@@ -3,8 +3,8 @@
 from . import ops
 from . import sim
 from . import utils
-from .main import *
 from . import help
+from .main import *
 
 __docformat__ = 'restructuredtext'
 

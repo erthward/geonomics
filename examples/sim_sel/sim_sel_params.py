@@ -198,7 +198,7 @@ params = {
                     #intrinsic growth rate
                     'R':                        0.5,
                     #intrinsic birth rate (MUST BE 0<=b<=1)
-                    'b':                        0.2,
+                    'b':                        0.5,
                     #expectation of distr of n offspring per mating pair
                     'n_births_distr_lambda':    1,
                     #whether n births should be fixed at n_births_dist_lambda
@@ -213,7 +213,7 @@ params = {
 
                 'mortality'     : {
                     #maximum age
-                    'max_age':                      None,
+                    'max_age':                      5,
                     #min P(death) (MUST BE 0<=d_min<=1)
                     'd_min':                        0,
                     #max P(death) (MUST BE 0<=d_max<=1)
@@ -266,7 +266,7 @@ params = {
                     #scale of distr of deleterious effect sizes
                     'delet_alpha_distr_scale':  0.2,
                     #alpha of distr of recomb rates
-                    'r_distr_alpha':            0.05,
+                    'r_distr_alpha':            None,
                     #beta of distr of recomb rates
                     'r_distr_beta':             None,
                     #whether loci should be dominant (for allele '1')
@@ -293,7 +293,7 @@ params = {
                             #trait-selection Layer name
                             'layer':                'layer_0',
                             #polygenic selection coefficient
-                            'phi':                  0.01,
+                            'phi':                  0.05,
                             #number of loci underlying trait
                             'n_loci':               10,
                             #mutation rate at loci underlying trait
@@ -318,7 +318,7 @@ params = {
                             #trait-selection Layer name
                             'layer':                'layer_1',
                             #polygenic selection coefficient
-                            'phi':                  0.01,
+                            'phi':                  0.05,
                             #number of loci underlying trait
                             'n_loci':               10,
                             #mutation rate at loci underlying trait

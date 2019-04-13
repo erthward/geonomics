@@ -882,18 +882,19 @@ class Species(OD):
                 zoom_width = zoom_width, x = x, y = y, ticks=ticks,
                 mask_rast=mask_rast)
             #make size smaller for the next layer of inner (fitness) circles
-            size = round(0.15*size)
+            size = round(0.4*size)
             # get sizes for all individuals' inner-circle fitness points, if
             # trt_num is not None
             if trt_num is not None:
                 size = size * (1 - ((np.array([*w.values(
                                             )]) - min_fit) / (1 - min_fit)))
 
-        self._plot(lyr_num=lyr_num, land=land, individs=individs,
-                   text=text, color=list(w.values()), pt_cmap=cmap, size=size,
-                   edge_color=edge_color, text_color=text_color, cbar=cbar,
-                   text_size=text_size, im_interp_method=im_interp_method,
-                   alpha=alpha, zoom_width=zoom_width, x=x, y=y, ticks=ticks,
+        self._plot(lyr_num=lyr_num, land=land, hide_land=True,
+                   individs=individs, text=text, color=list(w.values()),
+                   pt_cmap=cmap, size=size, edge_color=edge_color,
+                   text_color=text_color, cbar=cbar, text_size=text_size,
+                   im_interp_method=im_interp_method, alpha=alpha,
+                   zoom_width=zoom_width, x=x, y=y, ticks=ticks,
                    mask_rast=mask_rast)
 
         #plot phenotype text (works only if plotting a specific trait)
@@ -919,22 +920,22 @@ class Species(OD):
     def _plot_allele_frequencies(self):
         if self.gen_arch is None:
             print(("Species._plot_allele_frequencies is not valid for "
-                "species without genomes.\n"))
+                   "species without genomes.\n"))
         else:
             self.gen_arch._plot_allele_frequencies(self)
 
-
+    # method for plotting a histogram of the current fitness values
     def _plot_hist_fitness(self):
         plt.hist(list(self._calc_fitness()))
         plt.xlabel('Fitness')
         plt.ylabel('Count')
 
-
-    #method for plotting the movement surface (in various formats)
+    # method for plotting the movement surface (in various formats)
     def _plot_direction_surface(self, land, surf_type, style, x=None, y=None,
-        zoom_width=8, scale_fact=4.5, color='black', cbar = True, ticks=None,
-        cmap='Greens_r', mask_rast=None):
-        #get the correct surface
+                                zoom_width=None, scale_fact=4.5,
+                                color='black', cbar=True, ticks=None,
+                                cmap='plasma', mask_rast=None):
+        # get the correct surface
         if surf_type == 'move':
             surf = self._move_surf
         elif surf_type == 'disp':
@@ -975,15 +976,17 @@ class Species(OD):
                 for x_val in x:
                     for y_val in y:
                         v, a = np.histogram(r.choice(surf.surf[y_val,
-                            x_val,:], replace = True, size = 7500), bins=15)
+                                                               x_val, :],
+                                                     replace=True,
+                                                     size=7500), bins=15)
                         v = v / float(v.sum())
                         a = [(a[n] + a[n + 1]) / 2 for n in range(len(a) - 1)]
-                        xs = [np.cos(a[n]) * 0.5 for n in range(len(a))]
-                        ys = [np.sin(a[n]) * 0.5 for n in range(len(a))]
+                        xs = [np.cos(a[n]) * 0.75 for n in range(len(a))]
+                        ys = [np.sin(a[n]) * 0.75 for n in range(len(a))]
                         xs = np.array(xs) * v * scale_fact
                         ys = np.array(ys) * v * scale_fact
-                        [plt.plot((x_val, (x_val + xs[n])),
-                                  (y_val, (y_val + ys[n])),
+                        [plt.plot((x_val + 0.5, (x_val + 0.5 + xs[n])),
+                                  (y_val + 0.5, (y_val + 0.5 + ys[n])),
                                   linewidth=2,
                                   color=color) for n in range(len(xs))]
 
@@ -991,10 +994,10 @@ class Species(OD):
                 x = x[0]
                 y = y[0]
                 pts = [(np.cos(a), np.sin(a)) for a in r.choice(
-                    surf.surf[y,x,:], size = 1000, replace = True)]
-                plt.scatter([pt[0] * 0.5 + x for pt in pts], [pt[
-                    1] * 0.5 + y for pt in pts], color='red',
-                    alpha=0.1, marker = '.')
+                    surf.surf[y, x, :], size=1000, replace=True)]
+                plt.scatter([pt[0] * 0.5 + x + 0.5 for pt in pts], [pt[
+                    1] * 0.5 + y + 0.5 for pt in pts], color='red',
+                    alpha=0.1, marker='.')
 
             elif style == 'vect':
                 def plot_one_cell(x, y):
@@ -1011,8 +1014,8 @@ class Species(OD):
                     dx = np.mean(x_vects) / np.sqrt(2)
                     dy = np.mean(y_vects) / np.sqrt(2)
                     # now plot the arrow
-                    plt.arrow(x, y, dx, dy, alpha=0.75, color='black',
-                                            head_width=0.24, head_length=0.32)
+                    plt.arrow(x + 0.5, y + 0.5, dx, dy, alpha=0.75,
+                              color='black', head_width=0.24, head_length=0.32)
 
                 # call the internally defined function as a nested list
                 #comprehension for all raster cells, which I believe

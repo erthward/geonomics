@@ -96,7 +96,7 @@ params = {
                         #ending timestep of event
                         'end_t':            594,
                         #number of stepwise changes in event
-                        'n_steps':          18,
+                        'n_steps':          2,
                         }, # <END> event 0
 
                     }, # <END> 'change'
@@ -150,7 +150,7 @@ params = {
                         #ending timestep of event
                         'end_t':            594,
                         #number of stepwise changes in event
-                        'n_steps':          18,
+                        'n_steps':          2,
                         }, # <END> event 0
 
                     }, # <END> 'change'
@@ -190,7 +190,7 @@ params = {
                     #carrying-capacity Layer name
                     'K_layer':          'hab',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         8,
+                    'K_factor':         2,
                     }, # <END> 'init'
 
             #######################################

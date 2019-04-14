@@ -1124,12 +1124,19 @@ def _make_K(spp, land, K_layer, K_factor):
     spp._set_K(land)
 
 
-def _make_species(land, name, idx, spp_params, burn=False):
+def _make_species(land, name, idx, spp_params, burn=False, verbose=False):
     #get spp's intializing params
     init_params = deepcopy(spp_params.init)
 
+    # print verbose output
+    if verbose:
+        print('\t\tMAKING SPECIES %s...\n' % name)
+
     #if this species should have genomes, create the genomic architecture
     if 'gen_arch' in spp_params.keys():
+        # print verbose output
+        if verbose:
+            print('\t\t\tmaking genomic architecture...\n')
         g_params = spp_params.gen_arch
         #make genomic_architecture
         gen_arch = _make_genomic_architecture(spp_params = spp_params,
@@ -1137,6 +1144,9 @@ def _make_species(land, name, idx, spp_params, burn=False):
     else:
         gen_arch = None
 
+    # print verbose output
+    if verbose:
+        print('\t\t\tmaking individuals...\n')
     #make individs
     N = init_params.pop('N')
     #create an ordered dictionary to hold the individuals, and fill it up
@@ -1172,6 +1182,9 @@ def _make_species(land, name, idx, spp_params, burn=False):
     #make movement surface, if needed
     if spp._move:
         if 'move_surf' in spp_params.movement.keys():
+            if verbose:
+                print(('\t\t\tmaking movement surface...\n'
+                       '\t\t\t\t[can take a bit]\n'))
             ms_params = deepcopy(spp_params.movement.move_surf)
             #grab the lyr number for the lyr that the 
             #movement surface is to be based on
@@ -1189,6 +1202,10 @@ def _make_species(land, name, idx, spp_params, burn=False):
                                                                 **ms_params)
     #make dispersal surface, if needed
     if 'disp_surf' in spp_params.movement.keys():
+        # print verbose output
+        if verbose:
+            print(('\t\t\tmaking dispersal surface...\n'
+                   '\t\t\t\t[can take a bit]\n'))
         ds_params = deepcopy(spp_params.movement.disp_surf)
         #grab the lyr number for the lyr that the 
         #dispersal surface is to be based on
@@ -1215,7 +1232,12 @@ def _make_species(land, name, idx, spp_params, burn=False):
         or (spp._disp_surf is not None
         and land._changer is not None
         and spp._disp_surf.lyr_num in land._changer.change_info.keys())):
-        #grab the change params (or None, if 
+        # print verbose output
+        if verbose:
+            print(('\t\t\tsetting up species changes...\n'
+                   '\t\t\t\t[can take a while,\n\t\t\t\tif movement or\n'
+                   '\t\t\t\tdispersal surfaces will change]\n'))
+        #grab the change params (or None, if
         if 'change' in spp_params.keys():
             ch_params = spp_params.change
         else:

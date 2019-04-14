@@ -11,8 +11,10 @@ import numpy as np
 from sklearn.decomposition import PCA
 # import matplotlib as mpl
 import matplotlib.pyplot as plt
-# import os
+from matplotlib import gridspec
+import os
 import time
+import statsmodels.api as sm
 
 # set some plotting params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
@@ -75,7 +77,7 @@ def calc_euc(x, y):
 
 # calculate lower-triangular of PCA-bsaed Euclidean genetic distances between
 # all individuals, using a 'speciome' (2d array of all individs' genomes)
-def calc_dists(species, dist_type='gen', env_lyrs=None):
+def calc_dists(species, dist_type='gen', env_lyrs=None, return_flat=True):
     # calculate genetic distance as the euclidean distance between individuals
     # in genetic PC space
     if dist_type == 'gen':
@@ -102,21 +104,28 @@ def calc_dists(species, dist_type='gen', env_lyrs=None):
             dist_mat[i, j] = calc_euc(vals[i, :], vals[j, :])
     # check that all diagonal values are 0
     assert np.all(np.diag(dist_mat) == 0), "Not all diagonal values are 0!"
-    # print(dist_vals)
-    # for item in dist_vals:
-    #    assert item[0] == 0, "Not all diagonal values are 0!"
 
-    dists = dist_mat[np.tril_indices(dist_mat.shape[0], -1)]
+    if return_flat:
+        # flatten the lower triangle, if return 1-d of values
+        dists = dist_mat[np.tril_indices(dist_mat.shape[0], -1)]
+        assert dists.size == (n_ind**2 - n_ind)/2, ("Length not equal "
+                                                    "to n(n-1)/2!")
+    else:
+        # make it a symmetric dist matrix, if returning the matrix
+        dist_mat[dist_mat == -999] = 0
+        dists = dist_mat + dist_mat.T
+        assert dists.size == n_ind**2, "Size not equal to n*n!"
     # dist_vals = [item[1:] for item in dist_vals]
     # dists = [*chain.from_iterable(dist_vals)]
     # assert that the length is correct
-    assert len(dists) == (n_ind**2 - n_ind)/2, "Length not equal to n(n-1)/2!"
     return dists
 
 
 # make empty figure
-fig = plt.figure(figsize=(9.25, 6.75))
-
+fig = plt.figure(figsize=(6.75, 9.25))
+gs = gridspec.GridSpec(4, 2,
+                       width_ratios=[1, 1],
+                       height_ratios=[1, 1, 0.05, 0.5])
 # start timer
 start = time.time()
 
@@ -130,12 +139,14 @@ T = 1000
 mod.walk(20000, 'burn')
 
 # plot genetic PCA before evolution begins
-ax1 = fig.add_subplot(321)
+# ax1 = fig.add_subplot(321)
+ax1 = plt.subplot(gs[0])
 ax1.set_title('t = 0')
 plot_genetic_PCA(mod.comm[0])
 
 # plot phenotypes before evolution begins
-ax3 = fig.add_subplot(323)
+# ax3 = fig.add_subplot(323)
+ax3 = plt.subplot(gs[2])
 mask = np.ma.masked_where(mod.land[1].rast == 0, mod.land[1].rast)
 mod.plot_phenotype(0, 0, mask_rast=mask, size=mark_size)
 [f((-0.5, 39.5)) for f in [plt.xlim, plt.ylim]]
@@ -145,15 +156,17 @@ mod.walk(T)
 
 # finish timer
 stop = time.time()
-tot_time = start - stop
+tot_time = stop - start
 
 # plot genetic PCA after 1/4T timesteps
-ax2 = fig.add_subplot(322)
+# ax2 = fig.add_subplot(322)
+ax2 = plt.subplot(gs[1])
 ax2.set_title('t = %i' % T)
 plot_genetic_PCA(mod.comm[0])
 
 # plot the individuals' phenotypes
-ax4 = fig.add_subplot(324)
+# ax4 = fig.add_subplot(324)
+ax4 = plt.subplot(gs[3])
 mod.plot_phenotype(0, 0, mask_rast=mask, size=mark_size)
 [f((-0.5, 39.5)) for f in [plt.xlim, plt.ylim]]
 
@@ -163,25 +176,59 @@ spp_subset = {ind: mod.comm[0][ind] for ind in np.random.choice([*mod.comm[0]],
 gen_dists = calc_dists(spp_subset)
 geo_dists = calc_dists(spp_subset, 'geo')
 env_dists = calc_dists(spp_subset, 'env', [0])
-ax5 = fig.add_subplot(325)
+# ax5 = fig.add_subplot(325)
+ax5 = plt.subplot(gs[6])
 plt.scatter(geo_dists, gen_dists, alpha=0.05, c='black')
+# add a regression line (NOTE: doesn't include an intercept by default,
+# so I need to include one manually in the design matrix)
+est = sm.OLS(np.array(gen_dists).T,
+             np.array(([1] * len(geo_dists), geo_dists)).T).fit()
+x_preds = np.arange(0, 50, 0.1)
+y_preds = est.predict(np.vstack(([1] * len(x_preds), x_preds)).T)
+plt.plot(x_preds, y_preds, color='#C33B3B')
+plt.text(min(geo_dists) + 0.6 * (max(geo_dists) - min(geo_dists)),
+         min(gen_dists) + 0.2 * (max(gen_dists) - min(gen_dists)),
+         'slope:    %0.4f' % est.tvalues[1],
+         color='#C33B3B', size=9)
+plt.text(min(geo_dists) + 0.6 * (max(geo_dists) - min(geo_dists)),
+         min(gen_dists) + 0.05 * (max(gen_dists) - min(gen_dists)),
+         'p-value: %0.1e' % est.pvalues[1],
+         color='#C33B3B', size=9)
 ax5.set_title('IBD')
 ax5.set_xlabel('geographic distance')
 ax5.set_ylabel('genetic distance')
+ax5.set_ylim(int(np.floor(min(gen_dists))), int(np.ceil(max(gen_dists))))
 # ax5.set_aspect('equal')
-ax6 = fig.add_subplot(326)
+# ax6 = fig.add_subplot(326, sharey=ax5)
+ax6 = plt.subplot(gs[7])
 plt.scatter(env_dists, gen_dists, alpha=0.05, c='black')
-ax6.set_title('IBD')
+# add a regression line (a quadratic regression, to allow for a saturating
+# pattern within the range of x values)
+est = sm.OLS(np.array(gen_dists).T,
+             np.array(([1] * len(env_dists), env_dists)).T).fit()
+x_preds = np.arange(0, 1, 0.1)
+y_preds = est.predict(np.vstack(([1] * len(x_preds), x_preds)).T)
+plt.plot(x_preds, y_preds, color='#C33B3B')
+plt.text(min(env_dists) + 0.6 * (max(env_dists) - min(env_dists)),
+         min(gen_dists) + 0.2 * (max(gen_dists) - min(gen_dists)),
+         'slope:    %0.3f' % est.tvalues[1],
+         color='#C33B3B', size=9)
+plt.text(min(env_dists) + 0.6 * (max(env_dists) - min(env_dists)),
+         min(gen_dists) + 0.05 * (max(gen_dists) - min(gen_dists)),
+         'p-value: %0.1e' % est.pvalues[1],
+         color='#C33B3B', size=9)
+ax6.set_title('IBE')
 ax6.set_xlabel('environmental distance')
-ax6.set_ylabel('genetic distance')
+ax6.set_yticks([])
+# ax6.set_ylabel('genetic distance')
 # ax6.set_aspect('equal')
 
 # TODO: add regression line to each plot
-# fig.tight_layout()
+fig.tight_layout()
 plt.subplots_adjust(left=0.04, bottom=0.07, right=0.98, top=0.96, wspace=0.07,
                     hspace=0.16)
 plt.show()
-# plt.savefig(os.path.join(img_dir, 'IBD_IBE.png'))
+plt.savefig(os.path.join(img_dir, 'IBD_IBE.pdf'), format='pdf', dpi=1000)
 
 # print out time
 print("\n\nModel ran in %0.2f seconds." % tot_time)

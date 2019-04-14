@@ -366,7 +366,7 @@ def read_parameters_file(filepath):
 
 
 #function to create a model from a ParametersDict object
-def make_model(parameters=None):
+def make_model(parameters=None, verbose=False):
     """
     Create a new Model object.
 
@@ -493,7 +493,7 @@ def make_model(parameters=None):
         pass
     try:
         name = parameters.model.name
-        mod = Model(name, parameters)
+        mod = Model(name, parameters, verbose=verbose)
         return(mod)
     except Exception as e:
             traceback.print_exc(file = sys.stdout)

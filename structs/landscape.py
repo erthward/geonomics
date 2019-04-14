@@ -431,7 +431,10 @@ def _make_defined_lyr(dim, rast, pts, vals, interp_method="cubic",
     return I
 
 
-def _make_landscape(mod, params, num_hab_types=2):
+def _make_landscape(mod, params, num_hab_types=2, verbose=False):
+    #print verbose output
+    if verbose:
+        print('\tMAKING LANDSCAPE...\n')
     # NOTE: If a multi-class (rather than binary) block-habitat raster
     #would be of interest, would need to make
     # num_hab_types customizable)

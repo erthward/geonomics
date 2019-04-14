@@ -71,6 +71,10 @@ class Model:
         self._set_term_width()
         self._set_tab_len()
 
+        #print verbose output
+        if self._verbose:
+            print('MAKING MODEL...\n')
+
         #set the seed, if required
         self.seed = None
         if 'seed' in [*m_params]:
@@ -97,8 +101,8 @@ class Model:
         self.it = -1
 
         #make the land and community objects
-        self.land = self._make_landscape()
-        self.comm = self._make_community()
+        self.land = self._make_landscape(self._verbose)
+        self.comm = self._make_community(self._verbose)
 
         #and make the self._never_been_run attribute False,
         #to prevent the land and community from being reset
@@ -357,8 +361,9 @@ class Model:
     ###################################################
 
     #method to wrap around landscape._make_landscape
-    def _make_landscape(self):
-        land = _make_landscape(mod = self, params = self.params)
+    def _make_landscape(self, verbose=False):
+        land = _make_landscape(mod=self, params=self.params,
+                               verbose=verbose)
         return(land)
 
     #a method to reset the land as necessary
@@ -394,8 +399,9 @@ class Model:
         self.comm[spp_idx]._set_K(land)
 
     #method to wrap around community._make_community
-    def _make_community(self):
-        comm = _make_community(self.land, self.params, burn = True)
+    def _make_community(self, verbose=False):
+        comm = _make_community(self.land, self.params, burn=True,
+                               verbose=verbose)
         return(comm)
 
     #a method to reset the community (recopying or regenerating as necessary)
@@ -421,7 +427,7 @@ class Model:
             if self._verbose:
                 print(('Creating new community for '
                                     'iteration %i...\n\n') % self.it)
-            self.comm = self._make_community()
+            self.comm = self._make_community(self._verbose)
 
     #method to make a data._DataCollector object for this model
     def _make_data_collector(self):

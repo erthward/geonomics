@@ -59,7 +59,10 @@ def plot_genetic_PCA(species, land):
     # plt.imshow(masked_env, cmap=cmap, alpha=0.8)
     plt.pcolormesh(land._x_cell_bds, land._y_cell_bds, masked_env, cmap=cmap)
     # scatter plot of individuals, colored by composite PC score
-    plt.scatter(xs, ys, c=PC_colors/255.0, s=mark_size, edgecolors='black')
+    plt.scatter([x - 0.5 for x in xs],
+                [y - 0.5 for y in ys],
+                c=PC_colors/255.0,
+                s=mark_size, edgecolors='black')
     # fix x and y limits
     [f([dim - 0.5 for dim in (0, mod.land.dim[0])]) for f in (plt.xlim,
                                                               plt.ylim)]
@@ -122,7 +125,7 @@ def calc_dists(species, dist_type='gen', env_lyrs=None, return_flat=True):
 # make empty figure
 fig = plt.figure(figsize=(6.75, 9.25))
 gs = gridspec.GridSpec(4, 2,
-                       width_ratios=[1, 1.4],
+                       width_ratios=[1, 1.06],
                        height_ratios=[1, 1, 0.05, 0.5])
 # start timer
 start = time.time()
@@ -174,19 +177,19 @@ mod.plot_phenotype(0, 0, mask_rast=mask, size=mark_size, cbar='force')
 spp_subset = {ind: mod.comm[0][ind] for ind in np.random.choice([*mod.comm[0]],
                                                                 100)}
 gen_dists = calc_dists(spp_subset)
-scaled_gen_dists = gen_dists/gen_dists.max()
-assert (np.all(scaled_gen_dists >= 0)
-        and np.all(scaled_gen_dists <= 1)), ('Scaled genetic dist outside '
+scale_gen_dists = gen_dists/gen_dists.max()
+assert (np.all(scale_gen_dists >= 0)
+        and np.all(scale_gen_dists <= 1)), ('Scaled genetic dist outside '
                                             '0 and 1!')
 geo_dists = calc_dists(spp_subset, 'geo')
 env_dists = calc_dists(spp_subset, 'env', [0])
 # ax5 = fig.add_subplot(325)
 ax5 = plt.subplot(gs[6])
-plt.scatter(geo_dists, scaled_gen_dists, alpha=0.05, c='black')
+plt.scatter(geo_dists, scale_gen_dists, alpha=0.05, c='black')
 #plt.scatter(geo_dists, gen_dists, alpha=0.05, c='black')
 # add a regression line (NOTE: doesn't include an intercept by default,
 # so I need to include one manually in the design matrix)
-est = sm.GLM(np.array(scaled_gen_dists).T,
+est = sm.GLM(np.array(scale_gen_dists).T,
              geo_dists.T,
              family=sm.families.Binomial(sm.families.links.cloglog)).fit()
 #est = sm.OLS(np.array(gen_dists).T,
@@ -196,26 +199,27 @@ y_preds = est.predict(x_preds.T)
 #y_preds = est.predict(np.vstack(([1] * len(x_preds), x_preds)).T)
 plt.plot(x_preds, y_preds, color='#C33B3B')
 plt.text(min(geo_dists) + 0.6 * (max(geo_dists) - min(geo_dists)),
-         0.2, 'slope:    %0.4f' % est.params[0],
+         min(gen_dists) + 0.2 * (max(gen_dists) - min(gen_dists)),
+         'slope:    %0.4f' % est.params[0],
          color='#C33B3B', size=9)
 p_val_lt = est.pvalues[0] < 0.001
 assert p_val_lt, 'p-value not less than 0.001!'
 plt.text(min(geo_dists) + 0.6 * (max(geo_dists) - min(geo_dists)),
-         0.05, 'p-value < 0.001',
+         min(gen_dists) + 0.05 * (max(gen_dists) - min(gen_dists)),
+         'p-value < 0.001',
          color='#C33B3B', size=9)
 ax5.set_title('IBD')
 ax5.set_xlabel('geographic distance')
 ax5.set_ylabel('rescaled genetic distance')
-#ax5.set_ylim(int(np.floor(min(gen_dists))), int(np.ceil(max(gen_dists))))
-ax5.set_ylim((0, 1))
+ax5.set_ylim(int(np.floor(min(gen_dists))), int(np.ceil(max(gen_dists))))
 # ax5.set_aspect('equal')
 # ax6 = fig.add_subplot(326, sharey=ax5)
 ax6 = plt.subplot(gs[7], sharey=ax5)
-plt.scatter(env_dists, scaled_gen_dists, alpha=0.05, c='black')
+plt.scatter(env_dists, scale_gen_dists, alpha=0.05, c='black')
 #plt.scatter(env_dists, gen_dists, alpha=0.05, c='black')
 # add a regression line (a quadratic regression, to allow for a saturating
 # pattern within the range of x values)
-est = sm.GLM(np.array(scaled_gen_dists).T,
+est = sm.GLM(np.array(scale_gen_dists).T,
              env_dists.T,
              family=sm.families.Binomial(sm.families.links.cloglog)).fit()
 #est = sm.OLS(np.array(gen_dists).T,
@@ -225,12 +229,14 @@ y_preds = est.predict(x_preds.T)
 #y_preds = est.predict(np.vstack(([1] * len(x_preds), x_preds)).T)
 plt.plot(x_preds, y_preds, color='#C33B3B')
 plt.text(min(env_dists) + 0.6 * (max(env_dists) - min(env_dists)),
-         0.2, 'slope:    %0.3f' % est.params[0],
+         min(gen_dists) + 0.2 * (max(gen_dists) - min(gen_dists)),
+         'slope:    %0.3f' % est.params[0],
          color='#C33B3B', size=9)
 p_val_lt = est.pvalues[0] < 0.001
 assert p_val_lt, 'p-value not less than 0.001!'
 plt.text(min(env_dists) + 0.6 * (max(env_dists) - min(env_dists)),
-         0.05, 'p-value < 0.001',
+         min(gen_dists) + 0.05 * (max(gen_dists) - min(gen_dists)),
+         'p-value < 0.001',
          color='#C33B3B', size=9)
 ax6.set_title('IBE')
 ax6.set_xlabel('environmental distance')
@@ -240,7 +246,7 @@ ax6.set_yticks([])
 
 # TODO: add regression line to each plot
 fig.tight_layout()
-plt.subplots_adjust(left=0.05, bottom=0.07, right=0.98, top=0.96, wspace=0.07,
+plt.subplots_adjust(left=0.04, bottom=0.07, right=0.98, top=0.96, wspace=0.07,
                     hspace=0.16)
 plt.show()
 plt.savefig(os.path.join(img_dir, 'IBD_IBE.pdf'), format='pdf', dpi=1000)

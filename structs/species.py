@@ -676,8 +676,8 @@ class Species(OD):
                                                         dist = dist, k = k)
         return(dists, pairs)
 
-    #method for plotting the species (or a subset of its individuals, by ID)
-    #on top of a layer (or landscape)
+    # method for plotting the species (or a subset of its individuals, by ID)
+    # on top of a layer (or landscape)
     def _plot(self, lyr_num=None, land=None, hide_land=False, individs=None,
               text=False, color='black', edge_color='face', text_color='black',
               cbar=True, size=25, text_size=9, im_interp_method='nearest',
@@ -698,23 +698,37 @@ class Species(OD):
                 text = individs
         else:
             text = None
-        #set the plt_lims
+        # set the plt_lims
         plt_lims = viz._get_plt_lims(land, x, y, zoom_width)
-        #plot the layer(s)
+        # plot the layer(s)
         if hide_land:
             pass
         else:
-            viz._plot_rasters(land, lyr_num = lyr_num,
-                cbar = cbar, im_interp_method = im_interp_method,
-                cmap = land_cmap, plt_lims = plt_lims, ticks=ticks,
-                mask_rast=mask_rast)
-        #and plot the individuals
-        points = viz._plot_points(coords, lyr_num = lyr_num, color = color,
-                                  edge_color = edge_color,
-                                  text_color = text_color, size = size,
-                                  text_size = text_size, alpha = alpha,
-                                  text = text, plt_lims = plt_lims,
-                                  pt_cmap = pt_cmap, vmin = vmin, vmax = vmax,
+            # get the layers' vmin and vmax values, if any of the layers to
+            # be plotted has a change event
+            if ((lyr_num is None and land._changer is not None) or
+                (land._changer is not None
+                 and lyr_num in [*land._changer.change_info])):
+                if lyr_num is None:
+                    land_vmin = [lyr._scale_min for lyr in land.values()]
+                    land_vmax = [lyr._scale_max for lyr in land.values()]
+                else:
+                    land_vmin = [land[lyr_num]._scale_min]
+                    land_vmax = [land[lyr_num]._scale_max]
+            else:
+                land_vmin = land_vmax = None
+            viz._plot_rasters(land, lyr_num=lyr_num,
+                              cbar=cbar, im_interp_method=im_interp_method,
+                              cmap=land_cmap, plt_lims=plt_lims, ticks=ticks,
+                              mask_rast=mask_rast, vmin=land_vmin,
+                              vmax=land_vmax)
+        # and plot the individuals
+        points = viz._plot_points(coords, lyr_num=lyr_num, color=color,
+                                  edge_color=edge_color,
+                                  text_color=text_color, size=size,
+                                  text_size=text_size, alpha=alpha,
+                                  text=text, plt_lims=plt_lims,
+                                  pt_cmap=pt_cmap, vmin=vmin, vmax=vmax,
                                   animate=animate)
         return points
 
@@ -1235,8 +1249,8 @@ def _make_species(land, name, idx, spp_params, burn=False, verbose=False):
         # print verbose output
         if verbose:
             print(('\t\t\tsetting up species changes...\n'
-                   '\t\t\t\t[can take a while,\n\t\t\t\tif movement or\n'
-                   '\t\t\t\tdispersal surfaces will change]\n'))
+                   '\t\t\t\t[can take a while,\n\t\t\t\t if movement or '
+                   'dispersal\n\t\t\t\t surfaces will change]\n'))
         #grab the change params (or None, if
         if 'change' in spp_params.keys():
             ch_params = spp_params.change

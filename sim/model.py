@@ -73,7 +73,7 @@ class Model:
 
         #print verbose output
         if self._verbose:
-            print('MAKING MODEL...\n')
+            print('\nMAKING MODEL...\n')
 
         #set the seed, if required
         self.seed = None

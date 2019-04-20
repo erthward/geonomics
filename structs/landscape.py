@@ -101,11 +101,18 @@ class Layer:
     def _write_txt_array(self, filepath):
         _write_txt_array(filepath, self)
 
+    # method for the getting the vmin and vmax values for plotting
+    def _get_plot_vmin_vmax(self):
+        return (self._scale_min, self._scale_max)
+
     #method for plotting the layer
     def _plot(self, cbar=True, im_interp_method='nearest',
             cmap=None, x=None, y=None, zoom_width=None,
             vmin=None, vmax=None, ticks=None, mask_rast=None):
         plt_lims = _get_plt_lims(self, x, y, zoom_width)
+        # get the vmin and vmax values, if not provided
+        if vmin is None and vmax is None:
+            vmin, vmax = self._get_plot_vmin_vmax()
         _plot_rasters(self, cbar=cbar,
             im_interp_method=im_interp_method, cmap=cmap,
             plt_lims=plt_lims, vmin=vmin, vmax=vmax, ticks=ticks,
@@ -130,13 +137,15 @@ class Layer:
 
     # method for getting colorbar ticks
     def _get_cbar_ticks_and_minmax_scaled_vals(self):
-        if self.type == 'file':
-            rast = self._get_rast_in_native_units()
-            min_val = rast.min()
-            max_val = rast.max()
-        else:
-            min_val = self.rast.min()
-            max_val = self.rast.max()
+        #if self.type == 'file':
+            #rast = self._get_rast_in_native_units()
+            #min_val = rast.min()
+            #max_val = rast.max()
+        #else:
+        #    min_val = self.rast.min()
+        #    max_val = self.rast.max()
+        min_val = self._scale_min
+        max_val = self._scale_max
         ticks = np.round(np.linspace(min_val, max_val, 5), 3)
         return ticks, min_val, max_val
 
@@ -290,6 +299,15 @@ class Landscape(dict):
               zoom_width=None, vmin=None, vmax=None, ticks=None,
               mask_rast=None):
         plt_lims = _get_plt_lims(self, x, y, zoom_width)
+        # get the vmin and vmax values, if not provided
+        if vmin is None and vmax is None:
+            if lyr_num is None:
+                vmins_vmaxs = [lyr._get_plot_vmin_vmax(
+                                                    ) for lyr in self.values()]
+                vmin = [v[0] for v in vmins_vmaxs]
+                vmax = [v[1] for v in vmins_vmaxs]
+            else:
+                vmin, vmax = self[lyr_num]._get_plot_vmin_vmax()
         _plot_rasters(self, lyr_num=lyr_num, cbar=cbar,
                       im_interp_method=im_interp_method, cmap=cmap,
                       plt_lims=plt_lims, vmin=vmin, vmax=vmax, ticks=ticks,

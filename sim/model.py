@@ -902,6 +902,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                               "is False)."))
 
         # set the model's _verbose flag
+        old_verbose = deepcopy(self._verbose)
         self._verbose = verbose
 
         # if verbose, add a space below the command line prompt,
@@ -922,7 +923,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                 points = self.plot(spp=0, animate=True)
             plt.ion()
             plt.draw()
-            plt.pause(0.25)
+            plt.pause(0.1)
 
         # run the model for the stipulated number of timesteps
         for t in range(T):
@@ -965,7 +966,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
             if extinct:
                 break
         # reset self._verbose to False
-        self._verbose = False
+        self._verbose = old_verbose
 
     # method to use the self._data_collector object to sample and write data
     def write_data(self):

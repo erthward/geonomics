@@ -33,7 +33,7 @@ def make_island_landscape(n, w, d):
     w = island width
     d = interisland diagonal distance (i.e. distance/sqrt(2))
     """
-    #determine land dimension (i.e. nrows & ncols, hence n diagonal cells)
+    #determine land dimension (i.e. ncols & nrows, hence n diagonal cells)
     dim = int(n * (w + d) + d)
     #create landscape
     land = np.zeros([dim]*2)

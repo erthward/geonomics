@@ -128,7 +128,7 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
     # if integer-coordinates asked for, or land is a numpy array,
     # get the cell-bounds from cell-number integers
     if isinstance(land, np.ndarray) or int_coords:
-        x_cell_bds, y_cell_bds = [np.linspace(0, dim,
+        y_cell_bds, x_cell_bds = [np.linspace(0, dim,
                                               dim+1) for dim in land.shape]
 
     # plot all with the same cmap, if the cmap argument was provided
@@ -284,8 +284,9 @@ def _plot_points(points, lyr_num=None, color='black',
 
     return points
 
+
 def _get_lyr_plt_lims(land):
-    #NOTE: these are set up so that 0,0 is in the upper-left corner
+    # NOTE: these are set up so that 0,0 is in the upper-left corner
     xlim, ylim = [tuple(np.sort((land.ulc[i] - 0.5 * land.res[i],
                                  land.ulc[i] + (land.dim[i] + 0.5) * land.res[
                                                        i]))) for i in range(2)]
@@ -294,10 +295,10 @@ def _get_lyr_plt_lims(land):
 
 
 def _get_zoom_plt_lims(x, y, zoom_width):
-    #get zoom-half-width
+    # get zoom-half-width
     zhw = zoom_width/2
-    xlim = (x- zhw, x+zhw)
-    ylim = (y+ zhw, y-zhw)
+    xlim = (x - zhw, x + zhw)
+    ylim = (y + zhw, y - zhw)
     lims = (xlim, ylim)
     return(lims)
 

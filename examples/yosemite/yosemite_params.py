@@ -36,7 +36,7 @@ params = {
     ##############
         'main': {
             #y,x (a.k.a. i,j) dimensions of the Landscape
-            'dim':                      (150, 150),
+            'dim':                      (162, 157),
             #resolution of the Landscape
             'res':                      (0, 0),
             #upper-left corner of the Landscape
@@ -158,6 +158,60 @@ params = {
                 }, # <END> layer num. 1
 
 
+            #layer name (LAYER NAMES MUST BE UNIQUE!)
+            'ppt': {
+
+        #######################################
+        #### layer num. 2: init parameters ####
+        #######################################
+
+                #initiating parameters for this layer
+                'init': {
+
+                    #parameters for a 'file'-type Layer
+                    'file': {
+                        #</path/to/file>.<ext>
+                        'filepath': ('./geonomics/examples/yosemite/'
+                                     'yosemite_lyrs/ppt_1980-2010.tif'),
+                        #minimum value to use to rescale the Layer to [0,1]
+                        'scale_min_val':                81.53713,
+                        #maximum value to use to rescale the Layer to [0,1]
+                        'scale_max_val':                2171.341,
+                        #decimal precision to use for coord-units (ulc & res)
+                        'coord_prec':                   8,
+                        #units of this file's variable
+                        'units':                    '$mm/yr$',
+
+                        }, # <END> 'file'
+
+                    }, # <END> 'init'
+
+            #########################################
+            #### layer num. 0: change parameters ####
+            #########################################
+
+                #landscape-change events for this Layer
+                'change': {
+
+                    0: {
+                        #array or file for final raster of event, or directory
+                        #of files for each stepwise change in event
+                        'change_rast': ('./geonomics/examples/yosemite/'
+                                     'yosemite_lyrs/ppt'),
+
+                        #starting timestep of event
+                        'start_t':          509,
+                        #ending timestep of event
+                        'end_t':            594,
+                        #number of stepwise changes in event
+                        'n_steps':          18,
+                        }, # <END> event 0
+
+                    }, # <END> 'change'
+
+                }, # <END> layer num. 0
+
+
 
     #### NOTE: Individual Layers' sections can be copy-and-pasted (and
     #### assigned distinct keys and names), to create additional Layers.
@@ -178,7 +232,7 @@ params = {
         'species': {
 
             #species name (SPECIES NAMES MUST BE UNIQUE!)
-            'spp_0': {
+            'Sceloporus graciosus': {
 
             #####################################
             #### spp num. 0: init parameters ####
@@ -315,7 +369,7 @@ params = {
                             #trait-selection Layer name
                             'layer':                'tmp',
                             #polygenic selection coefficient
-                            'phi':                  0.05,
+                            'phi':                  0.1,
                             #number of loci underlying trait
                             'n_loci':               10,
                             #mutation rate at loci underlying trait
@@ -403,7 +457,7 @@ params = {
                 #when to collect data
                 'when':                 100,
                 #whether to save current Layers when data is collected
-                'include_landscape':    True,
+                'include_landscape':    False,
                 #whether to include fixed loci in VCF files
                 'include_fixed_sites':  True,
                 },

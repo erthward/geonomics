@@ -2,6 +2,8 @@
 --------------------------------------------------------------------------------------
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
+
+        5 make res, ulc, and dim attributes of the land all use either y,x or x,y convention (right now they're mixed!)
         
         5 change 'mod' (which overwrites the modulus function) to 'model'
 

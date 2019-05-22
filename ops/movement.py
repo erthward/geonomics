@@ -92,9 +92,9 @@ def _do_movement(spp):
     # NOTE: subtract a small value to avoid having the dimension itself set
     # as a coordinate, when the coordinates are converted to np.float32
     new_x = old_x + dist_x
-    new_x = np.clip(new_x, a_min=0, a_max=spp._land_dim[1]-0.001)
+    new_x = np.clip(new_x, a_min=0, a_max=spp._land_dim[0]-0.001)
     new_y = old_y + dist_y
-    new_y = np.clip(new_y, a_min=0, a_max=spp._land_dim[0]-0.001)
+    new_y = np.clip(new_y, a_min=0, a_max=spp._land_dim[1]-0.001)
 
     # then feed the new locations into each individual's set_pos method
     [ind._set_pos(x, y) for ind, x, y in zip(spp.values(), new_x, new_y)]
@@ -126,9 +126,9 @@ def _do_dispersal(spp, parent_midpoint_x, parent_midpoint_y,
         offspring_x = parent_midpoint_x + dist_x
         offspring_y = parent_midpoint_y + dist_y
         offspring_x = np.clip(offspring_x, a_min=0,
-                              a_max=spp._land_dim[1]-0.001)
-        offspring_y = np.clip(offspring_y, a_min=0,
                               a_max=spp._land_dim[0]-0.001)
+        offspring_y = np.clip(offspring_y, a_min=0,
+                              a_max=spp._land_dim[1]-0.001)
         within_landscape = ((offspring_x > 0
                              and offspring_x < spp._land_dim[0]) and
                             (offspring_y > 0 and

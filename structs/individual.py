@@ -128,13 +128,13 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
         x,y = _do_dispersal(parental_centerpoint)
     else:
         #randomly assign individual a valid starting location
-        y,x = r.rand(2)*dim
+        x,y = r.rand(2)*dim
         #clip to 0.01 under the dimensions, so that for landscapes even up to
-        #~10000 on a side (this is bigger than I expect most usres would
+        #~10000 on a side (this is bigger than I expect most users would
         #want to run) np.float32 can't return a number rounded up to
         #the dimension itself if an extremely high value is drawn
-        x = np.clip(x, 0, dim[1]-0.001)
-        y = np.clip(y, 0, dim[0]-0.001)
+        x = np.clip(x, 0, dim[0]-0.001)
+        y = np.clip(y, 0, dim[1]-0.001)
 
     #set the genome, if necessary
     if genomic_architecture is not None or new_genome is not None:

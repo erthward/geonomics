@@ -59,11 +59,11 @@ class Layer:
         self.idx = None
         self.type = lyr_type
         self.name = str(name)
-        #the y,x (i.e. i,j) dimensions
+        #the x,y (i.e. j,i) dimensions
         self.dim = dim
         assert type(self.dim) in [tuple, list], ("dim must be expressed "
                                                  "as a tuple or a list")
-        #set the resoultion (res; i.e. y,x cell sizes) and upper-left corner
+        #set the resoultion (res; i.e. x,y cell sizes) and upper-left corner
         #(ulc) to defaults; will be reset if layer read in from a GIS raster or
         #numpy txt array file
         self.res = res
@@ -120,8 +120,8 @@ class Layer:
 
     # method to get the tickmarks to use to plot the layer
     def _get_coord_ticks(self):
-        x_ticks = np.int64(np.round(np.linspace(0, self.dim[1]-1, 8)))
-        y_ticks = np.int64(np.round(np.linspace(0, self.dim[0]-1, 8)))
+        x_ticks = np.int64(np.round(np.linspace(0, self.dim[0]-1, 8)))
+        y_ticks = np.int64(np.round(np.linspace(0, self.dim[1]-1, 8)))
         x_tick_labs = [round(self.ulc[0] + (self.res[0] * (loc + 0.5)),
                              min(3, self.coord_prec)) for loc in x_ticks]
         y_tick_labs = [round(self.ulc[1] + (self.res[1] * (loc + 0.5)),
@@ -198,7 +198,7 @@ class Landscape(dict):
         #get the order of magnitude of the larger land dimension
         #(used when zero-padding cell-coorindate strings)
         self._dim_om = max([len(str(d)) for d in self.dim])
-        #set the resoultion (res; i.e. y,x cell sizes), upper-left corner
+        #set the resoultion (res; i.e. x,y cell sizes), upper-left corner
         #(ulc), and projection (prj) to the provided values
         self.res = res
         # get the resolution ratio (for calculating individuals' movement
@@ -282,7 +282,7 @@ class Landscape(dict):
     def _set_raster(self, lyr_num, rast):
         self[lyr_num].rast = rast
 
-    #method to set all lyrs' res and ulc attributes 
+    #method to set all lyrs' res and ulc attributes
     def _set_lyrs_res_ulc_prj(self):
         [setattr(lyr, 'res', self.res) for lyr in self.values()]
         [setattr(lyr, 'ulc', self.ulc) for lyr in self.values()]
@@ -530,7 +530,7 @@ def _make_landscape(mod, params, num_hab_types=2, verbose=False):
             #check that its dimensions match those of the Landscape
             assert lyr_rast.shape == dim, ("The dimensions of the NLM "
                 "created appear to differ from the Landscape dims: "
-                "Landscape has y,x (i.e. i,j) dims %s, "
+                "Landscape has x,y (i.e. j,i) dims %s, "
                 "NLM has dims %s.\n\n") % (str(dim), str(lyr_rast.shape))
             #set the nlm as the nth Layer in the Landscape
             lyrs[n] = Layer(lyr_rast, lyr_type = lyr_type,
@@ -621,10 +621,10 @@ def _get_file_rasters(land_dim, names, lyr_nums, filepaths, coord_precs,
         #check that the dimensions are right
         assert rast_dim == land_dim, ('Variable land_dim and the dimensions '
             'of the input raster %s appear to differ. Please clip %s to '
-            'the correct dimensions and try again. %s has dimensions '
-            '(%i, %i), but land has dimensions (%i,%i)') % (filepath,
-            filepath, filepath, rast_dim[0], rast_dim[1], land_dim[0],
-                                                            land_dim[1])
+            'the correct dimensions and try again, because it has x,y '
+            'dimensions (%i, %i), but land has x,y '
+            'dimensions (%i,%i)') % (filepath,
+            filepath, rast_dim[0], rast_dim[1], land_dim[0], land_dim[1])
         #if either the scale_min_val or scale_max_val for this Layer is None,
         #set it to the min or max value of this Layer's array
         if scale_min_vals[n] is None:

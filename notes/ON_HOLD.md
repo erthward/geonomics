@@ -1,4 +1,5 @@
 # IDEAS / TO-DO
+- consider adding ability to use/output tree sequence of spatial pedigree, then building tools to facilitate calculations of emergent properties of interest (e.g. migration rate/gene flow/dispersal flux across specific lines) from the spatial pedigree
 - add functionality to model male dispersal of gametes (i.e. sperm/pollen) for modeling of plants, etc
 - add any helper functions for manually resetting the landscape rasters of a model after it's created but before it's run?
 - add any functions for stipulating 'island'-type landscapes?

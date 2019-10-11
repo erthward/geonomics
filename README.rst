@@ -80,5 +80,5 @@ Disclaimer
 ----------
 **Geonomics** claims no affiliation with the philosophy and economic ideology
 `Georgism <https://en.wikipedia.org/wiki/Georgism>`_, sometimes referred to as
-'geonomics'. It is a portmanteau of *geo*\graphy and ge*nomics*.
+'geonomics'. It is a portmanteau of ***geo***\graphy and ge\*nomics*.
 I just thought it sounded neat, and found it delightfully confusing.

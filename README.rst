@@ -4,23 +4,23 @@ Geonomics
 
 .. code-block:: python
 
-                   ##  ::::::          :::    :: ::::::::::##
-             ##:::::    ::::   :::      ::    :: :: ::::::::::: :##
-          ##::::::::     ::            ::   ::::::::::::::::::::::::##
-        ##:::::::::                      :::::::::: :::::: ::::::::  :##
-      ## : ::::  ::                    ::::  : ::    :::::::: : ::  :   ##
-     ##ggggg  eeeee ooooo   nn   nn   ooooo   mm   mm iiiiii  ccccc sssss##
-    ##gg     ee    oo   oo  nnn  nn  oo   oo  mm   mm   ii   cc     ss    ##
-    ##gg     eeee oo     oo nn n nn oo     oo mmm mmm   ii   cc     ssssss##
-    ##gg ggg eeee oo     oo nn  nnn oo     oo mm m mm   ii   cc         ss##
-    ##gg   g ee    oo   oo  nn   nn  oo   oo  mm   mm   ii   cc        sss##
-     ##ggggg  eeeee ooooo   nn   nn   ooooo   mm   mm iiiiii  ccccc sssss##
-      ##    :::::::::             :::::::::::: ::              ::  :   :##
-        ##:   :::::                   ::::::: :::             ::::::: ##
-          ##   :::                     ::::::  ::              :::::##
-             ## ::                      ::::                     ##
-                   ##                                      ##
-
+                                 ##  ::::::          :::    :: ::::::::::##
+                           ##:::::    ::::   :::      ::    :: :: ::::::::::: :##
+                        ##::::::::     ::            ::   ::::::::::::::::::::::::##
+                      ##:::::::::                      :::::::::: :::::: ::::::::  :##
+                    ## : ::::  ::                    ::::  : ::    :::::::: : ::  :   ##
+                   ##ggggg  eeeee ooooo   nn   nn   ooooo   mm   mm iiiiii  ccccc sssss##
+                  ##gg     ee    oo   oo  nnn  nn  oo   oo  mm   mm   ii   cc     ss    ##
+                  ##gg     eeee oo     oo nn n nn oo     oo mmm mmm   ii   cc     ssssss##
+                  ##gg ggg eeee oo     oo nn  nnn oo     oo mm m mm   ii   cc         ss##
+                  ##gg   g ee    oo   oo  nn   nn  oo   oo  mm   mm   ii   cc        sss##
+                   ##ggggg  eeeee ooooo   nn   nn   ooooo   mm   mm iiiiii  ccccc sssss##
+                    ##    :::::::::             :::::::::::: ::              ::  :   :##
+                      ##:   :::::                   ::::::: :::             ::::::: ##
+                        ##   :::                     ::::::  ::              :::::##
+                           ## ::                      ::::                     ##
+                                 ##                                      ##
+              
  
 
 **Geonomics** allows users to build and run arbitrarily complex, forward-time,

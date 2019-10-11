@@ -75,6 +75,20 @@ This will build and run **geonomics**' default model, return its `Model` object
 as `mod`, and leave its parameters file in your current working directory under
 the name 'GNX_default_model_params.py'.
 
+How it works
+------------
+
+~~~~~~~~~~~~~~~~~~
+Conceptual Diagram
+~~~~~~~~~~~~~~~~~~
+
+.. image:: ./img/conceptual_diagram.jpg
+
+~~~~~~~~~~~~~~~~~~
+Procedural Diagram
+~~~~~~~~~~~~~~~~~~
+
+.. image:: ./img/procedural_diagram.jpg
 
 Disclaimer
 ----------

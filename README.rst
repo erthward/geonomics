@@ -121,20 +121,19 @@ a movement and carrying capacity layer (below). Surrounding the landscape is a
 flow-diagram of the major operations during a time step. Operations in dashed
 boxes are optional.
 
-- **top-left**: During the movement stages, individuals move
+- **movement**: During the movement stages (top-left), individuals move
   along movement vectors drawn from various distribution options.
 
-- **top-right**: During the mating stage an individual (purple outline) randomly
+- **mating**: During the mating stage (top-right), an individual (purple outline) randomly
   chooses a mate (green outline) from all potential mates within its mating radius
   (dashed circle). The resulting offspring (dashed outline)  disperses from its
   parents' midpoint along a randomly drawn dispersal vector.
 
-
-- **bottom-right**: During the mortality stage deaths are modeled as a Bernoulli
+- **mortality**: During the mortality stage (bottom-right), deaths are modeled as a Bernoulli
   process, with the probability of mortality a product of density-dependence
   and selection on all traits.
 
-- **bottom-left**: During the changes stage, demographic change events
+- **changes**: During the changes stage (bottom-left), demographic change events
   (not pictured) and environmental change events (represented as a
   series of change rasters corresponding to scheduled time steps,
   t1, t2, …, tn), take place.

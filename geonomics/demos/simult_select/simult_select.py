@@ -18,7 +18,8 @@ start = time.time()
 
 # RUN THE MODEL WITHOUT LINKAGE
 # make the model
-mod = gnx.make_model('./geonomics/examples/sim_sel/sim_sel_params.py')
+mod = gnx.make_model(('./geonomics/examples/simult_select/'
+                      'simult_select_params.py'))
 # run it
 mod.run(verbose=True)
 

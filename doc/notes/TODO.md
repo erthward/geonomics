@@ -1,6 +1,18 @@
 --------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------
 
+# FOR PACKAGE PUBLICATION:
+
+- figure out best way to include and maintain docs
+
+- debug and add tests back in
+
+- rework demo/example scripts, then include a demo/__init__.py to make demos a module
+
+- figure out how to get ./geonomics/__init__.py to correctly read in README.rst as the package-level docs (see commented-out bit)
+
+- figure out how to include yosemite package_data in setup.py (see commented-out bit)
+
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
         5 make res, ulc, and dim attributes of the land all use either y,x or x,y convention (right now they're mixed!)

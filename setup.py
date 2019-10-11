@@ -8,7 +8,8 @@ def readme():
 
 setuptools.setup(
     name='geonomics',
-    version='0.0',
+    # version num.: MAJOR.MINOR.PATCH
+    version='0.0.0',
     author='Drew Ellison Hart',
     author_email='drew.ellison.hart@gmail.com',
     description='A package for landscape genomic simulation',
@@ -16,7 +17,13 @@ setuptools.setup(
     long_description_content_type='text/x-rst',
     url='https://github.com/drewhart/geonomics',
     include_package_data=True,
-    packages=setuptools.find_packages(),
+    # packages=setuptools.find_packages(),
+    packages=['geonomics',
+              'geonomics.sim',
+              'geonomics.utils',
+              'geonomics.structs',
+              'geonomics.ops',
+              'geonomics.help'],
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
@@ -29,10 +36,11 @@ setuptools.setup(
     keywords=('landscape genomics genetics ecology evolution simulation model '
               'environmental model agent-based'),
     project_urls={
-        'Documentation': 'PUTDOCURLHERE',
-        'Methods Paper': 'URLTOMETHODSPAPERHERE',
+        'Documentation': ('https://htmlpreview.github.io/?https://github.com/'
+                          'drewhart/geonomics/blob/master/doc/built/doc.html'),
+        # 'Methods Paper': 'PAPER URL HERE!',
         'Source': 'https://github.com/drewhart/geonomics',
-        'Tracker': 'BUGTRACKERSITHERE',
+        # 'Tracker': 'BUGTRACKERSITHERE',
     },
     install_requires=['numpy', 'matplotlib', 'pandas', 'scipy', 'scikit-learn',
                       'statsmodels', 'shapely', 'bitarray', 'pyvcf'],
@@ -41,7 +49,7 @@ setuptools.setup(
         'reading and writing of common raster data formats': ['GDAL']
     },
     python_requires='>=3.5',
-    packages_data={
-        'example': ['yosemite_30yr_normals_90x90.tif']
-    },
+    # package_data={
+    # 'demos': ['geonomics/demos/yosemite/yosemite_30yr_normals_90x90.tif']
+    # },
 )

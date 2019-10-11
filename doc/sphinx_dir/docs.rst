@@ -7,26 +7,24 @@
 
 .. code-block:: python
 
- 
-                   ##  ::::::          :::    :: ::::::::::##
-             ##:::::    ::::   :::      ::    :: :: ::::::::::: :##
-          ##::::::::     ::            ::   ::::::::::::::::::::::::##
-        ##:::::::::                      :::::::::: :::::: ::::::::  :##
-      ## : ::::  ::                    ::::  : ::    :::::::: : ::  :   ##
-     ##GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS##
-    ##GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS    ##
-    ##GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS##
-    ##GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS##
-    ##GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS##
-     ##GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS##
-      ##    :::::::::               :::::::::: ::              ::  :   :##
-        ##:   :::::                    :::::: :::             ::::::: ##
-          ##   :::                      :::::  ::              :::::##
-             ## ::                      ::::                     ##
-                   ##                                      ##
-                      ## :: ::    :::            ##
 
-
+                    #   ::::::          :::    :: :::::::::::#
+             #::::::    ::::   :::      ::    :: :: ::::::::::: ::#
+          #:::::::::     ::            ::   :::::::::::::::::::::::::#
+        #::::::::::                      :::::::::: :::::: ::::::::  ::#
+      #  : ::::  ::                    ::::  : ::    :::::::: : ::  :    #
+     # GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
+    # GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS     #
+    # GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS #
+    # GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS #
+    # GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS #
+     # GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
+      #     :::::::::               :::::::::: ::              ::  :   : #
+        #::   :::::                    :::::: :::             :::::::  #
+          #    :::                      :::::  ::              ::::: #
+             #  ::                      ::::                      #
+                   #                                        #
+                      #  :: ::    :::             #
 
 
 .. image:: ./yosemite_header_img.png
@@ -4272,4 +4270,3 @@ Number of main timesteps:                       1000
 Geo-data collected:                             {csv, geotiff}
 Gen-data collected:                             {vcf, fasta}
 Stats collected:                                {maf, ld, mean_fit, het, Nt}
-

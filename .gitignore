@@ -16,7 +16,7 @@
 *.geojson
 *.vcf
 *.fasta
-/dist/
+/dist/*
 /*.egg-info
 /*.whl
 /*.gz

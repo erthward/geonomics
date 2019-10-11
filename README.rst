@@ -1,31 +1,28 @@
 *********
 Geonomics
 *********
-.. role:: underline
-    :class: underline
 
+Forward-time, individual-based landscape genomic simulation in Python.
 
 .. code-block:: python
 
-
- 
-                   ##  ::::::          :::    :: ::::::::::##
-             ##:::::    ::::   :::      ::    :: :: ::::::::::: :##
-          ##::::::::     ::            ::   ::::::::::::::::::::::::##
-        ##:::::::::                      :::::::::: :::::: ::::::::  :##
-      ## : ::::  ::                    ::::  : ::    :::::::: : ::  :   ##
-     ##GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS##
-    ##GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS    ##
-    ##GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS##
-    ##GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS##
-    ##GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS##
-     ##GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS##
-      ##    :::::::::               :::::::::: ::              ::  :   :##
-        ##:   :::::                    :::::: :::             ::::::: ##
-          ##   :::                      :::::  ::              :::::##
-             ## ::                      ::::                     ##
-                   ##                                      ##
-                      ## :: ::    :::            ##
+                   #   ::::::          :::    :: :::::::::::#
+             #::::::    ::::   :::      ::    :: :: ::::::::::: ::#
+          #:::::::::     ::            ::   :::::::::::::::::::::::::#
+        #::::::::::                      :::::::::: :::::: ::::::::  ::#
+      #  : ::::  ::                    ::::  : ::    :::::::: : ::  :    #
+     # GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
+    # GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS     #
+    # GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS #
+    # GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS #
+    # GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS #
+     # GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
+      #     :::::::::               :::::::::: ::              ::  :   : #
+        #::   :::::                    :::::: :::             :::::::  #
+          #    :::                      :::::  ::              ::::: #
+             #  ::                      ::::                      #
+                   #                                        #
+                      #  :: ::    :::             #
 
 
 
@@ -66,6 +63,17 @@ and the `original methods paper <PAPER_URL_HERE>`_.
     - numerous visualization methods to aid in model design, exploration,
       analysis, and presentation
 
+
+Installation
+------------
+
+Geonomics can be installed with `pip`:
+
+.. code-block:: python
+
+    pip install geonomics
+
+
 Quickstart
 ----------
 For impatient beginners, the following code will run Geonomics' default model::
@@ -82,8 +90,8 @@ For patient folks, the following diagrams should provide more insight, and the
 provides full details.
 
 
-How it works
-------------
+Details
+-------
 
 Procedural Diagram
 ~~~~~~~~~~~~~~~~~~

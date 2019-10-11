@@ -4,24 +4,28 @@ Geonomics
 
 .. code-block:: python
 
-                                 ##  ::::::          :::    :: ::::::::::##
-                           ##:::::    ::::   :::      ::    :: :: ::::::::::: :##
-                        ##::::::::     ::            ::   ::::::::::::::::::::::::##
-                      ##:::::::::                      :::::::::: :::::: ::::::::  :##
-                    ## : ::::  ::                    ::::  : ::    :::::::: : ::  :   ##
-                   ##ggggg  eeeee ooooo   nn   nn   ooooo   mm   mm iiiiii  ccccc sssss##
-                  ##gg     ee    oo   oo  nnn  nn  oo   oo  mm   mm   ii   cc     ss    ##
-                  ##gg     eeee oo     oo nn n nn oo     oo mmm mmm   ii   cc     ssssss##
-                  ##gg ggg eeee oo     oo nn  nnn oo     oo mm m mm   ii   cc         ss##
-                  ##gg   g ee    oo   oo  nn   nn  oo   oo  mm   mm   ii   cc        sss##
-                   ##ggggg  eeeee ooooo   nn   nn   ooooo   mm   mm iiiiii  ccccc sssss##
-                    ##    :::::::::             :::::::::::: ::              ::  :   :##
-                      ##:   :::::                   ::::::: :::             ::::::: ##
-                        ##   :::                     ::::::  ::              :::::##
-                           ## ::                      ::::                     ##
-                                 ##                                      ##
-              
+
  
+                   ##  ::::::          :::    :: ::::::::::##
+             ##:::::    ::::   :::      ::    :: :: ::::::::::: :##
+          ##::::::::     ::            ::   ::::::::::::::::::::::::##
+        ##:::::::::                      :::::::::: :::::: ::::::::  :##
+      ## : ::::  ::                    ::::  : ::    :::::::: : ::  :   ##
+     ##GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS##
+    ##GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS    ##
+    ##GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS##
+    ##GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS##
+    ##GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS##
+     ##GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS##
+      ##    :::::::::               :::::::::: ::              ::  :   :##
+        ##:   :::::                    :::::: :::             ::::::: ##
+          ##   :::                      :::::  ::              :::::##
+             ## ::                      ::::                     ##
+                   ##                                      ##
+                      ## :: ::    :::            ##
+
+
+
 
 **Geonomics** allows users to build and run arbitrarily complex, forward-time,
 agent-based, and spatially explicit simulations for landscape genomics. It is

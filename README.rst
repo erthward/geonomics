@@ -66,7 +66,7 @@ The following is a short list of highlights. For the full monty, please see the
 
 Quickstart
 ----------
-The impatient beginner can try the following::
+For impatient beginners, the following code will run Geonomics' default model::
 
   >>> import geonomics as gnx
   >>> mod = gnx.run_default_model()
@@ -75,20 +75,63 @@ This will build and run **geonomics**' default model, return its `Model` object
 as `mod`, and leave its parameters file in your current working directory under
 the name 'GNX_default_model_params.py'.
 
+For patient folks, the following diagrams should provide more insight,
+and the `documentation <URL_HERE>`_ provides full details.
+
+
 How it works
 ------------
 
+Procedural Diagram
 ~~~~~~~~~~~~~~~~~~
+
+.. image:: ./img/procedural_diagram.jpg
+
+Users can run Geonomics models in as few as three steps.
+
+1. **Create and edit a parameters file**: After importing geonomics as `gnx`,
+   users can run the function `gnx.make_parameters_file()` function, feeding in
+   a series of arguments to indicate the desired number and type of landscape layers,
+   number and parameterization of species, data and statistics to be recorded, and parameters
+   file name. Users can then edit the default parameter values in the resulting file to parameterize
+   their model. Within the parameters file, they have the option of referencing external files
+   to be used by their model, including static raster files or directories of raster time series, as well
+   as a CSV file defining a custom genomic architecture.
+
+2. **Use the parameters file to create a model**: After setting up their parameters file, users can
+   call the `gnx.make_model()` function, providing their parameters file's name as an argument. This
+   will create a new `gnx.Model` object, containing a `gnx.Landscape` with the defined number of layers,
+   and a `gnx.Community` with the defined number of species composed of starting individuals. The landscape,
+   species, and individuals will all be described by a number of characteristics, in accordance with the values
+   defined in the parameters file.
+
+3. **Run the model**: Users can then call the model's `mod.run` or `mod.walk` methods, to either run their model
+   to completion or run it manually for some number of time steps. Each time step will include, as applicable,
+   movement, mating, mortality, environmental and demographic change, and data-writing operations. For more detail
+   on these operations, see the conceptual diagram that follows.
+
 Conceptual Diagram
 ~~~~~~~~~~~~~~~~~~
 
 .. image:: ./img/conceptual_diagram.jpg
 
-~~~~~~~~~~~~~~~~~~
-Procedural Diagram
-~~~~~~~~~~~~~~~~~~
+Operations during the main phase of a Geonomics model run. In the center is a
+species on a multi-layer landscape that includes a selection layer (above) and
+a movement and carrying capacity layer (below). Surrounding the landscape is a
+flow-diagram of the major operations during a time step. Operations in dashed
+boxes are optional. During the movement stages (top-left), individuals move
+along movement vectors drawn from various distribution options.
+During the mating stage (top-right) an individual (purple outline) randomly
+chooses a mate (green outline) from all potential mates within its mating radius
+(dashed circle). The resulting offspring (dashed outline)  disperses from its
+parents' midpoint along a randomly drawn dispersal vector.
+During the mortality stage (bottom-right) deaths are modeled as a Bernoulli
+process, with the probability of mortality a product of density-dependence
+and selection on all traits. During the changes stage (bottom-left),
+environmental and demographic change events, which can be represented by a
+series of change rasters corresponding to scheduled time steps
+(t1, t2, …, tn), take place.
 
-.. image:: ./img/procedural_diagram.jpg
 
 Disclaimer
 ----------

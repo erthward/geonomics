@@ -9,7 +9,7 @@ def readme():
 setuptools.setup(
     name='geonomics',
     # version num.: MAJOR.MINOR.PATCH
-    version='0.0.0',
+    version='0.0.1',
     author='Drew Ellison Hart',
     author_email='drew.ellison.hart@gmail.com',
     description='A package for landscape genomic simulation',
@@ -42,8 +42,9 @@ setuptools.setup(
         'Source': 'https://github.com/drewhart/geonomics',
         # 'Tracker': 'BUGTRACKERSITHERE',
     },
-    install_requires=['numpy', 'matplotlib', 'pandas', 'scipy', 'scikit-learn',
-                      'statsmodels', 'shapely', 'bitarray', 'pyvcf'],
+    install_requires=['numpy', 'matplotlib', 'pandas', 'geopandas', 'scipy',
+                      'scikit-learn', 'statsmodels', 'shapely', 'bitarray',
+                      'pyvcf'],
     extras_require={
         'simulation on neutral landscape models': ['nlmpy'],
         'reading and writing of common raster data formats': ['GDAL']

@@ -2,7 +2,7 @@
 Geonomics
 *********
 
-Forward-time, individual-based landscape genomic simulation in Python.
+Forward-time, individual-based, landscape genomic simulation in Python.
 
 .. code-block:: python
 
@@ -11,12 +11,12 @@ Forward-time, individual-based landscape genomic simulation in Python.
           #:::::::::     ::            ::   :::::::::::::::::::::::::#
         #::::::::::                      :::::::::: :::::: ::::::::  ::#
       #  : ::::  ::                    ::::  : ::    :::::::: : ::  :    #
-     # GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
+     # GGGGG  EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
     # GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS     #
     # GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS #
     # GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS #
     # GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS #
-     # GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
+     # GGGGG  EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
       #     :::::::::               :::::::::: ::              ::  :   : #
         #::   :::::                    :::::: :::             :::::::  #
           #    :::                      :::::  ::              ::::: #
@@ -141,7 +141,7 @@ boxes are optional.
   parents' midpoint along a randomly drawn dispersal vector.
 
 - **mortality**: During the mortality stage (bottom-right), deaths are modeled as a Bernoulli
-  process, with the probability of mortality a product of density-dependence
+  process, with the probability of mortality being a product of density-dependence
   and selection on all traits.
 
 - **changes**: During the changes stage (bottom-left), demographic change events

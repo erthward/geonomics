@@ -572,8 +572,6 @@ def _make_landscape(mod, params, num_hab_types=2, verbose=False):
                  v) for n, v in zip(file_lyr_params['lyr_nums'],
                                     file_lyr_params['coord_precs'])]
 
-        lyrs[lyr_name].coord_prec = file_lyr_params['coord_precs'][lyr_name]
-
     #create the land object
     land = Landscape(lyrs, res=res, ulc=ulc, prj=prj, mod=mod)
 

@@ -55,6 +55,7 @@ for phi in phis:
             i.g[nonneut_loc, :]) for i in mod.comm[0].values(
                              ) if i.e[0] == allele]
         allele_freq = sum(allele_counts) / (2 * len(allele_counts))
+        print(allele_freq)
         allele_freqs_this_phi[allele].append(allele_freq)
     # walk the model, calculating the 1-allele freq at the non-neutral locus
     # after each timestep, for each half of the landscape
@@ -68,6 +69,7 @@ for phi in phis:
                 i.g[nonneut_loc, :]) for i in mod.comm[0].values(
                                  ) if i.e[0] == allele]
             allele_freq = sum(allele_counts) / (2 * len(allele_counts))
+            print(allele_freq)
             allele_freqs_this_phi[allele].append(allele_freq)
         # get ending environmental values for each individual
         new_env_vals = {i.idx: i.e[0] for i in mod.comm[0].values()}
@@ -122,6 +124,7 @@ for phi in phis:
     [expected_this_phi[allele].append(
             allele_freqs[phi][allele][0]) for allele in (0, 1)]
     for t in range(T):
+        print('TIME IS ' + str(t))
         for allele in [*expected_this_phi]:
             # get the current 0- and 1-allele freqs for this allele's half
             # of the environment
@@ -160,8 +163,9 @@ for phi in phis:
             # add the expected change in 1-allele freq to the previous
             # timestep's 1-allele freq to get the expected freq for this
             # timestep
-            expected_this_phi[allele].append(
-                    expected_this_phi[allele][t] + expected_delta_1)
+            next_expected = expected_this_phi[allele][t] + expected_delta_1
+            next_expected = np.clip(next_expected, 0, 1)
+            expected_this_phi[allele].append(next_expected)
     # store the expected allele frequencies for this phi
     expected_allele_freqs[phi] = expected_this_phi
 
@@ -177,8 +181,10 @@ plt.ylabel('frequency of 1 allele', fontdict=ax_fontdict)
 plt.ylim((0, 1))
 markers = ['o', 'P', '*']
 lines = ['-', '--', ':']
-colors = {0: 'blue', 1: 'white'}
-line_colors = {0: 'blue', 1: 'black'}
+cmap = plt.cm.RdBu_r
+colors = {0: cmap(20),
+          1: cmap(255 - 20)}
+line_colors = {**colors}
 for n, phi in enumerate(phis):
     for allele in (0, 1):
         # plot observed allele frequencies

@@ -414,7 +414,7 @@ GENOME_PARAMS = '''
                     #whether starting allele frequencies should be fixed at 0.5
                     'start_p_fixed':            True,
                     #genome-wide per-base neutral mut rate (0 to disable)
-                    'mu_neut':                  1e-9,
+                    'mu_neut':                  0,
                     #genome-wide per-base deleterious mut rate (0 to disable)
                     'mu_delet':                 0,
                     #shape of distr of deleterious effect sizes
@@ -473,9 +473,9 @@ TRT_PARAMS = '''
                             #polygenic selection coefficient
                             'phi':                  0.05,
                             #number of loci underlying trait
-                            'n_loci':               10,
+                            'n_loci':               1,
                             #mutation rate at loci underlying trait
-                            'mu':                   1e-9,
+                            'mu':                   0,
                             #mean of distr of effect sizes
                             'alpha_distr_mu' :      0.1,
                             #variance of distr of effect size
@@ -877,8 +877,8 @@ def _make_species_params_str(species=1):
                                                             str(spp_dict[arg]))
                     int_arg_str_fmt_dict = {'n_traits':'Traits',
                             'demographic_change': 'demographic change events'}
-                    assert spp_dict[arg] > 0, ("The number of %s to "
-                                    "be created must be a positive "
+                    assert spp_dict[arg] >= 0, ("The number of %s to "
+                                    "be created must be 0 or a positive "
                                     "integer.") % (int_arg_str_fmt_dict[arg])
             #get the movement surf and dispersal surf params, if required
             if 'movement_surface' in [*spp_dict]:
@@ -907,7 +907,7 @@ def _make_species_params_str(species=1):
                 else:
                     gen_arch_file_str = 'None'
                 #if this species' genomes should have traits
-                if 'n_traits' in [*spp_dict]:
+                if 'n_traits' in [*spp_dict] and spp_dict['n_traits'] > 0:
                     #get a list of params strings of length equal
                     #to the number of traits it should have
                     trait_params_list = []
@@ -937,7 +937,8 @@ def _make_species_params_str(species=1):
                 #create an empty string to tack either/both section(s) onto
                 change_series_str = ''
                 #tack on the dem-change events params str, if required
-                if 'demographic_change' in [*spp_dict]:
+                if ('demographic_change' in [*spp_dict]
+                    and spp_dict['demographic_change'] > 0):
                     dem_change_event_params_list = []
                     for n in range(spp_dict['demographic_change']):
                         params_str = params_str_dict['dem_change'][True]

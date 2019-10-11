@@ -81,9 +81,7 @@ for it_dir in its_dirs:
         csv['loc%i' % loc] = genotypes[:,loc]
         #run a GLM for each locus
         try:
-            glm = sm.GLM(csv['env'], csv['loc%i' % loc])#,
-                #family = sm.families.Binomial())
-            glm_results = glm.fit()
+            glm_results = sm.Logit(csv['env'], csv['loc%i' % loc]).fit()
             glms[loc] = glm_results
         except Exception as e:
             print(e)
@@ -98,7 +96,7 @@ for it_dir in its_dirs:
                             x, *tanh_params[loc][0]) for x in x_to_predict])
 
     #grab all pvalues
-    pvals = {loc:glm.pvalues[0] for loc, glm in glms.items()}
+    pvals = {loc: glm.pvalues[0] for loc, glm in glms.items()}
     loc = []
     pval = []
     for l, p, in pvals.items():
@@ -130,12 +128,12 @@ ax.get_xaxis().set_ticks([])
 ax.get_yaxis().set_ticks([])
 plt.ylabel(('Genotypes predicted by logit GLM\n'
     '(0.0 = 0|0; 0.5 = 0|1; 1.0 = 1|1'), fontdict=ax_fontdict)
-plt.imshow(mod.land[0].rast, cmap = 'terrain', interpolation = 'nearest')
+plt.imshow(mod.land[0].rast, cmap = 'RdBu_r', interpolation = 'nearest')
 ax2 = ax.twinx()
 #ax2.set_aspect('equal')
 plt.ylim((0,1))
 for loc, y_prediction in tanh_predictions.items():
-    colors = {True: 'red', False: 'black'}
+    colors = {True: 'yellow', False: 'black'}
     linetypes = {True: '-', False: ':'}
     linewidths = {True: 2, False: 1}
     plt.plot(x_to_plot_for_predicted, y_prediction,

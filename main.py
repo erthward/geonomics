@@ -24,7 +24,8 @@ Documentation:        URL
 
 #geonomics imports
 from geonomics.sim.model import Model
-from geonomics.sim.params import _read_params_file, _make_params_file
+from geonomics.sim.params import (_read_params_file, _make_params_file,
+                                  ParametersDict)
 from geonomics.structs.landscape import _make_landscape
 from geonomics.structs.genome import _make_genomic_architecture
 from geonomics.structs.individual import _make_individual
@@ -365,6 +366,39 @@ def read_parameters_file(filepath):
     return(params)
 
 
+#function to make a regular dict into a ParametersDict object
+def make_params_dict(params, model_name=None):
+    """
+    Create a ParametersDict object from a dict object.
+
+    Use a plain Python dict object, and an optional model name, to create
+    a new ParametersDict object.
+
+    Parameters
+    ----------
+
+    params: {dict}
+        The plain Python dict that is to be turned into a Geonomics
+        ParametersDict object.
+    model_name: {str}, optional
+        The name to be assigned to the model. (If not provided, the model
+        will be called 'unnamed_model'.)
+
+    Returns
+    -------
+    out: ParametersDict
+        An object of the ParametersDict class, which, if formatted correctly,
+        can be fed into gnx.make_model to create a Geonomics Model.
+
+    """
+    params_dict=ParametersDict(params)
+    if model_name is not None:
+        params_dict.model['name'] = model_name
+    else:
+        params_dict.model['name'] = 'unnamed_model'
+    return params_dict
+
+
 #function to create a model from a ParametersDict object
 def make_model(parameters=None, verbose=False):
     """
@@ -376,10 +410,12 @@ def make_model(parameters=None, verbose=False):
 
     Parameters
     ----------
-    parameters : {ParametersDict, str}, optional
+    parameters : {ParametersDict, dict, str}, optional
         The parameters to be used to make the Model object.
         If `parameters` is a ParametersDict object, the object will be used to
         make the Model.
+        If `parameters` is a dict object, Geonomics will attempt to convert it
+        to a ParametersDict object, then use that object to make the Model.
         If `parameters` is a string, Geonomics will call
         `gnx.read_parameters_file` to make a ParametersDict object, then use
         that object to make the Model.
@@ -488,6 +524,16 @@ def make_model(parameters=None, verbose=False):
                 "filepath that was provided. The following error was raised: "
                 "\n\t%s\n\n") % e)
 
+    if type(parameters) is dict:
+        try:
+            parameters = make_params_dict(params, 'unnamed_model')
+        except Exception as e:
+            traceback.print_exc(file=sys.stdout)
+            raise ValueError(("A plain dict was provided as the value for "
+                              "the parameters argument, but that dict "
+                              "could not be converted to a Geonomics "
+                              "ParametersDict object."))
+
     #elif isinstance(parameters, geonomics.sim.params.ParametersDict):
     else:
         pass
@@ -512,7 +558,8 @@ def run_default_model(delete_params_file=True):
     # create the default model
     mod = make_model(parameters = filename)
     # run the default model in verbose mode
-    mod.run(verbose = True)
+    mod.walk(T=10000, mode='burn', verbose = True, plot=True)
+    mod.walk(T=50, mode='main', verbose=True, plot=True)
     # plot the results
     mod.plot(0,0,0)
     # get rid of the params file it created

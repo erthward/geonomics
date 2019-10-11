@@ -281,7 +281,10 @@ class Model:
     #private method for determining the width of
     #the terminal on the current system
     def _set_term_width(self):
-        self.__term_width__ = int(os.popen('stty size', 'r').read().split()[1])
+        try:
+            self.__term_width__ = int(os.popen('stty size', 'r').read().split()[1])
+        except Exception:
+            self.__term_width__ = 80
 
     #private method for determining the length of a tab on the current system
     def _set_tab_len(self):
@@ -956,7 +959,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                     plt.draw()
                     plt.pause(0.1)
                 elif plot in [True]:
-                    [pts.remove() for pts in points]
+                    points.remove()
                     points = self.plot(spp=0, animate=True)
                     plt.ion()
                     plt.draw()

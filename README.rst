@@ -1,4 +1,27 @@
-**geonomics** allows users to build and run arbitrarily complex, forward-time,
+# Geonomics
+
+.. code-block:: python
+
+                   ##  ::::::          :::    :: ::::::::::##
+             ##:::::    ::::   :::      ::    :: :: ::::::::::: :##
+          ##::::::::     ::            ::   ::::::::::::::::::::::::##
+        ##:::::::::                      :::::::::: :::::: ::::::::  :##
+      ## : ::::  ::                    ::::  : ::    :::::::: : ::  :   ##
+     ##ggggg  eeeee ooooo   nn   nn   ooooo   mm   mm iiiiii  ccccc sssss##
+    ##gg     ee    oo   oo  nnn  nn  oo   oo  mm   mm   ii   cc     ss    ##
+    ##gg     eeee oo     oo nn n nn oo     oo mmm mmm   ii   cc     ssssss##
+    ##gg ggg eeee oo     oo nn  nnn oo     oo mm m mm   ii   cc         ss##
+    ##gg   g ee    oo   oo  nn   nn  oo   oo  mm   mm   ii   cc        sss##
+     ##ggggg  eeeee ooooo   nn   nn   ooooo   mm   mm iiiiii  ccccc sssss##
+      ##    :::::::::             :::::::::::: ::              ::  :   :##
+        ##:   :::::                   ::::::: :::             ::::::: ##
+          ##   :::                     ::::::  ::              :::::##
+             ## ::                      ::::                     ##
+                   ##                                      ##
+
+ 
+
+**Geonomics** allows users to build and run arbitrarily complex, forward-time,
 agent-based, and spatially explicit simulations for landscape genomics. It is
 designed to allow novice Python users to create sophisticated simulations with
 minimal code, while also allowing advanced users a high level of extensibility
@@ -10,7 +33,7 @@ contact us with questions, suggestions, or requests!
 Main Features
 -------------
 The following is a short list of highlights. For the full monty, please see the
-`original methods paper <PAPER_URL_HERE>`_ and the `docs <DOCS_URL_HERE>`_.
+`original methods paper <PAPER_URL_HERE>`_ and the `homepage <https://github.com/drewhart/geonomics>`_.
 
     - a model object, which serves as the primary user interface and which
       contains all other model components
@@ -46,7 +69,7 @@ the name 'GEONOMICS_default_model_params.py'.
 
 Disclaimer
 ----------
-**geonomics** claims no affiliation with the philosophy and economic ideology
+**Geonomics** claims no affiliation with the philosophy and economic ideology
 `Georgism <https://en.wikipedia.org/wiki/Georgism>`_, sometimes referred to as
-'geonomics'. It's just a portmanteau of **geo**\graphy and ge\ **nomics**.
-I thought it sounded neat and found it delightfully confusing to read in print.
+'geonomics'. It is a portmanteau of **geo**\graphy and ge\ **nomics**.
+I just thought it sounded neat, and found it delightfully confusing.

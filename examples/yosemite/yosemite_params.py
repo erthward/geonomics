@@ -36,7 +36,7 @@ params = {
     ##############
         'main': {
             #y,x (a.k.a. i,j) dimensions of the Landscape
-            'dim':                      (162, 157),
+            'dim':                      (157, 157),
             #resolution of the Landscape
             'res':                      (0, 0),
             #upper-left corner of the Landscape
@@ -66,9 +66,9 @@ params = {
                         'filepath': ('./geonomics/examples/yosemite/'
                                      'yosemite_lyrs/tmp_1980-2010.tif'),
                         #minimum value to use to rescale the Layer to [0,1]
-                        'scale_min_val':                -1.3700,
+                        'scale_min_val':                -1.37,
                         #maximum value to use to rescale the Layer to [0,1]
-                        'scale_max_val':                19.8073,
+                        'scale_max_val':                19.75773,
                         #decimal precision to use for coord-units (ulc & res)
                         'coord_prec':                   8,
                         #units of this file's variable
@@ -369,7 +369,7 @@ params = {
                             #trait-selection Layer name
                             'layer':                'tmp',
                             #polygenic selection coefficient
-                            'phi':                  0.1,
+                            'phi':                  0.3,
                             #number of loci underlying trait
                             'n_loci':               10,
                             #mutation rate at loci underlying trait

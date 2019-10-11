@@ -12,6 +12,7 @@ from sklearn.decomposition import PCA
 # import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+from mpl_toolkits.mplot3d import Axes3D
 import os
 import time
 import statsmodels.api as sm
@@ -176,61 +177,101 @@ spp_subset = {ind: mod.comm[0][ind] for ind in np.random.choice([*mod.comm[0]],
 gen_dists = calc_dists(spp_subset)
 scaled_gen_dists = gen_dists/gen_dists.max()
 assert (np.all(scaled_gen_dists >= 0)
-        and np.all(scaled_gen_dists <= 1)), ('Scaled genetic dist outside '
-                                            '0 and 1!')
+        and np.all(scaled_gen_dists <= 1)), ('Scaled genetic dist is outside '
+                                             '0 and 1!')
 geo_dists = calc_dists(spp_subset, 'geo')
 env_dists = calc_dists(spp_subset, 'env', [0])
 # ax5 = fig.add_subplot(325)
 ax5 = plt.subplot(gs[6])
+
+
+# create 3d axes, and label for geo, env, and gen
+fig3d = plt.figure()
+ax3d = fig3d.add_subplot(111, projection='3d')
+# get 3d-scatter colors
+col3d = ((geo_dists / geo_dists.max()) + (env_dists / env_dists.max())) / 2
+# scatter all 3 vars on those axes
+ax3d.scatter(geo_dists, env_dists, scaled_gen_dists, alpha=0.5, c=col3d,
+             cmap='plasma')
+ax3d.set_xlabel('geo', size=15)
+ax3d.set_ylabel('env', size=15)
+ax3d.set_zlabel('gen', size=15)
+# run multiple linear regression of gen on geo and env dists
+# mlr_est = sm.GLM(np.array(scaled_gen_dists.T),
+#                 np.vstack((geo_dists, env_dists)).T,
+#                 family=sm.families.Binomial(sm.families.links.cloglog)).fit()
+mlr_est = sm.Logit(endog=np.array(scaled_gen_dists.T),
+                   exog=np.vstack((geo_dists, env_dists)).T).fit()
+# create predicted surface, and add to 3d plot
+y_vals = np.arange(0, 1.01, 0.01)
+ys = np.hstack([list(y_vals) for _ in range(len(y_vals))])
+xs = np.hstack([[n] * len(y_vals) for n in np.linspace(0, 50, len(y_vals))])
+zs = mlr_est.predict(np.vstack((xs, ys)).T)
+xs = xs.reshape([len(y_vals)] * 2)
+ys = ys.reshape([len(y_vals)] * 2)
+zs = zs.reshape([len(y_vals)] * 2)
+# surf_cols = ((xs / xs.max()) + (ys / ys.max())) / 2
+# surf_cols = np.int64(surf_cols * 255) + 1
+# ax3d.plot_surface(xs, ys, zs, facecolors=surf_cols, alpha=0.5, cmap='plasma')
+ax3d.plot_surface(xs, ys, zs, color='black', alpha=0.4)
+
+
 plt.scatter(geo_dists, scaled_gen_dists, alpha=0.05, c='black')
-#plt.scatter(geo_dists, gen_dists, alpha=0.05, c='black')
+# plt.scatter(geo_dists, gen_dists, alpha=0.05, c='black')
 # add a regression line (NOTE: doesn't include an intercept by default,
 # so I need to include one manually in the design matrix)
-est = sm.GLM(np.array(scaled_gen_dists).T,
-             geo_dists.T,
-             family=sm.families.Binomial(sm.families.links.cloglog)).fit()
-#est = sm.OLS(np.array(gen_dists).T,
+# est = sm.GLM(np.array(scaled_gen_dists).T,
+#             geo_dists.T,
+#             family=sm.families.Binomial(sm.families.links.cloglog)).fit()
+# est = sm.OLS(np.array(gen_dists).T,
 #             np.array(([1] * len(geo_dists), geo_dists)).T).fit()
-x_preds = np.arange(0, 50, 0.1)
-y_preds = est.predict(x_preds.T)
-#y_preds = est.predict(np.vstack(([1] * len(x_preds), x_preds)).T)
-plt.plot(x_preds, y_preds, color='#C33B3B')
+x_preds = np.arange(0, 50.1, 0.1)
+y_preds = np.linspace(0, 1, len(x_preds))
+z_preds = mlr_est.predict(np.vstack((x_preds, y_preds)).T)
+# y_preds = est.predict(np.vstack(([1] * len(x_preds), x_preds)).T)
+plt.plot(x_preds, z_preds, color='#C33B3B')
 plt.text(min(geo_dists) + 0.6 * (max(geo_dists) - min(geo_dists)),
-         0.2, 'slope:    %0.4f' % est.params[0],
+         0.2, 'slope:    %0.4f' % mlr_est.params[0],
          color='#C33B3B', size=9)
-p_val_lt = est.pvalues[0] < 0.001
+p_val_lt = mlr_est.pvalues[0] < 0.001
 assert p_val_lt, 'p-value not less than 0.001!'
 plt.text(min(geo_dists) + 0.6 * (max(geo_dists) - min(geo_dists)),
          0.05, 'p-value < 0.001',
          color='#C33B3B', size=9)
+plt.text(min(geo_dists) + 0.6 * (max(geo_dists) - min(geo_dists)),
+         0.45, 'Pseudo-$R^{2}$:   %0.4f' % mlr_est.prsquared,
+         color='#C33B3B', size=9)
 ax5.set_title('IBD')
 ax5.set_xlabel('geographic distance')
 ax5.set_ylabel('rescaled genetic distance')
-#ax5.set_ylim(int(np.floor(min(gen_dists))), int(np.ceil(max(gen_dists))))
+# ax5.set_ylim(int(np.floor(min(gen_dists))), int(np.ceil(max(gen_dists))))
 ax5.set_ylim((0, 1))
 # ax5.set_aspect('equal')
 # ax6 = fig.add_subplot(326, sharey=ax5)
 ax6 = plt.subplot(gs[7], sharey=ax5)
 plt.scatter(env_dists, scaled_gen_dists, alpha=0.05, c='black')
-#plt.scatter(env_dists, gen_dists, alpha=0.05, c='black')
+# plt.scatter(env_dists, gen_dists, alpha=0.05, c='black')
 # add a regression line (a quadratic regression, to allow for a saturating
 # pattern within the range of x values)
-est = sm.GLM(np.array(scaled_gen_dists).T,
-             env_dists.T,
-             family=sm.families.Binomial(sm.families.links.cloglog)).fit()
+# est = sm.GLM(np.array(scaled_gen_dists).T,
+#             env_dists.T,
+#             family=sm.families.Binomial(sm.families.links.cloglog)).fit()
 #est = sm.OLS(np.array(gen_dists).T,
 #             np.array(([1] * len(env_dists), env_dists)).T).fit()
-x_preds = np.arange(0, 1, 0.01)
-y_preds = est.predict(x_preds.T)
-#y_preds = est.predict(np.vstack(([1] * len(x_preds), x_preds)).T)
-plt.plot(x_preds, y_preds, color='#C33B3B')
+# x_preds = np.arange(0, 1, 0.01)
+# z_preds = est.predict(x_preds.T)
+# y_preds = est.predict(np.vstack(([1] * len(x_preds), x_preds)).T)
+plt.plot(y_preds, z_preds, color='#C33B3B')
 plt.text(min(env_dists) + 0.6 * (max(env_dists) - min(env_dists)),
-         0.2, 'slope:    %0.3f' % est.params[0],
+         0.2, 'slope:    %0.3f' % mlr_est.params[0],
          color='#C33B3B', size=9)
-p_val_lt = est.pvalues[0] < 0.001
+p_val_lt = mlr_est.pvalues[0] < 0.001
 assert p_val_lt, 'p-value not less than 0.001!'
 plt.text(min(env_dists) + 0.6 * (max(env_dists) - min(env_dists)),
          0.05, 'p-value < 0.001',
+         color='#C33B3B', size=9)
+plt.text(min(geo_dists) + 0.6 * (max(geo_dists) - min(geo_dists)),
+         0.45, 'Pseudo-$R^{2}$:   %0.4f' % mlr_est.prsquared,
          color='#C33B3B', size=9)
 ax6.set_title('IBE')
 ax6.set_xlabel('environmental distance')

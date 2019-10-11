@@ -1,4 +1,7 @@
 # IDEAS / TO-DO
+- create an 'examples' submodule, where I can keep the three examples from the methods paper as well as other ones I build out (e.g. the one for the Biogeo class demo where a barrier arises, or a wind-dispersal one I spin up for Matt Kling)
+- add a module for easily creating basic geometric landscapes, then create a landscape type 'geometric' (along with 'defined', 'random', 'nlmpy') that links to it!
+- in order to model plants/sessile organisms, I think all I'd need to do is, when movement is not used, have gametes be created, then moved using some movement mechanism (either unimodal or multimodal von mises, or isotropic), where movement can be distinct for male and female gametes, then find gamete-pairs within its radius, then create a new offspring AT the mid-point between the resulting parental gametes. --> note that this uses the same functions that I already have written, just in a different order/for different purposes!
 - consider adding ability to use/output tree sequence of spatial pedigree, then building tools to facilitate calculations of emergent properties of interest (e.g. migration rate/gene flow/dispersal flux across specific lines) from the spatial pedigree
 - add functionality to model male dispersal of gametes (i.e. sperm/pollen) for modeling of plants, etc
 - add any helper functions for manually resetting the landscape rasters of a model after it's created but before it's run?

@@ -6,9 +6,9 @@ with open("README.rst", 'r') as fh:
 setuptools.setup(
     name='geonomics',
     version='0.0.1',
-    author='Drew Hart',
-    author_email='drew.hart@berkeley.edu',
-    description='A Python package for simulating landscape genomics',
+    author='Drew Ellison Hart',
+    author_email='drew.ellison.hart@gmail.com',
+    description='A package for landscape genomic simulation',
     long_description=long_description,
     long_description_content_type='text/x-rst',
     url='https://github.com/drewhart/geonomics',
@@ -22,8 +22,8 @@ setuptools.setup(
         'Natural Language :: English',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
     ],
-    keywords=('landscape genomics ecology evolution simulation model '
-              'genetics model'),
+    keywords=('landscape genomics genetics ecology evolution simulation model '
+              'environmental model agent-based'),
     project_urls={
         'Documentation': 'PUTDOCURLHERE',
         'Methods Paper': 'URLTOMETHODSPAPERHERE',

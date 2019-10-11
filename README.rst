@@ -1,4 +1,6 @@
-# Geonomics
+*********
+Geonomics
+*********
 
 .. code-block:: python
 
@@ -67,6 +69,7 @@ as `mod`, and leave its parameters file in your current working directory under
 the name 'GEONOMICS_default_model_params.py'.
 
 
+.. note::
 Disclaimer
 ----------
 **Geonomics** claims no affiliation with the philosophy and economic ideology

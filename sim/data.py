@@ -219,7 +219,7 @@ class _DataCollector:
 
                     #get the data directory name for this timestep
                     dirname = os.path.join(os.getcwd(),
-                          'GEONOMICS_mod-%s' % self.model_name,
+                          'GNX_mod-%s' % self.model_name,
                                     'it-%i' % iteration)
 
                     #get the subdirectory for this species

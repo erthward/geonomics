@@ -753,7 +753,7 @@ class Model:
         Examples
         --------
         We can create and run the default model (as long as there is no
-        "GEONOMICS_params_<...>.py" file in the current working directory
+        "GNX_params_<...>.py" file in the current working directory
         before `gnx.make_parameters_file` is called).
 
         >>> gnx.make_parameters_file()
@@ -874,7 +874,7 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         Examples
         --------
         We can create and walk the default model (as long as there is no
-        "GEONOMICS_params_<...>.py" file in the current working directory
+        "GNX_params_<...>.py" file in the current working directory
         before `gnx.make_parameters_file` is called).
 
         >>> gnx.make_parameters_file()

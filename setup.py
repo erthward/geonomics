@@ -8,7 +8,7 @@ def readme():
 
 setuptools.setup(
     name='geonomics',
-    version='1.0',
+    version='0.0',
     author='Drew Ellison Hart',
     author_email='drew.ellison.hart@gmail.com',
     description='A package for landscape genomic simulation',

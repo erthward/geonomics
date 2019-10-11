@@ -1002,7 +1002,7 @@ def _make_params_file(filepath=None, layers=1, species=1, data=None,
         #get a string of the date and time
         datetime_str = time.strftime("%d-%m-%Y_%H:%M:%S", time.localtime())
         #and add a default filename
-        filepath = 'GEONOMICS_params_%s.py' % datetime_str
+        filepath = 'GNX_params_%s.py' % datetime_str
     #check the filepath is pointed somewhere valid
     assert (os.path.isdir(os.path.split(filepath)[0])
             or os.path.split(filepath)[0] is ''), ("The filepath to which to "
@@ -1027,7 +1027,7 @@ def _make_params_file(filepath=None, layers=1, species=1, data=None,
         file_str = re.sub('%%GEN_ARCH_FILE_STR%%', gen_arch_file_prefix,
                                                                 file_str)
 
-    #write the file_str to a "GEONOMICS_params_<datetime>.py" file
+    #write the file_str to a "GNX_params_<datetime>.py" file
     with open(filepath, 'w') as f:
         f.write(file_str)
 

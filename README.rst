@@ -73,7 +73,7 @@ The impatient beginner can try the following::
 
 This will build and run **geonomics**' default model, return its `Model` object
 as `mod`, and leave its parameters file in your current working directory under
-the name 'GEONOMICS_default_model_params.py'.
+the name 'GNX_default_model_params.py'.
 
 
 Disclaimer

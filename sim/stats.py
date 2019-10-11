@@ -169,7 +169,7 @@ class _StatsCollector:
     #a method to make the filenames for all of the stats to be saved
     def _set_filepaths(self, iteration):
         #get the directory name for this model and iteration
-        dirname = os.path.join('GEONOMICS_mod-%s' % self.model_name,
+        dirname = os.path.join('GNX_mod-%s' % self.model_name,
                                'it-%i' % iteration)
         #for each species
         for spp_name in [*self.stats]:

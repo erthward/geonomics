@@ -73,7 +73,7 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=None,
     filepath : str, optional
         Where to write the resulting parameters file, in /path/to/filename.py
         format. Defaults to None. If None, a file named
-        "GEONOMICS_params_<datetime>.py" will be written to the working
+        "GNX_params_<datetime>.py" will be written to the working
         directory.
     layers : {int, list of dicts}, optional
         Number (and optionally, types) of Layer-parameter sections to include
@@ -165,7 +165,7 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=None,
     out : None
         Returns no output. Resulting parameters file will be written to the
         location and filename indicated (or by default, will be written to a
-        file named "GEONOMICS_params_<datetime>.py" in the working directory).
+        file named "GNX_params_<datetime>.py" in the working directory).
 
     See Also
     --------
@@ -314,7 +314,7 @@ def read_parameters_file(filepath):
 
     >>> gnx.read_parameters_file('null_model.py')
     <class 'sim.params.ParametersDict'>
-    Model name:                                     GEONOMICS_params_13-10-2018_15:54:03
+    Model name:                                     GNX_params_13-10-2018_15:54:03
 
     """
 
@@ -421,7 +421,7 @@ def make_model(parameters=None, verbose=False):
         that object to make the Model.
         If `parameters` is None, or is not provided, then Geonomics will
         attempt to find a single parameters file in the current working
-        directory with the filename "GEONOMICS_params_<...>.py", will use that
+        directory with the filename "GNX_params_<...>.py", will use that
         file to make a ParametersDict object, then will use that object to
         make the Model.
 
@@ -451,13 +451,13 @@ def make_model(parameters=None, verbose=False):
 
     Examples
     --------
-    Make a Model from a single, valid "GEONOMICS_params_<...>.py" file that can
+    Make a Model from a single, valid "GNX_params_<...>.py" file that can
     be found in the current working directory (such as a file that would be
     produced by calling gnx.make_parameters_file without any arguments).
 
     >>> gnx.make_model()
     <class 'sim.model.Model'>
-    Model name:                                     GEONOMICS_params_13-10-2018_15:54:03
+    Model name:                                     GNX_params_13-10-2018_15:54:03
     Layers:                                         0: '0'
     Species:                                        0: '0'
     Number of iterations:                           1
@@ -489,11 +489,11 @@ def make_model(parameters=None, verbose=False):
     if parameters is None:
         try:
             params_files = [f for f in os.listdir('.') if (
-                f.startswith('GEONOMICS_params_')
+                f.startswith('GNX_params_')
                 and os.path.splitext(f)[1] == '.py')]
             assert len(params_files) == 1, ("The 'parameters' argument was not"
                 " provided, and it appears that the current working directory "
-                "contains more than one 'GEONOMICS_params_<...>.py' file. "
+                "contains more than one 'GNX_params_<...>.py' file. "
                 "Please run again, providing a valid value for the "
                 "'parameters' argument.")
             parameters = params_files[0]
@@ -502,7 +502,7 @@ def make_model(parameters=None, verbose=False):
         except Exception as e:
             raise ValueError(("The 'parameters' argument was not provided, "
                 "and Geonomics could not identify a single "
-                "'GEONOMICS_params_<...>.py' file in the current working "
+                "'GNX_params_<...>.py' file in the current working "
                 "directory from which to create the Model object. The "
                 "following error was thrown: %s") % e)
 
@@ -512,7 +512,7 @@ def make_model(parameters=None, verbose=False):
         "If the 'parameters' argument is provided, its value must be either a "
         "string pointing to a valid Geonomics parameters file or an object of "
         "the ParametersDict class. If it is not provided, the current working "
-        "directory must contain a single 'GEONOMICS_params_<...>.py' file "
+        "directory must contain a single 'GNX_params_<...>.py' file "
         "from which to create the Model object.")
 
     if type(parameters) is str:
@@ -553,7 +553,7 @@ def make_model(parameters=None, verbose=False):
 # object
 def run_default_model(delete_params_file=True):
     # make the default params file
-    filename = 'GEONOMICS_default_model_params.py'
+    filename = 'GNX_default_model_params.py'
     make_parameters_file(filename)
     # create the default model
     mod = make_model(parameters = filename)

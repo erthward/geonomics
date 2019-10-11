@@ -41,8 +41,10 @@ contact us with questions, suggestions, or requests!
 
 Main Features
 -------------
-The following is a short list of highlights. For the full monty, please see the
-`original methods paper <PAPER_URL_HERE>`_ and the `homepage <https://github.com/drewhart/geonomics>`_.
+The following is a short list of highlights. For the full monty, please see
+the `homepage <https://github.com/drewhart/geonomics>`_,
+the `docs <https://htmlpreview.github.io/?https://github.com/drewhart/geonomics/blob/master/doc/built/doc.html>`_,
+and the `original methods paper <PAPER_URL_HERE>`_.
 
     - a model object, which serves as the primary user interface and which
       contains all other model components
@@ -75,8 +77,9 @@ This will build and run **geonomics**' default model, return its `Model` object
 as `mod`, and leave its parameters file in your current working directory under
 the name 'GNX_default_model_params.py'.
 
-For patient folks, the following diagrams should provide more insight,
-and the `documentation <URL_HERE>`_ provides full details.
+For patient folks, the following diagrams should provide more insight, and the
+`documentation <https://htmlpreview.github.io/?https://github.com/drewhart/geonomics/blob/master/doc/built/doc.html>`_
+provides full details.
 
 
 How it works

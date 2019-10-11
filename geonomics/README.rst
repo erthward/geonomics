@@ -1,6 +1,9 @@
 *********
 Geonomics
 *********
+.. role:: underline
+    :class: underline
+
 
 .. code-block:: python
 
@@ -74,9 +77,9 @@ the name 'GEONOMICS_default_model_params.py'.
 
 
 .. note::
-Disclaimer
-----------
-**Geonomics** claims no affiliation with the philosophy and economic ideology
-`Georgism <https://en.wikipedia.org/wiki/Georgism>`_, sometimes referred to as
-'geonomics'. It is a portmanteau of **geo**\graphy and ge\ **nomics**.
-I just thought it sounded neat, and found it delightfully confusing.
+        Disclaimer
+        ----------
+        **Geonomics** claims no affiliation with the philosophy and economic ideology
+        `Georgism <https://en.wikipedia.org/wiki/Georgism>`_, sometimes referred to as
+        'geonomics'. It is a portmanteau of :underline:`**geo**`\graphy and ge :underline:`\**nomics**`.
+        I just thought it sounded neat, and found it delightfully confusing.

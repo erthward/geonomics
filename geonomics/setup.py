@@ -1,17 +1,21 @@
 import setuptools
 
-with open("README.rst", 'r') as fh:
-    long_description = fh.read()
+
+def readme():
+    with open("README.rst", 'r') as f:
+        return f.read()
+
 
 setuptools.setup(
     name='geonomics',
-    version='0.0.1',
+    version='1.0',
     author='Drew Ellison Hart',
     author_email='drew.ellison.hart@gmail.com',
     description='A package for landscape genomic simulation',
-    long_description=long_description,
+    long_description=readme(),
     long_description_content_type='text/x-rst',
     url='https://github.com/drewhart/geonomics',
+    include_package_data=True,
     packages=setuptools.find_packages(),
     classifiers=[
         'Programming Language :: Python :: 3',
@@ -30,8 +34,12 @@ setuptools.setup(
         'Source': 'https://github.com/drewhart/geonomics',
         'Tracker': 'BUGTRACKERSITHERE',
     },
-    install_requires=['numpy', 'matplotlib', 'pandas', 'scipy', 'sklearn',
-                      'statsmodels', 'shapely', 'bitarray', 'vcf'],
+    install_requires=['numpy', 'matplotlib', 'pandas', 'scipy', 'scikit-learn',
+                      'statsmodels', 'shapely', 'bitarray', 'pyvcf'],
+    extras_require={
+        'simulation on neutral landscape models': ['nlmpy'],
+        'reading and writing of common raster data formats': ['GDAL']
+    },
     python_requires='>=3.5',
     packages_data={
         'example': ['yosemite_30yr_normals_90x90.tif']

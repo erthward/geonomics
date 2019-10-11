@@ -1,0 +1,106 @@
+Metadata-Version: 2.1
+Name: geonomics
+Version: 1.0
+Summary: A package for landscape genomic simulation
+Home-page: https://github.com/drewhart/geonomics
+Author: Drew Ellison Hart
+Author-email: drew.ellison.hart@gmail.com
+License: UNKNOWN
+Project-URL: Documentation, PUTDOCURLHERE
+Project-URL: Methods Paper, URLTOMETHODSPAPERHERE
+Project-URL: Source, https://github.com/drewhart/geonomics
+Project-URL: Tracker, BUGTRACKERSITHERE
+Description: *********
+        Geonomics
+        *********
+        
+        .. code-block:: python
+        
+        
+         
+                           ##  ::::::          :::    :: ::::::::::##
+                     ##:::::    ::::   :::      ::    :: :: ::::::::::: :##
+                  ##::::::::     ::            ::   ::::::::::::::::::::::::##
+                ##:::::::::                      :::::::::: :::::: ::::::::  :##
+              ## : ::::  ::                    ::::  : ::    :::::::: : ::  :   ##
+             ##GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS##
+            ##GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS    ##
+            ##GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS##
+            ##GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS##
+            ##GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS##
+             ##GGGGG  EEEEE OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS##
+              ##    :::::::::               :::::::::: ::              ::  :   :##
+                ##:   :::::                    :::::: :::             ::::::: ##
+                  ##   :::                      :::::  ::              :::::##
+                     ## ::                      ::::                     ##
+                           ##                                      ##
+                              ## :: ::    :::            ##
+        
+        
+        
+        
+        **Geonomics** allows users to build and run arbitrarily complex, forward-time,
+        agent-based, and spatially explicit simulations for landscape genomics. It is
+        designed to allow novice Python users to create sophisticated simulations with
+        minimal code, while also allowing advanced users a high level of extensibility
+        and customizability.
+        
+        We will continue to expand and add functionality in future versions. Please
+        contact us with questions, suggestions, or requests!
+        
+        Main Features
+        -------------
+        The following is a short list of highlights. For the full monty, please see the
+        `original methods paper <PAPER_URL_HERE>`_ and the `homepage <https://github.com/drewhart/geonomics>`_.
+        
+            - a model object, which serves as the primary user interface and which
+              contains all other model components
+            - a landscape object consisting of an arbitrary number of environmental
+              raster layers
+            - a community object consisting of an arbitrary number of species objects,
+              each consisting of an arbitrary number of individuals
+            - an optional genomic-architecture object, upon which individuals' genomes
+              are based
+            - spatialized logistic growth regulating local population densities
+            - the capability to model realistic movement and offspring dispersal
+              across conductance surfaces
+            - neutral and non-neutral evolution capabilities, with spatially contingent
+              selection
+            - demographic- and environmental-change capabilities
+            - the capability to run an arbitrary number of iterations of a model
+            - the capability to sample data and a variety of statistics at any desired
+              timesteps during a model run
+            - numerous visualization methods to aid in model design, exploration,
+              analysis, and presentation
+        
+        Quickstart
+        ----------
+        The impatient beginner can try the following::
+        
+          >>> import geonomics as gnx
+          >>> mod = gnx.run_default_model()
+        
+        This will build and run **geonomics**' default model, return its `Model` object
+        as `mod`, and leave its parameters file in your current working directory under
+        the name 'GEONOMICS_default_model_params.py'.
+        
+        
+        .. note::
+        Disclaimer
+        ----------
+        **Geonomics** claims no affiliation with the philosophy and economic ideology
+        `Georgism <https://en.wikipedia.org/wiki/Georgism>`_, sometimes referred to as
+        'geonomics'. It is a portmanteau of **geo**\graphy and ge\ **nomics**.
+        I just thought it sounded neat, and found it delightfully confusing.
+        
+Keywords: landscape genomics genetics ecology evolution simulation model environmental model agent-based
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Education
+Classifier: Natural Language :: English
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Requires-Python: >=3.5
+Description-Content-Type: text/x-rst

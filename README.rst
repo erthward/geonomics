@@ -11,14 +11,14 @@ Forward-time, individual-based, landscape genomic simulation in Python.
           #:::::::::     ::            ::   :::::::::::::::::::::::::#
         #::::::::::                      :::::::::: :::::: ::::::::  ::#
       #  : ::::  ::                    ::::  : ::    :::::::: : ::  :    #
-     # GGGGG  EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
+     # GGGGG :EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
     # GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS     #
     # GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS #
     # GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS #
     # GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS #
-     # GGGGG  EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
-      #     :::::::::               :::::::::: ::              ::  :   : #
-        #::   :::::                    :::::: :::             :::::::  #
+     # GGGGG :EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
+      #    : ::::::::               :::::::::: ::              ::  :   : #
+        #:    :::::                    :::::: :::             :::::::  #
           #    :::                      :::::  ::              ::::: #
              #  ::                      ::::                      #
                    #                                        #

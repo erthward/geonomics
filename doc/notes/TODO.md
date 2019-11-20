@@ -15,6 +15,13 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 sim on non-square landscapes doesn't work!!
+
+        5 add functionality to read in rasters with NA values and handle correctly
+                - and also funcitonality to make a move rast that sets NA vals to 0 prob in the movement surface!
+
+        5 add functionality to add lat and lon columns to output data if simulating on a real raster
+
         5 make res, ulc, and dim attributes of the land all use either y,x or x,y convention (right now they're mixed!)
         
         5 change 'mod' (which overwrites the modulus function) to 'model'

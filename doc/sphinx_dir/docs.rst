@@ -13,14 +13,14 @@
           #:::::::::     ::            ::   :::::::::::::::::::::::::#
         #::::::::::                      :::::::::: :::::: ::::::::  ::#
       #  : ::::  ::                    ::::  : ::    :::::::: : ::  :    #
-     # GGGGG  EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
+     # GGGGG :EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
     # GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS     #
     # GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS #
     # GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS #
     # GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS #
-     # GGGGG  EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
-      #     :::::::::               :::::::::: ::              ::  :   : #
-        #::   :::::                    :::::: :::             :::::::  #
+     # GGGGG :EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
+      #    : ::::::::               :::::::::: ::              ::  :   : #
+        #:    :::::                    :::::: :::             :::::::  #
           #    :::                      :::::  ::              ::::: #
              #  ::                      ::::                      #
                    #                                        #
@@ -2474,7 +2474,8 @@ custom genomic-architecture file
 (i.e. a CSV file with loci as rows and 'locus_num',
 'p', 'dom', 'r', 'trait', and 'alpha' as columns stipulating the starting
 allele frequencies, dominance values, inter-locus recombination rates,
-trait names, and effect sizes of all loci). Geonomics will create an empty
+trait names, and effect sizes of all loci; values can be left blank if not applicable).
+Geonomics will create an empty
 file of this format for each :py:`Species` for which the 
 'genomes' argument is given the value 'custom' when
 :py:`gnx.make_parameters_file` is called (which will be saved as

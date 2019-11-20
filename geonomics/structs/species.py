@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # species.py
 
+# flake8: noqa
+
 '''
 ##########################################
 
@@ -339,8 +341,8 @@ class Species(OD):
 
     #function for finding all the mating pairs in a species
     def _find_mating_pairs(self):
-        mating_pairs = _find_mates(
-                            self, dist_weighted_birth=self.dist_weighted_birth)
+        mating_pairs = _find_mates(self, sex=self.sex,
+                                   dist_weighted_birth=self.dist_weighted_birth)
         return mating_pairs
 
     #function for executing mating for a species
@@ -471,8 +473,8 @@ class Species(OD):
         assert type(normalize) is bool, ("The 'normalize' argument takes "
             "a boolean value.\n")
         #get species coordinates
-        x = self._get_xs()
-        y = self._get_ys()
+        x = self._get_x()
+        y = self._get_y()
         #calculate the density array
         dens = self._dens_grids._calc_density(x, y)
         #set min value to 0
@@ -629,11 +631,11 @@ class Species(OD):
         cells = self._get_coords(individs=individs, as_float=False)
         return cells
 
-    def _get_xs(self, individs=None):
+    def _get_x(self, individs=None):
         coords = self._get_coords(individs=individs)
         return coords[:, 0]
 
-    def _get_ys(self, individs=None):
+    def _get_y(self, individs=None):
         coords = self._get_coords(individs=individs)
         return coords[:, 1]
 
@@ -1090,6 +1092,40 @@ class Species(OD):
                 "for species with no _SpeciesChanger object.\n"))
         else:
             self._changer._plot_dem_changes(self)
+
+    def _plot_example_recombinant_genome(self):
+        assert self.gen_arch is not None, ("This species does not have "
+                                            "genomes, so it cannot be used "
+                                            "to plot an example recombinant "
+                                            "genome.")
+
+        recomb_paths = self.gen_arch._recomb_paths._get_paths(2)
+        idxs = (0, 2)
+        mock_spp = {}
+        for idx in idxs:
+            new_genome = np.hstack([(np.ones((self.gen_arch.L,
+                                              1)) * n ) + idx for n in (1,2)])
+            mock_spp[idx] = Individual(idx=idx, x=0, y=0,
+                                       new_genome=new_genome)
+
+        recomb_genome = _do_mating(spp=mock_spp,
+                                   mating_pairs=[idxs],
+                                   n_offspring=[1],
+                                   recomb_paths=recomb_paths)[0][0]
+        #recomb_genome = recomb_genome+1
+        #recomb_genome[:,1] = recomb_genome[:,1] * 5
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.imshow(np.repeat(recomb_genome,
+                            int(0.05 * self.gen_arch.L),
+                            axis=1),
+                  cmap='terrain')
+        ax.set_title("gamete 0     gamete1")
+        ax.set_xticks([])
+        ax.set_ylabel('locus')
+        plt.show()
+        return(recomb_paths, mock_spp, recomb_genome)
+
 
     def _plot_stat(self, stat):
         if self._stats_collector is None:

@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # model.py
 
+# flake8: noqa
+
 '''
 ##########################################
 
@@ -804,7 +806,7 @@ class Model:
 
     # method to run the model interactively from the command line; named 'walk'
     # to succinctly differentiate it from 'run'
-    def walk(self, T=1, mode='main', verbose=True, plot=False):
+    def walk(self, T=1, mode='main', verbose=True, animate=False):
         """
         Walk through a Model (i.e. run it for a certain number of timesteps).
 
@@ -842,7 +844,7 @@ class Model:
             Whether or not to run the Model should provide written output.
             If True, formatted messages will be printed to STDOUT at each
             timestep. Defaults to True for `Model.walk`.
-        plot : {tuple of ints, bool}, optional
+        animate : {tuple of ints, bool}, optional
             If a length-2 tuple of integers is provided, the Species indicated
             by the first number will be plotted on the Landscape Layer
             indicated by the second number at each timestep, in a dynamically
@@ -913,16 +915,16 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         if self._verbose:
             print('\n')
 
-        # start plot, if plot == True
-        if plot not in (False, None):
-            if (isinstance(plot, tuple)
-               and sum([isinstance(i, int) for i in plot]) == len(plot)):
-                if len(plot) == 2:
-                    points = self.plot(plot[0], plot[1], animate=True)
-                elif len(plot) == 3:
-                    points = self.plot_phenotype(plot[0], plot[1], plot[2],
-                                                 animate=True)
-            elif plot is True:
+        # start animated plot, if animate == True
+        if animate not in (False, None):
+            if (isinstance(animate, tuple)
+               and sum([isinstance(i, int) for i in animate]) == len(animate)):
+                if len(animate) == 2:
+                    points = self.plot(animate[0], animate[1], animate=True)
+                elif len(animate) == 3:
+                    points = self.plot_phenotype(animate[0], animate[1],
+                                                 animate[2], animate=True)
+            elif animate is True:
                 points = self.plot(spp=0, animate=True)
             plt.ion()
             plt.draw()
@@ -944,21 +946,23 @@ BE EXPECTED WHEN RUN WITH Model.walk.
                           'Running mod.reset()...\n\n'))
                 self._reset()
             extinct = self._do_timestep(mode=mode)
-            # continue the plot, if plot == True
-            if plot not in (False, None):
-                if (isinstance(plot, tuple)
+            # continue the animated plot, if animate == True
+            if animate not in (False, None):
+                if (isinstance(animate, tuple)
                    and sum([isinstance(i,
-                                       int) for i in plot]) == len(plot)):
+                                       int) for i in animate]) == len(
+                                                                    animate)):
                     points.remove()
-                    if len(plot) == 2:
-                        points = self.plot(plot[0], plot[1], animate=True)
-                    elif len(plot) == 3:
-                        points = self.plot_phenotype(plot[0], plot[1], plot[2],
-                                                     animate=True)
+                    if len(animate) == 2:
+                        points = self.plot(animate[0], animate[1],
+                                           animate=True)
+                    elif len(animate) == 3:
+                        points = self.plot_phenotype(animate[0], animate[1],
+                                                     animate[2], animate=True)
                     plt.ion()
                     plt.draw()
                     plt.pause(0.1)
-                elif plot in [True]:
+                elif animate in [True]:
                     points.remove()
                     points = self.plot(spp=0, animate=True)
                     plt.ion()
@@ -1217,6 +1221,11 @@ BE EXPECTED WHEN RUN WITH Model.walk.
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
         spp._plot_pop_growth()
+
+    #wrapper around Species._plot_example_recombinant_genome
+    def plot_examaple_recombinant_genome(self, spp):
+        spp = self.comm[self._get_spp_num(spp)]
+        spp._plot_example_recombinant_genome()
 
     #wrapper around Species._plot_demographic_changes
     def plot_demographic_changes(self, spp):

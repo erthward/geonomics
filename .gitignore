@@ -20,3 +20,5 @@
 /*.egg-info
 /*.whl
 /*.gz
+./tests
+./GNX*

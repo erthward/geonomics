@@ -390,7 +390,7 @@ def _calc_ld(spp, plot = False):
     assert L == np.shape(speciome)[1], ("The length of the 1st dimension "
                             "of speciome doesn't equal spp.genomic_arch.L")
 
-    r2_mat = np.zeros([L]*2)-1 # -1 serves as a 'no data' value here
+    r2_mat = np.zeros([L]*2)-1 # -1 serves as a 'no data' value
 
     for i in range(L):
         for j in range(i+1, L):

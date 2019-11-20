@@ -69,7 +69,7 @@ z_cmap = mpl.cm.RdBu_r
 start = time.time()
 
 # read in the params
-params = gnx.read_parameters_file(('./geonomics/examples/yosemite/'
+params = gnx.read_parameters_file(('./geonomics/demos/yosemite/'
                                    'yosemite_params.py'))
 
 # create the model
@@ -198,7 +198,11 @@ add_text_label('C')
 
 # axes for neighborhood mean rast before climate change
 ax4 = fig.add_subplot(gs[:2, 4:])
-ax4.imshow(calc_neighborhood_mean_phenotype(mod), cmap=z_cmap)
+neigh_mean = calc_neighborhood_mean_phenotype(mod)
+ax4.imshow(neigh_mean, cmap=z_cmap)
+# add a contour at phenotype = 0.5
+ax4.contour(neigh_mean, colors=['#17161a'], alpha=0.5,
+            levels=np.array([0.5]))
 ax4.set_xticks([])
 ax4.set_yticks([])
 add_text_label('D', 10, 10)
@@ -235,7 +239,10 @@ add_text_label('G')
 
 # axes for neighborhood mean rast after climate change
 ax8 = fig.add_subplot(gs[3:, 4:])
-ax8.imshow(calc_neighborhood_mean_phenotype(mod), cmap=z_cmap)
+neigh_mean = calc_neighborhood_mean_phenotype(mod)
+ax8.imshow(neigh_mean, cmap=z_cmap)
+ax4.contour(neigh_mean, colors=['#17161a'], alpha=0.5,
+            levels=np.array([0.5]))
 ax8.set_xticks([])
 ax8.set_yticks([])
 add_text_label('H', 10, 10)

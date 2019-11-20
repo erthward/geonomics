@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #individual.py
 
+# flake8: noqa
+
 '''
 ##########################################
 
@@ -70,31 +72,35 @@ class Individual:
     ### OTHER METHODS ###
     #####################
 
-    #function to increment age by one
+    # function to increment age by one
     def _set_age_stage(self):
         self.age += 1
 
-    #sets the individual's position
+    # set the individual's position
     def _set_pos(self, x_pos, y_pos):
         self.x = x_pos
         self.y = y_pos
 
-    #set the individual's current environmental values (attribute e)
+    # set the individual's current environmental values (attribute e)
     def _set_e(self, e):
         self.e = e
 
-    #set the individual's phenotype (attribute z) for all traits
+    # set the individual's phenotype (attribute z) for all traits
     def _set_z(self, genomic_architecture):
         self.z = [_calc_phenotype(self, genomic_architecture,
             trait) for trait in genomic_architecture.traits.values()]
 
-    #set the individual's fitness
+    # set the individual's fitness
     def _set_fit(self, fit):
         self.fit = fit
 
-    #set the individual's genome
+    # set the individual's genome
     def _set_g(self, genome):
         self.g = genome
+
+    # get the individual's x,y location as a tuple
+    def _get_loc(self):
+        return(self.x, self.y)
 
 
 ######################################

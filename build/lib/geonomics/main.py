@@ -551,15 +551,15 @@ def make_model(parameters=None, verbose=False):
 # convenience function for creating a parameters-file for, instantiating, and
 # running the default model, plotting the result, then returning the Model
 # object
-def run_default_model(delete_params_file=True):
+def run_default_model(delete_params_file=True, animate=False):
     # make the default params file
     filename = 'GNX_default_model_params.py'
     make_parameters_file(filename)
     # create the default model
     mod = make_model(parameters = filename)
     # run the default model in verbose mode
-    mod.walk(T=10000, mode='burn', verbose = True, plot=True)
-    mod.walk(T=50, mode='main', verbose=True, plot=True)
+    mod.walk(T=10000, mode='burn', verbose = True, animate=animate)
+    mod.walk(T=50, mode='main', verbose=True, animate=animate)
     # plot the results
     mod.plot(0,0,0)
     # get rid of the params file it created

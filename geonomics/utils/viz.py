@@ -148,9 +148,17 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
     # create alphas list
     alphas = [1] + [0.5] * (len(rasters)-1)
     # create vmin and vmax lists, if None
-    if vmin is None or isinstance(vmin, float) or isinstance(vmin, int):
+    if (vmin is None
+       or isinstance(vmin, float)
+        # DEH: 10-28-19: For some reason isinstance(<np.float32 obj>, float)
+        # returns False, so check if np.floating to avoid error
+       or isinstance(vmin, np.floating)
+       or isinstance(vmin, int)):
         vmin = [vmin] * len(rasters)
-    if vmax is None or isinstance(vmax, float) or isinstance(vmax, int):
+    if (vmax is None
+       or isinstance(vmax, float)
+       or isinstance(vmax, np.floating)
+       or isinstance(vmax, int)):
         vmax = [vmax] * len(rasters)
     # plot all the rasters...
     for n in range(len(rasters)):

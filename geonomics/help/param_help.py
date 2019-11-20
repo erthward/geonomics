@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # param_help.py
 
+# flake8: noqa
+
 
 '''
 ##########################################
@@ -44,7 +46,7 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
                   distance_distr_mu=None, distance_distr_sigma=None,
                   move_surf=None, subset_spp=None, color='black',
                   land_cmap='plasma', color_by_individ=True, size=10,
-                  ticks=True):
+                  ticks=True, increasing_linewidth=False):
 
     '''
     Useful for visual exploration of the movement parameters.
@@ -87,7 +89,7 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
         toy_move_params = {}
         toy_move_params['direction_distr_mu'] = direction_distr_mu
         toy_move_params['direction_distr_kappa'] = direction_distr_kappa
-        toy_move_params['distance_distr_mu'] = distance_distr_mu 
+        toy_move_params['distance_distr_mu'] = distance_distr_mu
         toy_move_params['distance_distr_sigma'] = distance_distr_sigma
         if move_surf != None:
             toy_move_params['move_surf'] = move_surf
@@ -118,7 +120,10 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
         toy_spp._set_coords_and_cells()
 
     #set the plotting linewidths to increase over runtime
-    linewidths = np.linspace(1, 5, num=num_timesteps)
+    if increasing_linewidth:
+        linewidths = np.linspace(1, 5, num=num_timesteps)
+    else:
+        linewidths = np.array([1] * num_timesteps)
 
     #Create a colors list, to plot different-colored paths for individuals
     #colors = ['black', 'red', 'orange', 'yellow', 'green', 'blue', 'white']

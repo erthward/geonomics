@@ -305,8 +305,11 @@ class GenomicArchitecture:
     def _plot_allele_frequencies(self, spp):
         speciome = np.stack([ind.g for ind in spp.values()])
         freqs = speciome.sum(axis=2).sum(axis=0) / (2*speciome.shape[0])
-        plt.plot(range(self.L), self.p, ':r')
-        plt.plot(range(self.L), freqs, '-b')
+        plt.plot(range(self.L), self.p, ':r', label='start freq.')
+        plt.plot(range(self.L), freqs, '-b', label='curr. freq.')
+        plt.xlabel('locus')
+        plt.ylabel('frequency')
+        plt.legend()
         plt.show()
 
     # method for pickling a genomic architecture

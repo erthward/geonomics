@@ -67,9 +67,9 @@ fig = plt.figure(figsize=(9.25, 4.5))
 gs = gridspec.GridSpec(1, 2, width_ratios=[1, 1])
 im = plt.pcolormesh(np.linspace(0, mod.land.dim[0], mod.land.dim[0]+1),
                     np.linspace(0, mod.land.dim[1], mod.land.dim[1]+1),
-                    mod.land[0].rast, cmap='RdBu_r')
+                    mod.land[0].rast, cmap='coolwarm')
 ax1 = plt.subplot(gs[0])
-mod.plot_phenotype(0, 0, 0)
+mod.plot_phenotype(0, 0, 0, size=55)
 divider = make_axes_locatable(ax1)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 cbar = plt.colorbar(im, cax=cax)
@@ -79,7 +79,7 @@ ax2 = plt.subplot(gs[1])
 im = plt.pcolormesh(np.linspace(0, mod.land.dim[0], mod.land.dim[0]+1),
                     np.linspace(0, mod.land.dim[1], mod.land.dim[1]+1),
                     mod.land[1].rast, cmap='BrBG_r')
-mod.plot_phenotype(0, 1, 1)
+mod.plot_phenotype(0, 1, 1, size=55)
 divider = make_axes_locatable(ax2)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 cbar = plt.colorbar(im, cax=cax)

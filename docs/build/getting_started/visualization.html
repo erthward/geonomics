@@ -1,0 +1,126 @@
+
+
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Visualization &#8212; geonomics 0.0 documentation</title>
+    <link rel="stylesheet" href="../_static/p_sphinx_theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/local_fonts.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../_static/p_sphinx_theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Data structures" href="../user_guide/data_structures.html" />
+    <link rel="prev" title="Examples" href="examples.html" /> 
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+      <div class="relbar-top">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../user_guide/data_structures.html" title="Data structures"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+      <li><a href="../index.html">geonomics 0.0 documentation</a> &#187;</li>
+ 
+      </ul>
+    </div>
+      </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="visualization">
+<h1>Visualization<a class="headerlink" href="#visualization" title="Permalink to this headline">¶</a></h1>
+<p>Each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> object has a variety of visualization methods
+(<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">plot</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">plot_fitness</span></span></code>, etc.),
+which aim to help users design, run, explore, present,
+and explain their <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Models</span></span></code>’ behavior and results.
+These methods can be called at any time (e.g. as
+soon as the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> has been created, or after it has
+run for any number of timesteps); but it is worth mentioning that some
+methods may be invalid depending on the point in model-time at
+which they’re called (e.g. <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">plot_genotype</span></span></code>,
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">plot_phenotype</span></span></code>, and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">plot_fitness</span></span></code>
+cannot be run for <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Models</span></span></code> that have not yet been burned in,
+as they will not yet have genomes assigned), or on
+the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> for which they’re called
+(e.g. the aforementioned methods cannot create plots for a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>
+that has no <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitecture</span></span></code>; and likewise, the
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">plot_demographic_changes</span></span></code> method cannot be called for a
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> for which demographic changes were not parameterized).</p>
+<p>Below is a list of the visualization methods available, with example
+output for each (generated from the default Geonomics <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>):</p>
+<p><strong>UNDER CONSTRUCTION!</strong></p>
+<p><a class="reference internal" href="getting_started/../construction.jpg"><img alt="construction" class="align-middle" src="getting_started/../construction.jpg" style="width: 6px;" /></a></p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+      <div class="relbar-bottom">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../user_guide/data_structures.html" title="Data structures"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >previous</a> &nbsp; &nbsp;</li>
+      <li><a href="../index.html">geonomics 0.0 documentation</a> &#187;</li>
+ 
+      </ul>
+    </div>
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Drew Hart.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+    </div>
+      <!-- PSphinxTheme -->
+  </body>
+</html>

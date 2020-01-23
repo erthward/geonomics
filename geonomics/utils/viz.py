@@ -43,7 +43,7 @@ from matplotlib.colors import LinearSegmentedColormap
 ######################################
 
 def _choose_cmap(lyr_num):
-    cols = {0: 'RdBu_r',
+    cols = {0: 'coolwarm',
             1: 'BrBG_r',
             2: 'PRGn',
             3: 'PiYG_r',
@@ -53,8 +53,7 @@ def _choose_cmap(lyr_num):
     return col
 
 
-def _plot_rasters(land, lyr_num=None, cbar=True,
-                  im_interp_method='nearest', cmap=None, plt_lims=None,
+def _plot_rasters(land, lyr_num=None, cbar=True, cmap=None, plt_lims=None,
                   vmin=None, vmax=None, lyr_name=None, ticks=None,
                   mask_rast=None,  int_coords=False):
     # if a figure is already open, force colorbar to False,
@@ -171,8 +170,6 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
         plt.pcolormesh(x_cell_bds, y_cell_bds, rasters[n], cmap=cmaps[n],
                        vmin=vmin[n], vmax=vmax[n], alpha=alphas[n])
         plt.axis('scaled')
-        # plt.imshow(rasters[n], interpolation=im_interp_method, cmap=cmaps[n],
-        #           vmin=vmin, vmax=vmax, alpha=alphas[n])
         if ((lyr_type != 'file' and not ticks) or
            (lyr_type == 'file' and ticks is False)):
             plt.xticks([])

@@ -1,0 +1,145 @@
+
+
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Installation &#8212; geonomics 0.0 documentation</title>
+    <link rel="stylesheet" href="../_static/p_sphinx_theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/local_fonts.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../_static/p_sphinx_theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Overview" href="overview.html" />
+    <link rel="prev" title="Indices and tables" href="../introduction.html" /> 
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+      <div class="relbar-top">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="overview.html" title="Overview"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="../introduction.html" title="Indices and tables"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+      <li><a href="../index.html">geonomics 0.0 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../introduction.html" accesskey="U">Indices and tables</a> &#187;</li> 
+      </ul>
+    </div>
+      </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>Geonomics depends on a number of common Python packages. See the
+[Dependencies] section below for details.</p>
+<div class="section" id="installing-with-pip">
+<h2>Installing with <cite>pip</cite><a class="headerlink" href="#installing-with-pip" title="Permalink to this headline">¶</a></h2>
+<p>To install Geonomics we recommend using
+<cite>pip &lt;https://pypi.org/project/pip/&gt;</cite>. It can be installed by following
+the installation instructions on the <cite>pip &lt;https://pypi.org/project/pip/&gt;</cite>
+webpage. Geonomics can then be installed using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install geonomics
+</pre></div>
+</div>
+<p>The installation can then be tested by launching a Python prompt and running:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">geonomics</span> <span class="k">as</span> <span class="nn">gnx</span>
+<span class="n">gnx</span><span class="o">.</span><span class="n">run_default_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This will load the Geonomics package, create in your current working
+directory a new Geonomics parameters file containing the default
+parameter values, then use that file to instantiate and run a Geonomics model.</p>
+</div>
+<div class="section" id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<p>Required dependencies:</p>
+<p><a class="reference external" href="http://numpy.org/">numpy</a></p>
+<p><a class="reference external" href="http://matplotlib.org/">matplotlib</a></p>
+<p><a class="reference external" href="http://pandas.pydata.org/">pandas</a> (version 0.23.4 or later)</p>
+<p><a class="reference external" href="http://geopandas.org/">geopandas</a></p>
+<p><a class="reference external" href="http://www.scipy.org/scipylib/index.html">scipy</a></p>
+<p><a class="reference external" href="http://scikit-learn.org/stable/">scikit-learn</a></p>
+<p><a class="reference external" href="http://www.statsmodels.org/stable/index.html">statsmodels</a> (version
+0.9.0 or later)</p>
+<p><a class="reference external" href="http://shapely.readthedocs.io/en/stable/project.html">shapely</a></p>
+<p><a class="reference external" href="http://pypi.org/project/bitarray/">bitarray</a></p>
+<p><a class="reference external" href="http://pyvcf.readthedocs.io/en/latest/">pyvcf</a></p>
+<p>Optional dependencies:</p>
+<p><a class="reference external" href="http://pypi.org/project/nlmpy/">nlmpy</a></p>
+<p><a class="reference external" href="http://pypi.org/project/GDAL/">GDAL</a></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+      <div class="relbar-bottom">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="overview.html" title="Overview"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="../introduction.html" title="Indices and tables"
+             >previous</a> &nbsp; &nbsp;</li>
+      <li><a href="../index.html">geonomics 0.0 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../introduction.html" >Indices and tables</a> &#187;</li> 
+      </ul>
+    </div>
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Drew Hart.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+    </div>
+      <!-- PSphinxTheme -->
+  </body>
+</html>

@@ -1,0 +1,345 @@
+
+
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Operations &#8212; geonomics 0.0 documentation</title>
+    <link rel="stylesheet" href="../_static/p_sphinx_theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/local_fonts.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../_static/p_sphinx_theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Indices and tables" href="../reference_guide/parameters.html" />
+    <link rel="prev" title="Data structures" href="data_structures.html" /> 
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+      <div class="relbar-top">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../reference_guide/parameters.html" title="Indices and tables"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="data_structures.html" title="Data structures"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+      <li><a href="../index.html">geonomics 0.0 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../introduction.html" accesskey="U">Indices and tables</a> &#187;</li> 
+      </ul>
+    </div>
+      </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="operations">
+<h1>Operations<a class="headerlink" href="#operations" title="Permalink to this headline">¶</a></h1>
+<p>The following sections discuss the mechanics of core Geonomics operations.</p>
+<p>As you’re reading, this conceptual diagram should serve as a useful reference.
+Most of the key operations are depicted in the cycle of four boxes
+in the corners.</p>
+<img alt="../_images/conceptual_diagram.png" src="../_images/conceptual_diagram.png" />
+<div class="section" id="movement-and-dispersal">
+<h2>Movement and Dispersal<a class="headerlink" href="#movement-and-dispersal" title="Permalink to this headline">¶</a></h2>
+<p>Movement is optional, such that turning off movement will allow the user
+to simulate sessile organisms (which will reproduce and disperse,
+but not move after dispersal; this distinction is of course irrelevant
+for a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> with a maximum age of 1). For <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>
+with movement, <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s can
+move by two distinct mechanisms. <strong>Spatially random movement</strong>
+is the default behavior; in this case, <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s
+move to next locations that are determined by a random distance drawn
+from a Wald distribution and a random direction drawn from a uniform
+circular (i.e. Von Mises) distribution.  As with most distributions used
+in Geonomics, the parameters of these distributions have sensible
+default values but can be customized in a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>’s parameters file
+(see section ‘Parameters’, below).</p>
+<p>The alternative movement mechanism that is available is
+<strong>movement across a permeability surface</strong>,
+using a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> object.
+To parameterize a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_MovemementSurface</span></span></code> for a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>, the user
+must create a template parameters file that includes the
+necessary parameters section for the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> (i.e.
+the user must set ‘movement’ to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">True</span></span></code> and ‘movement_surface’ to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">True</span></span></code>
+in the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’ arguments to the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">gnx</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">make_parameters_file</span></span></code>
+function (see the docstring for that function for details and an example).
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s move to next locations determined by a random distance drawn
+from a Wald distribution and a random direction drawn from the distribution
+at the  <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> cell in which which the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s
+are currently located. For details about <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> creation,
+see section ‘<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code>’ above, or the class’ docstring.</p>
+<p>Dispersal is currently implemeneted identically to spatially random movement
+(with the caveat that the an offspring’s new location is determined
+relative its parents’ midpoint). But the option to use a
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> for dispersal will be offered soon.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="reproduction">
+<h2>Reproduction<a class="headerlink" href="#reproduction" title="Permalink to this headline">¶</a></h2>
+<p>Each timestep, for each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>, all pairs of individuals within
+a certain distance of each other (i.e. the mating radius,
+which is set in the parameters file) are identified.
+These pairs are subsetted if necessary (i.e. if the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>
+requires that <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s be above a certain reproductive age,
+or that they be of opposite sexes, in order to mate; these values
+can also be changed from their defaults in the parameters file).
+Remaining pairs mate probabilistically (according to a Bernoulli
+random draw with probability equal to the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’ birth
+rate, which is also set in the parameters file).</p>
+<p>Pairs that are chosen to mate will produce a number of new
+offspring drawn from a Poisson distribution (with lambda set in the
+parameters file). For each offspring, sex is chosen probablistically
+(a Bernoulli random draw with probability equal to the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’
+sex ratio), age set to 0, and location chosen by dispersal from
+the parents’ midpoint (see section ‘Movement and Dispersal’). For
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> that have genomes, offspring genomes will be a
+fusion of two recombinant genomes from each of the two parents (where
+each recombinant is indexed out a parent’s genome using a recombination
+path; see section ‘<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_RecombinationPaths</span></span></code>’). For <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>
+with <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code>s in their
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitecture</span></span></code>s, offspring phenotypes are
+determined at birth. Mutations are also drawn and introduced at this
+point (see section ‘Mutation for details).</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="mortality">
+<h2>Mortality<a class="headerlink" href="#mortality" title="Permalink to this headline">¶</a></h2>
+<p>Mortality can occur as a combination of two factors: <strong>density dependence</strong>
+and <strong>natural selection</strong>. Each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> has a death decision drawn
+as a Bernoulli random variable with
+<span class="math notranslate nohighlight">\(P(d_{i}) = 1 - P(s_{i_{dens}})P(s_{i_{fit}})\)</span>, where <span class="math notranslate nohighlight">\(P(d_{i})\)</span>
+is the probability of death of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> <span class="math notranslate nohighlight">\(i\)</span>, and
+<span class="math notranslate nohighlight">\(P(s_{i_{dens}})\)</span> and <span class="math notranslate nohighlight">\(P(s_{i_{fit}})\)</span> are the probabilities of
+survival of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> <span class="math notranslate nohighlight">\(i\)</span> given density-dependence and
+fitness. The probability of density-dependent death is contingent on an
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s x,y location
+(i.e. the cell in which they’re currently located.
+And an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s probability of survival due to fitness
+is just equal to the product of their absolute fitness (<span class="math notranslate nohighlight">\(\omega\)</span>)
+for each of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s <span class="math notranslate nohighlight">\(m\)</span> <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code>s.
+Thus the equation for an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s probability of death becomes:</p>
+<div class="math notranslate nohighlight">
+\[P(d_{i}) = 1 - (1 - P(d_{x,y})) \prod_{p = 1}^{m}\omega_{i,p}\]</div>
+<p>The following two sections explain in detail the implementation and
+calculation of the two halves of the right side of this equation.</p>
+<div class="section" id="density-dependence">
+<h3>Density dependence<a class="headerlink" href="#density-dependence" title="Permalink to this headline">¶</a></h3>
+<p>Density dependence is implemented using a spatialized form of the class
+logistic growth equation (<span class="math notranslate nohighlight">\(\frac{\mathrm{d}
+N_{x,y}}{\mathrm{d}t}=rN_{x,y}(1-\frac{N_{x,y}}{K_{x,y}})\)</span>,
+where the x,y subscripts refer to
+values for a given cell on the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>).
+Each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> has a carrying-capacity raster (a 2d Numpy array;
+attribute ‘K’), which is defined in the parameters file to be
+one of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>s in the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>.
+The comparison between this raster and
+the population-density raster calculated at each timestep serves as the
+basis for the spatialized logistic growth equation, because both
+equations can be calculated cell-wise for the entire extent of the
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> (using the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’
+intrinsic growth rate, the attribute
+‘R’, which is set in the parameters file).</p>
+<p>The logistic equation returns an array of instantaneous population growth
+rates within each cell. We can derive from this the density-dependent
+probability of death at each cell by subtracting an array of the expected
+number of births at each cell, then dividing by the array of
+population density:</p>
+<div class="math notranslate nohighlight">
+\[P(d_{x,y}) = E[N_{d;x,y}]/N_{x,y} = \frac{E[N_{b;x,y}]
+ - \frac{\mathrm{d}N_{x,y}}{\mathrm{d}t}}{N_{x,y}}\]</div>
+<p>The expected number of births at each cell is calculated as a density
+raster of the number of succesful mating pairs, multiplied by the expected
+number of births per pair (i.e. the expectation of the Poisson
+distribution of the number of offspring per mating pair, which
+is just the distribution’s paramater lambda).</p>
+</div>
+<div class="section" id="selection">
+<h3>Selection<a class="headerlink" href="#selection" title="Permalink to this headline">¶</a></h3>
+<p>Selection on a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code> can exhibit three regimes: <strong>spatially divergent</strong>,
+<strong>universal</strong>, and <strong>spatially contingent</strong>. <strong>Spatially divergent</strong> selection
+is the default behavior, and the most commonly used; in this form of
+selection, an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s fitness depends on the absolute difference
+between the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s phenotypic value and the environmental
+value of the relevant <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> (i.e. the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> that represents the
+environmental variable acting as the selective force) in the cell where
+the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> is located.</p>
+<p><strong>Universal</strong> selection (which can be toggled using the ‘univ_adv’
+parameter with a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code>’s section in the parameters file) occurs
+when a phenotype of 1 is optimal everywhere on the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>. In other
+words, it represents directional selection on an entire <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>,
+regardless of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s’ spatial contexts. (Note that this can
+be thought of as operating the same as spatially divergent selection,
+but with the environmental variable driving natural selection being
+represented by an array in which all cells are equal to 1.)</p>
+<p>Under <strong>spatially contingent</strong> selection, the selection coefficient of a
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code> varies across space, such that the strength of selection
+is environmentally determined in some way. Importantly, this selection regime
+is <em>not mutually exclusive</em> with the other two; in other words,
+selection on a certain <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code> be both spatially contingent
+and either spatially divergent or universal. Spatially contingent selection
+can be implemented by providing an array of values (equal in dimensions
+to the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>) to the ‘phi’ value of a
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code>, rather than a scalar
+value (which could be done within the parameters file itself, but may be
+more easily accomplished as a step between reading in a parameters file and
+instantiating a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> object from it). (Note that non-spatailly
+cotingent selection could in fact be thought of as a special case of
+spatially contingent selection, but where the array of selection-coefficients
+has the same value at each cell.)</p>
+<p>All possible combinations of the three selection regimes of selection can all
+be thought of as special cases of the following equation for the fitness of
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> <span class="math notranslate nohighlight">\(i\)</span> for <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code> <span class="math notranslate nohighlight">\(p\)</span> (<span class="math notranslate nohighlight">\(\\omega_{i,p}\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[\omega_{i,p}= 1 - \phi_{p;x,y} (\mid e_{p;x,y} - z_{i;p} \mid)^{\gamma_{p}}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\\phi_{p;x,y}\)</span> is the selection coefficient of trait
+<span class="math notranslate nohighlight">\(p\)</span>; <span class="math notranslate nohighlight">\(e_{p;x,y}\)</span> is the environmental variable of the
+relevant <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> at <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> <span class="math notranslate nohighlight">\(i\)</span>’s x,y location
+(which can also be thought of as the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s optimal
+phenotype); <span class="math notranslate nohighlight">\(z_{i;p}\)</span> is <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> <span class="math notranslate nohighlight">\(i\)</span>’s (actual)
+phenotype for <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code> <span class="math notranslate nohighlight">\(p\)</span>; and <span class="math notranslate nohighlight">\(gamma_{p}\)</span> controls
+the curvature of the fitness function (i.e. how fitness decreases as
+the absolute difference between an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s
+optimal and actual phenotypes increases; the default value of 1 causes
+fitness to decrease linearly around the optimal phenotypic value).</p>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="mutation">
+<h2>Mutation<a class="headerlink" href="#mutation" title="Permalink to this headline">¶</a></h2>
+<p>Geonomics can model mutations of three different types: <strong>neutral</strong>,
+<strong>deleterious</strong>, and <strong>trait</strong> mutations. These terms don’t map
+precisely onto the traditional population-genetic
+lingo of “neutral”, “deleterious”, and “beneficial”, but they
+are more or less analogous:</p>
+<ul class="simple">
+<li><p><strong>Neutral</strong> mutations are the same conceptually in Geonomics as
+they are in the field of population genetics in general:
+They are mutations that have no effect on the fitness of
+the individuals in which they occur.</p></li>
+<li><p><strong>Deleterious</strong> mutations in Geonomics are also conceptually the
+same in Geonomics and in population genetics: They negatively impact
+the fitness of the individuals in which they occur.</p></li>
+<li><p><strong>Trait</strong> mutations are the place where the Geonomics concept and
+the population-genetic concept diverge: In Geonomics, natural selection
+acts on the phenotype, not the genotype (although these concepts are
+identical if a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code> in monogenic), and it is (by default,
+but not always; see section ‘Selection’, above) divergent. For this reason
+it would be a misnomer to call mutations that influence a given
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code>’s phenotypes ‘beneficial’ – even though that term is the closest
+population-genetic concept to this concept as it is employed in Geonomics –
+because the same mutant genotype in the same <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>
+could have opposite effects on that <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s fitness
+in different environmental contexts (i.e. it could behave as
+a beneficial mutation is one region of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>
+but as a deleterious mutation in another).</p></li>
+</ul>
+</div>
+<hr class="docutils" />
+<div class="section" id="species-interactions">
+<h2>Species interactions<a class="headerlink" href="#species-interactions" title="Permalink to this headline">¶</a></h2>
+<p>This functionality is not yet included available. But the Community class was
+created in advance recognition that this functionality could be desirable
+for future versions (e.g. to simulate coevolutionary, speciation, or
+hybridization scenarios).</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="landscape-and-species-change">
+<h2><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> change<a class="headerlink" href="#landscape-and-species-change" title="Permalink to this headline">¶</a></h2>
+<p>For a given <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>, any number of change events
+can be planned.
+In the parameters file, for each event, the user stipulates the initial
+timestep; the final timestep; the end raster (i.e. the array
+of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> that will exist after the event is complete, defined using
+the <strong>end_rast</strong> parameter); and the
+interval at which intermediate changes will occur.  When the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> is
+created, the stepped series of intermediate <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layers</span></span></code> (and
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> objects,
+if the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> that is changing serves as the basis for a
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> for any <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>) will be
+created and queued, so that they will swap out accordingly at the appropriate
+timesteps.</p>
+<p>For a given <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>, any number of demographic change events can
+also be planned. In the parameters file, for each event, the user
+stipulates the type of the event (‘monotonic’, ‘cyclical’, ‘random’, or
+‘custom’) as well as the values of a number of associated
+parameters (precisely which parameters depdends on the type of event chosen).
+As with <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> change events, all necessary stepwise changes will be
+planned and queued when the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> is created, and will be
+executed at the appropriate timesteps.</p>
+<p>It is also possible to schedule any number of instantaneous changes
+to some of the life-history parameters of a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> (e.g. birth rate;
+the lambda parameter of the Poisson distribution determining the number of
+offspring of mating events). This functionality is currently minimalistic,
+but will be more facilitated in future versions.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+      <div class="relbar-bottom">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../reference_guide/parameters.html" title="Indices and tables"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="data_structures.html" title="Data structures"
+             >previous</a> &nbsp; &nbsp;</li>
+      <li><a href="../index.html">geonomics 0.0 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../introduction.html" >Indices and tables</a> &#187;</li> 
+      </ul>
+    </div>
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Drew Hart.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+    </div>
+      <!-- PSphinxTheme -->
+  </body>
+</html>

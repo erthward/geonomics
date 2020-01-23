@@ -19,9 +19,9 @@ ax_fontdict = {'fontsize': 12,
                'name': 'Bitstream Vera Sans'}
 ttl_fontdict = {'fontsize': 14,
                 'name': 'Bitstream Vera Sans'}
-color_dict = dict(zip(np.linspace(0,1,3), plt.cm.RdBu_r(np.linspace(0,1,3))))
+color_dict = dict(zip(np.linspace(0,1,3), plt.cm.coolwarm(np.linspace(0,1,3))))
 
-def calc_pi(mod, nonneut_loc, window_width=5):
+def calc_pi(mod, nonneut_loc, window_width=6):
     print("\nCalculating nucleotide diversity (WILL TAKE A WHILE)...\n")
     # make speciome
     speciome = np.stack([i.g for i in mod.comm[0].values()])
@@ -81,11 +81,11 @@ def plot_by_phenotype(mod):
                                         :])] for ind in mod.comm[0].values()]
     y_cell_bds, x_cell_bds = [np.linspace(0, dim,
                                     dim+1) for dim in mod.land[0].rast.shape]
-    plt.pcolormesh(x_cell_bds, y_cell_bds, mod.land[0].rast, cmap='RdBu')
+    plt.pcolormesh(x_cell_bds, y_cell_bds, mod.land[0].rast, cmap='coolwarm')
     #plt.imshow(mod.land[0].rast, cmap='RdBu')
-    plt.scatter(mod.comm[0]._get_x() - 0.5,
-                mod.comm[0]._get_y() - 0.5,
-                c=cols, cmap='RdBu_r', edgecolors='black', s=10)
+    plt.scatter(mod.comm[0]._get_x(),# - 0.5,
+                mod.comm[0]._get_y(),# - 0.5,
+                c=cols, cmap='coolwarm', edgecolors='black', s=10)
     plt.axis('scaled')
     plt.xticks([])
     plt.yticks([])
@@ -200,10 +200,10 @@ plot_by_phenotype(mod)
 # calculate and store ending nucleotide diversity
 pi.append(calc_pi(mod, nonneut_loc))
 
-# walk model 2500 more timesteps, then plot status
-mod.walk(2500, verbose=True)
+# walk model 5000 more timesteps, then plot status
+mod.walk(5000, verbose=True)
 ax4 = fig.add_subplot(244)
-ax4.set_title('2500 timesteps after sweep (t = %i)' % (mod.t - lapsed_t + 50 + 50),
+ax4.set_title('5000 timesteps after sweep (t = %i)' % (mod.t - lapsed_t + 50 + 50),
               fontdict=ttl_fontdict)
 plot_by_phenotype(mod)
 

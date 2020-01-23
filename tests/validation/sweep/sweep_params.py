@@ -229,7 +229,7 @@ params = {
                             #trait-selection Layer name
                             'layer':                'layer_0',
                             #polygenic selection coefficient
-                            'phi':                  0.05,
+                            'phi':                  0.1,
                             #number of loci underlying trait
                             'n_loci':               1,
                             #mutation rate at loci underlying trait

@@ -166,7 +166,7 @@ def _draw_n_births(num_pairs, n_births_distr_lambda):
 def _do_mating_sngl_offspr(spp, pair, recomb_paths):
     # generate a gamete for each member of mating pair, stack, and transpose
     new_genome = np.vstack(
-      [spp[ind].g.flatten()[recomb_paths.pop()] for ind in pair]).T
+      [spp[ind].g.flatten()[[*recomb_paths.pop()]] for ind in pair]).T
     return new_genome
 
 

@@ -70,7 +70,7 @@ def map_genetic_PCA(species, land):
     # top = plt.cm.get_cmap('Reds', 256)(np.linspace(0.4, 0.45, 2))[0]
     # cols = np.vstack((top, bot))
     # cmap = mpl.colors.ListedColormap(cols, name='OrangeBlue')
-    cmap = plt.cm.RdBu_r
+    cmap = plt.cm.coolwarm
     cmap.set_bad(color='#8C8C8C')
     # plot landscape
     # plt.imshow(masked_env, cmap=cmap, alpha=0.8)

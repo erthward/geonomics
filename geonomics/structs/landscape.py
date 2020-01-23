@@ -106,17 +106,15 @@ class Layer:
         return (self._scale_min, self._scale_max)
 
     #method for plotting the layer
-    def _plot(self, cbar=True, im_interp_method='nearest',
-            cmap=None, x=None, y=None, zoom_width=None,
-            vmin=None, vmax=None, ticks=None, mask_rast=None):
+    def _plot(self, cbar=True, cmap=None, x=None, y=None, zoom_width=None,
+              vmin=None, vmax=None, ticks=None, mask_rast=None):
         plt_lims = _get_plt_lims(self, x, y, zoom_width)
         # get the vmin and vmax values, if not provided
         if vmin is None and vmax is None:
             vmin, vmax = self._get_plot_vmin_vmax()
-        _plot_rasters(self, cbar=cbar,
-            im_interp_method=im_interp_method, cmap=cmap,
-            plt_lims=plt_lims, vmin=vmin, vmax=vmax, ticks=ticks,
-            mask_rast=mask_rast)
+        _plot_rasters(self, cbar=cbar, cmap=cmap,
+                      plt_lims=plt_lims, vmin=vmin, vmax=vmax, ticks=ticks,
+                      mask_rast=mask_rast)
 
     # method to get the tickmarks to use to plot the layer
     def _get_coord_ticks(self):
@@ -294,8 +292,7 @@ class Landscape(dict):
                                    verbose=verbose)
 
     #method to plot the landscape (or just a certain lyr)
-    def _plot(self, lyr_num=None, cbar=True, cmap=None,
-              im_interp_method='nearest', x=None, y=None,
+    def _plot(self, lyr_num=None, cbar=True, cmap=None, x=None, y=None,
               zoom_width=None, vmin=None, vmax=None, ticks=None,
               mask_rast=None):
         plt_lims = _get_plt_lims(self, x, y, zoom_width)
@@ -308,8 +305,7 @@ class Landscape(dict):
                 vmax = [v[1] for v in vmins_vmaxs]
             else:
                 vmin, vmax = self[lyr_num]._get_plot_vmin_vmax()
-        _plot_rasters(self, lyr_num=lyr_num, cbar=cbar,
-                      im_interp_method=im_interp_method, cmap=cmap,
+        _plot_rasters(self, lyr_num=lyr_num, cbar=cbar, cmap=cmap,
                       plt_lims=plt_lims, vmin=vmin, vmax=vmax, ticks=ticks,
                       mask_rast=mask_rast)
 

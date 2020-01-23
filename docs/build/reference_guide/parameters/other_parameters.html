@@ -1,0 +1,452 @@
+
+
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Other parameters &#8212; geonomics 0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/p_sphinx_theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/local_fonts.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/p_sphinx_theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Functions" href="../functions.html" />
+    <link rel="prev" title="Community and Species parameters" href="community_and_species_parameters.html" /> 
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+      <div class="relbar-top">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../functions.html" title="Functions"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="community_and_species_parameters.html" title="Community and Species parameters"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+      <li><a href="../../index.html">geonomics 0.0 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../../introduction.html" >Indices and tables</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../parameters.html" accesskey="U">Indices and tables</a> &#187;</li> 
+      </ul>
+    </div>
+      </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="other-parameters">
+<h1>Other parameters<a class="headerlink" href="#other-parameters" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="main">
+<h2>Main<a class="headerlink" href="#main" title="Permalink to this headline">¶</a></h2>
+<hr class="docutils" />
+<p><strong>T</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#total Model runtime (in timesteps)</span>
+<span class="s1">&#39;T&#39;</span><span class="p">:</span>            <span class="mi">100</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 100</p>
+<p>reset? Y</p>
+<p>This indicates the total number of timesteps for which the main portion of
+a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> (i.e. the portion after the burn-in has completed) will be run
+during each iteration.</p>
+<hr class="docutils" />
+<p><strong>burn_T</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#min burn-in runtime (in timesteps)</span>
+<span class="s1">&#39;burn_T&#39;</span><span class="p">:</span>       <span class="mi">30</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 30</p>
+<p>reset? P</p>
+<p>This indicates the minimum number of timesteps for which a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>’s
+burn-in will run. (Note this is only a minimum because the test for
+burn-in completion includes a check that at least this many timesteps have
+elapsed, but also includes two statistical checks of stationarity of the
+size of each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> in a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code>.)</p>
+<hr class="docutils" />
+<p><strong>seed</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#seed number</span>
+<span class="s1">&#39;num&#39;</span><span class="p">:</span>          <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates whether or not to set the seeds of the random number
+generators (by calling <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">random</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">seed</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">random</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">seed</span></span></code>)
+before building and running a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>. If value is an integer, the seeds
+will be set to that value. If value is <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>, seeds will not be set.</p>
+</div>
+<div class="section" id="iterations">
+<h2>Iterations<a class="headerlink" href="#iterations" title="Permalink to this headline">¶</a></h2>
+<hr class="docutils" />
+<p><strong>num_iterations</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#num iterations</span>
+<span class="s1">&#39;n_its&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 2</p>
+<p>reset? Y</p>
+<p>This indicates the number of iterations for which the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>
+should be run. (Note that for each iteration a separate subdirectory of
+data and stats will be written, if your <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> has parameterized data
+and stats to be collected.)</p>
+<hr class="docutils" />
+<p><strong>rand_landscape</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to randomize Landscape each iteration</span>
+<span class="s1">&#39;rand_landscape&#39;</span><span class="p">:</span>    <span class="kc">False</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
+<p>default: False</p>
+<p>reset? P</p>
+<p>This indicates whether the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> should be randomized for each
+iteration. If True, a new <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> will be generated at the start
+of each iteration. If False, the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> from iteration 0 will be
+saved and reused for each subsequent iteration.</p>
+<hr class="docutils" />
+<p><strong>rand_community</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to randomize Community each iteration</span>
+<span class="s1">&#39;rand_comm&#39;</span><span class="p">:</span>    <span class="kc">False</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
+<p>default: False</p>
+<p>reset? P</p>
+<p>This indicates whether the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code> should be randomized for each
+iteration. If True, a new <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code> will be generated at the start
+of each iteration. If False, the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code> from iteration 0 will be
+saved and reused for each subsequent iteration (and whether that
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code> is saved before or after being burned in will depend on
+the value provided to the <strong>repeat_burn</strong> parameter).</p>
+<hr class="docutils" />
+<p><strong>repeat_burn</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to burn in each iteration</span>
+<span class="s1">&#39;repeat_burn&#39;</span><span class="p">:</span>  <span class="kc">False</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
+<p>default: False</p>
+<p>reset? P</p>
+<p>This indicates whether a reused <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code> should be burned in
+separately for each iteration for which it is reused. If True, the
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code> from iteration 0 will be saved as soon as its instantiated,
+but will have a new burn-in run for each iteration in which it is used. If
+False, the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code> from iteration 0 will be saved after its burn-in
+is complete, and then will only have the main portion of its <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> run
+separately during each iteration. (Note that if <strong>rand_community</strong> is set to True then
+the value of this parameter will not be used.)</p>
+<div class="section" id="data">
+<h3>Data<a class="headerlink" href="#data" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="sampling">
+<h4>Sampling<a class="headerlink" href="#sampling" title="Permalink to this headline">¶</a></h4>
+<hr class="docutils" />
+<p><strong>scheme</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#sampling scheme {&#39;all&#39;, &#39;random&#39;, &#39;point&#39;, &#39;transect&#39;}</span>
+<span class="s1">&#39;scheme&#39;</span><span class="p">:</span>               <span class="s1">&#39;random&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘all’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘random’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘point’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘transect’</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘random’</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the sampling scheme to use when collecting data from a
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>. Currently valid values include <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘all’</span></span></code>,
+<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘random’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘point’</span></span></code>, and <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘transect’</span></span></code>.</p>
+<p>With <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘all’</span></span></code>, data will be collected for all <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s
+at each sampling timestep. With <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘random’</span></span></code>, data will be collected from a
+random sample of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s (of size indicated by parameter <strong>n</strong>)
+from anywhere on the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>.
+With <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘point’</span></span></code>, data will be collected from random samples of size <strong>n</strong>
+within a certain distance (<strong>radius</strong>) of each of a set of particular
+points (<strong>points</strong>). With <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘transect’</span></span></code>, a linear transect of some
+number of points (<strong>n_transect_points</strong>) between some endpoints
+(<strong>transect_endpoints</strong>) will be created, and then data will be collected
+from random samples of size <strong>n</strong> with a certain distance (<strong>radius</strong>)
+of each point along the transect.</p>
+<hr class="docutils" />
+<p><strong>n</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#sample size at each point, for point &amp; transect sampling</span>
+<span class="s1">&#39;n&#39;</span><span class="p">:</span>                    <span class="mi">250</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 250</p>
+<p>reset? P</p>
+<p>This indicates the total number of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s to sample each time
+data is collected (if <strong>scheme</strong> is <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘random’</span></span></code>), or the number of
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s to sample around each one of a set of points (if <strong>scheme</strong>
+is <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘point’</span></span></code> or <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘transect’</span></span></code>). This parameter will only be used if
+<strong>scheme</strong> is <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘random’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘point’</span></span></code>, or <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘transect’</span></span></code>; otherwise
+it may be set to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>.</p>
+<hr class="docutils" />
+<p><strong>points</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#coords of collection points, for point sampling</span>
+<span class="s1">&#39;points&#39;</span><span class="p">:</span>               <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">tuple</span></span></code> of 2-<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">tuple</span></span></code>s, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the points around which to sample <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s for data
+collection. This parameter will only be used if <strong>scheme</strong> is <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘point’</span></span></code>;
+otherwise it may be set to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>.</p>
+<hr class="docutils" />
+<p><strong>transect_endpoints</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#coords of transect endpoints, for transect sampling</span>
+<span class="s1">&#39;transect_endpoints&#39;</span><span class="p">:</span>   <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{2-<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">tuple</span></span></code> of 2-<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">tuple</span></span></code>s, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the endpoints between which to create a transect, along which
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s will be sampled for data collection.
+This parameter will only be used if <strong>scheme</strong> is <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘transect’</span></span></code>;
+otherwise it may be set to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>.</p>
+<hr class="docutils" />
+<p><strong>n_transect_points</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#num points along transect, for transect sampling</span>
+<span class="s1">&#39;n_transect_points&#39;</span><span class="p">:</span>    <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the number of points to create on the transect along which
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s will be sampled for data collection.
+This parameter will only be used if <strong>scheme</strong> is <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘transect’</span></span></code>;
+otherwise it may be set to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>.</p>
+<hr class="docutils" />
+<p><strong>radius</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#collection radius around points, for point &amp; transect sampling</span>
+<span class="s1">&#39;radius&#39;</span><span class="p">:</span>               <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">float</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the radius around sampling points within which
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s may be sampled for data collection.
+This parameter will only be used if <strong>scheme</strong> is <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘point’</span></span></code> or
+<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘transect’</span></span></code>; otherwise it may be set to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>.</p>
+<hr class="docutils" />
+<p><strong>when</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#when to collect data</span>
+<span class="s1">&#39;when&#39;</span><span class="p">:</span>                 <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">list</span></span></code> of <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>s, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the timesteps during main <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> iterations
+at which data should be collected (in addition to after the final timestep
+of each iteration, when data is always collected for any <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> for which
+data collection is parameterized). If value is a non-zero <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>,
+it will be treated as a frequency at which data should be collected (e.g.
+a value of 5 will cause data to be collected every 5 timesteps). If value
+is a list of <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>s, they will be treated as the particular timesteps
+at which data should be collected. If value is 0 or <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>,
+data will be collected only after the final timestep.</p>
+<hr class="docutils" />
+<p><strong>include_landscape</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to save current Layers when data is collected</span>
+<span class="s1">&#39;include_landscape&#39;</span><span class="p">:</span>         <span class="kc">False</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
+<p>default: False</p>
+<p>reset? P</p>
+<p>This indicates whether to include the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>s among the
+data that is collected. If True, each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> will be written to a raster
+or array file (according to the format indicated by
+<strong>geo_rast_format</strong>) each time data is collected.</p>
+<hr class="docutils" />
+<p><strong>include_fixed_sites</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to include fixed loci in VCF files</span>
+<span class="s1">&#39;include_fixed_sites&#39;</span><span class="p">:</span>  <span class="kc">False</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
+<p>default: False</p>
+<p>reset? P</p>
+<p>This indicates whether fixed sites (i.e. loci which are fixed for either the
+0 or 1 allele) should be included in any VCF files that are written. Thus,
+this parameter is only relevant if <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘vcf’</span></span></code> is one of the genetic data
+formats indicated by <strong>gen_format</strong>.</p>
+</div>
+<div class="section" id="format">
+<h4>Format<a class="headerlink" href="#format" title="Permalink to this headline">¶</a></h4>
+<hr class="docutils" />
+<p><strong>gen_format</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#format for genetic data {&#39;vcf&#39;, &#39;fasta&#39;}</span>
+<span class="s1">&#39;gen_format&#39;</span><span class="p">:</span>           <span class="p">[</span><span class="s1">&#39;vcf&#39;</span><span class="p">,</span> <span class="s1">&#39;fasta&#39;</span><span class="p">],</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘vcf’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘fasta’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="punctuation"><span class="pre">[</span></span><span class="literal string single"><span class="pre">‘vcf’</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="literal string single"><span class="pre">‘fasta’</span></span><span class="punctuation"><span class="pre">]</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="punctuation"><span class="pre">[</span></span><span class="literal string single"><span class="pre">‘vcf’</span></span><span class="punctuation"><span class="pre">,</span></span> <span class="literal string single"><span class="pre">‘fasta’</span></span><span class="punctuation"><span class="pre">]</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the format or formats to use for writing genetic data.
+data. Currently valid formats include <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘vcf’</span></span></code> and <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘fasta’</span></span></code> formats.
+Either or both formats may be specified; all formats that are specified will
+be written each time data is collected.</p>
+<hr class="docutils" />
+<p><strong>geo_vect_format</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#format for vector geodata {&#39;csv&#39;, &#39;shapefile&#39;, &#39;geojson&#39;}</span>
+<span class="s1">&#39;geo_vect_format&#39;</span><span class="p">:</span>      <span class="s1">&#39;csv&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘csv’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘shapefile’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘geojson’</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘csv’</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the format to use for writing geographic vector data (i.e.
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s’ point locations).
+Currently valid formats include <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘csv’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘shapefile’</span></span></code>,
+and <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘geojson’</span></span></code>. Any one format may be specified.</p>
+<hr class="docutils" />
+<p><strong>geo_rast_format</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#format for raster geodata {&#39;geotiff&#39;, &#39;txt&#39;}</span>
+<span class="s1">&#39;geo_rast_format&#39;</span><span class="p">:</span>      <span class="s1">&#39;geotiff&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘geotiff’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘txt’</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘geotiff’</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the format to use for writing geographic raster data (i.e.
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> arrays). Currently valid formats include <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘geotiff’</span></span></code>
+and <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘txt’</span></span></code>. Either format may be specified. Note that this parameter
+will only be used if the <strong>include_landscape</strong> parameter is set to True.</p>
+</div>
+</div>
+<div class="section" id="stats">
+<h3>Stats<a class="headerlink" href="#stats" title="Permalink to this headline">¶</a></h3>
+<hr class="docutils" />
+<p>The stats parameters section has subsection for each statistc that Geonomics
+can calculate. (Currently valid statistics include:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><em>‘Nt’</em>: number of individuals at timestep t</p></li>
+<li><p><em>‘het’</em>: heterozygosity</p></li>
+<li><p><em>‘maf’</em>: minor allele frequency</p></li>
+<li><p><em>‘mean_fit’</em>: mean fitness of a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code></p></li>
+<li><p><em>‘ld’</em>: linkage disequilibrium</p></li>
+</ul>
+<p>There are only a few parameters, which are shared across all</p>
+</div></blockquote>
+<p>of those subsections, and each parameter always means the same thing despite
+which statistic it is parameterizing. Thus, hereafter we provide a single of
+each of those parameters are how it works, regardless of the statistic for
+which it used:</p>
+<hr class="docutils" />
+<p><strong>calc</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to calculate</span>
+<span class="s1">&#39;calc&#39;</span><span class="p">:</span>     <span class="kc">True</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
+<p>default: (varies by statistic)</p>
+<p>reset? P</p>
+<p>This indicates whether or not a given statistic should be calculated. Thus,
+only those statistics whose <strong>calc</strong> parameters are set to True will be
+calculated and saved when their <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> is run.</p>
+<hr class="docutils" />
+<p><strong>freq</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#calculation frequency (in timesteps)</span>
+<span class="s1">&#39;freq&#39;</span><span class="p">:</span>     <span class="mi">5</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: (varies by statistic)</p>
+<p>reset? P</p>
+<p>This indicates the frequency with which a given statistic should be calculated
+during each iteration (in timesteps). If set to 0, Geonomics will calculate
+and save this statistic for only the first and last timesteps
+of each iteration.</p>
+<hr class="docutils" />
+<p><strong>mean</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to mean across sampled individs</span>
+<span class="s1">&#39;mean&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
+<p>default: (varies by statistic, and only valid for certain statistics)</p>
+<p>reset? P</p>
+<p>For some statistics that produce a vector of values each timestep
+when they are collected (containing one value per <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>),
+such as heterozygosity, this indicates
+whether those values should instead be meaned and saved as a
+single value for each timestep.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+      <div class="relbar-bottom">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../functions.html" title="Functions"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="community_and_species_parameters.html" title="Community and Species parameters"
+             >previous</a> &nbsp; &nbsp;</li>
+      <li><a href="../../index.html">geonomics 0.0 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../../introduction.html" >Indices and tables</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../parameters.html" >Indices and tables</a> &#187;</li> 
+      </ul>
+    </div>
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Drew Hart.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+    </div>
+      <!-- PSphinxTheme -->
+  </body>
+</html>

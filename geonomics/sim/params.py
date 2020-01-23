@@ -1005,7 +1005,7 @@ def _make_params_file(filepath=None, layers=1, species=1, data=None,
         filepath = 'GNX_params_%s.py' % datetime_str
     #check the filepath is pointed somewhere valid
     assert (os.path.isdir(os.path.split(filepath)[0])
-            or os.path.split(filepath)[0] is ''), ("The filepath to which to "
+            or os.path.split(filepath)[0] == ''), ("The filepath to which to "
             "write the parameters file does not point to a valid directory.")
     #coerce the file to a .py extension if it is not already provided
     filepath = os.path.splitext(filepath)[0] + '.py'

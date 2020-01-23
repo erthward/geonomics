@@ -1,0 +1,591 @@
+
+
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Landscape parameters &#8212; geonomics 0.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/p_sphinx_theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/local_fonts.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/jquery.cookie.js"></script>
+    <script type="text/javascript" src="../../_static/p_sphinx_theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Community and Species parameters" href="community_and_species_parameters.html" />
+    <link rel="prev" title="Indices and tables" href="../parameters.html" /> 
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+      <div class="relbar-top">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="community_and_species_parameters.html" title="Community and Species parameters"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="../parameters.html" title="Indices and tables"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+      <li><a href="../../index.html">geonomics 0.0 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../../introduction.html" >Indices and tables</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../parameters.html" accesskey="U">Indices and tables</a> &#187;</li> 
+      </ul>
+    </div>
+      </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="landscape-parameters">
+<h1>Landscape parameters<a class="headerlink" href="#landscape-parameters" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="main">
+<h2>Main<a class="headerlink" href="#main" title="Permalink to this headline">¶</a></h2>
+<hr class="docutils" />
+<p><strong>dim</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># x,y (a.k.a. j,i) dimensions of the Landscape</span>
+<span class="s1">&#39;dim&#39;</span><span class="p">:</span>                      <span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">20</span><span class="p">),</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">tuple</span></span></code></p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="punctuation"><span class="pre">(</span></span><span class="literal number integer"><span class="pre">20</span></span><span class="punctuation"><span class="pre">,</span></span><span class="literal number integer"><span class="pre">20</span></span><span class="punctuation"><span class="pre">)</span></span></code></p>
+<p>reset: P</p>
+<blockquote>
+<div><p>This defines the y,x dimensions of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>,
+in units of cells. As you might imagine, these values are used
+for a wide variety of basic operations throughout Geonomics. Change the
+default value to the dimensions of the landscape you wish to simulate on.</p>
+</div></blockquote>
+<hr class="docutils" />
+<p><strong>res</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># x,y resolution of the Landscape</span>
+<span class="s1">&#39;res&#39;</span><span class="p">:</span>                      <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">tuple</span></span></code></p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="punctuation"><span class="pre">(</span></span><span class="literal number integer"><span class="pre">1</span></span><span class="punctuation"><span class="pre">,</span></span><span class="literal number integer"><span class="pre">1</span></span><span class="punctuation"><span class="pre">)</span></span></code></p>
+<p>reset: N</p>
+<blockquote>
+<div><p>This defines the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> resolution (or cell-size) in the y,x
+dimensions (matching the convention of the <strong>dim</strong> parameter).
+This information is only used if GIS rasters of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>
+layers are to be written out as GIS raster files (as parameterized in the
+‘Data’ parameters). Defaults to the meaningless value (1,1), and this value
+generally needn’t be changed in your parameters file, because it will
+be automatically updated to the resolution of any GIS rasters that
+are read in for use as <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layers</span></span></code> (assuming they all share the same
+resolution; otherwise, an Error is thrown).</p>
+</div></blockquote>
+<hr class="docutils" />
+<p><strong>ulc</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># x,y coords of upper-left corner of the Landscape</span>
+<span class="s1">&#39;ulc&#39;</span><span class="p">:</span>                      <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">tuple</span></span></code></p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="punctuation"><span class="pre">(</span></span><span class="literal number integer"><span class="pre">0</span></span><span class="punctuation"><span class="pre">,</span></span><span class="literal number integer"><span class="pre">0</span></span><span class="punctuation"><span class="pre">)</span></span></code></p>
+<p>reset: N</p>
+<blockquote>
+<div><p>This defines the x,y upper-left corner (ULC) of the
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> (in the units of
+some real-world coordinate reference system, e.g. decimal degrees, or
+meters). This information is only used if GIS rasters of
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> layers are to be written out as GIS raster files.
+Defaults to the meaningless value
+(0,0), and this value usually needn’t be changed in your parameters file,
+because it will be automatically updated to match the ULC value
+of any GIS rasters that are read in for use as <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layers</span></span></code> (assuming
+they all share the same ULC; otherwise, an Error is thrown).</p>
+</div></blockquote>
+<hr class="docutils" />
+<p><strong>prj</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#projection of the Landscape</span>
+<span class="s1">&#39;prj&#39;</span><span class="p">:</span>                      <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">str</span></span></code>; (WKT projection string)</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset: N</p>
+<blockquote>
+<div><p>This defines the projection of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>, as a
+string of Well Known Text (WKT).
+This information is only used if GIS rasters of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> layers are
+to be written out as GIS raster files. Defaults to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>, which is fine,
+because this value will be automatically updated to match the projection
+of any GIS rasters that are read in for us as <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layers</span></span></code> (assuming they
+all share the same projection; otherwise, an Error is thrown)</p>
+</div></blockquote>
+</div>
+<div class="section" id="layers">
+<h2>Layers<a class="headerlink" href="#layers" title="Permalink to this headline">¶</a></h2>
+<hr class="docutils" />
+<p><strong>layer_&lt;n&gt;</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">################</span>
+<span class="c1">#### layers ####</span>
+<span class="c1">################</span>
+    <span class="s1">&#39;layers&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="c1">#layer name (LAYER NAMES MUST BE UNIQUE!)</span>
+        <span class="s1">&#39;layer_0&#39;</span><span class="p">:</span> <span class="p">{</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">str</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">layer_</span></span><span class="operator"><span class="pre">&lt;</span></span><span class="name"><span class="pre">n</span></span><span class="operator"><span class="pre">&gt;</span></span></code></p>
+<p>reset? P</p>
+<p>This parameter defines the name for each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>. (Note that unlike most
+parameters, this parameter is a <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">dict</span></span></code> key,
+the value for which is a <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">dict</span></span></code>
+of parameters defining the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> being named.) As the capitalized
+reminder in the parameters states, each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> must have a unique name
+(so that a parameterized <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> isn’t overwritten in the
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">ParametersDict</span></span></code> by a second, identically-named <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>; Geonomics
+checks for unique names and throws an Error if this condition is not met.
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> names can, but needn’t be, descriptive of what each
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> represents. Example valid values include: 0, 0.1, ‘layer_0’, 1994,
+‘1994’, ‘mean_ann_tmp’. Names default to <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">layer_</span></span><span class="operator"><span class="pre">&lt;</span></span><span class="name"><span class="pre">n</span></span><span class="operator"><span class="pre">&gt;</span></span></code>,
+where n is a series of integers starting from 0 and counting the number
+of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>s.</p>
+<div class="section" id="init">
+<h3>Init<a class="headerlink" href="#init" title="Permalink to this headline">¶</a></h3>
+<p>There are four different types of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layers</span></span></code> that can be created. The
+parameters for each are explained in the next four subsections.</p>
+<div class="section" id="random">
+<h4>random<a class="headerlink" href="#random" title="Permalink to this headline">¶</a></h4>
+<hr class="docutils" />
+<p><strong>n_pts</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#parameters for a &#39;random&#39;-type Layer</span>
+<span class="s1">&#39;rand&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1">#number of random points</span>
+    <span class="s1">&#39;n_pts&#39;</span><span class="p">:</span>                        <span class="mi">500</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 500</p>
+<p>reset? P</p>
+<p>This defines the number of randomly located, randomly valued points
+from which the random <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> will be interpolated. (Locations drawn
+from uniform distributions between 0 and the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> dimensions on
+each axis. Values drawn from a uniform distribution between 0 and 1.)</p>
+<hr class="docutils" />
+<p><strong>interp_method</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#interpolation method (&#39;linear&#39;, &#39;cubic&#39;, or &#39;nearest&#39;)</span>
+<span class="s1">&#39;interp_method&#39;</span><span class="p">:</span>                <span class="s1">&#39;linear&#39;</span><span class="p">,</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘linear’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘cubic’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘nearest’</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘linear’</span></span></code></p>
+<p>reset? N</p>
+<p>This defines the method to use to interpolate random points to the array that
+will serve as the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>’s raster. Whichever of the three valid values
+is chosen (<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘linear’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘cubic’</span></span></code>, or <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘nearest’</span></span></code>) will be passed
+on as an argument to <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">scipy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">interpolate</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">griddata</span></span></code>. Note that the
+<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘nearest’</span></span></code> method will generate a random categorical array, such as
+might be used for modeling habitat types.</p>
+</div>
+<div class="section" id="defined">
+<h4>defined<a class="headerlink" href="#defined" title="Permalink to this headline">¶</a></h4>
+<hr class="docutils" />
+<p><strong>rast</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#parameters for a &#39;defined&#39;-type Layer</span>
+<span class="s1">&#39;defined&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1">#raster to use for the Layer</span>
+    <span class="s1">&#39;rast&#39;</span><span class="p">:</span>                    <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">100</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span>
+</pre></div>
+</div>
+<p>nx2 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code></p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ones</span></span><span class="punctuation"><span class="pre">((</span></span><span class="literal number integer"><span class="pre">100</span></span><span class="punctuation"><span class="pre">,</span></span><span class="literal number integer"><span class="pre">100</span></span><span class="punctuation"><span class="pre">))</span></span></code></p>
+<p>reset? Y</p>
+<p>This defines the raster that will be used for this <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>. Can be set to
+<code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code> if an array for the raster should instead be interpolated from a
+set of valued points using the <strong>pts</strong>, <strong>vals</strong>, and <strong>interp_method</strong>
+parameters. Dimensions of this array must match the dimensions of the
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>.</p>
+<hr class="docutils" />
+<p><strong>pts</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#parameters for a &#39;defined&#39;-type Layer</span>
+<span class="s1">&#39;defined&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1">#point coordinates</span>
+    <span class="s1">&#39;pts&#39;</span><span class="p">:</span>                    <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>nx2 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code></p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? Y</p>
+<p>This defines the coordinates of the points to use to
+interpolate this <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>. Can be left as <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code> if the <strong>rast</strong>
+parameter is given a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">numpy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code>.</p>
+<hr class="docutils" />
+<p><strong>vals</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#point values</span>
+<span class="s1">&#39;vals&#39;</span><span class="p">:</span>                  <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">list</span></span></code>, 1xn <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? Y</p>
+<p>This defines the values of the points to use to
+interpolate this <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>. Can be left as <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code> if the <strong>rast</strong>
+parameter is given a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">numpy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code>.</p>
+<hr class="docutils" />
+<p><strong>interp_method</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#interpolation method {None, &#39;linear&#39;, &#39;cubic&#39;,</span>
+<span class="c1">#&#39;nearest&#39;}</span>
+<span class="s1">&#39;interp_method&#39;</span><span class="p">:</span>                <span class="kc">None</span><span class="p">,</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘linear’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘cubic’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘nearest’</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? N</p>
+<p>This defines the method to use to interpolate random points to the array that
+will serve as the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>’s raster. Whichever of the valid string values
+is chosen (<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘linear’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘cubic’</span></span></code>, or <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘nearest’</span></span></code>) will be passed
+on as an argument to <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">scipy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">interpolate</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">griddata</span></span></code>. Note that the
+<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘nearest’</span></span></code> method will generate a random categorical array, such as
+might be used for modeling habitat types. Can be left as <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code> if
+the <strong>rast</strong> parameter is given a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">numpy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code>.</p>
+</div>
+<div class="section" id="file">
+<h4>file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h4>
+<hr class="docutils" />
+<p><strong>filepath</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#parameters for a &#39;file&#39;-type Layer</span>
+<span class="s1">&#39;file&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1">#&lt;/path/to/file&gt;.&lt;ext&gt;</span>
+    <span class="s1">&#39;filepath&#39;</span><span class="p">:</span>                     <span class="s1">&#39;/PATH/TO/FILE.EXT&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">str</span></span></code></p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘/PATH/TO/FILE.EXT’</span></span></code></p>
+<p>reset? Y</p>
+<p>This defines the location and name of the file that should be read in as the
+raster-array for this <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>. Valid file types include a ‘.txt’ file
+containing a 2d <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code>, or any GIS raster file that can be read
+by <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">osgeo</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">gdal</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">Open</span></span></code>. In all cases, the raster-array read in from the
+file must have dimensions equal to the stipulated dimensions of the
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> (as defined in the <strong>dims</strong> parameter, above); otherwise,
+Geonomics will throw an Error. Defaults to a dummy filename that must be
+changed.</p>
+<hr class="docutils" />
+<p><strong>scale_min_val</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#minimum value to use to rescale the Layer to [0,1]</span>
+<span class="s1">&#39;scale_min_val&#39;</span><span class="p">:</span>                <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">float</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? P</p>
+<p>This defines the minimum value (in the units of the variable represented by
+the file you are reading in) to use when rescaling the file’s array to
+values between 0 and 1. (This is done to satisfy the requirement that all
+Geonomics <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>s have arrays in that interval). Defaults to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>
+(in which case Geonomics will set it to the minimum value observed in this
+file’s array). But note that you should put good thought into
+this parameter, because it <em>won’t</em> necessarily be the minimum value
+observed in the file; for example, if this file is being used
+to create a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> that will undergo environmental change
+in your <cite>Model</cite>, causing its real-world values to drop
+below this file’s minimum value, then you will probably want to set
+this value to the minimum real-world value that will occur for this <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>
+during your <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> scenario, so that low values
+that later arise on this <cite>Layer</cite> don’t get truncated at 0.</p>
+<hr class="docutils" />
+<p><strong>scale_max_val</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#maximum value to use to rescale the Layer to [0,1]</span>
+<span class="s1">&#39;scale_max_val&#39;</span><span class="p">:</span>                <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">float</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code></p>
+<p>reset? P</p>
+<p>This defines the maximum value (in the units of the variable represented by
+the file you are reading in) to use when rescaling the file’s array to
+values between 0 and 1. (This is done to satisfy the requirement that all
+Geonomics <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>s have arrays in that interval). Defaults to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>
+(in which case Geonomics will set it to the maximum value observed in this
+file’s array). But note that you should put good thought into
+this parameter, because it <em>won’t</em> necessarily be the maximum value
+observed in the file; for example, if this file is being used
+to create a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> that will undergo environmental change
+in your <cite>Model</cite>, causing its real-world values to increase
+above this file’s maximum value, then you will probably want to set
+this value to the maximum real-world value that will occur for this
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> during your <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> scenario, so that high values that
+later arise on this <cite>Layer</cite> don’t get truncated at 1.</p>
+<hr class="docutils" />
+<p><strong>coord_prec</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#decimal-precision to use for coord-units (ulc &amp; res)</span>
+<span class="s1">&#39;coord_prec&#39;</span><span class="p">:</span>                <span class="mi">5</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 5</p>
+<p>reset? P</p>
+<p>This defines number of decimals to which to round upper-left corner
+coordinates and resolution values read in from a raster file.
+Because Geonomics requires equality of these values amongst all
+input raster files, this allows the user to stipulate
+the level of precision of their coordinate system, avoiding
+false coordinate-system mismatch errors because of
+arbitrary float imprecision.
+(Note that for <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>s for which change rasters will be read in,
+the same coordinate precision value will be used for all input rasters.)</p>
+<hr class="docutils" />
+<p><strong>units</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#units of this file&#39;s variable</span>
+<span class="s1">&#39;units&#39;</span><span class="p">:</span>                       <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">str</span></span></code>, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
+<p>default: None</p>
+<p>reset? P</p>
+<p>This is an optional parameter providing a string-representation
+of the units in which a raster file’s variable is expressed.
+If provided, it will be used to label the colorbar on plots
+of the raster’s <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>.</p>
+</div>
+<div class="section" id="nlmpy">
+<h4>nlmpy<a class="headerlink" href="#nlmpy" title="Permalink to this headline">¶</a></h4>
+<hr class="docutils" />
+<p><strong>function</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#parameters for an &#39;nlmpy&#39;-type Layer</span>
+<span class="s1">&#39;nlmpy&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1">#nlmpy function to use the create this Layer</span>
+    <span class="s1">&#39;function&#39;</span><span class="p">:</span>                 <span class="s1">&#39;mpd&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">str</span></span></code> that is the name of an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code> function</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘mpd’</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code> function that should be used to generate
+this <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>’s array. (<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code> is a Python package for
+generating neutral landscape models; NLMs.) Defaults to <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘mpd’</span></span></code> (the
+function for creating a midpoint-displacement NLM). Can be set to any other
+<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">str</span></span></code> that identifies a valid <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code> function, but then the
+remaining parameters in this section must be changed to the parameters
+that that function needs, and <em>only</em> those parameters
+(because they will be unpacked into this function,
+i.e. passed on to it, at the time it is called.
+(Visit the <a class="reference external" href="https://pypi.org/project/nlmpy/">Cheese Shop</a> for more
+information about the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code> package and available functions).</p>
+<hr class="docutils" />
+<p><strong>nRow</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#number of rows (MUST EQUAL LAND DIMENSION y!)</span>
+<span class="s1">&#39;nRow&#39;</span><span class="p">:</span>                     <span class="mi">20</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 20</p>
+<p>reset? P</p>
+<p>This defines the number of rows in the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code> array that is created.
+As the capitalized reminder in the parameters file mentions, this must be
+equal to the y-dimension of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>; otherwise, an error
+will be thrown. Note that this parameter (as for the remaining parameters in
+this section, other than the <strong>function</strong> parameter) is valid for the
+default <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">mpd</span></span></code> function that is set by the
+<strong>function</strong> parameter); if you are using a different <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code>
+function to create this <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> then this and the remaining parameters
+must be changed to the parameters that that function needs,
+and <em>only</em> those parameters (because they will be unpacked into that function,
+i.e. passed on to it, at the time it is called).</p>
+<hr class="docutils" />
+<p><strong>nCol</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#number of cols (MUST EQUAL LAND DIMENSION x!)</span>
+<span class="s1">&#39;nCol&#39;</span><span class="p">:</span>                     <span class="mi">20</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 20</p>
+<p>reset? P</p>
+<p>This defines the number of columns in the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code> array that is created.
+As the capitalized reminder in the parameters file mentions, this must be
+equal to the x-dimension of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>; otherwise, an error
+will be thrown. Note that this parameter (as for the remaining parameters in
+this section, other than the <strong>function</strong> parameter) is valid for the
+default <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">mpd</span></span></code> function that is set by the
+<strong>function</strong> parameter); if you are using a different <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code>
+function to create this <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> then this and the remaining parameters
+must be changed to the parameters that that function needs,
+and <em>only</em> those parameters (because they will be unpacked into that function,
+i.e. passed on to it, at the time it is called).</p>
+<hr class="docutils" />
+<p><strong>h</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#level of spatial autocorrelation in element values</span>
+<span class="s1">&#39;h&#39;</span><span class="p">:</span>                     <span class="mi">1</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">float</span></span></code></p>
+<p>default: 1</p>
+<p>reset? P</p>
+<p>This defines the level of spatial autocorrelation in the element values
+of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code> array that is created.
+Note that this parameter (and the remaining parameters in
+this section, other than the <strong>function</strong> parameter) is valid for the
+default <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code> function (<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">mpd</span></span></code>, which is set by the
+<strong>function</strong> parameter); but if you are using a different <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">nlmpy</span></span></code>
+function to create this <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> then this and the remaining parameters
+must be changed to the parameters that that function needs,
+and <em>only</em> those parameters (because they will be unpacked into that function,
+i.e. passed on to it, at the time it is called).</p>
+</div>
+</div>
+<div class="section" id="change">
+<h3>Change<a class="headerlink" href="#change" title="Permalink to this headline">¶</a></h3>
+<hr class="docutils" />
+<p><strong>change_rast</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#land-change event for this Layer</span>
+<span class="s1">&#39;change&#39;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1">#array of file for final raster of event, or directory</span>
+    <span class="c1">#of files for each stepwise change in event</span>
+    <span class="s1">&#39;change_rast&#39;</span><span class="p">:</span>         <span class="s1">&#39;/PATH/TO/FILE.EXT&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{2d <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">str</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘/PATH/TO/FILE.EXT’</span></span></code></p>
+<p>reset? Y</p>
+<p>This defines either the final raster of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> change event
+(with valid values being a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">numpy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code> or a string pointing
+to a valid raster file, i.e. a file that can be read by <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">osgeo</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">gdal</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">Open</span></span></code>);
+or the stepwise series of changes to be made over the course of the
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> change event (with the valid value being a string
+pointing to a directory full of valid raster files).
+Note that whether an array, a raster, or multiple rasters
+are input, their dimensions must be equal to the dimensions of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>
+that is being changed (and hence to the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> to which it belongs).
+Also note that if a directory of stepwise-change rasters is provided, the
+rasters’ filenames must begin with the integer timesteps at which they
+should be used during the change event, followed by underscores. (For example,
+files with the filenames ‘50_mat_2001.tif’, ‘60_mat_2011.tif’,
+‘65_mat_2011.tif’ would be used at timesteps 50, 60, and 65 during a model.)
+Defaults to a dummy file name that must be changed.</p>
+<hr class="docutils" />
+<p><strong>start_t</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#starting timestep of event</span>
+<span class="s1">&#39;start_t&#39;</span><span class="p">:</span>          <span class="mi">50</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 50</p>
+<p>reset? P</p>
+<p>This indicates the first timestep of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>-change event.
+Defaults to 50, but should be set to suit your specific scenario.
+If a directory of files is provided for the <strong>change_rast</strong> parameter,
+then this must match the earliest timestep in that series of files
+(as indicated by the integers at the beginning of the file names).</p>
+<hr class="docutils" />
+<p><strong>end_t</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#ending timestep of event</span>
+<span class="s1">&#39;end_t&#39;</span><span class="p">:</span>          <span class="mi">100</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 100</p>
+<p>reset? P</p>
+<p>This indicates the last timestep of the
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>-change event.
+Defaults to 100, but should be set to suit your specific scenario.
+If a directory of files is provided for the <strong>change_rast</strong> parameter,
+then this must match the final timestep in that series of files
+(as indicated by the integers at the beginning of the file names).</p>
+<hr class="docutils" />
+<p><strong>n_steps</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#number of stepwise changes in event</span>
+<span class="s1">&#39;n_steps&#39;</span><span class="p">:</span>          <span class="mi">5</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 5</p>
+<p>reset? P</p>
+<p>This indicates the number of stepwise changes to use to model a
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>-change event.
+If the the <strong>change_rast</strong> parameter is a directory of files,
+then the value of this parameter must be the number of files in that directory.
+If the <strong>change_rast</strong> parameter is either an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code> or a file name,
+then the changes during the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>-change event
+are linearly interpolated (cellwise for the whole <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>) to this
+number of discrete, instantaneous <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> changes between
+the starting and ending rasters. Thus, the fewer the number of
+steps, the larger, magnitudinally, each change will be. So more
+steps may be ‘better’, as it will better approximate change that is continuous
+in time. However, there is a potenitally significant memory trade-off here:
+The whole series of stepwise-changed arrays is computed when the
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> is created, then saved and used at the appropriate timestep
+during each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> run (and if the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> that is changing is used
+by any <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> as a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> then each
+intermediate <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> is also calculated
+when the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> is first built, which can be much more memory-intensive
+because these are 3-dimensional arrays).
+These objects take up memory, which may be limiting for larger
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>s and/or <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> objects. This often will not be a
+major issue, but depending on your use case it could pose a problem, so
+is worth considering.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+      <div class="relbar-bottom">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="community_and_species_parameters.html" title="Community and Species parameters"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="../parameters.html" title="Indices and tables"
+             >previous</a> &nbsp; &nbsp;</li>
+      <li><a href="../../index.html">geonomics 0.0 documentation</a> &#187;</li>
+
+          <li class="nav-item nav-item-1"><a href="../../introduction.html" >Indices and tables</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../parameters.html" >Indices and tables</a> &#187;</li> 
+      </ul>
+    </div>
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Drew Hart.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+    </div>
+      <!-- PSphinxTheme -->
+  </body>
+</html>

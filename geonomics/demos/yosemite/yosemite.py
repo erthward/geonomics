@@ -63,7 +63,7 @@ def calc_neighborhood_mean_phenotype(mod, window_width=8):
 
 
 # create colormap to match the phenotype colors
-z_cmap = mpl.cm.RdBu_r
+z_cmap = mpl.cm.coolwarm
 
 # start timer
 start = time.time()
@@ -119,7 +119,7 @@ def save_gif_img(t):
     land1 = ax2_1.pcolormesh(mod.land._x_cell_bds,
                              mod.land._y_cell_bds,
                              mod.land[0]._get_rast_in_native_units(),
-                             cmap='RdBu_r',
+                             cmap='coolwarm',
                              vmin=mod.land[0]._scale_min,
                              vmax=mod.land[0]._scale_max)
     xticks, xticklabs, yticks, yticklabs = mod.land[0]._get_coord_ticks()
@@ -137,7 +137,7 @@ def save_gif_img(t):
     xs = coords[:, 0]
     ys = coords[:, 1]
     zs = mod.comm[0]._get_z()[:, 0]
-    ax2_1.scatter(xs, ys, c=zs, s=1, cmap='RdBu_r')
+    ax2_1.scatter(xs, ys, c=zs, s=1, cmap='coolwarm')
     land2 = ax2_2.pcolormesh(mod.land._x_cell_bds,
                              mod.land._y_cell_bds,
                              mod.land[1]._get_rast_in_native_units(),

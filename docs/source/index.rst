@@ -7,7 +7,7 @@ Welcome to the Geonomics documentation!
 =======================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    intro
    getting_started/installation

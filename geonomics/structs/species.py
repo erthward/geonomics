@@ -965,16 +965,16 @@ class Species(OD):
                    '_%sSurface.') % ({
                 'move': 'Movement', 'disp': 'Dispersal'}[surf_type]))
             return
-        elif style not in ['hist', 'circ_hist', 'vect', 'circ_draws']:
+        elif style not in ['hist', 'chist', 'vect', 'cdraws']:
             print(("The 'style' argument must take one of the "
-                   "following values: 'hist', 'circ_hist', "
-                   "'vect', 'circ_draws'"))
+                   "following values: 'hist', 'chist', "
+                   "'vect', 'cdraws'"))
             return
         elif style == 'hist':
             x = x[0]
             y = y[0]
-            plt.hist(r.choice(surf.surf[y,x,:], size = 10000,
-                        replace = True), bins=100, density=True, alpha=0.5)
+            plt.hist(r.choice(surf.surf[y,x,:], size = 10000, replace = True),
+                     bins=100, density=True, alpha=0.5, color=color)
 
         else:
             #display the movement-surface raster
@@ -983,7 +983,7 @@ class Species(OD):
                                 y=np.mean(y), ticks=ticks, cmap=cmap,
                                 mask_rast=mask_rast)
 
-            if style == 'circ_hist':
+            if style == 'chist':
                 for x_val in x:
                     for y_val in y:
                         v, a = np.histogram(r.choice(surf.surf[y_val,
@@ -1001,14 +1001,15 @@ class Species(OD):
                                   linewidth=2,
                                   color=color) for n in range(len(xs))]
 
-            elif style == 'circ_draws':
-                x = x[0]
-                y = y[0]
-                pts = [(np.cos(a), np.sin(a)) for a in r.choice(
-                    surf.surf[y, x, :], size=1000, replace=True)]
-                plt.scatter([pt[0] * 0.5 + x + 0.5 for pt in pts], [pt[
-                    1] * 0.5 + y + 0.5 for pt in pts], color='red',
-                    alpha=0.1, marker='.')
+            elif style == 'cdraws':
+                for x_val in x:
+                    for y_val in y:
+                        pts = [(np.cos(a), np.sin(a)) for a in r.choice(
+                                surf.surf[y_val, x_val, :], size=1000,
+                                replace=True)]
+                        plt.scatter([pt[0] * 0.5 + x_val + 0.5 for pt in pts],
+                                    [pt[1] * 0.5 + y_val + 0.5 for pt in pts],
+                                    color=color, alpha=0.1, marker='.')
 
             elif style == 'vect':
                 def plot_one_cell(x, y):
@@ -1026,7 +1027,7 @@ class Species(OD):
                     dy = np.mean(y_vects) / np.sqrt(2)
                     # now plot the arrow
                     plt.arrow(x + 0.5, y + 0.5, dx, dy, alpha=0.75,
-                              color='black', head_width=0.24, head_length=0.32)
+                              color=color, head_width=0.24, head_length=0.32)
 
                 # call the internally defined function as a nested list
                 #comprehension for all raster cells, which I believe

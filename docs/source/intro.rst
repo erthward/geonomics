@@ -47,13 +47,13 @@ Key Features
   for easy model construction, customization, and extension
   2. Model set-up from a single, well annotated parameters file
   3. Tools for customizable collection of data throughout a simulation
-  3. Ability to model complex evolutionary scenarios, including custom
+  4. Ability to model complex evolutionary scenarios, including custom
   demographic change, spatially varying selection, and multiple polygenic
   traits 
-  4. Ability to model complex spatial scenarios, including multi-layer
+  5. Ability to model complex spatial scenarios, including multi-layer
   simulated or real-world landscapes, resistance-based movement, and
   non-stationary environmental change
-  5. Numerous visualization tools, to help the user design models and
+  6. Numerous visualization tools, to help the user design models and
   explore results
 
 

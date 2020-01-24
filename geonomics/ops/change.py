@@ -292,7 +292,8 @@ class _SpeciesChanger(_Changer):
             cop_self._set_base_K(spp)
             Ks = []
             for t in range(end):
-                cop_self._make_change(t, for_plotting = True)
+                cop_self._make_change(t, for_plotting = True,
+                                      additional_args={'spp': spp})
                 Ks.append(spp.K)
             plt.plot(range(end), Ks)
             #set spp back to its original value

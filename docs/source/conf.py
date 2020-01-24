@@ -19,7 +19,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../geonomics/'))
+sys.path.insert(0, os.path.abspath('../../'))
 
 
 # -- General configuration ------------------------------------------------
@@ -83,12 +83,12 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'p-green'
-import os
-from PSphinxTheme import utils
-
-p, html_theme, needs_sphinx = utils.set_psphinxtheme(html_theme)
-html_theme_path = p
+html_theme = 'sphinx_rtd_theme'
+#html_theme = 'p-green'
+#import os
+#from PSphinxTheme import utils
+#p, html_theme, needs_sphinx = utils.set_psphinxtheme(html_theme)
+#html_theme_path = p
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

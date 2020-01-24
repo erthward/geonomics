@@ -779,36 +779,24 @@ class Model:
 
         >>> gnx.make_parameters_file()
         >>> mod = gnx.make_model()
-
         NOTE: Using the following file, in the current working directory to create the Model object:
                 GNX_params_21-01-2020_17:22:08.py
-
         >>> mod.run(verbose = True)
         ###############################################################################################
-
         Running model "GNX_params_21-01-2020_17:22:08"...
-
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
         Setting up iteration 0...
-
         Creating the burn-in function queue...
-
         Creating the main function queue...
-
         Running burn-in, iteration 0...
-
         burn:   0:0
                 species: spp_0                         N=250    (births=35      deaths=214)
-
         .......................................................................................
         burn:   0:1
                 species: spp_0                         N=250    (births=35      deaths=214)
-
         .......................................................................................
         burn:   0:2
                 species: spp_0                         N=250    (births=35      deaths=214)
-
         .......................................................................................
         .
         .
@@ -928,61 +916,42 @@ class Model:
 
         >>> gnx.make_parameters_file()
         >>> mod = gnx.make_model()
-
         NOTE: Using the following file, in the current working directory to create the Model object:
                 GNX_params_21-01-2020_17:22:08.py
-
         >>> #run the burn-in until it is complete
         >>> mod.walk(T = 1000, mode = 'burn')
         ###############################################################################################
-
         Running model "GNX_params_21-01-2020_17:22:08"...
-
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
         Setting up iteration 0...
-
         Creating the burn-in function queue...
-
         Creating the main function queue...
-
         Running burn-in, iteration 0...
-
         burn:   0:0
                 species: spp_0                         N=250    (births=35      deaths=214)
-
         .......................................................................................
         burn:   0:1
                 species: spp_0                         N=250    (births=35      deaths=214)
-
         .......................................................................................
         burn:   0:2
                 species: spp_0                         N=250    (births=35      deaths=214)
-
         .......................................................................................
         .
         .
         .
         Assigning genomes for species "spp_0"...
-
         Burn-in complete.
-
         Burn-in complete.
-
         >>> #now run in main mode for 50 timesteps
         >>> mod.walk(T = 50, mode = 'main')
-
          main:   1:0
                  species: spp_0                         N=131    (births=35      deaths=214)
-
          .......................................................................................
          main:   1:1
                  species: spp_0                         N=129    (births=35      deaths=214)
-
          .......................................................................................
          main:   1:2
                  species: spp_0                         N=133    (births=35      deaths=214)
-
          .......................................................................................
          .
          .
@@ -1163,7 +1132,7 @@ class Model:
             Colormap to use for plotting Layer rasters. If None, will default
             to the colormap automatically assigned to the Layer by Geonomics
             based on the Layer's index number in the Landscape dict. Can be
-            passed any string that points to a colormap in
+            passed any string that references a colormap in
             matplotlib.pyplot.cm.
 
         pt_cmap : {valid string, None}, optional, default: None
@@ -1171,7 +1140,7 @@ class Model:
             Individual scatter is being plotted, and if the value provided to
             *color* is an ordered collection of values to which to map the
             Individuals' colors.) If None, no colormap will be used.
-            Can be passed any string that points to a colormap in
+            Can be passed any string that references a colormap in
             matplotlib.pyplot.cm, as well as an
             matplotlib.colors.LinearSegmentedColormap instance.
 
@@ -1733,7 +1702,7 @@ class Model:
         fit_cmap : {valid string, None}, optional, default: 'gray'
             Colormap to use for color Individuals by their fitness values.
             If no value passed, will defaul to grayscale. Can be passed any
-            string that points to a colormap in matplotlib.pyplot.cm.
+            string that references a colormap in matplotlib.pyplot.cm.
 
         alpha : {scalar, bool, None}, optional, default: None
             The transparency level of the points. If scalar is passed, it is
@@ -1816,11 +1785,10 @@ class Model:
         Parameters
         ----------
         spp : {int, str}
-            A reference to the Species whose Individuals should be scattered
-            on the plot. Can be either the Species' index number (i.e. its
+            A reference to the Species whose allele frequencies will be
+            plotted. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
-            string). If None, will cause only the Landscape
-            to be plotted.
+            string).
 
         Returns
         -------
@@ -1844,11 +1812,10 @@ class Model:
         Parameters
         ----------
         spp : {int, str}
-            A reference to the Species whose Individuals should be scattered
-            on the plot. Can be either the Species' index number (i.e. its
+            A reference to the Species whose Individuals' fitness will be
+            plotted. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
-            string). If None, will cause only the Landscape
-            to be plotted.
+            string).
 
         Returns
         -------
@@ -1862,94 +1829,62 @@ class Model:
 
 
     #wrapper around Species._plot_direction_surface for _move_surf
-    def plot_movement_surface(self, spp, style, x=None, y=None,
-                              zoom_width=None, scale_fact=4.5, color='black',
-                              cbar = True, ticks=None, cmap='plasma',
-                              mask_rast=None):
+    def plot_movement_surface(self, spp, style,  color='black', cbar=True,
+                              ticks=None, cmap='plasma', zoom_width=None,
+                              x=None, y=None, scale_fact=4.5, mask_rast=None):
         """
-        Create a basic plot of the Model in its current state.
+        Create any of 4 types of plots to summarize a Species' MovementSurface
 
-        Plot the current state of the model, with any number of overlain
-        Landscape Layers, and with or without points representing the
-        Individuals in a Species.
+        Plot a Species' MovemementSurface with either circularized histograms,
+        a circle of directional draws, or a vector on each cell, to visualize
+        the von Mises distributions of each cell on the MovementSurface.
+        Or plot a plain histogram of the von Mises distribution at a given
+        cell.
 
         Parameters
         ----------
-        spp : {int, str}, optional, default: None
-            A reference to the Species whose Individuals should be scattered
-            on the plot. Can be either the Species' index number (i.e. its
+        spp : {int, str}
+            A reference to the Species whose MovementSurface should be plotted.
+            Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
-            string). If None, will cause only the Landscape
-            to be plotted.
+            string).
 
-        lyr : {int, str}, optional, default: None
-            A reference to the Layer whose raster should be plotted. Can be
-            either the Layer's index number (i.e. its integer key in the
-            Landscape dict), or its name (as a character string). Defaults
-            to None, which will cause all Layers to be plotted as an overlay
-            of transparent rasters, each with a different colormap.
-
-        hide_land : bool, optional, default: False
-            If True, the Landscape will be 'hidden', i.e. the plot will only
-            show a scatter of the plotted Individuals. Defaults to False.
-
-        individs : iterable collection of ints, optional, default: None
-            If provided, indicates the integer indices of the only Individuals
-            to be plotted. If None, all Individuals will be plotted.
-
-        text : bool, optional, default: False
-            If True, each Individual's index number will be displayed next to
-            it. Can be useful for model introspection.
+        style : str
+            Determines the style of plot produced. There are four options:
+                'hist':
+                    Plot a classic histogram approximating the von Mises
+                    distribution at the cell indicated by position x,y.
+                    (Note that *x* and *y* must be provided for this style.)
+                'chist':
+                    Plot a circular histogram approximating the von Mises
+                    distribution at the cell indicated by position x,y;
+                    plot will be drawn inside the chosen cell on the
+                    MovementSurface raster.
+                'cdraws':
+                    Plot points on the unit circle, whose locations were
+                    drawn from the von Mises distribution at the cell indicated
+                    by position x,y; plot will be drawn inside the chosen cell
+                    on the MovementSurface raster.
+                'vect':
+                    Inside each cell of the MovementSurface raster,
+                    plot the mean direction vector of directions drawn
+                    from that cell's von Mises distribution.
 
         color : valid mpl.plt color value, optional, default: 'black'
-            Face color for the points in the Individual scatter. Passed to the
-            *c* argument of matplotlib.pyplot.scatter.
-
-        edge_color : valid mpl.plt color value, optional, default: 'face'
-            Edge color for the points in the Individual scatter. If 'face',
-            will always match the face color (i.e. the color provided to
-            *color*). Passed to the *edgecolor* argument of
-            matplotlib.pyplot.scatter.
-
-        text_color : valid mpl.plt color value, default 'black'
-            Color for the plotted text. (Will only be used if the *text*
-            argument is True.) Passed to the *color* argument of
-            matplotlib.pyplot.text.
+            Color to use for the plot elements. Passed to the
+            *c* argument of matplotlib.pyplot.hist, matplotlib.pyplot.plot,
+            matplotlib.pyplot.scatter, or matplotlib.pyplot.arrow,
+            depending on *style*.
 
         cbar : bool, optional, default: True
             If True, a colorbar will be included, depicting the mapping of
-            color onto the Landscape's environmental values.
+            color onto the MovementSurface's environmental values.
 
-        size : scalar or array_like, optional, default: 25
-            Size of the scatter points. Passed to the *s* argument
-            of matplotlib.pyplot.scatter.
-
-        text_size : {size in points, valid string}, optional, default: 9
-            Text size. (Will only be used if *text* is True.) Can be expressed
-            as a numeric size in points, or as any string that is a valid size
-            argument for matplotlib.text.Text.
-
-        land_cmap : {valid string, None}, optional, default: None
-            Colormap to use for plotting Layer rasters. If None, will default
-            to the colormap automatically assigned to the Layer by Geonomics
-            based on the Layer's index number in the Landscape dict. Can be
-            passed any string that points to a colormap in
+        cmap : {valid string, None}, optional, default: 'plasma'
+            Colormap to use for plotting the MovementSurface. If None,
+            will default to 'plasma', a common colormap used to plot resistance
+            surfaces.Can be passed any string that references a colormap in
             matplotlib.pyplot.cm.
-
-        pt_cmap : {valid string, None}, optional, default: None
-            Colormap to use for plotting points. (Will only be used if the
-            Individual scatter is being plotted, and if the value provided to
-            *color* is an ordered collection of values to which to map the
-            Individuals' colors.) If None, no colormap will be used.
-            Can be passed any string that points to a colormap in
-            matplotlib.pyplot.cm, as well as an
-            matplotlib.colors.LinearSegmentedColormap instance.
-
-        alpha : {scalar, bool, None}, optional, default: None
-            The transparency level of the points. If scalar is passed, it is
-            passed on to the *alpha* value fed to matplotlib.pyplot.scatter.
-            If True, alpha value will be set to 0.6. If False or None, points
-            will be opaque.
 
         zoom_width : {scalar, None}, optional, default: None
             Width, in raster cells, of the window to which to zoom to resulting
@@ -1959,14 +1894,6 @@ class Model:
             The x and y coordinates of the center of the resulting plot.
             Only used if *zoom_width* is not None.
 
-        vmin, vmax : {scalar}, optional, default: None
-            Used to normalize the luminance data that determine how colors
-            are colormapped onto Individuals' point colors. Passed to the
-            *vmin* and *vmax* arguments of matplotlib.pyplot.scatter.
-
-        ticks : bool, optional, default: False
-            If True, x- and y-axis ticks will be added to the plot.
-
         mask_rast : array_like, optional default: None
             An array to use to mask values in the Layer(s) being plotted.
             All np.nan values in the array will be plotted as light gray,
@@ -1975,12 +1902,6 @@ class Model:
             The array must be of the same x,y dimensions as the Layer(s)
             being plotted.
 
-        animate : bool, optional, default: False
-            If True, this function will return a list of the Individuals'
-            points, as a matplotlib.collections.PathCollection. This is used
-            internally by the Model.walk method, to create animated simulation
-            plots.
-
         Returns
         -------
         None
@@ -1988,6 +1909,7 @@ class Model:
 
         Notes
         -----
+        - Not valid for Species without a DisersalSurface
         - For more detail on plotting parameters, see the documentation for
           matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
           and matplotlib.pyplot.text.
@@ -2006,89 +1928,58 @@ class Model:
                                cbar = True, ticks=None, cmap='plasma',
                                mask_rast=None):
         """
-        Create a basic plot of the Model in its current state.
+        Create any of 4 types of plots to summarize a Species' DispersalSurface
 
-        Plot the current state of the model, with any number of overlain
-        Landscape Layers, and with or without points representing the
-        Individuals in a Species.
+        Plot a Species' DispersalSurface with either circularized histograms,
+        a circle of directional draws, or a vector on each cell, to visualize
+        the von Mises distributions of each cell on the MovementSurface.
+        Or plot a plain histogram of the von Mises distribution at a given
+        cell.
 
         Parameters
         ----------
-        spp : {int, str}, optional, default: None
-            A reference to the Species whose Individuals should be scattered
-            on the plot. Can be either the Species' index number (i.e. its
+        spp : {int, str}
+            A reference to the Species whose DispersalSurface should be
+            plotted. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
-            string). If None, will cause only the Landscape
-            to be plotted.
+            string).
 
-        lyr : {int, str}, optional, default: None
-            A reference to the Layer whose raster should be plotted. Can be
-            either the Layer's index number (i.e. its integer key in the
-            Landscape dict), or its name (as a character string). Defaults
-            to None, which will cause all Layers to be plotted as an overlay
-            of transparent rasters, each with a different colormap.
-
-        hide_land : bool, optional, default: False
-            If True, the Landscape will be 'hidden', i.e. the plot will only
-            show a scatter of the plotted Individuals. Defaults to False.
-
-        individs : iterable collection of ints, optional, default: None
-            If provided, indicates the integer indices of the only Individuals
-            to be plotted. If None, all Individuals will be plotted.
-
-        text : bool, optional, default: False
-            If True, each Individual's index number will be displayed next to
-            it. Can be useful for model introspection.
+        style : str
+            Determines the style of plot produced. There are four options:
+                'hist':
+                    Plot a classic histogram approximating the von Mises
+                    distribution at the cell indicated by position x,y.
+                    (Note that *x* and *y* must be provided for this style.)
+                'chist':
+                    Plot a circular histogram approximating the von Mises
+                    distribution at the cell indicated by position x,y;
+                    plot will be drawn inside the chosen cell on the
+                    DispersalSurface raster.
+                'cdraws':
+                    Plot points on the unit circle, whose locations were
+                    drawn from the von Mises distribution at the cell indicated
+                    by position x,y; plot will be drawn inside the chosen cell
+                    on the DispersalSurface raster.
+                'vect':
+                    Inside each cell of the DispersalSurface raster,
+                    plot the mean direction vector of directions drawn
+                    from that cell's von Mises distribution.
 
         color : valid mpl.plt color value, optional, default: 'black'
-            Face color for the points in the Individual scatter. Passed to the
-            *c* argument of matplotlib.pyplot.scatter.
-
-        edge_color : valid mpl.plt color value, optional, default: 'face'
-            Edge color for the points in the Individual scatter. If 'face',
-            will always match the face color (i.e. the color provided to
-            *color*). Passed to the *edgecolor* argument of
-            matplotlib.pyplot.scatter.
-
-        text_color : valid mpl.plt color value, default 'black'
-            Color for the plotted text. (Will only be used if the *text*
-            argument is True.) Passed to the *color* argument of
-            matplotlib.pyplot.text.
+            Color to use for the plot elements. Passed to the
+            *c* argument of matplotlib.pyplot.hist, matplotlib.pyplot.plot,
+            matplotlib.pyplot.scatter, or matplotlib.pyplot.arrow,
+            depending on *style*.
 
         cbar : bool, optional, default: True
             If True, a colorbar will be included, depicting the mapping of
-            color onto the Landscape's environmental values.
+            color onto the MovementSurface's environmental values.
 
-        size : scalar or array_like, optional, default: 25
-            Size of the scatter points. Passed to the *s* argument
-            of matplotlib.pyplot.scatter.
-
-        text_size : {size in points, valid string}, optional, default: 9
-            Text size. (Will only be used if *text* is True.) Can be expressed
-            as a numeric size in points, or as any string that is a valid size
-            argument for matplotlib.text.Text.
-
-        land_cmap : {valid string, None}, optional, default: None
-            Colormap to use for plotting Layer rasters. If None, will default
-            to the colormap automatically assigned to the Layer by Geonomics
-            based on the Layer's index number in the Landscape dict. Can be
-            passed any string that points to a colormap in
+        cmap : {valid string, None}, optional, default: 'plasma'
+            Colormap to use for plotting the DispersalSurface. If None,
+            will default to 'plasma', a common colormap used to plot resistance
+            surfaces.Can be passed any string that references a colormap in
             matplotlib.pyplot.cm.
-
-        pt_cmap : {valid string, None}, optional, default: None
-            Colormap to use for plotting points. (Will only be used if the
-            Individual scatter is being plotted, and if the value provided to
-            *color* is an ordered collection of values to which to map the
-            Individuals' colors.) If None, no colormap will be used.
-            Can be passed any string that points to a colormap in
-            matplotlib.pyplot.cm, as well as an
-            matplotlib.colors.LinearSegmentedColormap instance.
-
-        alpha : {scalar, bool, None}, optional, default: None
-            The transparency level of the points. If scalar is passed, it is
-            passed on to the *alpha* value fed to matplotlib.pyplot.scatter.
-            If True, alpha value will be set to 0.6. If False or None, points
-            will be opaque.
 
         zoom_width : {scalar, None}, optional, default: None
             Width, in raster cells, of the window to which to zoom to resulting
@@ -2098,14 +1989,6 @@ class Model:
             The x and y coordinates of the center of the resulting plot.
             Only used if *zoom_width* is not None.
 
-        vmin, vmax : {scalar}, optional, default: None
-            Used to normalize the luminance data that determine how colors
-            are colormapped onto Individuals' point colors. Passed to the
-            *vmin* and *vmax* arguments of matplotlib.pyplot.scatter.
-
-        ticks : bool, optional, default: False
-            If True, x- and y-axis ticks will be added to the plot.
-
         mask_rast : array_like, optional default: None
             An array to use to mask values in the Layer(s) being plotted.
             All np.nan values in the array will be plotted as light gray,
@@ -2114,12 +1997,6 @@ class Model:
             The array must be of the same x,y dimensions as the Layer(s)
             being plotted.
 
-        animate : bool, optional, default: False
-            If True, this function will return a list of the Individuals'
-            points, as a matplotlib.collections.PathCollection. This is used
-            internally by the Model.walk method, to create animated simulation
-            plots.
-
         Returns
         -------
         None
@@ -2127,12 +2004,12 @@ class Model:
 
         Notes
         -----
+        - Not valid for Species without a DisersalSurface
         - For more detail on plotting parameters, see the documentation for
           matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
           and matplotlib.pyplot.text.
 
         """
-
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, cbar=cbar, ticks=ticks, cmap=cmap,
@@ -2144,27 +2021,6 @@ class Model:
                                 zoom_width=None, scale_fact=4.5, color='black',
                                 cbar = True, ticks=None, cmap='plasma',
                                 mask_rast=None):
-        """
-        The 'style' argument can take the following values:
-            'hist':
-                Plot a classic histogram approximating the Von Mises
-                distribution at the cell indicated by position x,y.
-            'circle_hist':
-                Plot a circular histogram approximating the Von Mises
-                distribution at the cell indicated by position x,y;
-                plot will be drawn inside the chosen cell on the
-                _ConductanceSurface raster.
-            'circle_draws':
-                Plot points on the unit circle, whose locations were
-                drawn from the Von Mises distribution at the cell indicated
-                by position x,y; plot will be drawn inside the chosen cell
-                on the _ConductanceSurface raster.
-            'vect':
-                Inside each cell of the _ConductanceSurface raster,
-                plot the mean direction vector of directions drawn
-                from that cell's Von Mises distribution.
-
-        """
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
@@ -2176,6 +2032,25 @@ class Model:
 
     #wrapper around Species._plot_demographic_pyramid
     def plot_demographic_pyramid(self, spp):
+        """
+        Plot a demographic pyramid for the chosen Species
+
+        Plot a paired, horizontal bar plot of the chosen Species'
+        count of Individuals of each age.
+
+        Parameters
+        ----------
+        spp : {int, str}
+            A reference to the Species whose demographic pyramid will be
+            plotted. Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        Returns
+        -------
+        None
+            Returns no output
+        """
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
@@ -2184,6 +2059,26 @@ class Model:
 
     #wrapper around Species._plot_pop_growth
     def plot_pop_growth(self, spp):
+        """
+        Plot the chosen Species' population over time
+
+        Plot a line plot of the Species' population over model time (in blue),
+        as well as the expected population-size trend (based on summing the
+        Species' carrying-capacity raster and using that total expected
+        population size to solve the the logistic growth equation; in red).
+
+        Parameters
+        ----------
+        spp : {int, str}
+            A reference to the Species whose population growth will be plotted.
+            Can be either the Species' index number (i.e. its integer key
+            in the Community dict), or its name (as a character string).
+
+        Returns
+        -------
+        None
+            Returns no output
+        """
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
@@ -2191,13 +2086,69 @@ class Model:
 
 
     #wrapper around Species._plot_example_recombinant_genome
-    def plot_examaple_recombinant_genome(self, spp):
+    def plot_example_recombinant_genome(self, spp):
+        """
+        Plot an example recombinant genome for the chosen Species
+
+        Plot a vertical image depicting an example recombinant genome for the
+        chosen Species. Each gamete (i.e. vertical half) is colored using a
+        different colormap, and for each one alternating bands of color
+        indicate breakpoints where recombination occurred between the two
+        parental chromatids (or haploid chromatid sets, for multi-chromosome
+        models). The resulting plot can be useful for introspecting or
+        exploring a model, because each plot will be unique, and will be a
+        result of the array of interlocus recombination rates defined in the
+        Species' GenomicArchitecture.
+
+        Parameters
+        ----------
+        spp : {int, str}
+            A reference to the Species for which an example recombinant genome
+            should be plotted. Can be either the Species' index number
+            (i.e. its integer key in the Community dict), or its name
+            (as a character string).
+
+        Returns
+        -------
+        None
+            Returns no output
+
+        Notes
+        -----
+        - Not valid for Species without genomes.
+        """
         spp = self.comm[self._get_spp_num(spp)]
         spp._plot_example_recombinant_genome()
 
 
     #wrapper around Species._plot_demographic_changes
     def plot_demographic_changes(self, spp):
+        """
+        TEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.
+        """
+#       TODO: FIX ME! BUGS HAVE EMERGED.
+#
+#        Plot the scheduled demographic changes for the chosen Species
+#
+#        Plot a line plot of a Species' expected population size over time,
+#        showing the anticipated effect of any demographic changes scheduled
+#        for that Species.
+#
+#        Parameters
+#        ----------
+#        spp : {int, str}
+#            A reference to the Species whose demographic changes should be
+#            plotted. Can be either the Species' index number (i.e. its
+#            integer key in the Community dict), or its name (as a character
+#            string).
+#
+#        Returns
+#        -------
+#        None
+#            Returns no output
+#        Notes
+#        -----
+#        - Not valid for Species without genomes.
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
@@ -2206,6 +2157,30 @@ class Model:
 
     #wrapper around Species._plot_stat
     def plot_stat(self, spp, stat):
+        """
+        TEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.
+        """
+#        TODO: FIX ME! BUGS HAVE EMERGED.
+#
+#        Plot the chosen statistic's data for the chosen Species
+#
+#        Create a plot of the data for the chosen statistic, for the chosen
+#        Species. The type of plot will vary depending on the statistic chosen.
+#
+#        Parameters
+#        ----------
+#        spp : {int, str}
+#            A reference to the Species for which the chosen statistic should
+#            be plotted. Can be either the Species' index number (i.e. its
+#            integer key in the Community dict), or its name (as a character
+#            string).
+#
+#        stat : str
+#
+#        Returns
+#        -------
+#        None
+#            Returns no output
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn

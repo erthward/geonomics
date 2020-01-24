@@ -1,0 +1,1231 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>geonomics.sim package &mdash; geonomics 0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> geonomics
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html#getting-started">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html#motivation">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/visualization.html">Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/data_structures.html">Data structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/operations.html">Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/landscape_parameters.html">Landscape parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/community_and_species_parameters.html">Community and Species parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/other_parameters.html">Other parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/functions.html">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/classes.html">Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters.html">Indices and tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/classes.html">Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference_guide/functions.html">Functions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">geonomics</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>geonomics.sim package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/geonomics.sim.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="geonomics-sim-package">
+<h1>geonomics.sim package<a class="headerlink" href="#geonomics-sim-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-geonomics.sim.burnin">
+<span id="geonomics-sim-burnin-module"></span><h2>geonomics.sim.burnin module<a class="headerlink" href="#module-geonomics.sim.burnin" title="Permalink to this headline">¶</a></h2>
+<p>Functions for testing burn-in stationarity.</p>
+</div>
+<div class="section" id="module-geonomics.sim.data">
+<span id="geonomics-sim-data-module"></span><h2>geonomics.sim.data module<a class="headerlink" href="#module-geonomics.sim.data" title="Permalink to this headline">¶</a></h2>
+<hr class="docutils" />
+<p>Module name:              sim/data</p>
+<dl>
+<dt>Module contents:          - definition of the _DataCollector class (which</dt><dd><blockquote>
+<div><p>gathers and organizes the parameters for how
+and when to sample data, and does the sampling)</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>definition of functions for sampling individuals
+according to the contents of the
+params[‘model’][‘data’] section</p></li>
+<li><p>definition of data formatting functions</p></li>
+</ul>
+</dd>
+</dl>
+<p>Author:                   Drew Ellison Hart
+Email:                    <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
+Github:                   URL
+Start date:               01-01-18
+Documentation:            URL</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="module-geonomics.sim.model">
+<span id="geonomics-sim-model-module"></span><h2>geonomics.sim.model module<a class="headerlink" href="#module-geonomics.sim.model" title="Permalink to this headline">¶</a></h2>
+<hr class="docutils" />
+<p>Module name:          sim.model</p>
+<dl class="simple">
+<dt>Module contains:</dt><dd><ul class="simple">
+<li><p>classes and functions to facilitate building a
+Geonomics model and running multiple iterations
+of it, including across multiple cores</p></li>
+</ul>
+</dd>
+</dl>
+<p>Author:               Drew Ellison Hart
+Email:                <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
+Github:               URL
+Start date:           07-06-18
+Documentation:        URL</p>
+<hr class="docutils" />
+<dl class="class">
+<dt id="geonomics.sim.model.Model">
+<em class="property">class </em><code class="sig-prename descclassname">geonomics.sim.model.</code><code class="sig-name descname">Model</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">params</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Hierarchical data structure containing a Landscape and a Community as
+attributes, and serving as an interface for all of the core simulation
+functionality (as methods to run simulations and visualize results).
+The principal Geonomics data structure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – A character string to be assigned as the Model’s name.</p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="#geonomics.sim.params.ParametersDict" title="geonomics.sim.params.ParametersDict"><em>ParametersDict</em></a>) – A ParametersDict object containing all of the parameter values needed
+instantiate the Model. (See the online documentation for a detailed
+discussion of all parameters.)</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to display information about the Model’s status
+during simulations. Defaults to False.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="geonomics.sim.model.Model.calc_stats">
+<code class="sig-name descname">calc_stats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.calc_stats" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot">
+<code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param">spp=None</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">hide_land=False</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">color='black'</em>, <em class="sig-param">edge_color='face'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">land_cmap=None</em>, <em class="sig-param">pt_cmap=None</em>, <em class="sig-param">alpha=False</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">vmin=None</em>, <em class="sig-param">vmax=None</em>, <em class="sig-param">ticks=False</em>, <em class="sig-param">mask_rast=None</em>, <em class="sig-param">animate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a basic plot of the Model in its current state.</p>
+<p>Plot the current state of the model, with any number of overlain
+Landscape Layers, and with or without points representing the
+Individuals in a Species.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A reference to the Species whose Individuals should be scattered
+on the plot. Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string). If None, will cause only the Landscape
+to be plotted.</p></li>
+<li><p><strong>lyr</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A reference to the Layer whose raster should be plotted. Can be
+either the Layer’s index number (i.e. its integer key in the
+Landscape dict), or its name (as a character string). Defaults
+to None, which will cause all Layers to be plotted as an overlay
+of transparent rasters, each with a different colormap.</p></li>
+<li><p><strong>hide_land</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, the Landscape will be ‘hidden’, i.e. the plot will only
+show a scatter of the plotted Individuals. Defaults to False.</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the only Individuals
+to be plotted. If None, all Individuals will be plotted.</p></li>
+<li><p><strong>text</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, each Individual’s index number will be displayed next to
+it. Can be useful for model introspection.</p></li>
+<li><p><strong>color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>optional</em><em>, </em><em>default: 'black'</em>) – Face color for the points in the Individual scatter. Passed to the
+<em>c</em> argument of matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>edge_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>optional</em><em>, </em><em>default: 'face'</em>) – Edge color for the points in the Individual scatter. If ‘face’,
+will always match the face color (i.e. the color provided to
+<em>color</em>). Passed to the <em>edgecolor</em> argument of
+matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>text_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>default 'black'</em>) – Color for the plotted text. (Will only be used if the <em>text</em>
+argument is True.) Passed to the <em>color</em> argument of
+matplotlib.pyplot.text.</p></li>
+<li><p><strong>cbar</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – If True, a colorbar will be included, depicting the mapping of
+color onto the Landscape’s environmental values.</p></li>
+<li><p><strong>size</strong> (<em>scalar</em><em> or </em><em>array_like</em><em>, </em><em>optional</em><em>, </em><em>default: 25</em>) – Size of the scatter points. Passed to the <em>s</em> argument
+of matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>text_size</strong> (<em>{size in points</em><em>, </em><em>valid string}</em><em>, </em><em>optional</em><em>, </em><em>default: 9</em>) – Text size. (Will only be used if <em>text</em> is True.) Can be expressed
+as a numeric size in points, or as any string that is a valid size
+argument for matplotlib.text.Text.</p></li>
+<li><p><strong>land_cmap</strong> (<em>{valid string</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Colormap to use for plotting Layer rasters. If None, will default
+to the colormap automatically assigned to the Layer by Geonomics
+based on the Layer’s index number in the Landscape dict. Can be
+passed any string that references a colormap in
+matplotlib.pyplot.cm.</p></li>
+<li><p><strong>pt_cmap</strong> (<em>{valid string</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Colormap to use for plotting points. (Will only be used if the
+Individual scatter is being plotted, and if the value provided to
+<em>color</em> is an ordered collection of values to which to map the
+Individuals’ colors.) If None, no colormap will be used.
+Can be passed any string that references a colormap in
+matplotlib.pyplot.cm, as well as an
+matplotlib.colors.LinearSegmentedColormap instance.</p></li>
+<li><p><strong>alpha</strong> (<em>{scalar</em><em>, </em><em>bool</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – The transparency level of the points. If scalar is passed, it is
+passed on to the <em>alpha</em> value fed to matplotlib.pyplot.scatter.
+If True, alpha value will be set to 0.6. If False or None, points
+will be opaque.</p></li>
+<li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
+plot. If None, plot shows full Landscape.</p></li>
+<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>vmax</strong> (<em>vmin</em><em>,</em>) – Used to normalize the luminance data that determine how colors
+are colormapped onto Individuals’ point colors. Passed to the
+<em>vmin</em> and <em>vmax</em> arguments of matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
+<li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
+All np.nan values in the array will be plotted as light gray,
+instead of the color that would otherwise map to their
+environmental values in their raster(s).
+The array must be of the same x,y dimensions as the Layer(s)
+being plotted.</p></li>
+<li><p><strong>animate</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, this function will return a list of the Individuals’
+points, as a matplotlib.collections.PathCollection. This is used
+internally by the Model.walk method, to create animated simulation
+plots.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output (unless <em>animate</em> is passed True, in which case
+a PathCollection of the Individuals’ points is returned, for
+internal use by Model.walk, to create animated simulations)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>{None, <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.collections.PathCollection</span></code>}</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For more detail on plotting parameters, see the documentation for
+matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
+and matplotlib.pyplot.text.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_allele_frequencies">
+<code class="sig-name descname">plot_allele_frequencies</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_allele_frequencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a Species’ current allele frequencies for all alleles</p>
+<p>For the Species indicated, create a plot showing, across all loci,
+the current allele frequencies (in solid blue) versus the starting
+frequencies (in dashed red).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose allele frequencies will be
+plotted. Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_demographic_changes">
+<code class="sig-name descname">plot_demographic_changes</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_demographic_changes" title="Permalink to this definition">¶</a></dt>
+<dd><p>TEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_demographic_pyramid">
+<code class="sig-name descname">plot_demographic_pyramid</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_demographic_pyramid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a demographic pyramid for the chosen Species</p>
+<p>Plot a paired, horizontal bar plot of the chosen Species’
+count of Individuals of each age.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose demographic pyramid will be
+plotted. Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_density">
+<code class="sig-name descname">plot_density</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">normalize=False</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">color='black'</em>, <em class="sig-param">edge_color='face'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">alpha=0.5</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_density" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the population-density raster for a given Species.</p>
+<p>Plot the population density of a Species, as estimated by the Species’
+_DensityGridStack.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose Individuals should be scattered
+on the plot. Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, the population-density values of the output raster will be
+normalized to 0 &lt;= density &lt;= 1. Otherwise, actual estimates
+(individuals per cell) are returned.</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the only Individuals
+to be plotted. If None, all Individuals will be plotted.</p></li>
+<li><p><strong>text</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, each Individual’s index number will be displayed next to
+it. Can be useful for model introspection.</p></li>
+<li><p><strong>color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>optional</em><em>, </em><em>default: 'black'</em>) – Face color for the points in the Individual scatter. Passed to the
+<em>c</em> argument of matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>edge_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>optional</em><em>, </em><em>default: 'face'</em>) – Edge color for the points in the Individual scatter. If ‘face’,
+will always match the face color (i.e. the color provided to
+<em>color</em>). Passed to the <em>edgecolor</em> argument of
+matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>text_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>default 'black'</em>) – Color for the plotted text. (Will only be used if the <em>text</em>
+argument is True.) Passed to the <em>color</em> argument of
+matplotlib.pyplot.text.</p></li>
+<li><p><strong>size</strong> (<em>scalar</em><em> or </em><em>array_like</em><em>, </em><em>optional</em><em>, </em><em>default: 25</em>) – Size of the scatter points. Passed to the <em>s</em> argument
+of matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>text_size</strong> (<em>{size in points</em><em>, </em><em>valid string}</em><em>, </em><em>optional</em><em>, </em><em>default: 9</em>) – Text size. (Will only be used if <em>text</em> is True.) Can be expressed
+as a numeric size in points, or as any string that is a valid size
+argument for matplotlib.text.Text.</p></li>
+<li><p><strong>alpha</strong> (<em>{scalar</em><em>, </em><em>bool</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – The transparency level of the points. If scalar is passed, it is
+passed on to the <em>alpha</em> value fed to matplotlib.pyplot.scatter.
+If True, alpha value will be set to 0.6. If False or None, points
+will be opaque.</p></li>
+<li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
+plot. If None, plot shows full Landscape.</p></li>
+<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
+<li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
+All np.nan values in the array will be plotted as light gray,
+instead of the color that would otherwise map to their
+environmental values in their raster(s).
+The array must be of the same x,y dimensions as the Layer(s)
+being plotted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For more detail on plotting parameters, see the documentation for
+matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
+and matplotlib.pyplot.text.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_dispersal_surface">
+<code class="sig-name descname">plot_dispersal_surface</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">style</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">scale_fact=4.5</em>, <em class="sig-param">color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">cmap='plasma'</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_dispersal_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create any of 4 types of plots to summarize a Species’ DispersalSurface</p>
+<p>Plot a Species’ DispersalSurface with either circularized histograms,
+a circle of directional draws, or a vector on each cell, to visualize
+the von Mises distributions of each cell on the MovementSurface.
+Or plot a plain histogram of the von Mises distribution at a given
+cell.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose DispersalSurface should be
+plotted. Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>style</strong> (<em>str</em>) – <dl class="simple">
+<dt>Determines the style of plot produced. There are four options:</dt><dd><dl class="simple">
+<dt>’hist’:</dt><dd><p>Plot a classic histogram approximating the von Mises
+distribution at the cell indicated by position x,y.
+(Note that <em>x</em> and <em>y</em> must be provided for this style.)</p>
+</dd>
+<dt>’chist’:</dt><dd><p>Plot a circular histogram approximating the von Mises
+distribution at the cell indicated by position x,y;
+plot will be drawn inside the chosen cell on the
+DispersalSurface raster.</p>
+</dd>
+<dt>’cdraws’:</dt><dd><p>Plot points on the unit circle, whose locations were
+drawn from the von Mises distribution at the cell indicated
+by position x,y; plot will be drawn inside the chosen cell
+on the DispersalSurface raster.</p>
+</dd>
+<dt>’vect’:</dt><dd><p>Inside each cell of the DispersalSurface raster,
+plot the mean direction vector of directions drawn
+from that cell’s von Mises distribution.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>optional</em><em>, </em><em>default: 'black'</em>) – Color to use for the plot elements. Passed to the
+<em>c</em> argument of matplotlib.pyplot.hist, matplotlib.pyplot.plot,
+matplotlib.pyplot.scatter, or matplotlib.pyplot.arrow,
+depending on <em>style</em>.</p></li>
+<li><p><strong>cbar</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – If True, a colorbar will be included, depicting the mapping of
+color onto the MovementSurface’s environmental values.</p></li>
+<li><p><strong>cmap</strong> (<em>{valid string</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: 'plasma'</em>) – Colormap to use for plotting the DispersalSurface. If None,
+will default to ‘plasma’, a common colormap used to plot resistance
+surfaces.Can be passed any string that references a colormap in
+matplotlib.pyplot.cm.</p></li>
+<li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
+plot. If None, plot shows full Landscape.</p></li>
+<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
+All np.nan values in the array will be plotted as light gray,
+instead of the color that would otherwise map to their
+environmental values in their raster(s).
+The array must be of the same x,y dimensions as the Layer(s)
+being plotted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Not valid for Species without a DisersalSurface</p></li>
+<li><p>For more detail on plotting parameters, see the documentation for
+matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
+and matplotlib.pyplot.text.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_example_recombinant_genome">
+<code class="sig-name descname">plot_example_recombinant_genome</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_example_recombinant_genome" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot an example recombinant genome for the chosen Species</p>
+<p>Plot a vertical image depicting an example recombinant genome for the
+chosen Species. Each gamete (i.e. vertical half) is colored using a
+different colormap, and for each one alternating bands of color
+indicate breakpoints where recombination occurred between the two
+parental chromatids (or haploid chromatid sets, for multi-chromosome
+models). The resulting plot can be useful for introspecting or
+exploring a model, because each plot will be unique, and will be a
+result of the array of interlocus recombination rates defined in the
+Species’ GenomicArchitecture.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species for which an example recombinant genome
+should be plotted. Can be either the Species’ index number
+(i.e. its integer key in the Community dict), or its name
+(as a character string).</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Not valid for Species without genomes.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_fitness">
+<code class="sig-name descname">plot_fitness</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">trt=None</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">phenotype_text=False</em>, <em class="sig-param">fitness_text=False</em>, <em class="sig-param">edge_color='black'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">phenotype_text_color='black'</em>, <em class="sig-param">fitness_text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">fitness_cbar=True</em>, <em class="sig-param">size=100</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">fit_cmap='gray'</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_fitness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a Species’ Individuals, colored by fitness</p>
+<p>Create a scatter plot of the Individuals in a Species,
+on top of any Landscape Layer, and color the points by
+their fitnesses. Fitness values can be either overall fitness
+(i.e. calculated across all traits), or can be fitnesses for
+a certain Trait.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose Individuals should be scattered
+on the plot. Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string). If None, will cause only the Landscape
+to be plotted.</p></li>
+<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A reference to the Trait for which fitness should be calculated
+and used to color Individuals in the plot. Can be either the
+Trait’s index number (i.e. its integer key in the
+GenomicArchitecture’s traits dict), or its name (as a character
+string). If None, Individuals’ overall fitnesses will be
+calculated instead.</p></li>
+<li><p><strong>lyr</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A reference to the Layer whose raster should be plotted. Can be
+either the Layer’s index number (i.e. its integer key in the
+Landscape dict), or its name (as a character string). Defaults
+to None, which will either cause only the Layer associated with the
+chosen Trait to be plotted, if <em>trt</em> is not None; or else
+will cause all Layers to be plotted as an overlay of transparent
+rasters, each with a different colormap, if <em>trt</em> is None.</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the only Individuals
+to be plotted. If None, all Individuals will be plotted.</p></li>
+<li><p><strong>text</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, each Individual’s index number will be displayed next to
+it. Can be useful for model introspection.</p></li>
+<li><p><strong>phenotype_text</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, each Individual’s phenotype will be displayed next to
+it. Can be useful for model introspection.</p></li>
+<li><p><strong>fitness_text</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, each Individual’s calculated fitness value will be
+displayed next to it. Can be useful for model introspection.</p></li>
+<li><p><strong>edge_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>optional</em><em>, </em><em>default: 'face'</em>) – Edge color for the points in the Individual scatter. If ‘face’,
+will always match the face color (i.e. the color provided to
+<em>color</em>). Passed to the <em>edgecolor</em> argument of
+matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>text_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>default 'black'</em>) – Color for the plotted text. (Will only be used if the <em>text</em>
+argument is True.) Passed to the <em>color</em> argument of
+matplotlib.pyplot.text.</p></li>
+<li><p><strong>fitness_text_color</strong> (<em>phenotype_text_color</em><em>,</em>) – </p></li>
+<li><p><strong>'black'</strong> (<em>default</em>) – Color for the plotted phenotype-value or fitness-value text.
+(Will only be used if the <em>phenotype_text</em> or <em>fitness_text</em>
+arguments are True.) Passed to the <em>color</em> argument
+of matplotlib.pyplot.text.</p></li>
+<li><p><strong>cbar</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – If True, a colorbar will be included, depicting the mapping of
+color onto the Landscape’s environmental values.</p></li>
+<li><p><strong>fitness_cbar</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – If True, a colorbar will be included, depicting the mapping of
+color onto the Landscape’s environmental values.</p></li>
+<li><p><strong>size</strong> (<em>scalar</em><em> or </em><em>array_like</em><em>, </em><em>optional</em><em>, </em><em>default: 25</em>) – Size of the scatter points. Passed to the <em>s</em> argument
+of matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>text_size</strong> (<em>{size in points</em><em>, </em><em>valid string}</em><em>, </em><em>optional</em><em>, </em><em>default: 9</em>) – Text size. (Will only be used if <em>text</em> is True.) Can be expressed
+as a numeric size in points, or as any string that is a valid size
+argument for matplotlib.text.Text.</p></li>
+<li><p><strong>fit_cmap</strong> (<em>{valid string</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: 'gray'</em>) – Colormap to use for color Individuals by their fitness values.
+If no value passed, will defaul to grayscale. Can be passed any
+string that references a colormap in matplotlib.pyplot.cm.</p></li>
+<li><p><strong>alpha</strong> (<em>{scalar</em><em>, </em><em>bool</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – The transparency level of the points. If scalar is passed, it is
+passed on to the <em>alpha</em> value fed to matplotlib.pyplot.scatter.
+If True, alpha value will be set to 0.6. If False or None, points
+will be opaque.</p></li>
+<li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
+plot. If None, plot shows full Landscape.</p></li>
+<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
+<li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
+All np.nan values in the array will be plotted as light gray,
+instead of the color that would otherwise map to their
+environmental values in their raster(s).
+The array must be of the same x,y dimensions as the Layer(s)
+being plotted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For more detail on plotting parameters, see the documentation for
+matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
+and matplotlib.pyplot.text.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_genotype">
+<code class="sig-name descname">plot_genotype</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">locus</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">by_dominance=False</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">edge_color='black'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_genotype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a Species’ Individuals, colored by their genotypes for a locus</p>
+<p>Create a scatter plot of the Individuals in a Species,
+on top of any Landscape Layer, and color the points by
+their genotypes for the chosen locus.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose Individuals should be scattered
+on the plot. Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>locus</strong> (<em>int</em>) – The index of the locus for which Individuals’ genotypes should be
+depicted. Must be 0 &lt;= val &lt;= (genome length - 1)</p></li>
+<li><p><strong>lyr</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A reference to the Layer whose raster should be plotted. Can be
+either the Layer’s index number (i.e. its integer key in the
+Landscape dict), or its name (as a character string). Defaults
+to None, which will cause all Layers to be plotted as an overlay
+of transparent rasters, each with a different colormap.</p></li>
+<li><p><strong>by_dominance</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If False, the Individuals will be colored by their actual genotypes
+(i.e. a 0|0 homozygote will be depicted as 0, a 1|1 homozygote as
+1, and a 0|1 heterozygote as 0.5). If True, then the dominance
+value for the chosen locus will be used to the determine the
+‘effective genotype’, which will instead be displayed as an
+Individual’s color. In this case, 0|1 heterozygotes
+will be be depicted as 0.5’s for loci with codominance (i.e.
+dominance values of 0), but
+will be depicted as 1’s for loci with 1-allele dominance (i.e.
+dominance values of 1). The dominance values for all loci in the
+genome are set in a Species’ GenomicArchitecture object. For more
+detail, see the “Genomes, GenomicArchitecture, and Traits”
+subsection of the “Data Structures” section of the online
+documentation.</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the only Individuals
+to be plotted. If None, all Individuals will be plotted.</p></li>
+<li><p><strong>text</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, each Individual’s index number will be displayed next to
+it. Can be useful for model introspection.</p></li>
+<li><p><strong>edge_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>optional</em><em>, </em><em>default: 'face'</em>) – Edge color for the points in the Individual scatter. If ‘face’,
+will always match the face color (i.e. the color provided to
+<em>color</em>). Passed to the <em>edgecolor</em> argument of
+matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>text_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>default 'black'</em>) – Color for the plotted text. (Will only be used if the <em>text</em>
+argument is True.) Passed to the <em>color</em> argument of
+matplotlib.pyplot.text.</p></li>
+<li><p><strong>cbar</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – If True, a colorbar will be included, depicting the mapping of
+color onto the Landscape’s environmental values.</p></li>
+<li><p><strong>size</strong> (<em>scalar</em><em> or </em><em>array_like</em><em>, </em><em>optional</em><em>, </em><em>default: 25</em>) – Size of the scatter points. Passed to the <em>s</em> argument
+of matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>text_size</strong> (<em>{size in points</em><em>, </em><em>valid string}</em><em>, </em><em>optional</em><em>, </em><em>default: 9</em>) – Text size. (Will only be used if <em>text</em> is True.) Can be expressed
+as a numeric size in points, or as any string that is a valid size
+argument for matplotlib.text.Text.</p></li>
+<li><p><strong>alpha</strong> (<em>{scalar</em><em>, </em><em>bool</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – The transparency level of the points. If scalar is passed, it is
+passed on to the <em>alpha</em> value fed to matplotlib.pyplot.scatter.
+If True, alpha value will be set to 0.6. If False or None, points
+will be opaque.</p></li>
+<li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
+plot. If None, plot shows full Landscape.</p></li>
+<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
+<li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
+All np.nan values in the array will be plotted as light gray,
+instead of the color that would otherwise map to their
+environmental values in their raster(s).
+The array must be of the same x,y dimensions as the Layer(s)
+being plotted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For more detail on plotting parameters, see the documentation for
+matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
+and matplotlib.pyplot.text.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_hist_fitness">
+<code class="sig-name descname">plot_hist_fitness</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_hist_fitness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a Species</p>
+<p>For the Species indicated, create a histogram of Individuals’ current
+fitness values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose Individuals’ fitness will be
+plotted. Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_movement_surface">
+<code class="sig-name descname">plot_movement_surface</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">style</em>, <em class="sig-param">color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">cmap='plasma'</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">scale_fact=4.5</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_movement_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create any of 4 types of plots to summarize a Species’ MovementSurface</p>
+<p>Plot a Species’ MovemementSurface with either circularized histograms,
+a circle of directional draws, or a vector on each cell, to visualize
+the von Mises distributions of each cell on the MovementSurface.
+Or plot a plain histogram of the von Mises distribution at a given
+cell.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose MovementSurface should be plotted.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>style</strong> (<em>str</em>) – <dl class="simple">
+<dt>Determines the style of plot produced. There are four options:</dt><dd><dl class="simple">
+<dt>’hist’:</dt><dd><p>Plot a classic histogram approximating the von Mises
+distribution at the cell indicated by position x,y.
+(Note that <em>x</em> and <em>y</em> must be provided for this style.)</p>
+</dd>
+<dt>’chist’:</dt><dd><p>Plot a circular histogram approximating the von Mises
+distribution at the cell indicated by position x,y;
+plot will be drawn inside the chosen cell on the
+MovementSurface raster.</p>
+</dd>
+<dt>’cdraws’:</dt><dd><p>Plot points on the unit circle, whose locations were
+drawn from the von Mises distribution at the cell indicated
+by position x,y; plot will be drawn inside the chosen cell
+on the MovementSurface raster.</p>
+</dd>
+<dt>’vect’:</dt><dd><p>Inside each cell of the MovementSurface raster,
+plot the mean direction vector of directions drawn
+from that cell’s von Mises distribution.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>optional</em><em>, </em><em>default: 'black'</em>) – Color to use for the plot elements. Passed to the
+<em>c</em> argument of matplotlib.pyplot.hist, matplotlib.pyplot.plot,
+matplotlib.pyplot.scatter, or matplotlib.pyplot.arrow,
+depending on <em>style</em>.</p></li>
+<li><p><strong>cbar</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – If True, a colorbar will be included, depicting the mapping of
+color onto the MovementSurface’s environmental values.</p></li>
+<li><p><strong>cmap</strong> (<em>{valid string</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: 'plasma'</em>) – Colormap to use for plotting the MovementSurface. If None,
+will default to ‘plasma’, a common colormap used to plot resistance
+surfaces.Can be passed any string that references a colormap in
+matplotlib.pyplot.cm.</p></li>
+<li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
+plot. If None, plot shows full Landscape.</p></li>
+<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
+All np.nan values in the array will be plotted as light gray,
+instead of the color that would otherwise map to their
+environmental values in their raster(s).
+The array must be of the same x,y dimensions as the Layer(s)
+being plotted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Not valid for Species without a DisersalSurface</p></li>
+<li><p>For more detail on plotting parameters, see the documentation for
+matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
+and matplotlib.pyplot.text.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_phenotype">
+<code class="sig-name descname">plot_phenotype</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">trt</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">edge_color='black'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em>, <em class="sig-param">animate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_phenotype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a Species’ Individuals, colored by their phenotypes for a Trait</p>
+<p>Create a scatter plot of the Individuals in a Species,
+on top of any Landscape Layer, and color the points by
+their phenotypes for the chosen Trait.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose Individuals should be scattered
+on the plot. Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Trait whose phenotypes should be used to color
+Individuals in the plot. Can be either the Trait’s index number
+(i.e. its integer key in the GenomicArchitecture’s traits dict),
+or its name (as a character string).</p></li>
+<li><p><strong>lyr</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A reference to the Layer whose raster should be plotted. Can be
+either the Layer’s index number (i.e. its integer key in the
+Landscape dict), or its name (as a character string). Defaults
+to None, which will cause only the Layer associated with the chosen
+Trait to be plotted.</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the only Individuals
+to be plotted. If None, all Individuals will be plotted.</p></li>
+<li><p><strong>text</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, each Individual’s index number will be displayed next to
+it. Can be useful for model introspection.</p></li>
+<li><p><strong>edge_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>optional</em><em>, </em><em>default: 'face'</em>) – Edge color for the points in the Individual scatter. If ‘face’,
+will always match the face color (i.e. the color provided to
+<em>color</em>). Passed to the <em>edgecolor</em> argument of
+matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>text_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>default 'black'</em>) – Color for the plotted text. (Will only be used if the <em>text</em>
+argument is True.) Passed to the <em>color</em> argument of
+matplotlib.pyplot.text.</p></li>
+<li><p><strong>cbar</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – If True, a colorbar will be included, depicting the mapping of
+color onto the Landscape’s environmental values.</p></li>
+<li><p><strong>size</strong> (<em>scalar</em><em> or </em><em>array_like</em><em>, </em><em>optional</em><em>, </em><em>default: 25</em>) – Size of the scatter points. Passed to the <em>s</em> argument
+of matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>text_size</strong> (<em>{size in points</em><em>, </em><em>valid string}</em><em>, </em><em>optional</em><em>, </em><em>default: 9</em>) – Text size. (Will only be used if <em>text</em> is True.) Can be expressed
+as a numeric size in points, or as any string that is a valid size
+argument for matplotlib.text.Text.</p></li>
+<li><p><strong>alpha</strong> (<em>{scalar</em><em>, </em><em>bool</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – The transparency level of the points. If scalar is passed, it is
+passed on to the <em>alpha</em> value fed to matplotlib.pyplot.scatter.
+If True, alpha value will be set to 0.6. If False or None, points
+will be opaque.</p></li>
+<li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
+plot. If None, plot shows full Landscape.</p></li>
+<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
+<li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
+All np.nan values in the array will be plotted as light gray,
+instead of the color that would otherwise map to their
+environmental values in their raster(s).
+The array must be of the same x,y dimensions as the Layer(s)
+being plotted.</p></li>
+<li><p><strong>animate</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, this function will return a list of the Individuals’
+points, as a matplotlib.collections.PathCollection. This is used
+internally by the Model.walk method, to create animated simulation
+plots.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output (unless <em>animate</em> is passed True, in which case
+a PathCollection of the Individuals’ points is returned, for
+internal use by Model.walk, to create animated simulations)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>{None, <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.collections.PathCollection</span></code>}</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>For more detail on plotting parameters, see the documentation for
+matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
+and matplotlib.pyplot.text.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_pop_growth">
+<code class="sig-name descname">plot_pop_growth</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_pop_growth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the chosen Species’ population over time</p>
+<p>Plot a line plot of the Species’ population over model time (in blue),
+as well as the expected population-size trend (based on summing the
+Species’ carrying-capacity raster and using that total expected
+population size to solve the the logistic growth equation; in red).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose population growth will be plotted.
+Can be either the Species’ index number (i.e. its integer key
+in the Community dict), or its name (as a character string).</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns no output</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.plot_stat">
+<code class="sig-name descname">plot_stat</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">stat</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_stat" title="Permalink to this definition">¶</a></dt>
+<dd><p>TEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a Model.</p>
+<p>Run the Model for the number of iterations that was stipulated in the
+parameters file used to create it (which is saved as the <cite>n_its</cite>
+attribute). During each iteration, the model will burn in for at least
+the stipulated number of burn-in timesteps (the <cite>burn_T</cite> attribute),
+then will run for the stipulated number of main timesteps (the ‘T’
+attribute). If stats and/or data are going to be collected (also
+stipulated by the parameters file used to create the Model), then the
+output files for each iteration will be saved in a separate
+subdirectory, containing further subdirectories for each Species.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to run the Model should provide written output.
+If True, formatted messages will be printed to STDOUT at each
+timestep (which could be piped to a log file, if desired).</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>out</strong> – Returns no output. Writes information to STDOUT if verbose is
+True. Writes data and statistics to file if so parameterized.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>We can create and run the default model (as long as there is no
+“GNX_params_&lt;…&gt;.py” file in the current working directory
+before <cite>gnx.make_parameters_file</cite> is called).</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gnx</span><span class="o">.</span><span class="n">make_parameters_file</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mod</span> <span class="o">=</span> <span class="n">gnx</span><span class="o">.</span><span class="n">make_model</span><span class="p">()</span>
+<span class="go">NOTE: Using the following file, in the current working directory to create the Model object:</span>
+<span class="go">        GNX_params_21-01-2020_17:22:08.py</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mod</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">verbose</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="go">###############################################################################################</span>
+<span class="go">Running model &quot;GNX_params_21-01-2020_17:22:08&quot;...</span>
+<span class="go">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="go">Setting up iteration 0...</span>
+<span class="go">Creating the burn-in function queue...</span>
+<span class="go">Creating the main function queue...</span>
+<span class="go">Running burn-in, iteration 0...</span>
+<span class="go">burn:   0:0</span>
+<span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
+<span class="go">.......................................................................................</span>
+<span class="go">burn:   0:1</span>
+<span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
+<span class="go">.......................................................................................</span>
+<span class="go">burn:   0:2</span>
+<span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
+<span class="go">.......................................................................................</span>
+<span class="go">.</span>
+<span class="go">.</span>
+<span class="go">.</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.walk">
+<code class="sig-name descname">walk</code><span class="sig-paren">(</span><em class="sig-param">T=1</em>, <em class="sig-param">mode='main'</em>, <em class="sig-param">verbose=True</em>, <em class="sig-param">animate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.walk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Walk through a Model (i.e. run it for a certain number of timesteps).</p>
+<p>This function will run a Model for a specific number of timesteps,
+either in ‘burn’ or ‘main’ mode. It is designed to help users to try
+out, explore, and introspect their Models in an interactive Python
+session. (For best results, we strongly recommend this be done with
+the <cite>iPython &lt;https://ipython.org&gt;</cite> shell.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>T</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of timesteps for which to run the Model. (If in ‘main’
+mode, the Model will run for precisely this many timesteps. If in
+‘burn’ mode, it will run either until stationarity statistics
+indicate that it has burned in, or for this many timesteps,
+whichever occurs first.) Defaults to a single timestep.
+single step.</p></li>
+<li><p><strong>mode</strong> (<em>{'burn'</em><em>, </em><em>'main'}</em><em>, </em><em>optional</em>) – <p>The mode in which to run the Model.
+If ‘burn’, it will run in burn-in mode. This entails the following:</p>
+<blockquote>
+<div><ul>
+<li><p>Genomes will not yet be assigned, so genomic phenomena such
+as crossing-over and natural selection will not occur;</p></li>
+<li><p>Any scheduled landscape and demographic changes will not
+occur;</p></li>
+<li><p>Statiionarity statistics will be checked at the end of each
+timestep, to determine if the Model has burned in (in which
+case the model will stop running regardless of timestep,
+genomes will be randomly assigned to all individuals, and
+the Model will be deemed ready to run in main mode)</p></li>
+</ul>
+</div></blockquote>
+<p>If ‘main’, it will run in main mode (i.e. all functionalities will
+be used. (Note that for a Model to run in main mode it must first
+have been burned in.)</p>
+</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to run the Model should provide written output.
+If True, formatted messages will be printed to STDOUT at each
+timestep. Defaults to True for <cite>Model.walk</cite>.</p></li>
+<li><p><strong>animate</strong> (<em>{tuple of ints</em><em>, </em><em>bool}</em><em>, </em><em>optional</em>) – If a length-2 tuple of integers is provided, the Species indicated
+by the first number will be plotted on the Landscape Layer
+indicated by the second number at each timestep, in a dynamically
+updating plot.
+If a length-3 tuple of integers in provided, the Species indicated
+by the first number will be plotted on the Landscape Layer
+indicated by the second number at each timestep, colored by the
+phenotypes of the trait indicated by the third number.
+If just True, the first Species (index 0) will be plotted
+on top of a transparent stack of all Landscape Layers.
+(Note that this will slow down the execution of a model a bit,
+because the plot will pause for 0.1 seconds after each timestep.)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>out</strong> – Returns no output. Writes information to STDOUT if verbose is
+True. Writes data and statistics to file if so parameterized.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the user attempts to run the Model in ‘main’ mode before it has
+    been burned in.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>We can create and walk the default model (as long as there is no
+“GNX_params_&lt;…&gt;.py” file in the current working directory
+before <cite>gnx.make_parameters_file</cite> is called).</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gnx</span><span class="o">.</span><span class="n">make_parameters_file</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mod</span> <span class="o">=</span> <span class="n">gnx</span><span class="o">.</span><span class="n">make_model</span><span class="p">()</span>
+<span class="go">NOTE: Using the following file, in the current working directory to create the Model object:</span>
+<span class="go">        GNX_params_21-01-2020_17:22:08.py</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#run the burn-in until it is complete</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mod</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">T</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;burn&#39;</span><span class="p">)</span>
+<span class="go">###############################################################################################</span>
+<span class="go">Running model &quot;GNX_params_21-01-2020_17:22:08&quot;...</span>
+<span class="go">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="go">Setting up iteration 0...</span>
+<span class="go">Creating the burn-in function queue...</span>
+<span class="go">Creating the main function queue...</span>
+<span class="go">Running burn-in, iteration 0...</span>
+<span class="go">burn:   0:0</span>
+<span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
+<span class="go">.......................................................................................</span>
+<span class="go">burn:   0:1</span>
+<span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
+<span class="go">.......................................................................................</span>
+<span class="go">burn:   0:2</span>
+<span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
+<span class="go">.......................................................................................</span>
+<span class="go">.</span>
+<span class="go">.</span>
+<span class="go">.</span>
+<span class="go">Assigning genomes for species &quot;spp_0&quot;...</span>
+<span class="go">Burn-in complete.</span>
+<span class="go">Burn-in complete.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#now run in main mode for 50 timesteps</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mod</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">T</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;main&#39;</span><span class="p">)</span>
+<span class="go"> main:   1:0</span>
+<span class="go">         species: spp_0                         N=131    (births=35      deaths=214)</span>
+<span class="go"> .......................................................................................</span>
+<span class="go"> main:   1:1</span>
+<span class="go">         species: spp_0                         N=129    (births=35      deaths=214)</span>
+<span class="go"> .......................................................................................</span>
+<span class="go"> main:   1:2</span>
+<span class="go">         species: spp_0                         N=133    (births=35      deaths=214)</span>
+<span class="go"> .......................................................................................</span>
+<span class="go"> .</span>
+<span class="go"> .</span>
+<span class="go"> .</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.model.Model.write_data">
+<code class="sig-name descname">write_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.write_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-geonomics.sim.params">
+<span id="geonomics-sim-params-module"></span><h2>geonomics.sim.params module<a class="headerlink" href="#module-geonomics.sim.params" title="Permalink to this headline">¶</a></h2>
+<hr class="docutils" />
+<p>Module name:              sim.params</p>
+<dl class="simple">
+<dt>Module contents:          - definition of the parameters-file strings</dt><dd><ul class="simple">
+<li><p>definition of the _DynAttrDict and ParametersDict
+classes</p></li>
+<li><p>definiton of functions for making and reading
+params files</p></li>
+</ul>
+</dd>
+</dl>
+<p>Author:                   Drew Ellison Hart
+Email:                    <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
+Github:                   URL
+Start date:               09-10-18
+Documentation:            URL</p>
+<hr class="docutils" />
+<dl class="class">
+<dt id="geonomics.sim.params.ParametersDict">
+<em class="property">class </em><code class="sig-prename descclassname">geonomics.sim.params.</code><code class="sig-name descname">ParametersDict</code><span class="sig-paren">(</span><em class="sig-param">params</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.params.ParametersDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">geonomics.sim.params._DynAttrDict</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-geonomics.sim.stats">
+<span id="geonomics-sim-stats-module"></span><h2>geonomics.sim.stats module<a class="headerlink" href="#module-geonomics.sim.stats" title="Permalink to this headline">¶</a></h2>
+<hr class="docutils" />
+<p>Module name:              stats</p>
+<dl>
+<dt>Module contents:          - definition of Stats class (i.e. structured</dt><dd><blockquote>
+<div><p>container for stats calculated during model run)</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>definition of functions for calculating various
+stats, at specified frequencies and with specified
+arguments, according to the contents of the
+params.model.stats section</p></li>
+</ul>
+</dd>
+</dl>
+<p>Author:                   Drew Ellison Hart
+Email:                    <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
+Github:                   URL
+Start date:               01-01-18
+Documentation:            URL</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="module-geonomics.sim">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-geonomics.sim" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Drew Hart
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

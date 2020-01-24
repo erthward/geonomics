@@ -1,27 +1,44 @@
 #!/usr/bin/python
 # main.py
 
-'''
-##########################################
+# flake8: noqa
 
-Module name:          main
+"""
+Geonomics
+=========
 
+Provides
+  1. A function for creating custom-structured, editable parameters files.
+  2. A function for creating model objects from parameters files.
+  3. Functions for running models.
+  4. Functions for model visualization.
+  5. A variety of parameters, for construction of arbitrarily complex
+     simulation scenarios.
 
-Module contains:
-                      - the Geonomics main module, containing the key,
-                        highest-level functions the common user would need
+How to use the documentation
+----------------------------
+There are two levels of documentation available:
+  - Basic, procedural documentation is available as docstrings in the code,
+  which are returned when requesting Python's help on a class or function.
 
+  - Detailed documentation is available at the
+    `Geonomics homepage<https://FIX_ME>`_.
 
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           07-06-18
-Documentation:        URL
+All documentation examples assume that `geonomics` has been imported as `gnx`::
 
+    >>> import geonomics as gnx
 
-##########################################
-'''
+To get help, call Python's `help` function on a component of Geonomics that you
+are trying to use, such as::
 
+    >>> help(gnx.make_parameters_file)
+
+Or use the question mark, if you are working in the
+`IPython <https://ipython.org>`_ shell or in the
+`Jupyter <https://jupyter.org/>`_ Notebook::
+
+    >>> geonomics.make_parameters_file?
+"""
 #geonomics imports
 from geonomics.sim.model import Model
 from geonomics.sim.params import (_read_params_file, _make_params_file,
@@ -79,7 +96,7 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
         in the parameters file that is generated. Defaults to 1. Valid values
         and their associated behaviors are:
 
-        If an int is passed:
+        *If an int is passed*:
             Add sections for the stipulated number of Layers, each with default
             settings:
                 - parameters for creating Layers of type 'random' (i.e.
@@ -87,11 +104,12 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
                   randomly valued random points)
                 - no LandscapeChanger parameters
 
-        If [dict, ..., dict] is passed:
-            Each dict in this list should be of the form:
-                {'type':    'random', 'defined', 'file', or 'nlmpy',
-                'change':   bool
-                }
+        *If [dict, ..., dict] is passed*:
+            Each dict in this list should have the following key-value pairs:
+                KEY                    VALUE
+                'type':                {'random', 'defined', 'file', 'nlmpy'}
+
+                'change':               bool
             This will add one section of Layer parameters, with the
             contents indicated, for each dict in this list.
 
@@ -100,7 +118,7 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
         include in the parameters file that is generated. Defaults to 1. Valid
         values and their associated behaviors are:
 
-        If an int is passed:
+        *If an int is passed*:
             Add sections for the stipulated number of Species, each with
             default settings:
                 - parameters for movement and dispersal without
@@ -109,17 +127,24 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
                   only neutral loci)
                 - no _SpeciesChanger parameters
 
-        If [dict, ..., dict] is passed:
-            Each dict should contain at least one argument from among the
-            following:
-                {'movement':                       bool,
-                'movement_surface':                bool,
-                'dispersal_surface':               bool,
-                'genomes':                         {bool, 'custom'},
-                'n_traits':                        int,
-                'demographic_change':              int,
-                'parameter_change':                bool
-                }
+        *If [dict, ..., dict] is passed*:
+            Each dict in this list can contain any of the following
+            key-value pairs:
+                KEY                     VALUE
+
+                'movement':             bool,
+
+                'movement_surface':     bool,
+
+                'dispersal_surface':    bool,
+
+                'genomes':              {bool, 'custom'},
+
+                'n_traits':             int,
+
+                'demographic_change':   int,
+
+                'parameter_change':     bool
             This will add one section of Species parameters, customized
             as indicated, for each dict in the list. (Note that if the
             'genomes' argument is True or 'custom', a section for

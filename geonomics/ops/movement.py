@@ -3,24 +3,7 @@
 
 
 '''
-##########################################
-
-Module name:                movement
-
-Module contains:
-                            - function for simulating the movement of an
-                              individual, according to input parameters
-                            - associated functions
-
-
-Author:                     Drew Ellison Hart
-Email:                      drew.hart@berkeley.edu
-Github:                     URL
-Start date:                 12-28-15
-Documentation:              URL
-
-
-##########################################
+Functions to implement movement and dispersal.
 '''
 
 
@@ -31,13 +14,14 @@ Documentation:              URL
 #     draws, then call those within move, disperse, etc
 
 import numpy as np
-from numpy import sin, cos
-from numpy.random import vonmises as r_vonmises
-from numpy.random import wald
-from scipy.stats import vonmises as s_vonmises
+from numpy import sin as _sin
+from numpy import cos as _cos
+from numpy.random import vonmises as _r_vonmises
+from numpy.random import wald as _wald
+from scipy.stats import vonmises as _s_vonmises
 
-s_vonmises.a = -np.inf
-s_vonmises.b = np.inf
+_s_vonmises.a = -np.inf
+_s_vonmises.b = np.inf
 
 
 ######################################
@@ -67,18 +51,18 @@ def _do_movement(spp):
         # i.e. vertical, then horizontal
     # else, choose direction using a random walk with a uniform vonmises
     elif not spp._move_surf:
-        direction = r_vonmises(spp.direction_distr_mu,
+        direction = _r_vonmises(spp.direction_distr_mu,
                                spp.direction_distr_kappa, size=len(old_x))
 
     # choose distance
     # NOTE: Instead of lognormal, could use something with long right tail
     # for Levy-flight type movement, same as below
-    distance = wald(spp.distance_distr_mu, spp.distance_distr_sigma,
+    distance = _wald(spp.distance_distr_mu, spp.distance_distr_sigma,
                     size=len(old_x))
 
     # decompose distance into x and y components
-    dist_x = cos(direction) * distance
-    dist_y = sin(direction) * distance
+    dist_x = _cos(direction) * distance
+    dist_y = _sin(direction) * distance
     # multiply the x and y distances by the land's resolution-ratios,
     # if they're not 1 and 1 (e.g. a non-square-resolution raster was read in)
     if spp._land_res_ratio[0] != 1:
@@ -112,11 +96,11 @@ def _do_dispersal(spp, parent_midpoint_x, parent_midpoint_y,
                 [int(parent_midpoint_x)], [int(parent_midpoint_y)])[0]
         # else, choose direction using a random walk with a uniform vonmises
         elif not spp._disp_surf:
-            direction = r_vonmises(mu_dir, kappa_dir)
-        distance = wald(dispersal_distr_mu, dispersal_distr_sigma)
+            direction = _r_vonmises(mu_dir, kappa_dir)
+        distance = _wald(dispersal_distr_mu, dispersal_distr_sigma)
         # decompose distance into x and y components
-        dist_x = cos(direction) * distance
-        dist_y = sin(direction) * distance
+        dist_x = _cos(direction) * distance
+        dist_y = _sin(direction) * distance
         # multiply the x and y distances by the land's resolution-ratios,
         # if they're not 1 and 1 (e.g. using a non-square-resolution raster)
         if spp._land_res_ratio[0] != 1:

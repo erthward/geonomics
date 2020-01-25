@@ -2,26 +2,8 @@
 # landscape.py
 
 '''
-##########################################
-
-Module name:          landscape
-
-
-Module contains:
-                      - definition of the Landscape and Layer classes
-                      - function for creating a random landscape,
-                        based on input parameters
-                      - associated functions
-
-
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           12-28-15
-Documentation:        URL
-
-
-##########################################
+Defines the Layer and Landscape classes, with their associated methods and
+supporting functions
 '''
 #geonomics imports
 from geonomics.utils.viz import _get_plt_lims, _plot_rasters
@@ -148,13 +130,8 @@ class Layer:
         return ticks, min_val, max_val
 
 
-
-    ################
-    #public methods#
-    ################
-
     #method for writing the lyr's raster to a file of the specified format
-    def write_raster(self, filepath, raster_format):
+    def _write_raster(self, filepath, raster_format):
         assert raster_format in ['geotiff', 'txt'], ("The raster_format "
             "must be one of the following: 'geotiff', 'txt'.")
         if raster_format == 'geotiff':
@@ -329,7 +306,7 @@ class Landscape(dict):
         ################
 
     # method for pickling a landscape
-    def write_pickle(self, filename):
+    def _write_pickle(self, filename):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)

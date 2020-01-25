@@ -4,25 +4,7 @@
 # flake8: noqa
 
 '''
-##########################################
-
-Module name:          sim.model
-
-
-Module contains:
-                      - classes and functions to facilitate building a
-                        Geonomics model and running multiple iterations
-                        of it, including across multiple cores
-
-
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           07-06-18
-Documentation:        URL
-
-
-##########################################
+Defines the core Model class, as well as its public and private methods
 '''
 
 #geonomics imports
@@ -586,9 +568,9 @@ class Model:
             for spp in self.comm.values():
                 if spp._changer is not None:
                     queue.append(lambda: self._make_spp_change(spp.idx))
-            #add self.write_data method
+            #add self._write_data method
             if self._data_collector is not None:
-                queue.append(self.write_data)
+                queue.append(self._write_data)
             #add self.calc_stats method
             if self._stats_collector is not None:
                 queue.append(self.calc_stats)
@@ -1044,7 +1026,7 @@ class Model:
 
 
     # method to use the self._data_collector object to sample and write data
-    def write_data(self):
+    def _write_data(self):
         self._data_collector._write_data(self.comm, self.land, self.it)
 
 
@@ -1078,8 +1060,7 @@ class Model:
             A reference to the Species whose Individuals should be scattered
             on the plot. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
-            string). If None, will cause only the Landscape
-            to be plotted.
+            string). If None, will cause only the Landscape to be plotted.
 
         lyr : {int, str}, optional, default: None
             A reference to the Layer whose raster should be plotted. Can be

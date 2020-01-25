@@ -4,25 +4,8 @@
 # flake8: noqa
 
 '''
-##########################################
-
-Module name:              individual
-
-
-Module contains:
-                          - definition of the Individual type
-                          - function for creation of a simulated individual
-                          - associated functions
-
-
-Author:                   Drew Ellison Hart
-Email:                    drew.hart@berkeley.edu
-Github:                   URL
-Start date:               12-28-15
-Documentation:            URL
-
-
-##########################################
+Defines the Individual class, with its associated methods and supporting
+functions
 '''
 
 #geonomics imports

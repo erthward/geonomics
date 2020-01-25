@@ -2,23 +2,7 @@
 # params.py
 
 '''
-##########################################
-
-Module name:              sim.params
-
-Module contents:          - definition of the parameters-file strings
-                          - definition of the _DynAttrDict and ParametersDict
-                            classes
-                          - definiton of functions for making and reading
-                            params files
-
-Author:                   Drew Ellison Hart
-Email:                    drew.hart@berkeley.edu
-Github:                   URL
-Start date:               09-10-18
-Documentation:            URL
-
-##########################################
+Classes and functions for creating and reading parameters files
 '''
 
 #geonomics imports

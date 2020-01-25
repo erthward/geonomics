@@ -35,7 +35,9 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="geonomics.structs package" href="geonomics.structs.html" />
+    <link rel="prev" title="geonomics.ops package" href="geonomics.ops.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,24 +85,30 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html#getting-started">Getting started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html#motivation">Motivation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/visualization.html">Visualization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/data_structures.html">Data structures</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/operations.html">Operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/landscape_parameters.html">Landscape parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/community_and_species_parameters.html">Community and Species parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/other_parameters.html">Other parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/functions.html">Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/classes.html">Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters.html">Indices and tables</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/classes.html">Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/functions.html">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Model Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">geonomics API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="geonomics.html">geonomics package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="geonomics.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="geonomics.help.html">geonomics.help package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="geonomics.ops.html">geonomics.ops package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">geonomics.sim package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="geonomics.structs.html">geonomics.structs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="geonomics.utils.html">geonomics.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#module-geonomics.main">geonomics.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#module-geonomics">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
             
@@ -146,6 +154,10 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
+          <li><a href="modules.html">geonomics API</a> &raquo;</li>
+        
+          <li><a href="geonomics.html">geonomics package</a> &raquo;</li>
+        
       <li>geonomics.sim package</li>
     
     
@@ -176,46 +188,11 @@
 </div>
 <div class="section" id="module-geonomics.sim.data">
 <span id="geonomics-sim-data-module"></span><h2>geonomics.sim.data module<a class="headerlink" href="#module-geonomics.sim.data" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:              sim/data</p>
-<dl>
-<dt>Module contents:          - definition of the _DataCollector class (which</dt><dd><blockquote>
-<div><p>gathers and organizes the parameters for how
-and when to sample data, and does the sampling)</p>
-</div></blockquote>
-<ul class="simple">
-<li><p>definition of functions for sampling individuals
-according to the contents of the
-params[‘model’][‘data’] section</p></li>
-<li><p>definition of data formatting functions</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:                   Drew Ellison Hart
-Email:                    <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:                   URL
-Start date:               01-01-18
-Documentation:            URL</p>
+<p>Classes and functions for implementing data collection and output</p>
 </div>
-<hr class="docutils" />
 <div class="section" id="module-geonomics.sim.model">
 <span id="geonomics-sim-model-module"></span><h2>geonomics.sim.model module<a class="headerlink" href="#module-geonomics.sim.model" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:          sim.model</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>classes and functions to facilitate building a
-Geonomics model and running multiple iterations
-of it, including across multiple cores</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:               Drew Ellison Hart
-Email:                <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:               URL
-Start date:           07-06-18
-Documentation:        URL</p>
-<hr class="docutils" />
+<p>Defines the core Model class, as well as its public and private methods</p>
 <dl class="class">
 <dt id="geonomics.sim.model.Model">
 <em class="property">class </em><code class="sig-prename descclassname">geonomics.sim.model.</code><code class="sig-name descname">Model</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">params</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model" title="Permalink to this definition">¶</a></dt>
@@ -254,8 +231,7 @@ Individuals in a Species.</p>
 <li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A reference to the Species whose Individuals should be scattered
 on the plot. Can be either the Species’ index number (i.e. its
 integer key in the Community dict), or its name (as a character
-string). If None, will cause only the Landscape
-to be plotted.</p></li>
+string). If None, will cause only the Landscape to be plotted.</p></li>
 <li><p><strong>lyr</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A reference to the Layer whose raster should be plotted. Can be
 either the Layer’s index number (i.e. its integer key in the
 Landscape dict), or its name (as a character string). Defaults
@@ -1126,33 +1102,12 @@ before <cite>gnx.make_parameters_file</cite> is called).</p>
 </div>
 </dd></dl>
 
-<dl class="method">
-<dt id="geonomics.sim.model.Model.write_data">
-<code class="sig-name descname">write_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.write_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 </div>
 <div class="section" id="module-geonomics.sim.params">
 <span id="geonomics-sim-params-module"></span><h2>geonomics.sim.params module<a class="headerlink" href="#module-geonomics.sim.params" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:              sim.params</p>
-<dl class="simple">
-<dt>Module contents:          - definition of the parameters-file strings</dt><dd><ul class="simple">
-<li><p>definition of the _DynAttrDict and ParametersDict
-classes</p></li>
-<li><p>definiton of functions for making and reading
-params files</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:                   Drew Ellison Hart
-Email:                    <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:                   URL
-Start date:               09-10-18
-Documentation:            URL</p>
-<hr class="docutils" />
+<p>Classes and functions for creating and reading parameters files</p>
 <dl class="class">
 <dt id="geonomics.sim.params.ParametersDict">
 <em class="property">class </em><code class="sig-prename descclassname">geonomics.sim.params.</code><code class="sig-name descname">ParametersDict</code><span class="sig-paren">(</span><em class="sig-param">params</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.params.ParametersDict" title="Permalink to this definition">¶</a></dt>
@@ -1162,27 +1117,8 @@ Documentation:            URL</p>
 </div>
 <div class="section" id="module-geonomics.sim.stats">
 <span id="geonomics-sim-stats-module"></span><h2>geonomics.sim.stats module<a class="headerlink" href="#module-geonomics.sim.stats" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:              stats</p>
-<dl>
-<dt>Module contents:          - definition of Stats class (i.e. structured</dt><dd><blockquote>
-<div><p>container for stats calculated during model run)</p>
-</div></blockquote>
-<ul class="simple">
-<li><p>definition of functions for calculating various
-stats, at specified frequencies and with specified
-arguments, according to the contents of the
-params.model.stats section</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:                   Drew Ellison Hart
-Email:                    <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:                   URL
-Start date:               01-01-18
-Documentation:            URL</p>
+<p>Classes and functons to implement calculation and output of statistics</p>
 </div>
-<hr class="docutils" />
 <div class="section" id="module-geonomics.sim">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-geonomics.sim" title="Permalink to this headline">¶</a></h2>
 </div>
@@ -1193,6 +1129,15 @@ Documentation:            URL</p>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="geonomics.structs.html" class="btn btn-neutral float-right" title="geonomics.structs package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="geonomics.ops.html" class="btn btn-neutral float-left" title="geonomics.ops package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

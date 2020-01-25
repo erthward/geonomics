@@ -35,7 +35,9 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="geonomics.utils package" href="geonomics.utils.html" />
+    <link rel="prev" title="geonomics.sim package" href="geonomics.sim.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,24 +85,30 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html#getting-started">Getting started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html#motivation">Motivation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/visualization.html">Visualization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/data_structures.html">Data structures</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/operations.html">Operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/landscape_parameters.html">Landscape parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/community_and_species_parameters.html">Community and Species parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/other_parameters.html">Other parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/functions.html">Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/classes.html">Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters.html">Indices and tables</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/classes.html">Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/functions.html">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Model Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">geonomics API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="geonomics.html">geonomics package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="geonomics.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="geonomics.help.html">geonomics.help package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="geonomics.ops.html">geonomics.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="geonomics.sim.html">geonomics.sim package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">geonomics.structs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="geonomics.utils.html">geonomics.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#module-geonomics.main">geonomics.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#module-geonomics">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
             
@@ -146,6 +154,10 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
+          <li><a href="modules.html">geonomics API</a> &raquo;</li>
+        
+          <li><a href="geonomics.html">geonomics package</a> &raquo;</li>
+        
       <li>geonomics.structs package</li>
     
     
@@ -172,25 +184,8 @@
 </div>
 <div class="section" id="module-geonomics.structs.community">
 <span id="geonomics-structs-community-module"></span><h2>geonomics.structs.community module<a class="headerlink" href="#module-geonomics.structs.community" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:              community</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>definition of the Community class</p></li>
-<li><p>a make_commmunity() function</p></li>
-<li><p>nothing else for now, but it leaves open the
-possibility of adding functionality for mutliple
-species (e.g. species interactions, speciation
-models, etc.)</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:                    Drew Ellison Hart
-Email:                     <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:                    URL
-Start date:                07-25-18
-Documentation:             URL</p>
-<hr class="docutils" />
+<p>Defines the Community class, with its associated methods and supporting
+functions</p>
 <dl class="class">
 <dt id="geonomics.structs.community.Community">
 <em class="property">class </em><code class="sig-prename descclassname">geonomics.structs.community.</code><code class="sig-name descname">Community</code><span class="sig-paren">(</span><em class="sig-param">land</em>, <em class="sig-param">spps</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.community.Community" title="Permalink to this definition">¶</a></dt>
@@ -200,34 +195,12 @@ Documentation:             URL</p>
 </div>
 <div class="section" id="module-geonomics.structs.genome">
 <span id="geonomics-structs-genome-module"></span><h2>geonomics.structs.genome module<a class="headerlink" href="#module-geonomics.structs.genome" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:              structs.genome</p>
-<dl>
-<dt>Module contents:          - definition of the Trait, _RecombinationPaths, and</dt><dd><blockquote>
-<div><p>GenomicArchitecture classes</p>
-</div></blockquote>
-<ul class="simple">
-<li><p>functions for simulation of genomic architecture,
-simulation of a new genome, and other associated
-functions</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:                   Drew Ellison Hart
-Email:                    <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:                   URL
-Start date:               12-28-15
-Documentation:            URL</p>
-<hr class="docutils" />
+<p>Classes, associated methods, and supporting functions for all genomic
+components</p>
 <dl class="class">
 <dt id="geonomics.structs.genome.GenomicArchitecture">
 <em class="property">class </em><code class="sig-prename descclassname">geonomics.structs.genome.</code><code class="sig-name descname">GenomicArchitecture</code><span class="sig-paren">(</span><em class="sig-param">p</em>, <em class="sig-param">dom</em>, <em class="sig-param">r</em>, <em class="sig-param">g_params</em>, <em class="sig-param">land</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.genome.GenomicArchitecture" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="geonomics.structs.genome.GenomicArchitecture.write_pickle">
-<code class="sig-name descname">write_pickle</code><span class="sig-paren">(</span><em class="sig-param">filename</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.genome.GenomicArchitecture.write_pickle" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="class">
@@ -244,22 +217,8 @@ Documentation:            URL</p>
 </div>
 <div class="section" id="module-geonomics.structs.individual">
 <span id="geonomics-structs-individual-module"></span><h2>geonomics.structs.individual module<a class="headerlink" href="#module-geonomics.structs.individual" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:              individual</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>definition of the Individual type</p></li>
-<li><p>function for creation of a simulated individual</p></li>
-<li><p>associated functions</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:                   Drew Ellison Hart
-Email:                    <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:                   URL
-Start date:               12-28-15
-Documentation:            URL</p>
-<hr class="docutils" />
+<p>Defines the Individual class, with its associated methods and supporting
+functions</p>
 <dl class="class">
 <dt id="geonomics.structs.individual.Individual">
 <em class="property">class </em><code class="sig-prename descclassname">geonomics.structs.individual.</code><code class="sig-name descname">Individual</code><span class="sig-paren">(</span><em class="sig-param">idx</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">age=0</em>, <em class="sig-param">new_genome=None</em>, <em class="sig-param">sex=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.individual.Individual" title="Permalink to this definition">¶</a></dt>
@@ -269,43 +228,18 @@ Documentation:            URL</p>
 </div>
 <div class="section" id="module-geonomics.structs.landscape">
 <span id="geonomics-structs-landscape-module"></span><h2>geonomics.structs.landscape module<a class="headerlink" href="#module-geonomics.structs.landscape" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:          landscape</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>definition of the Landscape and Layer classes</p></li>
-<li><p>function for creating a random landscape,
-based on input parameters</p></li>
-<li><p>associated functions</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:               Drew Ellison Hart
-Email:                <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:               URL
-Start date:           12-28-15
-Documentation:        URL</p>
-<hr class="docutils" />
+<p>Defines the Layer and Landscape classes, with their associated methods and
+supporting functions</p>
 <dl class="class">
 <dt id="geonomics.structs.landscape.Landscape">
 <em class="property">class </em><code class="sig-prename descclassname">geonomics.structs.landscape.</code><code class="sig-name descname">Landscape</code><span class="sig-paren">(</span><em class="sig-param">lyrs</em>, <em class="sig-param">res=(1</em>, <em class="sig-param">1)</em>, <em class="sig-param">ulc=(0</em>, <em class="sig-param">0)</em>, <em class="sig-param">prj=None</em>, <em class="sig-param">mod=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.landscape.Landscape" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
-<dl class="method">
-<dt id="geonomics.structs.landscape.Landscape.write_pickle">
-<code class="sig-name descname">write_pickle</code><span class="sig-paren">(</span><em class="sig-param">filename</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.landscape.Landscape.write_pickle" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="class">
 <dt id="geonomics.structs.landscape.Layer">
 <em class="property">class </em><code class="sig-prename descclassname">geonomics.structs.landscape.</code><code class="sig-name descname">Layer</code><span class="sig-paren">(</span><em class="sig-param">rast</em>, <em class="sig-param">lyr_type</em>, <em class="sig-param">name</em>, <em class="sig-param">dim</em>, <em class="sig-param">res=(1</em>, <em class="sig-param">1)</em>, <em class="sig-param">ulc=(0</em>, <em class="sig-param">0)</em>, <em class="sig-param">prj=None</em>, <em class="sig-param">coord_prec=0</em>, <em class="sig-param">units=''</em>, <em class="sig-param">scale_min=0</em>, <em class="sig-param">scale_max=1</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.landscape.Layer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="geonomics.structs.landscape.Layer.write_raster">
-<code class="sig-name descname">write_raster</code><span class="sig-paren">(</span><em class="sig-param">filepath</em>, <em class="sig-param">raster_format</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.landscape.Layer.write_raster" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="function">
@@ -316,33 +250,11 @@ Documentation:        URL</p>
 </div>
 <div class="section" id="module-geonomics.structs.species">
 <span id="geonomics-structs-species-module"></span><h2>geonomics.structs.species module<a class="headerlink" href="#module-geonomics.structs.species" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:              species</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>definition of the Species class</p></li>
-<li><p>function for creating a Species comprised of
-Individuals (including their genomes and
-associated data)</p></li>
-<li><p>associated functions</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:                    Drew Ellison Hart
-Email:                     <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:                    URL
-Start date:                12-28-15
-Documentation:             URL</p>
-<hr class="docutils" />
+<p>Defines the Species class, with its associated methods and supporting functions</p>
 <dl class="class">
 <dt id="geonomics.structs.species.Species">
 <em class="property">class </em><code class="sig-prename descclassname">geonomics.structs.species.</code><code class="sig-name descname">Species</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">idx</em>, <em class="sig-param">inds</em>, <em class="sig-param">land</em>, <em class="sig-param">spp_params</em>, <em class="sig-param">genomic_architecture=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.species.Species" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">collections.OrderedDict</span></code></p>
-<dl class="method">
-<dt id="geonomics.structs.species.Species.write_pickle">
-<code class="sig-name descname">write_pickle</code><span class="sig-paren">(</span><em class="sig-param">filename</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.species.Species.write_pickle" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="function">
@@ -361,6 +273,15 @@ Documentation:             URL</p>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="geonomics.utils.html" class="btn btn-neutral float-right" title="geonomics.utils package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="geonomics.sim.html" class="btn btn-neutral float-left" title="geonomics.sim package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

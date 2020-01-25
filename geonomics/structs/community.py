@@ -2,28 +2,8 @@
 # community.py
 
 '''
-##########################################
-
-Module name:              community
-
-
-Module contains:
-                          - definition of the Community class
-                          - a make_commmunity() function
-                          - nothing else for now, but it leaves open the
-                            possibility of adding functionality for mutliple
-                            species (e.g. species interactions, speciation
-                            models, etc.)
-
-
-Author:                    Drew Ellison Hart
-Email:                     drew.hart@berkeley.edu
-Github:                    URL
-Start date:                07-25-18
-Documentation:             URL
-
-
-##########################################
+Defines the Community class, with its associated methods and supporting
+functions
 '''
 
 #geonomics imports

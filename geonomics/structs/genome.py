@@ -5,25 +5,8 @@
 
 
 '''
-##########################################
-
-Module name:              structs.genome
-
-Module contents:          - definition of the Trait, _RecombinationPaths, and
-                            GenomicArchitecture classes
-                          - functions for simulation of genomic architecture,
-                            simulation of a new genome, and other associated
-                            functions
-
-
-Author:                   Drew Ellison Hart
-Email:                    drew.hart@berkeley.edu
-Github:                   URL
-Start date:               12-28-15
-Documentation:            URL
-
-
-##########################################
+Classes, associated methods, and supporting functions for all genomic
+components
 '''
 
 # geonomics imports
@@ -313,7 +296,7 @@ class GenomicArchitecture:
         plt.show()
 
     # method for pickling a genomic architecture
-    def write_pickle(self, filename):
+    def _write_pickle(self, filename):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)

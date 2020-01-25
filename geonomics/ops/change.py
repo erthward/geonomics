@@ -2,24 +2,8 @@
 # change.py
 
 '''
-##########################################
-
-Module name:          sims.change
-
-
-Module contains:
-                      - classes and functions to facilitate environmental,
-                        demographic, and parameter change
-
-
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           07-06-18
-Documentation:        URL
-
-
-##########################################
+Classes and functions to implement landscape, demographic, and life-history
+parameter change operations.
 '''
 #geonomics imports
 from geonomics.utils import spatial as spt

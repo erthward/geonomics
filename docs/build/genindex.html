@@ -86,22 +86,12 @@
             
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html#getting-started">Getting started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html#motivation">Motivation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/visualization.html">Visualization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/data_structures.html">Data structures</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/operations.html">Operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/landscape_parameters.html">Landscape parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/community_and_species_parameters.html">Community and Species parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/other_parameters.html">Other parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/functions.html">Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/classes.html">Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters.html">Indices and tables</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/classes.html">Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/functions.html">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Model Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">geonomics API</a></li>
 </ul>
 
             
@@ -177,7 +167,6 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
- | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
 </div>
@@ -201,10 +190,6 @@
       <li><a href="geonomics.html#module-geonomics">geonomics (module)</a>
 </li>
       <li><a href="geonomics.help.html#module-geonomics.help">geonomics.help (module)</a>
-</li>
-      <li><a href="geonomics.help.html#module-geonomics.help.memory_help">geonomics.help.memory_help (module)</a>
-</li>
-      <li><a href="geonomics.help.html#module-geonomics.help.param_help">geonomics.help.param_help (module)</a>
 </li>
       <li><a href="geonomics.html#module-geonomics.main">geonomics.main (module)</a>
 </li>
@@ -256,8 +241,6 @@
 </li>
       <li><a href="geonomics.utils.html#module-geonomics.utils.viz">geonomics.utils.viz (module)</a>
 </li>
-      <li><a href="geonomics.help.html#geonomics.help.memory_help.getsize">getsize() (in module geonomics.help.memory_help)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -278,8 +261,6 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="geonomics.structs.html#geonomics.structs.landscape.Layer">Layer (class in geonomics.structs.landscape)</a>
 </li>
-      <li><a href="geonomics.help.html#geonomics.help.param_help.lognormal">lognormal() (in module geonomics.help.param_help)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -294,14 +275,10 @@
 </li>
       <li><a href="geonomics.html#geonomics.main.make_landscape">make_landscape() (in module geonomics.main)</a>
 </li>
-      <li><a href="reference_guide/functions.html#make_model">make_model() (built-in function)</a>
-
-      <ul>
-        <li><a href="geonomics.html#geonomics.main.make_model">(in module geonomics.main)</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="geonomics.html#geonomics.main.make_model">make_model() (in module geonomics.main)</a>
+</li>
       <li><a href="geonomics.html#geonomics.main.make_parameters_file">make_parameters_file() (in module geonomics.main)</a>
 </li>
       <li><a href="geonomics.html#geonomics.main.make_params_dict">make_params_dict() (in module geonomics.main)</a>
@@ -330,17 +307,15 @@
 </li>
       <li><a href="geonomics.sim.html#geonomics.sim.model.Model.plot_dispersal_surface">plot_dispersal_surface() (geonomics.sim.model.Model method)</a>
 </li>
-      <li><a href="geonomics.sim.html#geonomics.sim.model.Model.plot_example_recombinant_genome">plot_example_recombinant_genome() (geonomics.sim.model.Model method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="geonomics.sim.html#geonomics.sim.model.Model.plot_example_recombinant_genome">plot_example_recombinant_genome() (geonomics.sim.model.Model method)</a>
+</li>
       <li><a href="geonomics.sim.html#geonomics.sim.model.Model.plot_fitness">plot_fitness() (geonomics.sim.model.Model method)</a>
 </li>
       <li><a href="geonomics.sim.html#geonomics.sim.model.Model.plot_genotype">plot_genotype() (geonomics.sim.model.Model method)</a>
 </li>
       <li><a href="geonomics.sim.html#geonomics.sim.model.Model.plot_hist_fitness">plot_hist_fitness() (geonomics.sim.model.Model method)</a>
-</li>
-      <li><a href="geonomics.help.html#geonomics.help.param_help.plot_movement">plot_movement() (in module geonomics.help.param_help)</a>
 </li>
       <li><a href="geonomics.sim.html#geonomics.sim.model.Model.plot_movement_surface">plot_movement_surface() (geonomics.sim.model.Model method)</a>
 </li>
@@ -356,20 +331,14 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="geonomics.ops.html#geonomics.ops.movement.r_vonmises">r_vonmises() (in module geonomics.ops.movement)</a>
+      <li><a href="geonomics.html#geonomics.main.read_parameters_file">read_parameters_file() (in module geonomics.main)</a>
 </li>
-      <li><a href="reference_guide/functions.html#read_parameters_file">read_parameters_file() (built-in function)</a>
-
-      <ul>
-        <li><a href="geonomics.html#geonomics.main.read_parameters_file">(in module geonomics.main)</a>
-</li>
-      </ul></li>
       <li><a href="geonomics.structs.html#geonomics.structs.genome.read_pickled_genomic_architecture">read_pickled_genomic_architecture() (in module geonomics.structs.genome)</a>
+</li>
+      <li><a href="geonomics.structs.html#geonomics.structs.landscape.read_pickled_land">read_pickled_land() (in module geonomics.structs.landscape)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="geonomics.structs.html#geonomics.structs.landscape.read_pickled_land">read_pickled_land() (in module geonomics.structs.landscape)</a>
-</li>
       <li><a href="geonomics.structs.html#geonomics.structs.species.read_pickled_spp">read_pickled_spp() (in module geonomics.structs.species)</a>
 </li>
       <li><a href="geonomics.sim.html#geonomics.sim.model.Model.run">run() (geonomics.sim.model.Model method)</a>
@@ -395,34 +364,10 @@
   </ul></td>
 </tr></table>
 
-<h2 id="V">V</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="geonomics.help.html#geonomics.help.param_help.vonmises">vonmises() (in module geonomics.help.param_help)</a>
-</li>
-  </ul></td>
-</tr></table>
-
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="geonomics.ops.html#geonomics.ops.movement.wald">wald() (in module geonomics.ops.movement)</a>
-</li>
       <li><a href="geonomics.sim.html#geonomics.sim.model.Model.walk">walk() (geonomics.sim.model.Model method)</a>
-</li>
-      <li><a href="geonomics.sim.html#geonomics.sim.model.Model.write_data">write_data() (geonomics.sim.model.Model method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="geonomics.structs.html#geonomics.structs.genome.GenomicArchitecture.write_pickle">write_pickle() (geonomics.structs.genome.GenomicArchitecture method)</a>
-
-      <ul>
-        <li><a href="geonomics.structs.html#geonomics.structs.landscape.Landscape.write_pickle">(geonomics.structs.landscape.Landscape method)</a>
-</li>
-        <li><a href="geonomics.structs.html#geonomics.structs.species.Species.write_pickle">(geonomics.structs.species.Species method)</a>
-</li>
-      </ul></li>
-      <li><a href="geonomics.structs.html#geonomics.structs.landscape.Layer.write_raster">write_raster() (geonomics.structs.landscape.Layer method)</a>
 </li>
   </ul></td>
 </tr></table>

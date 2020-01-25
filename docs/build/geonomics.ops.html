@@ -35,7 +35,9 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="geonomics.sim package" href="geonomics.sim.html" />
+    <link rel="prev" title="geonomics.help package" href="geonomics.help.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,24 +85,30 @@
               
             
             
-              <ul>
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html#getting-started">Getting started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/overview.html#motivation">Motivation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started/visualization.html">Visualization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/data_structures.html">Data structures</a></li>
-<li class="toctree-l1"><a class="reference internal" href="user_guide/operations.html">Operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/landscape_parameters.html">Landscape parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/community_and_species_parameters.html">Community and Species parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters/other_parameters.html">Other parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/functions.html">Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/classes.html">Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/parameters.html">Indices and tables</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/classes.html">Classes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference_guide/functions.html">Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Model Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">geonomics API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="geonomics.html">geonomics package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="geonomics.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="geonomics.help.html">geonomics.help package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">geonomics.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="geonomics.sim.html">geonomics.sim package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="geonomics.structs.html">geonomics.structs package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="geonomics.utils.html">geonomics.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#module-geonomics.main">geonomics.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#module-geonomics">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
             
@@ -146,6 +154,10 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
+          <li><a href="modules.html">geonomics API</a> &raquo;</li>
+        
+          <li><a href="geonomics.html">geonomics package</a> &raquo;</li>
+        
       <li>geonomics.ops package</li>
     
     
@@ -172,277 +184,30 @@
 </div>
 <div class="section" id="module-geonomics.ops.change">
 <span id="geonomics-ops-change-module"></span><h2>geonomics.ops.change module<a class="headerlink" href="#module-geonomics.ops.change" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:          sims.change</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>classes and functions to facilitate environmental,
-demographic, and parameter change</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:               Drew Ellison Hart
-Email:                <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:               URL
-Start date:           07-06-18
-Documentation:        URL</p>
+<p>Classes and functions to implement landscape, demographic, and life-history
+parameter change operations.</p>
 </div>
-<hr class="docutils" />
 <div class="section" id="module-geonomics.ops.demography">
 <span id="geonomics-ops-demography-module"></span><h2>geonomics.ops.demography module<a class="headerlink" href="#module-geonomics.ops.demography" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:          ops.demography</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>Functions to control demography/population dynamics</p></li>
-<li><p>a DebugPlotter class, which will create a series
-of plots to help debug the _do_pop_dynamics function
-(and general model behavior) if that function is
-called with debug = True</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:               Drew Ellison Hart
-Email:                <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:               URL
-Start date:           04-28-17
-Documentation:        URL</p>
+<p>Functions to implement demographic operations (birth and death).</p>
 </div>
-<hr class="docutils" />
 <div class="section" id="module-geonomics.ops.mating">
 <span id="geonomics-ops-mating-module"></span><h2>geonomics.ops.mating module<a class="headerlink" href="#module-geonomics.ops.mating" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:                mating</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>function for simulating the mating of two
-individuals, according to input parameters</p></li>
-<li><p>associated functions</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:                     Drew Ellison Hart
-Email:                      <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:                     URL
-Start date:                 12-28-15
-Documentation:              URL</p>
+<p>Functions to implement mating operations.</p>
 </div>
-<hr class="docutils" />
 <div class="section" id="module-geonomics.ops.movement">
 <span id="geonomics-ops-movement-module"></span><h2>geonomics.ops.movement module<a class="headerlink" href="#module-geonomics.ops.movement" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:                movement</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>function for simulating the movement of an
-individual, according to input parameters</p></li>
-<li><p>associated functions</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:                     Drew Ellison Hart
-Email:                      <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:                     URL
-Start date:                 12-28-15
-Documentation:              URL</p>
-<hr class="docutils" />
-<dl class="function">
-<dt id="geonomics.ops.movement.r_vonmises">
-<code class="sig-prename descclassname">geonomics.ops.movement.</code><code class="sig-name descname">r_vonmises</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.ops.movement.r_vonmises" title="Permalink to this definition">¶</a></dt>
-<dd><p>vonmises(mu, kappa, size=None)</p>
-<p>Draw samples from a von Mises distribution.</p>
-<p>Samples are drawn from a von Mises distribution with specified mode
-(mu) and dispersion (kappa), on the interval [-pi, pi].</p>
-<p>The von Mises distribution (also known as the circular normal
-distribution) is a continuous probability distribution on the unit
-circle.  It may be thought of as the circular analogue of the normal
-distribution.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>New code should use the <code class="docutils literal notranslate"><span class="pre">vonmises</span></code> method of a <code class="docutils literal notranslate"><span class="pre">default_rng()</span></code>
-instance instead; see <cite>random-quick-start</cite>.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>mu</strong> (<em>float</em><em> or </em><em>array_like of floats</em>) – Mode (“center”) of the distribution.</p></li>
-<li><p><strong>kappa</strong> (<em>float</em><em> or </em><em>array_like of floats</em>) – Dispersion of the distribution, has to be &gt;=0.</p></li>
-<li><p><strong>size</strong> (<em>int</em><em> or </em><em>tuple of ints</em><em>, </em><em>optional</em>) – Output shape.  If the given shape is, e.g., <code class="docutils literal notranslate"><span class="pre">(m,</span> <span class="pre">n,</span> <span class="pre">k)</span></code>, then
-<code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">*</span> <span class="pre">n</span> <span class="pre">*</span> <span class="pre">k</span></code> samples are drawn.  If size is <code class="docutils literal notranslate"><span class="pre">None</span></code> (default),
-a single value is returned if <code class="docutils literal notranslate"><span class="pre">mu</span></code> and <code class="docutils literal notranslate"><span class="pre">kappa</span></code> are both scalars.
-Otherwise, <code class="docutils literal notranslate"><span class="pre">np.broadcast(mu,</span> <span class="pre">kappa).size</span></code> samples are drawn.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>out</strong> – Drawn samples from the parameterized von Mises distribution.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>ndarray or scalar</p>
-</dd>
-</dl>
-<div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<dl class="simple">
-<dt><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.stats.vonmises()</span></code></dt><dd><p>probability density function, distribution, or cumulative density function, etc.</p>
-</dd>
-<dt><code class="xref py py-func docutils literal notranslate"><span class="pre">Generator.vonmises()</span></code></dt><dd><p>which should be used for new code.</p>
-</dd>
-</dl>
-</div>
-<p class="rubric">Notes</p>
-<p>The probability density for the von Mises distribution is</p>
-<div class="math notranslate nohighlight">
-\[p(x) = \frac{e^{\kappa cos(x-\mu)}}{2\pi I_0(\kappa)},\]</div>
-<p>where <span class="math notranslate nohighlight">\(\mu\)</span> is the mode and <span class="math notranslate nohighlight">\(\kappa\)</span> the dispersion,
-and <span class="math notranslate nohighlight">\(I_0(\kappa)\)</span> is the modified Bessel function of order 0.</p>
-<p>The von Mises is named for Richard Edler von Mises, who was born in
-Austria-Hungary, in what is now the Ukraine.  He fled to the United
-States in 1939 and became a professor at Harvard.  He worked in
-probability theory, aerodynamics, fluid mechanics, and philosophy of
-science.</p>
-<p class="rubric">References</p>
-<dl class="footnote brackets">
-<dt class="label" id="id1"><span class="brackets">1</span></dt>
-<dd><p>Abramowitz, M. and Stegun, I. A. (Eds.). “Handbook of
-Mathematical Functions with Formulas, Graphs, and Mathematical
-Tables, 9th printing,” New York: Dover, 1972.</p>
-</dd>
-<dt class="label" id="id2"><span class="brackets">2</span></dt>
-<dd><p>von Mises, R., “Mathematical Theory of Probability
-and Statistics”, New York: Academic Press, 1964.</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>Draw samples from the distribution:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mu</span><span class="p">,</span> <span class="n">kappa</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">4.0</span> <span class="c1"># mean and dispersion</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">vonmises</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">kappa</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Display the histogram of the samples, along with
-the probability density function:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">i0</span>  
-<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">51</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">kappa</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">mu</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">i0</span><span class="p">(</span><span class="n">kappa</span><span class="p">))</span>  
-<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>  
-<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="function">
-<dt id="geonomics.ops.movement.wald">
-<code class="sig-prename descclassname">geonomics.ops.movement.</code><code class="sig-name descname">wald</code><span class="sig-paren">(</span><em class="sig-param">mean</em>, <em class="sig-param">scale</em>, <em class="sig-param">size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.ops.movement.wald" title="Permalink to this definition">¶</a></dt>
-<dd><p>Draw samples from a Wald, or inverse Gaussian, distribution.</p>
-<p>As the scale approaches infinity, the distribution becomes more like a
-Gaussian. Some references claim that the Wald is an inverse Gaussian
-with mean equal to 1, but this is by no means universal.</p>
-<p>The inverse Gaussian distribution was first studied in relationship to
-Brownian motion. In 1956 M.C.K. Tweedie used the name inverse Gaussian
-because there is an inverse relationship between the time to cover a
-unit distance and distance covered in unit time.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>New code should use the <code class="docutils literal notranslate"><span class="pre">wald</span></code> method of a <code class="docutils literal notranslate"><span class="pre">default_rng()</span></code>
-instance instead; see <cite>random-quick-start</cite>.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>mean</strong> (<em>float</em><em> or </em><em>array_like of floats</em>) – Distribution mean, must be &gt; 0.</p></li>
-<li><p><strong>scale</strong> (<em>float</em><em> or </em><em>array_like of floats</em>) – Scale parameter, must be &gt; 0.</p></li>
-<li><p><strong>size</strong> (<em>int</em><em> or </em><em>tuple of ints</em><em>, </em><em>optional</em>) – Output shape.  If the given shape is, e.g., <code class="docutils literal notranslate"><span class="pre">(m,</span> <span class="pre">n,</span> <span class="pre">k)</span></code>, then
-<code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">*</span> <span class="pre">n</span> <span class="pre">*</span> <span class="pre">k</span></code> samples are drawn.  If size is <code class="docutils literal notranslate"><span class="pre">None</span></code> (default),
-a single value is returned if <code class="docutils literal notranslate"><span class="pre">mean</span></code> and <code class="docutils literal notranslate"><span class="pre">scale</span></code> are both scalars.
-Otherwise, <code class="docutils literal notranslate"><span class="pre">np.broadcast(mean,</span> <span class="pre">scale).size</span></code> samples are drawn.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>out</strong> – Drawn samples from the parameterized Wald distribution.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>ndarray or scalar</p>
-</dd>
-</dl>
-<div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<dl class="simple">
-<dt><code class="xref py py-func docutils literal notranslate"><span class="pre">Generator.wald()</span></code></dt><dd><p>which should be used for new code.</p>
-</dd>
-</dl>
-</div>
-<p class="rubric">Notes</p>
-<p>The probability density function for the Wald distribution is</p>
-<div class="math notranslate nohighlight">
-\[P(x;mean,scale) = \sqrt{\frac{scale}{2\pi x^3}}e^
-\frac{-scale(x-mean)^2}{2\cdotp mean^2x}\]</div>
-<p>As noted above the inverse Gaussian distribution first arise
-from attempts to model Brownian motion. It is also a
-competitor to the Weibull for use in reliability modeling and
-modeling stock returns and interest rate processes.</p>
-<p class="rubric">References</p>
-<dl class="footnote brackets">
-<dt class="label" id="id3"><span class="brackets">1</span></dt>
-<dd><p>Brighton Webs Ltd., Wald Distribution,
-<a class="reference external" href="https://web.archive.org/web/20090423014010/http://www.brighton-webs.co.uk:80/distributions/wald.asp">https://web.archive.org/web/20090423014010/http://www.brighton-webs.co.uk:80/distributions/wald.asp</a></p>
-</dd>
-<dt class="label" id="id4"><span class="brackets">2</span></dt>
-<dd><p>Chhikara, Raj S., and Folks, J. Leroy, “The Inverse Gaussian
-Distribution: Theory : Methodology, and Applications”, CRC Press,
-1988.</p>
-</dd>
-<dt class="label" id="id5"><span class="brackets">3</span></dt>
-<dd><p>Wikipedia, “Inverse Gaussian distribution”
-<a class="reference external" href="https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution">https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution</a></p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>Draw values from the distribution and plot the histogram:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">wald</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">100000</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-</dd></dl>
-
+<p>Functions to implement movement and dispersal.</p>
 </div>
 <div class="section" id="module-geonomics.ops.mutation">
 <span id="geonomics-ops-mutation-module"></span><h2>geonomics.ops.mutation module<a class="headerlink" href="#module-geonomics.ops.mutation" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:                  mutation</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>function for simulating mutation across the
-genome, according to input parameters</p></li>
-<li><p>associated functions</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:                       Drew Ellison Hart
-Email:                        <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:                       URL
-Start date:                   12-28-15
-Documentation:                URL</p>
+<p>Functions to implement mutation operations</p>
 </div>
-<hr class="docutils" />
 <div class="section" id="module-geonomics.ops.selection">
 <span id="geonomics-ops-selection-module"></span><h2>geonomics.ops.selection module<a class="headerlink" href="#module-geonomics.ops.selection" title="Permalink to this headline">¶</a></h2>
-<hr class="docutils" />
-<p>Module name:          ops.selection</p>
-<dl class="simple">
-<dt>Module contains:</dt><dd><ul class="simple">
-<li><p>Functions to implement fitness and selection</p></li>
-</ul>
-</dd>
-</dl>
-<p>Author:               Drew Ellison Hart
-Email:                <a class="reference external" href="mailto:drew&#46;hart&#37;&#52;&#48;berkeley&#46;edu">drew<span>&#46;</span>hart<span>&#64;</span>berkeley<span>&#46;</span>edu</a>
-Github:               URL
-Start date:           04-28-17
-Documentation:        URL</p>
+<p>Functions to implement natural selection operations (aside from actual
+mortality)</p>
 </div>
-<hr class="docutils" />
 <div class="section" id="module-geonomics.ops">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-geonomics.ops" title="Permalink to this headline">¶</a></h2>
 </div>
@@ -453,6 +218,15 @@ Documentation:        URL</p>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="geonomics.sim.html" class="btn btn-neutral float-right" title="geonomics.sim package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="geonomics.help.html" class="btn btn-neutral float-left" title="geonomics.help package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

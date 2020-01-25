@@ -2,24 +2,8 @@
 # spatial.py
 
 '''
-##########################################
-
-Module name:          utils.spatial
-
-
-Module contains:
-                      - general-use spatial classes and functions, for use
-                        in a variety of operations
-
-
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           07-04-18
-Documentation:        URL
-
-
-##########################################
+Defines core spatial classes, with their associated methods and supporting
+functions
 '''
 
 # geonomics imports

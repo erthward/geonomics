@@ -7,22 +7,22 @@
 Geonomics
 =========
 
-Provides
-  1. A function for creating custom-structured, editable parameters files.
-  2. A function for creating model objects from parameters files.
-  3. Functions for running models.
-  4. Functions for model visualization.
-  5. A variety of parameters, for construction of arbitrarily complex
-     simulation scenarios.
+Provides:
+1. A function for creating custom-structured, editable parameters files.
+2. A function for creating model objects from parameters files.
+3. Functions for running models.
+4. Functions for model visualization.
+5. A variety of parameters, for construction of arbitrarily complex simulation scenarios.
+
 
 How to use the documentation
 ----------------------------
 There are two levels of documentation available:
-  - Basic, procedural documentation is available as docstrings in the code,
+- Basic, procedural documentation is available as docstrings in the code,
   which are returned when requesting Python's help on a class or function.
 
-  - Detailed documentation is available at the
-    `Geonomics homepage<https://FIX_ME>`_.
+- Detailed documentation is available at the
+  `Geonomics homepage<https://FIX_ME>`_.
 
 All documentation examples assume that `geonomics` has been imported as `gnx`::
 
@@ -110,6 +110,7 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
                 'type':                {'random', 'defined', 'file', 'nlmpy'}
 
                 'change':               bool
+
             This will add one section of Layer parameters, with the
             contents indicated, for each dict in this list.
 
@@ -145,6 +146,7 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
                 'demographic_change':   int,
 
                 'parameter_change':     bool
+
             This will add one section of Species parameters, customized
             as indicated, for each dict in the list. (Note that if the
             'genomes' argument is True or 'custom', a section for
@@ -225,30 +227,20 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
 
     >>> mod.run(verbose = True)
     ###############################################################################################
-
     Running model "GNX_params_21-01-2020_17:22:08"...
-
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     Setting up iteration 0...
-
     Creating the burn-in function queue...
-
     Creating the main function queue...
-
     Running burn-in, iteration 0...
-
     burn:   0:0
             species: spp_0                         N=250    (births=35      deaths=214)
-
     .......................................................................................
     burn:   0:1
             species: spp_0                         N=250    (births=35      deaths=214)
-
     .......................................................................................
     burn:   0:2
             species: spp_0                         N=250    (births=35      deaths=214)
-
     .......................................................................................
     .
     .

@@ -3,26 +3,7 @@
 
 
 '''
-##########################################
-
-Module name:              stats
-
-Module contents:          - definition of Stats class (i.e. structured
-                            container for stats calculated during model run)
-                          - definition of functions for calculating various
-                            stats, at specified frequencies and with specified
-                            arguments, according to the contents of the
-                            params.model.stats section
-
-
-Author:                   Drew Ellison Hart
-Email:                    drew.hart@berkeley.edu
-Github:                   URL
-Start date:               01-01-18
-Documentation:            URL
-
-
-##########################################
+Classes and functons to implement calculation and output of statistics
 '''
 
 #geonomics imports

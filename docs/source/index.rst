@@ -10,15 +10,12 @@ Welcome to the Geonomics documentation!
    :maxdepth: 3
 
    intro
-   getting_started/installation
-   getting_started/overview
-   getting_started/examples
-   getting_started/visualization
-   user_guide/data_structures
-   user_guide/operations
-   reference_guide/parameters
-   reference_guide/classes
-   reference_guide/functions
+   getting_started
+   overview
+   parameters
+   visualization
+   examples
+   modules
 
 
 

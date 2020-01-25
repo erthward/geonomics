@@ -1,7 +1,9 @@
 #!/usr/bin/python
 #burn_in.py
 
-'''Functions for testing burn-in stationarity.'''
+'''
+Functions for testing burn-in stationarity.
+'''
 
 # other imports
 import numpy as np

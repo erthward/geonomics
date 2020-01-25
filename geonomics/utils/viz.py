@@ -2,24 +2,7 @@
 # viz.py
 
 '''
-##########################################
-
-Module name:          utils.viz
-
-
-Module contains:
-                      - basic visualization functions, to be
-                        inherited by classes of model components
-
-
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           06-18-18
-Documentation:        URL
-
-
-##########################################
+Defines core functions for visualization
 '''
 
 import numpy as np

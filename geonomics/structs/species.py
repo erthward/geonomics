@@ -4,27 +4,7 @@
 # flake8: noqa
 
 '''
-##########################################
-
-Module name:              species
-
-
-Module contains:
-                          - definition of the Species class
-                          - function for creating a Species comprised of
-                            Individuals (including their genomes and
-                            associated data)
-                          - associated functions
-
-
-Author:                    Drew Ellison Hart
-Email:                     drew.hart@berkeley.edu
-Github:                    URL
-Start date:                12-28-15
-Documentation:             URL
-
-
-##########################################
+Defines the Species class, with its associated methods and supporting functions
 '''
 
 #geonomics imports
@@ -1136,7 +1116,7 @@ class Species(OD):
         #public methods#
         ################
 
-    def write_pickle(self, filename):
+    def _write_pickle(self, filename):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)

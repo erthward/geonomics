@@ -5,28 +5,25 @@ Geonomics
 Forward-time, individual-based, landscape genomic simulation in Python.
 
 .. code-block:: python
-
-                   #   ::::::          :::    :: :::::::::::#
-             #::::::    ::::   :::      ::    :: :: ::::::::::: ::#
-          #:::::::::     ::            ::   :::::::::::::::::::::::::#
-        #::::::::::                      :::::::::: :::::: ::::::::  ::#
-      #  : ::::  ::                    ::::  : ::    :::::::: : ::  :    #
-     # GGGGG :EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
-    # GG     EE    OO   OO  NNN  NN  OO   OO  MM   MM   II   CC     SS     #
-    # GG     EE   OO     OO NN N NN OO     OO MMM MMM   II   CC     SSSSSS #
-    # GG GGG EEEE OO     OO NN  NNN OO     OO MM M MM   II   CC         SS #
-    # GG   G EE    OO   OO  NN   NN  OO   OO  MM   MM   II   CC        SSS #
-     # GGGGG :EEEE: OOOOO   NN   NN   OOOOO   MM   MM IIIIII  CCCCC SSSSS #
-      #    : ::::::::               :::::::::: ::              ::  :   : #
-        #:    :::::                    :::::: :::             :::::::  #
-          #    :::                      :::::  ::              ::::: #
-             #  ::                      ::::                      #
-                   #                                        #
-                      #  :: ::    :::             #
-
-
-
-
+         
+       .                  .   ::::::          :::    :: :::::::::::.           .
+                    .::::::    ::::   :::      ::    :: :: ::::::::::: ::.                 .
+    .      .     .:::::::::     ::            ::   :::::::::::::::::::::::::.        .   
+               .::::::::::                      :::::::::: :::::: ::::::::  ::.
+         .   .  : ::::  ::                    ::::  : ::    :::::::: : ::  :    .      .
+            . 55555 :3333: 00000   44   44   00000   44   44 111111  66666 55555 .
+           . 55     33    00   00  444  44  00   00  44   44   11   66     55     .         .
+ .         . 55     33   00     00 44 4 44 00     00 444 444   11   66     555555 .
+           . 55 555 3333 00     00 44  444 00     00 44 4 44   11   66         55 .
+           . 55   5 33    00   00  44   44  00   00  44   44   11   66        555 .     .
+            . 55555 :3333: 00000   44   44   00000   44   44 111111  66666 55555 .         .
+      .      .    : ::::::::               :::::::::: ::              ::  :   : .
+     .         .:    :::::                    :::::: :::             :::::::  .      .
+  .              .    :::                      :::::  ::              ::::: .              . 
+           .        .  ::                      ::::                      .
+                          . ::                                     .                .
+          
+ 
 **Geonomics** allows users to build and run arbitrarily complex, forward-time,
 agent-based, and spatially explicit simulations for landscape genomics. It is
 designed to allow novice Python users to create sophisticated simulations with
@@ -149,10 +146,22 @@ boxes are optional.
   series of change rasters corresponding to scheduled time steps,
   t1, t2, …, tn), take place.
 
+------------------------------------------------------------------
+
+Attribution
+***********
+
+This package was written by Drew Ellison Hart, as part of his PhD work.
+It is available to freely distribute and modify, with proper
+attribution, under the MIT License. Should you have any questons or
+concerns, please feel free to get in touch! (drew.hart <at> berkeley <dot> edu)
+
+-------------------------------------------------------
 
 Disclaimer
 ----------
 **Geonomics** claims no affiliation with the philosophy and economic ideology
 `Georgism <https://en.wikipedia.org/wiki/Georgism>`_, sometimes referred to as
 'geonomics'. It is a portmanteau of **geo**\graphy and ge\ **nomics**.
-I just thought it sounded neat, and found it delightfully confusing.
+
+We just thought it sounded neat, and found it delightfully confusing.

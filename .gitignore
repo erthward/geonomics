@@ -1,6 +1,5 @@
 *.pyc
 *.pstats
-*.png
 *.swp
 /python_model/.idea/
 *ipynb

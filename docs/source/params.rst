@@ -5,8 +5,8 @@
    :language: bash
 
 
-Parameters Overview
-*******************
+Parameters Guide
+****************
 
 How to Use This Section:
 

@@ -36,8 +36,8 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Parameters Overview" href="parameters.html" />
-    <link rel="prev" title="Getting Started" href="getting_started.html" /> 
+    <link rel="next" title="Visualization" href="viz.html" />
+    <link rel="prev" title="Conceptual Diagram" href="diagram.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -85,16 +85,23 @@
               
             
             
-              <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Model Overview</a><ul>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="diagram.html">Conceptual Diagram</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#data-structures">Data structures</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#landscape-and-layer-objects"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> objects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#genomes-genomicarchitecture-and-trait-objects">Genomes, <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitecture</span></span></code>, and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code> objects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#individual-species-and-community-objects"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>, and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code> objects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#model-objects"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> Objects</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#secondary-classes">Secondary classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#secondary-i-e-private-classes">Secondary (i.e. private) classes</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#conductancesurface"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#densitygridstack"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_DensityGridStack</span></span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#kdtree"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_KDTree</span></span></code></a></li>
@@ -120,10 +127,12 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">geonomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="viz.html">Visualization</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Reference Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="params.html">Parameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">API</a></li>
 </ul>
 
             
@@ -190,7 +199,7 @@
             
   <div class="section" id="model-overview">
 <h1>Model Overview<a class="headerlink" href="#model-overview" title="Permalink to this headline">¶</a></h1>
-<p>As you’re reading, this conceptual diagram should be a useful reference.
+<p>As you’re reading, you may want to refer to the <a class="reference internal" href="diagram.html#conceptual-diagram"><span class="std std-ref">Conceptual Diagram</span></a> as a useful reference.
 The primary data structures are depicted in the central image.
 Most of the key operations are depicted in the cycle of four corner boxes.</p>
 <img alt="_images/conceptual_diagram.png" src="_images/conceptual_diagram.png" />
@@ -214,9 +223,9 @@ object, and with the values of its environmental variable ‘e’ constrained to
 the interval [0 &lt;= e &lt;= 1]. Each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> can be initialized from its own
 parameters subsection within the ‘land’ parameters section of a Geonomics
 parameters file.</p>
-<p>For each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> (see section ‘<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code>
-and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’, below), the different <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>
-layers in the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> can be used to model habitat
+<p>For each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>
+(see <a class="reference internal" href="#individual-species-and-community-objects"><span class="std std-ref">Individual, Species, and Community objects</span></a>, below),
+the different <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> layers in the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> can be used to model habitat
 viability, habitat connectivity, or variables imposing spatially varying
 natural selection. <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> objects
 also contain some metatdata (as public attributes), including
@@ -228,8 +237,9 @@ real-world GIS rasters.</p>
 <hr class="docutils" />
 <div class="section" id="genomes-genomicarchitecture-and-trait-objects">
 <h3>Genomes, <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitecture</span></span></code>, and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code> objects<a class="headerlink" href="#genomes-genomicarchitecture-and-trait-objects" title="Permalink to this headline">¶</a></h3>
-<p><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> objects (see section ‘<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code>
-and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’, below) can optionally be assigned genomes.
+<p><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> objects
+(see <a class="reference internal" href="#individual-species-and-community-objects"><span class="std std-ref">Individual, Species, and Community objects</span></a>, below)
+can optionally be assigned genomes.
 If they are, each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s genome is modeled as a
 2-by-L Numpy array (where 2 is the ploidy, currently fixed at
 diploidy, and L is genome length) containing 0s and 1s (because
@@ -410,8 +420,8 @@ for the purposes of learning, teaching, or debugging the package, or
 developing, exploring, introspecting, or visaulizing particular <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>s.</p>
 </div>
 <hr class="docutils" />
-<div class="section" id="secondary-classes">
-<h3>Secondary classes<a class="headerlink" href="#secondary-classes" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="secondary-i-e-private-classes">
+<h3>Secondary (i.e. private) classes<a class="headerlink" href="#secondary-i-e-private-classes" title="Permalink to this headline">¶</a></h3>
 <p>The typical user will not need to access or interact with the following
 classes in any way. They will, however, parameterize them in the
 parameters file by either leaving or altering their default values. Geonomics
@@ -768,10 +778,10 @@ but will be more facilitated in future versions.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="parameters.html" class="btn btn-neutral float-right" title="Parameters Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="viz.html" class="btn btn-neutral float-right" title="Visualization" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="getting_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="diagram.html" class="btn btn-neutral float-left" title="Conceptual Diagram" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

@@ -5,7 +5,6 @@
       :language: bash
 
 
-*************
 Visualization
 *************
 

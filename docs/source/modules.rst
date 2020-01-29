@@ -1,5 +1,5 @@
-geonomics API
-=============
+API
+===
 
 .. toctree::
    :maxdepth: 4

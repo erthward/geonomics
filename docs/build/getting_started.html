@@ -110,7 +110,7 @@
 <li class="toctree-l1"><a class="reference internal" href="parameters.html">Parameters Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">geonomics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">geonomics API</a></li>
 </ul>
 
             
@@ -180,7 +180,7 @@
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <p>Geonomics depends on a number of common Python packages. See the
-[Dependencies] section below for details.</p>
+<a class="reference internal" href="#dependencies"><span class="std std-ref">Dependencies</span></a> section below for details.</p>
 <div class="section" id="installing-with-pip">
 <h3>Installing with <cite>pip</cite><a class="headerlink" href="#installing-with-pip" title="Permalink to this headline">¶</a></h3>
 <p>To install Geonomics we recommend using
@@ -265,7 +265,11 @@ the behavior and results of their models.</p></li>
 </dd>
 </dl>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>   <span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">geonomics</span> <span class="k">as</span> <span class="nn">gnx</span>
+
 <span class="mf">4.</span> <span class="n">Run</span> <span class="n">the</span> <span class="n">default</span> <span class="n">model</span><span class="p">,</span> <span class="ow">and</span> <span class="n">start</span> <span class="n">mussin</span><span class="s1">&#39; around!</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mod</span> <span class="o">=</span> <span class="n">gnx</span><span class="o">.</span><span class="n">run_default_model</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>This will load the Geonomics package as <cite>gnx</cite>, create a default Geonomics

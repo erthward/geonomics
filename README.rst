@@ -37,7 +37,7 @@ Main Features
 -------------
 The following is a short list of highlights. For the full monty, please see
 the `homepage <https://github.com/drewhart/geonomics>`_,
-the `docs <https://htmlpreview.github.io/?https://github.com/drewhart/geonomics/blob/master/doc/built/doc.html>`_,
+the `docs <https://geonomics.readthedocs.org>`_,
 and the `original methods paper <PAPER_URL_HERE>`_.
 
     - a model object, which serves as the primary user interface and which
@@ -83,7 +83,7 @@ as `mod`, and leave its parameters file in your current working directory under
 the name 'GNX_default_model_params.py'.
 
 For patient folks, the following diagrams should provide more insight, and the
-`documentation <https://htmlpreview.github.io/?https://github.com/drewhart/geonomics/blob/master/doc/built/doc.html>`_
+`documentation <https://geonomics.readthedocs.org>`_
 provides full details.
 
 

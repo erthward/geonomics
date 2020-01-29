@@ -7,7 +7,7 @@
 
 Model Overview
 """"""""""""""
-As you're reading, this conceptual diagram should be a useful reference.
+As you're reading, you may want to refer to the :ref:`Conceptual Diagram` as a useful reference.
 The primary data structures are depicted in the central image.
 Most of the key operations are depicted in the cycle of four corner boxes.
 
@@ -40,9 +40,9 @@ the interval [0 <= e <= 1]. Each :py:`Layer` can be initialized from its own
 parameters subsection within the 'land' parameters section of a Geonomics
 parameters file. 
 
-For each :py:`Species` (see section ':py:`Individuals`
-and :py:`Species`', below), the different :py:`Layer`
-layers in the :py:`Landscape` can be used to model habitat 
+For each :py:`Species`
+(see :ref:`:py:\`Individual\`, :py:\`Species\`, and :py:\`Community\` objects`, below),
+the different :py:`Layer` layers in the :py:`Landscape` can be used to model habitat 
 viability, habitat connectivity, or variables imposing spatially varying
 natural selection. :py:`Landscape` and :py:`Layer` objects
 also contain some metatdata (as public attributes), including
@@ -57,8 +57,9 @@ real-world GIS rasters.
 Genomes, :py:`GenomicArchitecture`, and :py:`Trait` objects
 ===========================================================
 
-:py:`Individual` objects (see section ':py:`Individuals`
-and :py:`Species`', below) can optionally be assigned genomes.
+:py:`Individual` objects 
+(see :ref:`:py:\`Individual\`, :py:\`Species\`, and :py:\`Community\` objects`, below)
+can optionally be assigned genomes.
 If they are, each :py:`Individual`'s genome is modeled as a 
 2-by-L Numpy array (where 2 is the ploidy, currently fixed at
 diploidy, and L is genome length) containing 0s and 1s (because
@@ -238,8 +239,8 @@ developing, exploring, introspecting, or visaulizing particular :py:`Model`\s.
 
 -------------------------------------------------------------------------------
 
-Secondary classes
-=================
+Secondary (i.e. private) classes
+================================
 
 The typical user will not need to access or interact with the following 
 classes in any way. They will, however, parameterize them in the 

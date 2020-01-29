@@ -36,7 +36,7 @@ As you work through these steps, it may be helpful to refer to the
 *Really* Quick Start
 --------------------
 
-**For the `really impatient` beginner**:
+**For the impatient beginner**:
 
 1. Install Geonomics
 2. Launch Python

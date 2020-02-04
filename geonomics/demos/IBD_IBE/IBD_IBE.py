@@ -12,6 +12,7 @@ from copy import deepcopy
 import numpy as np
 from sklearn.decomposition import PCA
 # import matplotlib as mpl
+from matplotlib import animation
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from mpl_toolkits.mplot3d import Axes3D
@@ -391,18 +392,13 @@ plt.subplots_adjust(left=0.05, bottom=0.07, right=0.98, top=0.96, wspace=0.07,
 plt.savefig(os.path.join(img_dir, 'IBD_IBE.pdf'), format='pdf', dpi=1000)
 
 
-# create 3d axes, and label for geo, env, and gen
+# create 3d animated plot
+plt.rc('animation', html='html5')
 fig3d = plt.figure()
 ax3d = fig3d.add_subplot(111, projection='3d')
-# get 3d-scatter colors
-col3d = ((geo_dists / geo_dists.max()) + (env_dists / env_dists.max())) / 2
-# scatter all 3 vars on those axes
-ax3d.scatter(geo_dists, env_dists, scaled_gen_dists, alpha=0.5, c=col3d,
-             cmap='plasma')
 ax3d.set_xlabel('geo', size=15)
 ax3d.set_ylabel('env', size=15)
 ax3d.set_zlabel('gen', size=15)
-# create predicted surface, and add to 3d plot
 y_vals = np.arange(0, 1.01, 0.01)
 ys = np.hstack([list(y_vals) for _ in range(len(y_vals))])
 xs = np.hstack([[n] * len(y_vals) for n in np.linspace(0, 50, len(y_vals))])
@@ -410,10 +406,25 @@ zs = mlr_est.predict(np.vstack((xs, ys)).T)
 xs = xs.reshape([len(y_vals)] * 2)
 ys = ys.reshape([len(y_vals)] * 2)
 zs = zs.reshape([len(y_vals)] * 2)
-# surf_cols = ((xs / xs.max()) + (ys / ys.max())) / 2
-# surf_cols = np.int64(surf_cols * 255) + 1
-# ax3d.plot_surface(xs, ys, zs, facecolors=surf_cols, alpha=0.5, cmap='plasma')
-ax3d.plot_surface(xs, ys, zs, color='black', alpha=0.4)
+col3d = ((geo_dists / geo_dists.max()) + (env_dists / env_dists.max())) / 2
+
+# initialization function: plot the background of each frame
+def init():
+    scat = ax3d.scatter(geo_dists, env_dists, scaled_gen_dists,
+                         alpha=0.5, c=col3d, cmap='plasma')
+    ax3d.plot_surface(xs, ys, zs, color='gray', alpha=0.9)
+    return fig3d,
+
+# animation function. This is called sequentially
+def animate(i):
+    ax3d.view_init(elev=10., azim=i)
+    return fig3d,
+
+# use the init and animate functions to create an animation object
+anim = animation.FuncAnimation(fig3d, animate, init_func=init, frames=359,
+                               interval=20, blit=True)
+# write to file
+anim.save('./IBD_animation.gif', writer='imagemagick', fps=60)
 
 
 # create plot of z-e diffs

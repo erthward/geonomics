@@ -2,24 +2,7 @@
 # _str_repr_.py
 
 '''
-##########################################
-
-Module name:          utils.str_repr
-
-
-Module contains:
-                      - helper functions for defining class __str__ and
-                      __repr__ special methods
-
-
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           10-13-18
-Documentation:        URL
-
-
-##########################################
+Defines core functions to aid in formatting strings for STDOUT
 '''
 
 

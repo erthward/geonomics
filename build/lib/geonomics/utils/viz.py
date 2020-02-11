@@ -2,24 +2,7 @@
 # viz.py
 
 '''
-##########################################
-
-Module name:          utils.viz
-
-
-Module contains:
-                      - basic visualization functions, to be
-                        inherited by classes of model components
-
-
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           06-18-18
-Documentation:        URL
-
-
-##########################################
+Defines core functions for visualization
 '''
 
 import numpy as np
@@ -43,7 +26,7 @@ from matplotlib.colors import LinearSegmentedColormap
 ######################################
 
 def _choose_cmap(lyr_num):
-    cols = {0: 'RdBu_r',
+    cols = {0: 'coolwarm',
             1: 'BrBG_r',
             2: 'PRGn',
             3: 'PiYG_r',
@@ -53,8 +36,7 @@ def _choose_cmap(lyr_num):
     return col
 
 
-def _plot_rasters(land, lyr_num=None, cbar=True,
-                  im_interp_method='nearest', cmap=None, plt_lims=None,
+def _plot_rasters(land, lyr_num=None, cbar=True, cmap=None, plt_lims=None,
                   vmin=None, vmax=None, lyr_name=None, ticks=None,
                   mask_rast=None,  int_coords=False):
     # if a figure is already open, force colorbar to False,
@@ -148,9 +130,17 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
     # create alphas list
     alphas = [1] + [0.5] * (len(rasters)-1)
     # create vmin and vmax lists, if None
-    if vmin is None or isinstance(vmin, float) or isinstance(vmin, int):
+    if (vmin is None
+       or isinstance(vmin, float)
+        # DEH: 10-28-19: For some reason isinstance(<np.float32 obj>, float)
+        # returns False, so check if np.floating to avoid error
+       or isinstance(vmin, np.floating)
+       or isinstance(vmin, int)):
         vmin = [vmin] * len(rasters)
-    if vmax is None or isinstance(vmax, float) or isinstance(vmax, int):
+    if (vmax is None
+       or isinstance(vmax, float)
+       or isinstance(vmax, np.floating)
+       or isinstance(vmax, int)):
         vmax = [vmax] * len(rasters)
     # plot all the rasters...
     for n in range(len(rasters)):
@@ -163,8 +153,6 @@ def _plot_rasters(land, lyr_num=None, cbar=True,
         plt.pcolormesh(x_cell_bds, y_cell_bds, rasters[n], cmap=cmaps[n],
                        vmin=vmin[n], vmax=vmax[n], alpha=alphas[n])
         plt.axis('scaled')
-        # plt.imshow(rasters[n], interpolation=im_interp_method, cmap=cmaps[n],
-        #           vmin=vmin, vmax=vmax, alpha=alphas[n])
         if ((lyr_type != 'file' and not ticks) or
            (lyr_type == 'file' and ticks is False)):
             plt.xticks([])

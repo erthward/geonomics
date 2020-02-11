@@ -2,23 +2,7 @@
 # io.py
 
 '''
-##########################################
-
-Module name:          utils.io
-
-
-Module contains:
-                      - basic IO functions
-
-
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           07-18-18
-Documentation:        URL
-
-
-##########################################
+Defines core IO functions
 '''
 
 # genomics imports

@@ -3,13 +3,11 @@
 
 # FOR PACKAGE PUBLICATION:
 
-- figure out best way to include and maintain docs
+- add test of stationarity of point-pattern to burn-in tests
 
 - debug and add tests back in
 
 - rework demo/example scripts, then include a demo/__init__.py to make demos a module
-
-- figure out how to get ./geonomics/__init__.py to correctly read in README.rst as the package-level docs (see commented-out bit)
 
 - figure out how to include yosemite package_data in setup.py (see commented-out bit)
 

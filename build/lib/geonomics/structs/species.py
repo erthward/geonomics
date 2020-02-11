@@ -1,28 +1,10 @@
 #!/usr/bin/python
 # species.py
 
+# flake8: noqa
+
 '''
-##########################################
-
-Module name:              species
-
-
-Module contains:
-                          - definition of the Species class
-                          - function for creating a Species comprised of
-                            Individuals (including their genomes and
-                            associated data)
-                          - associated functions
-
-
-Author:                    Drew Ellison Hart
-Email:                     drew.hart@berkeley.edu
-Github:                    URL
-Start date:                12-28-15
-Documentation:             URL
-
-
-##########################################
+Defines the Species class, with its associated methods and supporting functions
 '''
 
 #geonomics imports
@@ -44,7 +26,6 @@ from numpy import random as r
 import random
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from scipy import interpolate
 from scipy.stats.distributions import norm
 from collections import Counter as C
 from collections import OrderedDict as OD
@@ -339,8 +320,8 @@ class Species(OD):
 
     #function for finding all the mating pairs in a species
     def _find_mating_pairs(self):
-        mating_pairs = _find_mates(
-                            self, dist_weighted_birth=self.dist_weighted_birth)
+        mating_pairs = _find_mates(self, sex=self.sex,
+                                   dist_weighted_birth=self.dist_weighted_birth)
         return mating_pairs
 
     #function for executing mating for a species
@@ -471,8 +452,8 @@ class Species(OD):
         assert type(normalize) is bool, ("The 'normalize' argument takes "
             "a boolean value.\n")
         #get species coordinates
-        x = self._get_xs()
-        y = self._get_ys()
+        x = self._get_x()
+        y = self._get_y()
         #calculate the density array
         dens = self._dens_grids._calc_density(x, y)
         #set min value to 0
@@ -629,11 +610,11 @@ class Species(OD):
         cells = self._get_coords(individs=individs, as_float=False)
         return cells
 
-    def _get_xs(self, individs=None):
+    def _get_x(self, individs=None):
         coords = self._get_coords(individs=individs)
         return coords[:, 0]
 
-    def _get_ys(self, individs=None):
+    def _get_y(self, individs=None):
         coords = self._get_coords(individs=individs)
         return coords[:, 1]
 
@@ -680,10 +661,10 @@ class Species(OD):
     # on top of a layer (or landscape)
     def _plot(self, lyr_num=None, land=None, hide_land=False, individs=None,
               text=False, color='black', edge_color='face', text_color='black',
-              cbar=True, size=25, text_size=9, im_interp_method='nearest',
-              land_cmap=None, pt_cmap=None, alpha=False, zoom_width=None,
-              x=None, y=None, vmin=None, vmax=None, ticks=None,
-              mask_rast=None, animate=False, cell_coords=False):
+              cbar=True, size=25, text_size=9, land_cmap=None, pt_cmap=None,
+              alpha=False, zoom_width=None, x=None, y=None, vmin=None,
+              vmax=None, ticks=None, mask_rast=None, animate=False,
+              cell_coords=False):
         # convert individs to a list (in case comes in as a numpy array)
         if individs is not None and not isinstance(individs, list):
             individs = list(individs)
@@ -718,10 +699,9 @@ class Species(OD):
             else:
                 land_vmin = land_vmax = None
             viz._plot_rasters(land, lyr_num=lyr_num,
-                              cbar=cbar, im_interp_method=im_interp_method,
-                              cmap=land_cmap, plt_lims=plt_lims, ticks=ticks,
-                              mask_rast=mask_rast, vmin=land_vmin,
-                              vmax=land_vmax)
+                              cbar=cbar, cmap=land_cmap, plt_lims=plt_lims,
+                              ticks=ticks, mask_rast=mask_rast,
+                              vmin=land_vmin, vmax=land_vmax)
         # and plot the individuals
         points = viz._plot_points(coords, lyr_num=lyr_num, color=color,
                                   edge_color=edge_color,
@@ -762,10 +742,10 @@ class Species(OD):
 
     # method for plotting individuals colored by their genotype at a locus
     def _plot_genotype(self, locus, lyr_num=None, individs=None,
-            text=False, size=25, text_size = 9, edge_color='black',
-            text_color='black', cbar=True, im_interp_method='nearest',
-            alpha=1, by_dominance=False, zoom_width=None, x=None, y=None,
-            ticks=None, mask_rast=None):
+                       text=False, size=25, text_size = 9, edge_color='black',
+                       text_color='black', cbar=True, alpha=1,
+                       by_dominance=False, zoom_width=None, x=None, y=None,
+                       ticks=None, mask_rast=None):
 
         if by_dominance == True:
             genotypes = self._get_genotype(locus, by_dominance=True)
@@ -788,8 +768,7 @@ class Species(OD):
                 self._plot(lyr_num = lyr_num, individs = genotype_individs,
                     text = text, color = colors[n], edge_color = edge_color,
                     text_color = text_color, cbar = cbar,
-                    size = size, text_size = text_size,
-                    im_interp_method = im_interp_method, alpha = alpha,
+                    size = size, text_size = text_size, alpha = alpha,
                     zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1,
                     ticks=ticks, mask_rast=mask_rast)
 
@@ -797,10 +776,10 @@ class Species(OD):
     # method for plotting individuals colored by their phenotypes
     #for a given trait
     def _plot_phenotype(self, trait, lyr_num=None, land=None,
-            individs=None, text=False, size=25, text_size=9,
-            edge_color='black', text_color='black', cbar=True,
-            im_interp_method='nearest', alpha=1, zoom_width=None, x=None,
-            y=None, ticks=None, mask_rast=None, animate=False):
+                        individs=None, text=False, size=25, text_size=9,
+                        edge_color='black', text_color='black', cbar=True,
+                        alpha=1, zoom_width=None, x=None, y=None,
+                        ticks=None, mask_rast=None, animate=False):
 
         # get the trait's lyr_num, if no lyr_num provided
         lyr_num = self.gen_arch.traits[trait].lyr_num
@@ -817,10 +796,9 @@ class Species(OD):
                             color = list(z.values()), pt_cmap = pt_cmap,
                             edge_color = edge_color, text_color = text_color,
                             cbar = cbar, size = size, text_size = text_size,
-                            im_interp_method = im_interp_method, alpha = alpha,
-                            zoom_width = zoom_width, x = x, y = y, vmin = 0,
-                            vmax = 1, ticks=ticks, mask_rast=mask_rast,
-                            animate=animate)
+                            alpha = alpha, zoom_width = zoom_width, x = x,
+                            y = y, vmin = 0, vmax = 1, ticks=ticks,
+                            mask_rast=mask_rast, animate=animate)
 
         return points
 
@@ -828,13 +806,13 @@ class Species(OD):
     # method for plotting individuals colored by their overall fitnesses,
     #or by their fitnesses for a single trait (if trait is not None)
     def _plot_fitness(self, trt_num=None, lyr_num=None, land=None,
-            individs=None, text=False, phenotype_text=False,
-            phenotype_text_color='black', fitness_text=False,
-            fitness_text_color='#333333', size=100, text_size = 9,
-            edge_color='black', text_color='black', fit_cmap = 'RdYlGn',
-            cbar=True, fitness_cbar=True, im_interp_method='nearest',
-            alpha=1, zoom_width=None, x=None, y=None, ticks=None,
-            mask_rast=None):
+                      individs=None, text=False, phenotype_text=False,
+                      phenotype_text_color='black', fitness_text=False,
+                      fitness_text_color='#333333', size=100, text_size = 9,
+                      edge_color='black', text_color='black',
+                      fit_cmap = 'RdYlGn', cbar=True, fitness_cbar=True,
+                      alpha=1, zoom_width=None, x=None, y=None, ticks=None,
+                      mask_rast=None):
 
         #return messages if species does not have genomes or traits
         if self.gen_arch is None:
@@ -891,8 +869,7 @@ class Species(OD):
             self._plot_phenotype(trait = trt_num, lyr_num = lyr_num,
                 land = land, individs = individs, text = False, size = size,
                 text_size = text_size, edge_color=edge_color,
-                text_color = text_color, cbar = cbar,
-                im_interp_method = im_interp_method, alpha = alpha,
+                text_color = text_color, cbar = cbar, alpha = alpha,
                 zoom_width = zoom_width, x = x, y = y, ticks=ticks,
                 mask_rast=mask_rast)
             #make size smaller for the next layer of inner (fitness) circles
@@ -907,8 +884,7 @@ class Species(OD):
                    individs=individs, text=text, color=list(w.values()),
                    pt_cmap=cmap, size=size, edge_color=edge_color,
                    text_color=text_color, cbar=cbar, text_size=text_size,
-                   im_interp_method=im_interp_method, alpha=alpha,
-                   zoom_width=zoom_width, x=x, y=y, ticks=ticks,
+                   alpha=alpha, zoom_width=zoom_width, x=x, y=y, ticks=ticks,
                    mask_rast=mask_rast)
 
         #plot phenotype text (works only if plotting a specific trait)
@@ -968,16 +944,16 @@ class Species(OD):
                    '_%sSurface.') % ({
                 'move': 'Movement', 'disp': 'Dispersal'}[surf_type]))
             return
-        elif style not in ['hist', 'circ_hist', 'vect', 'circ_draws']:
+        elif style not in ['hist', 'chist', 'vect', 'cdraws']:
             print(("The 'style' argument must take one of the "
-                   "following values: 'hist', 'circ_hist', "
-                   "'vect', 'circ_draws'"))
+                   "following values: 'hist', 'chist', "
+                   "'vect', 'cdraws'"))
             return
         elif style == 'hist':
             x = x[0]
             y = y[0]
-            plt.hist(r.choice(surf.surf[y,x,:], size = 10000,
-                        replace = True), bins=100, density=True, alpha=0.5)
+            plt.hist(r.choice(surf.surf[y,x,:], size = 10000, replace = True),
+                     bins=100, density=True, alpha=0.5, color=color)
 
         else:
             #display the movement-surface raster
@@ -986,7 +962,7 @@ class Species(OD):
                                 y=np.mean(y), ticks=ticks, cmap=cmap,
                                 mask_rast=mask_rast)
 
-            if style == 'circ_hist':
+            if style == 'chist':
                 for x_val in x:
                     for y_val in y:
                         v, a = np.histogram(r.choice(surf.surf[y_val,
@@ -1004,14 +980,15 @@ class Species(OD):
                                   linewidth=2,
                                   color=color) for n in range(len(xs))]
 
-            elif style == 'circ_draws':
-                x = x[0]
-                y = y[0]
-                pts = [(np.cos(a), np.sin(a)) for a in r.choice(
-                    surf.surf[y, x, :], size=1000, replace=True)]
-                plt.scatter([pt[0] * 0.5 + x + 0.5 for pt in pts], [pt[
-                    1] * 0.5 + y + 0.5 for pt in pts], color='red',
-                    alpha=0.1, marker='.')
+            elif style == 'cdraws':
+                for x_val in x:
+                    for y_val in y:
+                        pts = [(np.cos(a), np.sin(a)) for a in r.choice(
+                                surf.surf[y_val, x_val, :], size=1000,
+                                replace=True)]
+                        plt.scatter([pt[0] * 0.5 + x_val + 0.5 for pt in pts],
+                                    [pt[1] * 0.5 + y_val + 0.5 for pt in pts],
+                                    color=color, alpha=0.1, marker='.')
 
             elif style == 'vect':
                 def plot_one_cell(x, y):
@@ -1029,7 +1006,7 @@ class Species(OD):
                     dy = np.mean(y_vects) / np.sqrt(2)
                     # now plot the arrow
                     plt.arrow(x + 0.5, y + 0.5, dx, dy, alpha=0.75,
-                              color='black', head_width=0.24, head_length=0.32)
+                              color=color, head_width=0.24, head_length=0.32)
 
                 # call the internally defined function as a nested list
                 #comprehension for all raster cells, which I believe
@@ -1091,6 +1068,40 @@ class Species(OD):
         else:
             self._changer._plot_dem_changes(self)
 
+    def _plot_example_recombinant_genome(self):
+        assert self.gen_arch is not None, ("This species does not have "
+                                            "genomes, so it cannot be used "
+                                            "to plot an example recombinant "
+                                            "genome.")
+
+        recomb_paths = self.gen_arch._recomb_paths._get_paths(2)
+        idxs = (0, 2)
+        mock_spp = {}
+        for idx in idxs:
+            new_genome = np.hstack([(np.ones((self.gen_arch.L,
+                                              1)) * n ) + idx for n in (1,2)])
+            mock_spp[idx] = Individual(idx=idx, x=0, y=0,
+                                       new_genome=new_genome)
+
+        recomb_genome = _do_mating(spp=mock_spp,
+                                   mating_pairs=[idxs],
+                                   n_offspring=[1],
+                                   recomb_paths=recomb_paths)[0][0]
+        #recomb_genome = recomb_genome+1
+        #recomb_genome[:,1] = recomb_genome[:,1] * 5
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.imshow(np.repeat(recomb_genome,
+                            int(0.05 * self.gen_arch.L),
+                            axis=1),
+                  cmap='terrain')
+        ax.set_title("gamete 0     gamete1")
+        ax.set_xticks([])
+        ax.set_ylabel('locus')
+        plt.show()
+        return(recomb_paths, mock_spp, recomb_genome)
+
+
     def _plot_stat(self, stat):
         if self._stats_collector is None:
             print(("Species._plot_stat is not valid "
@@ -1104,7 +1115,7 @@ class Species(OD):
         #public methods#
         ################
 
-    def write_pickle(self, filename):
+    def _write_pickle(self, filename):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)

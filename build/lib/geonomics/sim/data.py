@@ -3,27 +3,7 @@
 
 
 '''
-##########################################
-
-Module name:              sim/data
-
-Module contents:          - definition of the _DataCollector class (which
-                            gathers and organizes the parameters for how
-                            and when to sample data, and does the sampling)
-                          - definition of functions for sampling individuals
-                            according to the contents of the
-                            params['model']['data'] section
-                          - definition of data formatting functions
-
-
-Author:                   Drew Ellison Hart
-Email:                    drew.hart@berkeley.edu
-Github:                   URL
-Start date:               01-01-18
-Documentation:            URL
-
-
-##########################################
+Classes and functions for implementing data collection and output
 '''
 
 #geonmics imports
@@ -286,7 +266,7 @@ class _DataCollector:
                                     self.file_extension_dict[self.rast_format])
                     filepath = os.path.join(dirname, filename)
                     #and write it to disk
-                    lyr.write_raster(filepath, self.rast_format)
+                    lyr._write_raster(filepath, self.rast_format)
 
             #update self.next_t to the next timestep to be sampled
             self._set_next_t()

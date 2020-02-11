@@ -69,24 +69,24 @@ im = plt.pcolormesh(np.linspace(0, mod.land.dim[0], mod.land.dim[0]+1),
                     np.linspace(0, mod.land.dim[1], mod.land.dim[1]+1),
                     mod.land[0].rast, cmap='coolwarm')
 ax1 = plt.subplot(gs[0])
-mod.plot_phenotype(0, 0, 0, size=55)
+mod.plot_phenotype(0, 0, 0, size=85)
 divider = make_axes_locatable(ax1)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 cbar = plt.colorbar(im, cax=cax)
 cbar.set_label('environmental and phenotypic value', rotation=270,
-               labelpad=15, y=0.5, size=18)
+               labelpad=25, y=0.5, size=24)
 ax2 = plt.subplot(gs[1])
 im = plt.pcolormesh(np.linspace(0, mod.land.dim[0], mod.land.dim[0]+1),
                     np.linspace(0, mod.land.dim[1], mod.land.dim[1]+1),
                     mod.land[1].rast, cmap='BrBG_r')
-mod.plot_phenotype(0, 1, 1, size=55)
+mod.plot_phenotype(0, 1, 1, size=85)
 divider = make_axes_locatable(ax2)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 cbar = plt.colorbar(im, cax=cax)
 cbar.set_label('environmental and phenotypic value', rotation=270,
-               labelpad=15, y=0.5, size=18)
-ax1.set_title('trait_0', size=22)
-ax2.set_title('trait_1', size=22)
+               labelpad=25, y=0.5, size=24)
+ax1.set_title('trait 0', size=30)
+ax2.set_title('trait 1', size=30)
 plt.show()
 fig.tight_layout()
 # print out time

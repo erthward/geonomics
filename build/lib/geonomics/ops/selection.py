@@ -3,23 +3,8 @@
 
 
 '''
-##########################################
-
-Module name:          ops.selection
-
-
-Module contains:
-                      - Functions to implement fitness and selection
-
-
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           04-28-17
-Documentation:        URL
-
-
-##########################################
+Functions to implement natural selection operations (aside from actual
+mortality)
 '''
 
 

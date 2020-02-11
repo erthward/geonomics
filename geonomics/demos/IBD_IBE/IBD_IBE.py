@@ -69,8 +69,6 @@ def map_genetic_PCA(species, land):
     # create light colormap for plotting landscape
     # bot = plt.cm.get_cmap('Blues', 256)(np.linspace(0.4, 0.45, 2))[0]
     # top = plt.cm.get_cmap('Reds', 256)(np.linspace(0.4, 0.45, 2))[0]
-    # cols = np.vstack((top, bot))
-    # cmap = mpl.colors.ListedColormap(cols, name='OrangeBlue')
     cmap = plt.cm.coolwarm
     cmap.set_bad(color='#8C8C8C')
     # plot landscape
@@ -132,13 +130,17 @@ def calc_euc(x, y):
 
 # calculate lower-triangular of PCA-bsaed Euclidean genetic distances between
 # all individuals, using a 'speciome' (2d array of all individs' genomes)
-def calc_dists(species, dist_type='gen', env_lyrs=None, return_flat=True):
+def calc_dists(species, dist_type='gen', env_lyrs=None, return_flat=True,
+               allele_freq_diff=False):
     # calculate genetic distance as the euclidean distance between individuals
     # in genetic PC space
     if dist_type == 'gen':
         speciome = np.mean(np.stack([i.g for i in species.values()]), axis=2)
-        pca = PCA()
-        vals = pca.fit_transform(speciome)
+        if not allele_freq_diff:
+            pca = PCA()
+            vals = pca.fit_transform(speciome)
+        else:
+            vals = speciome
     # calculate geographic distance as the linear euclidean distance between
     # individuals
     elif dist_type == 'geo':
@@ -148,17 +150,30 @@ def calc_dists(species, dist_type='gen', env_lyrs=None, return_flat=True):
     # the 'env_lyrs' argument
     elif dist_type == 'env':
         vals = np.stack([np.array(i.e)[env_lyrs] for i in species.values()])
+    #calculate the phenotypic distances
+    elif dist_type == 'phn':
+        vals = np.stack([np.array(i.z)[env_lyrs] for i in species.values()])
     # print(vals)
     # print(vals.shape)
     n_ind = vals.shape[0]
-    dist_mat = np.ones([n_ind] * 2) * -999
+    dist_mat = np.ones([n_ind] * 2) * np.nan
     # dist_vals = [[calc_euc(i, j) for j in vals[n:,
     #                                        :]] for n, i in enumerate(vals)]
     for i in range(n_ind):
         for j in range(0, i+1):
-            dist_mat[i, j] = calc_euc(vals[i, :], vals[j, :])
+            if dist_type == 'gen' and allele_freq_diff:
+                dist_mat[i, j] = np.sum(np.abs(
+                                        vals[:, i] - vals[:, j])) / vals.shape[1]
+            else:
+                dist_mat[i, j] = calc_euc(vals[i, :], vals[j, :])
     # check that all diagonal values are 0
     assert np.all(np.diag(dist_mat) == 0), "Not all diagonal values are 0!"
+    if dist_type == 'gen' and allele_freq_diff:
+        assert (np.all(0 <= dist_mat[np.invert(np.isnan(dist_mat))])
+                and np.all(dist_mat[np.invert(np.isnan(dist_mat))] <= 1)), (
+            "You are calculating genetic distances using allele-frequency "
+            "differences, which should be normalized to 0 <= diff <= 1, but "
+            "you have non-NaN values outside that range!")
 
     if return_flat:
         # flatten the lower triangle, if return 1-d of values
@@ -312,13 +327,14 @@ mod.plot_phenotype(0, 0, mask_rast=mask, size=mark_size, cbar=False)
 # plot IBD and IBE
 spp_subset = {ind: mod.comm[0][ind] for ind in np.random.choice([*mod.comm[0]],
                                                                 100)}
-gen_dists = calc_dists(spp_subset)
+gen_dists = calc_dists(spp_subset, allele_freq_diff=False)
 scaled_gen_dists = gen_dists/gen_dists.max()
 assert (np.all(scaled_gen_dists >= 0)
         and np.all(scaled_gen_dists <= 1)), ('Scaled genetic dist is outside '
                                              '0 and 1!')
 geo_dists = calc_dists(spp_subset, 'geo')
 env_dists = calc_dists(spp_subset, 'env', [0])
+pheno_dists = calc_dists(spp_subset, 'phn', [0])
 
 
 # run multiple linear regression of gen on geo and env dists
@@ -406,25 +422,29 @@ zs = mlr_est.predict(np.vstack((xs, ys)).T)
 xs = xs.reshape([len(y_vals)] * 2)
 ys = ys.reshape([len(y_vals)] * 2)
 zs = zs.reshape([len(y_vals)] * 2)
-col3d = ((geo_dists / geo_dists.max()) + (env_dists / env_dists.max())) / 2
+
+#col3d = ((geo_dists / geo_dists.max()) + (env_dists / env_dists.max())) / 2
+col3d = pheno_dists / pheno_dists.max()
 
 # initialization function: plot the background of each frame
 def init():
+    ax3d.plot_wireframe(xs, ys, zs, color='lightgray', ccount=10, rcount=10,
+                        linestyles='dashed', alpha=0.9, linewidths=0.5)
     scat = ax3d.scatter(geo_dists, env_dists, scaled_gen_dists,
                          alpha=0.5, c=col3d, cmap='plasma')
-    ax3d.plot_surface(xs, ys, zs, color='gray', alpha=0.9)
+    #ax3d.plot_surface(xs, ys, zs, color='gray', alpha=0.995)
     return fig3d,
 
 # animation function. This is called sequentially
 def animate(i):
-    ax3d.view_init(elev=10., azim=i)
+    ax3d.view_init(elev=5., azim=i)
     return fig3d,
 
 # use the init and animate functions to create an animation object
 anim = animation.FuncAnimation(fig3d, animate, init_func=init, frames=359,
-                               interval=20, blit=True)
+                               interval=5, blit=True)
 # write to file
-anim.save('./IBD_animation.gif', writer='imagemagick', fps=60)
+anim.save('./IBD_IBE_animation.gif', writer='imagemagick', fps=60)
 
 
 # create plot of z-e diffs

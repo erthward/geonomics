@@ -3,26 +3,7 @@
 
 
 '''
-##########################################
-
-Module name:              stats
-
-Module contents:          - definition of Stats class (i.e. structured
-                            container for stats calculated during model run)
-                          - definition of functions for calculating various
-                            stats, at specified frequencies and with specified
-                            arguments, according to the contents of the
-                            params.model.stats section
-
-
-Author:                   Drew Ellison Hart
-Email:                    drew.hart@berkeley.edu
-Github:                   URL
-Start date:               01-01-18
-Documentation:            URL
-
-
-##########################################
+Classes and functons to implement calculation and output of statistics
 '''
 
 #geonomics imports
@@ -390,7 +371,7 @@ def _calc_ld(spp, plot = False):
     assert L == np.shape(speciome)[1], ("The length of the 1st dimension "
                             "of speciome doesn't equal spp.genomic_arch.L")
 
-    r2_mat = np.zeros([L]*2)-1 # -1 serves as a 'no data' value here
+    r2_mat = np.zeros([L]*2)-1 # -1 serves as a 'no data' value
 
     for i in range(L):
         for j in range(i+1, L):

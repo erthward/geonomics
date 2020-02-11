@@ -1,27 +1,12 @@
 #!/usr/bin/python
 # genome.py
 
+# flake8: noqa
+
 
 '''
-##########################################
-
-Module name:              structs.genome
-
-Module contents:          - definition of the Trait, _RecombinationPaths, and
-                            GenomicArchitecture classes
-                          - functions for simulation of genomic architecture,
-                            simulation of a new genome, and other associated
-                            functions
-
-
-Author:                   Drew Ellison Hart
-Email:                    drew.hart@berkeley.edu
-Github:                   URL
-Start date:               12-28-15
-Documentation:            URL
-
-
-##########################################
+Classes, associated methods, and supporting functions for all genomic
+components
 '''
 
 # geonomics imports
@@ -303,12 +288,15 @@ class GenomicArchitecture:
     def _plot_allele_frequencies(self, spp):
         speciome = np.stack([ind.g for ind in spp.values()])
         freqs = speciome.sum(axis=2).sum(axis=0) / (2*speciome.shape[0])
-        plt.plot(range(self.L), self.p, ':r')
-        plt.plot(range(self.L), freqs, '-b')
+        plt.plot(range(self.L), self.p, ':r', label='start freq.')
+        plt.plot(range(self.L), freqs, '-b', label='curr. freq.')
+        plt.xlabel('locus')
+        plt.ylabel('frequency')
+        plt.legend()
         plt.show()
 
     # method for pickling a genomic architecture
-    def write_pickle(self, filename):
+    def _write_pickle(self, filename):
         import cPickle
         with open(filename, 'wb') as f:
             cPickle.dump(self, f)
@@ -554,9 +542,9 @@ def _make_recomb_paths_bitarrays(genomic_architecture,
         # and set fixed_r to None
         fixed_r = None
 
-    # if recombination rates are homoegenous, then just return None for the
-    # bitarrays, and return the fixed recombination rate as fixed_r, because
-    # recombinants will be quickly generated on the fly
+    # instead, if recombination rates are homoegenous, then just return None
+    # for the bitarrays, and return the fixed recombination rate as fixed_r,
+    # because recombinants will be quickly generated on the fly
     else:
         fixed_r = np.unique(genomic_architecture.r)[0]
         bitarrays = None
@@ -565,7 +553,7 @@ def _make_recomb_paths_bitarrays(genomic_architecture,
 
 
 def _make_bitarray_recomb_subsetter(recomb_path):
-    chrom1 = bitarray.bitarray([*recomb_path.reshape((recomb_path.size,))])
+    chrom1 = bitarray.bitarray([*recomb_path.ravel()])
     chrom0 = chrom1[:]
     chrom0.invert()
     #chrom0 = bitarray.bitarray([*np.invert(chrom1)])
@@ -675,11 +663,11 @@ def _make_genomic_architecture(spp_params, land):
         # convert the trait names in the 'trait' column of the file into
         # lists of their trait numbers (i.e. their keys in the gen_arch
         # traits dict)
-        trait_names_nums = {
+        trt_names_nums = {
             trt.name: num for num, trt in gen_arch.traits.items()}
-        gen_arch_file['trait'] = [[trait_names_nums[
+        gen_arch_file['trait'] = [[trt_names_nums[
             val] for val in [x.strip() for x in row.split(
-                                    ',')]] for row in gen_arch_file['trait']]
+            ',')] if val in trt_names_nums] for row in gen_arch_file['trait']]
         # turn the values in the 'alpha' column into lists of
         # values, by splitting on commas
         # (this will allow people to assign a single locus

@@ -43,7 +43,7 @@ setuptools.setup(
         # 'Tracker': 'BUGTRACKERSITHERE',
     },
     install_requires=['numpy', 'matplotlib', 'pandas>=0.23.4', 'geopandas',
-                      'scipy', 'scikit-learn', 'statsmodels>=0.9.0',
+                      'scipy>=1.3.1', 'scikit-learn', 'statsmodels>=0.9.0',
                       'shapely', 'bitarray', 'pyvcf'],
     extras_require={
         'simulation on neutral landscape models': ['nlmpy'],

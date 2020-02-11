@@ -563,17 +563,17 @@ class Species(OD):
 
     #convenience method for getting age of whole species
     def _get_age(self, individs=None):
-        ages = self._get_scalar_attr('age', individs = individs)
+        ages = self._get_scalar_attr('age', individs=individs)
         return ages
 
     # convenience method for getting whole species' phenotype
     def _get_z(self, individs=None):
-        zs = self._get_scalar_attr('z', individs = individs)
+        zs = self._get_scalar_attr('z', individs=individs)
         return zs
 
     #convenience method for getting whole species' fitnesses
     def _get_fit(self, individs = None):
-        fits = self._get_scalar_attr('fit', individs = individs)
+        fits = self._get_scalar_attr('fit', individs=individs)
         return fits
 
     def _calc_fitness(self, trait_num = None, set_fit = True):

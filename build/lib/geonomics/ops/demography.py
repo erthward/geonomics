@@ -2,27 +2,7 @@
 #demography.py
 
 '''
-##########################################
-
-Module name:          ops.demography
-
-
-Module contains:
-                      - Functions to control demography/population dynamics
-                      - a DebugPlotter class, which will create a series
-                        of plots to help debug the _do_pop_dynamics function
-                        (and general model behavior) if that function is
-                        called with debug = True
-
-
-Author:               Drew Ellison Hart
-Email:                drew.hart@berkeley.edu
-Github:               URL
-Start date:           04-28-17
-Documentation:        URL
-
-
-##########################################
+Functions to implement demographic operations (birth and death).
 '''
 
 #geonomics imports

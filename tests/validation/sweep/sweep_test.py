@@ -11,6 +11,8 @@ from collections import Counter as C
 from itertools import combinations
 import os
 from copy import copy
+import statsmodels.api as sm
+lowess = sm.nonparametric.lowess
 
 # set some plotting params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
@@ -73,23 +75,24 @@ def calc_nonneut_loc_freq(mod):
     return nonneut_loc_freq
 
 
-# function for plotting species colored by phenotype, since I don't yet know
-# why the landscape color seems to be incorrectly inverted (i.e. landscape
-# of all 1s is plotting as all blue, not all red)
-def plot_by_phenotype(mod):
-    cols = [color_dict[np.mean(ind.g[mod.comm[0].gen_arch.traits[0].loci[0],
-                                        :])] for ind in mod.comm[0].values()]
-    y_cell_bds, x_cell_bds = [np.linspace(0, dim,
-                                    dim+1) for dim in mod.land[0].rast.shape]
-    plt.pcolormesh(x_cell_bds, y_cell_bds, mod.land[0].rast, cmap='coolwarm')
-    #plt.imshow(mod.land[0].rast, cmap='RdBu')
-    plt.scatter(mod.comm[0]._get_x(),# - 0.5,
-                mod.comm[0]._get_y(),# - 0.5,
-                c=cols, cmap='coolwarm', edgecolors='black', s=10)
-    plt.axis('scaled')
-    plt.xticks([])
-    plt.yticks([])
+def gen_data_linkage_dist_plot(r2_mat, recomb_rates, L=1001, sweep_loc=500):
+    # TODO: Do I need to account for possibility of even number of recombination
+    # events between loci when calculating distance? In other words, should
+    # I convert the distance to a true cM distance, or just leave as the sum
+    # of the interlocus recombination rates?
+    r2s = []
+    dists = []
+    for i in range(L-1):
+        for j in range(i, L-1):
+            r2 = r2_mat[i, j]
+            if not np.isnan(r2):
+                dist = np.sum(recomb_rates[i+1:j+1])
+                r2s.append(r2)
+                dists.append(dist)
+    return(r2s, dists)
 
+
+################################################################
 
 # create data structures to save data to be analyzed/plotted
 mean_fit = []
@@ -98,28 +101,31 @@ ld = []
 
 # build the model
 mod = gnx.make_model('./tests/validation/sweep/sweep_params.py')
-# set the non-neutral locus to the central locus (i.e. 50, in a 101-length
-# genomic arch.), then set the starting 1-allele freq of the
-# non-neutral allele to 0
-#nonneut_loc = 50
-#mod.comm[0].gen_arch.traits[0].loci[0] = nonneut_loc
-#mod.comm[0].gen_arch.p[nonneut_loc] = 0
 
 #get the non-neutral locus
 nonneut_loc = mod.comm[0].gen_arch.traits[0].loci[0]
 
-# burn the model in, then run for 50 timesteps (to make sure pop size is
-# at equilibrium)
+# burn the model in
 mod.walk(20000, 'burn', True)
-mod.walk(50, 'main', True)
 
-# create the figure and first Axes instance
+# create the figure and its Axes instances
 fig = plt.figure()
-ax1 = fig.add_subplot(241)
-ax1.set_title('Population at beginning of sweep\n(colored by phenotype)')
+ax1 = fig.add_subplot(221)
+ax2 = fig.add_subplot(222)
+ax3 = fig.add_subplot(223)
+ax4 = fig.add_subplot(224)
 
 # calculate LD at outset
+print('\ncalculating linkage...\n')
 ld.append(gnx.sim.stats._calc_ld(mod.comm[0]))
+r2s, dists = gen_data_linkage_dist_plot(ld[0], mod.comm[0].gen_arch.r)
+ax3.plot(dists, r2s, '.r')
+ax3.set_xlabel("recombination distance (sum of interlocus recomb. rates)",
+              fontdict=ax_fontdict)
+ax3.set_ylabel("linkage ($R^{2}$)", fontdict=ax_fontdict)
+
+# run for 1 main step, so that all individuals have fitness values
+mod.walk(1, 'main', True)
 
 # keep reintroducing a mutant and running for 100 timesteps, until
 # mutant establishes
@@ -140,11 +146,6 @@ while not sweeping_allele_established:
     mod.comm[0][individ].g[nonneut_loc, chromatid] = 1
 
     pi_at_intro.append(calc_pi(mod, nonneut_loc))
-
-    # plot the beginning of the sweep, with the mutant individual
-    plt.cla()
-    plot_by_phenotype(mod)
-    ax1.set_title('just after mutation', fontdict=ttl_fontdict)
 
     # walk 50 timesteps
     for _ in range(5):
@@ -172,11 +173,6 @@ for _ in range(10):
     # calclate and store mean fitness
     mean_fit.append(calc_mean_fit(mod))
     print('\tallele_freq = %0.3f' % calc_nonneut_loc_freq(mod))
-# calculate and store nucleotide diversity again
-pi.append(calc_pi(mod, nonneut_loc))
-ax2 = fig.add_subplot(242)
-plt.title('200 timesteps into sweep',  fontdict=ttl_fontdict)
-plot_by_phenotype(mod)
 
 # walk until mutant fixed
 nonneut_loc_freq = np.mean(np.vstack(
@@ -192,62 +188,35 @@ while not fixed:
                         [i.g[nonneut_loc, :] for i in mod.comm[0].values()]))
     fixed = nonneut_loc_freq == 1
 
-# plot status after sweep is complete
-ax3 = fig.add_subplot(243)
-ax3.set_title(('just after sweep (t = %i)') % (mod.t - lapsed_t + 50 + 50),
-              fontdict=ttl_fontdict)
-plot_by_phenotype(mod)
 # calculate and store ending nucleotide diversity
 pi.append(calc_pi(mod, nonneut_loc))
-
-# walk model 5000 more timesteps, then plot status
-mod.walk(5000, verbose=True)
-ax4 = fig.add_subplot(244)
-ax4.set_title('5000 timesteps after sweep (t = %i)' % (mod.t - lapsed_t + 50 + 50),
-              fontdict=ttl_fontdict)
-plot_by_phenotype(mod)
-
-# calculate and store nucleotide diversity again
-pi.append(calc_pi(mod, nonneut_loc))
-# and calculate and store LD again
+print('\ncalculating linkage...\n')
 ld.append(gnx.sim.stats._calc_ld(mod.comm[0]))
+r2s, dists = gen_data_linkage_dist_plot(ld[1], mod.comm[0].gen_arch.r)
+ax4.plot(dists, r2s, '.r')
+ax4.set_xlabel("recombination distance (sum of interlocus recomb. rates)",
+               fontdict=ax_fontdict)
+
 
 # plot stats
-ax5 = fig.add_subplot(245)
-ax5.plot(range(mod.comm[0].gen_arch.L), pi[0])
-ax5.plot([nonneut_loc, nonneut_loc], [0, 1], '--r')
-ax5.set_xlabel('genomic_position', fontdict=ax_fontdict)
-ax5.set_ylabel('nucleotide diversity', fontdict=ax_fontdict)
-ax6 = fig.add_subplot(246)
-# plt.title(('Nucleotide diversity 100 timesteps into sweep\n(calculated in '
-#          '11-locus windows'))
-ax6.plot(range(mod.comm[0].gen_arch.L), pi[1])
-ax6.plot([nonneut_loc, nonneut_loc], [0, 1], '--r')
-ax6.set_xlabel('genomic_position', fontdict=ax_fontdict)
-# ax6.set_ylabel('nucleotide diversity', fontdict=ax_fontdict)
-ax6.set_yticks([])
-ax7 = fig.add_subplot(247)
-# plt.title(('Nucleotide diversity at end of sweep\n(calculated in 11-locus '
-#          'windows)'))
-ax7.plot(range(mod.comm[0].gen_arch.L), pi[2])
-ax7.plot([nonneut_loc, nonneut_loc], [0, 1], '--r')
-ax7.set_xlabel('genomic_position', fontdict=ax_fontdict)
-ax7.set_yticks([])
-# ax7.set_ylabel('nucleotide diversity', fontdict=ax_fontdict)
-ax8 = fig.add_subplot(248)
-# plt.title(('Nucleotide diversity 2500 timesteps after end of sweep\n'
-#           '(calculated in 11-locus windows)'))
-ax8.plot(range(mod.comm[0].gen_arch.L), pi[3])
-ax8.plot([nonneut_loc, nonneut_loc], [0, 1], '--r')
-ax8.set_xlabel('genomic_position', fontdict=ax_fontdict)
-ax8.set_yticks([])
-# ax8.set_ylabel('nucleotide diversity', fontdict=ax_fontdict)
+ax1.set_title('before sweep', fontdict=ttl_fontdict)
+ys = lowess(pi[0], [*range(mod.comm[0].gen_arch.L)], frac=0.01)[:, 1]
+ax1.plot(range(mod.comm[0].gen_arch.L), ys, '-k')
+ax1.plot([nonneut_loc, nonneut_loc], [0, 1], '--r')
+ax1.set_xlabel('genomic_position', fontdict=ax_fontdict)
+ax1.set_ylabel('nucleotide diversity', fontdict=ax_fontdict)
+
+ax2.set_title('after sweep', fontdict=ttl_fontdict)
+ys = lowess(pi[1], [*range(mod.comm[0].gen_arch.L)], frac=0.01)[:, 1]
+ax2.plot(range(mod.comm[0].gen_arch.L), ys, '-k')
+ax2.plot([nonneut_loc, nonneut_loc], [0, 1], '--r')
+ax2.set_xlabel('genomic_position', fontdict=ax_fontdict)
+ax2.set_yticks([])
+
 pi_min_lim = 0.95 * min([val for sublist in pi for val in sublist])
 pi_max_lim = 1.05 * max([val for sublist in pi for val in sublist])
-ax5.set_ylim((pi_min_lim, pi_max_lim))
-ax6.set_ylim((pi_min_lim, pi_max_lim))
-ax7.set_ylim((pi_min_lim, pi_max_lim))
-ax8.set_ylim((pi_min_lim, pi_max_lim))
+ax1.set_ylim((pi_min_lim, pi_max_lim))
+ax2.set_ylim((pi_min_lim, pi_max_lim))
 
 # add vertical space between the first and second rows of plots
 fig.subplots_adjust(hspace=.5)
@@ -259,7 +228,6 @@ print('Sweep complete')
 plt.rcParams['figure.figsize'] = [5.5, 4]
 fig2 = plt.figure()
 ax = fig2.add_subplot(111)
-# plt.title('Mean fitness across model time', fontdict=ttl_fontdict)
 ax.plot(np.linspace(0, mod.t, len(mean_fit)), mean_fit, '-', color='#D55E00')
 ax.set_xlabel('time', fontdict=ax_fontdict)
 ax.set_ylabel('mean fitness', fontdict=ax_fontdict)

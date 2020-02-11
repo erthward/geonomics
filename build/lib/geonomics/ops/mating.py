@@ -1,25 +1,10 @@
 #!/usr/bin/python
 # mating.py
 
+# flake8: noqa
+
 '''
-##########################################
-
-Module name:                mating
-
-Module contains:
-                            - function for simulating the mating of two
-                              individuals, according to input parameters
-                            - associated functions
-
-
-Author:                     Drew Ellison Hart
-Email:                      drew.hart@berkeley.edu
-Github:                     URL
-Start date:                 12-28-15
-Documentation:              URL
-
-
-##########################################
+Functions to implement mating operations.
 '''
 
 #other imports
@@ -164,11 +149,12 @@ def _draw_n_births(num_pairs, n_births_distr_lambda):
 def _do_mating_sngl_offspr(spp, pair, recomb_paths):
     # generate a gamete for each member of mating pair, stack, and transpose
     new_genome = np.vstack(
-      [spp[ind].g.flatten()[recomb_paths.pop()] for ind in pair]).T
+      [spp[ind].g.flatten()[[*recomb_paths.pop()]] for ind in pair]).T
     return new_genome
 
 
 def _do_mating_sngl_pair(spp, pair, n_offspring, recomb_paths):
+    # generate a list of n offspring for the given pair
     offspring = [_do_mating_sngl_offspr(spp, pair,
         [recomb_paths.pop() for _ in range(2)]) for off in range(n_offspring)]
     return offspring
@@ -176,8 +162,15 @@ def _do_mating_sngl_pair(spp, pair, n_offspring, recomb_paths):
 
 # function for mating a chosen mating-pair
 def _do_mating(spp, mating_pairs, n_offspring, recomb_paths):
-    pairs_paths = [[next(iter(recomb_paths)) for _ in range(
-                                                2*n)] for n in n_offspring]
+    # use list of number of offsrpring per mating pair to create
+    # list of start and stop indices for subsetting the recomb paths into
+    # groups of paths to be used for each gamete-production event for each pair
+    start_stop_idxs = np.hstack((0, np.cumsum([2*n for n in n_offspring])))
+    # get the recombination paths to be used by each pair
+    pairs_paths = [recomb_paths[start_stop_idxs[i]: start_stop_idxs[i + 1]] for
+                   i in range(len(n_offspring))]
+    # use the pairs' paths to produce recombinant genomes for each pair (where
+    # number of genomes equals that pair's number of offspring)
     new_genomes = list(starmap(_do_mating_sngl_pair, zip(repeat(spp),
                                     mating_pairs, n_offspring, pairs_paths)))
     return new_genomes

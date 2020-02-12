@@ -3,6 +3,11 @@
 
 # flake8: noqa
 
+
+########
+# set-up
+########
+
 # import geonomics
 import geonomics as gnx
 
@@ -33,6 +38,10 @@ use_barr = True
 not_timing = True
 
 
+# flag for whether or not to make the 3d plot
+make_3d_plot = False
+
+
 # set some plotting params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
            'img/final/')
@@ -42,6 +51,11 @@ ttl_fontdict = {'fontsize': 15,
                 'name': 'Bitstream Vera Sans'}
 mark_size = 15
 
+
+
+###############
+# function defs
+###############
 
 def map_genetic_PCA(species, land):
     """run genetic PCA and mapping individuals colored in RGB
@@ -83,6 +97,7 @@ def map_genetic_PCA(species, land):
     #                                                          plt.ylim)]
     # get rid of x and y ticks
     #[f([]) for f in (plt.xticks, plt.yticks)]
+
 
 def plot_genetic_PCA(mod):
     """run a genetic PCA and plot individuals on first 2 PCs, colored by which
@@ -182,7 +197,7 @@ def calc_dists(species, dist_type='gen', env_lyrs=None, return_flat=True,
                                                     "to n(n-1)/2!")
     else:
         # make it a symmetric dist matrix, if returning the matrix
-        dist_mat[dist_mat == -999] = 0
+        dist_mat[dist_mat == np.nan] = 0
         dists = dist_mat + dist_mat.T
         assert dists.size == n_ind**2, "Size not equal to n*n!"
     # dist_vals = [item[1:] for item in dist_vals]
@@ -236,11 +251,70 @@ def track_horiz_crossing(mod, zone_edges, tracker, count):
     return count
 
 
-# make empty figure
+###############
+# set up figure
+###############
 fig = plt.figure(figsize=(6.75, 9.25))
-gs = gridspec.GridSpec(4, 2,
-                       width_ratios=[1, 1],
-                       height_ratios=[1, 1, 0.05, 0.5])
+fig.tight_layout()
+plt.subplots_adjust(left=0.05, bottom=0.07, right=0.98, top=0.96, wspace=0.07,
+                    hspace=0.16)
+gs = gridspec.GridSpec(3, 9, height_ratios=[1, 1, 1.5])
+
+# BEFORE-SIM AXES
+gen_b4_ax = fig.add_subplot(gs[0, 1:4], aspect='equal')
+gen_b4_ax.set_title('genotype', fontdict=ttl_fontdict)
+gen_b4_ax.set_ylabel('before simulation', fontdict=ax_fontdict)
+phn_b4_ax = fig.add_subplot(gs[0, 5:8], aspect='equal')
+phn_b4_ax.set_title('phenotype', fontdict=ttl_fontdict)
+
+# AFTER-SIM AXES
+gen_af_ax = fig.add_subplot(gs[1, 1:4], aspect='equal')
+gen_af_ax.set_ylabel('after simulation', fontdict=ax_fontdict)
+phn_af_ax = fig.add_subplot(gs[1, 5:8], aspect='equal')
+
+# 3D AXES
+    #1
+n1_3d_ax = fig.add_subplot(gs[2, 0:3], projection='3d')
+n1_3d_ax.view_init(elev=1, azim=90)
+n1_3d_ax.set_xlabel('$\longleftarrow$ Geo. Dist.', size=9, labelpad=-13)
+#n1_3d_ax.set_ylabel(' ' * 35 + '$\longleftarrow$ Env. Dist.', size=9,
+#                    labelpad=20)
+n1_3d_ax.zaxis.set_rotate_label(False)
+n1_3d_ax.set_zlabel('Gen. Dist. $\longrightarrow$', size=9, labelpad=-13,
+                    rotation=90)
+n1_3d_ax.set_xticklabels([])
+n1_3d_ax.set_yticklabels([])
+n1_3d_ax.set_zticklabels([])
+n1_3d_ax.set_title("", pad=-260)
+    #2
+n2_3d_ax = fig.add_subplot(gs[2, 3:6], projection='3d')
+n2_3d_ax.view_init(elev=25, azim=225)
+n2_3d_ax.set_xlabel('Geo. Dist. $\longrightarrow$', size=9, labelpad=-13)
+n2_3d_ax.set_ylabel('$\longleftarrow$ Env. Dist.', size=9, labelpad=-13)
+n2_3d_ax.zaxis.set_rotate_label(False)
+n2_3d_ax.set_zlabel('Gen. Dist. $\longrightarrow$', size=9, labelpad=-13,
+                    rotation=90)
+n2_3d_ax.set_xticklabels([])
+n2_3d_ax.set_yticklabels([])
+n2_3d_ax.set_zticklabels([])
+    #3
+n3_3d_ax = fig.add_subplot(gs[2, 6:9], projection='3d')
+n3_3d_ax.view_init(elev=1, azim=0)
+#n3_3d_ax.set_xlabel('$\longleftarrow$ Geo. Dist.' + ' ' * 25, size=9,
+#                    labelpad=10)
+n3_3d_ax.set_ylabel('Env. Dist. $\longrightarrow$', size=9, labelpad=-13)
+n3_3d_ax.zaxis.set_rotate_label(False)
+n3_3d_ax.set_zlabel('Gen. Dist. $\longrightarrow$', size=9, labelpad=-13,
+                    rotation=90)
+n3_3d_ax.set_xticklabels([])
+n3_3d_ax.set_yticklabels([])
+n3_3d_ax.set_zticklabels([])
+
+
+
+#########################
+# set trackers and timers
+#########################
 
 # create objects for crossing of barrier, and of equal-width vertical areas
 # within each of the two sides for comparison
@@ -249,6 +323,11 @@ cross_tracker = {}
 
 # start timer
 start = time.time()
+
+
+#####################
+# prep and make model
+#####################
 
 # make model
 params = gnx.read_parameters_file(('./geonomics/demos/IBD_IBE/'
@@ -266,6 +345,13 @@ if not use_barr:
 
 mod = gnx.make_model(params)
 
+
+
+
+################################
+# run model, plotting as it goes
+################################
+
 # define number of timesteps
 T = 1000
 
@@ -273,21 +359,14 @@ T = 1000
 mod.walk(20000, 'burn')
 
 # plot genetic PCA before evolution begins
-# ax1 = fig.add_subplot(321)
-ax1 = plt.subplot(gs[0])
-ax1.set_aspect('equal')
-# ax1.set_title('t = 0')
+plt.sca(gen_b4_ax)
 map_genetic_PCA(mod.comm[0], mod.land)
-ax1.set_title('colored by genetic PCA', fontsize=16)
-ax1.set_ylabel('before simulation', fontsize=14)
 
 # plot phenotypes before evolution begins
-# ax3 = fig.add_subplot(323)
-ax2 = plt.subplot(gs[1])
-ax2.set_title('colored by phenotype', fontsize=16)
 mask = np.ma.masked_where(mod.land[1].rast == 0, mod.land[1].rast)
+plt.sca(phn_b4_ax)
 mod.plot_phenotype(0, 0, mask_rast=mask, size=mark_size, cbar=False)
-[f((-0.5, 39.5)) for f in [plt.xlim, plt.ylim]]
+[f((-0.5, 39.5)) for f in [phn_b4_ax.set_xlim, phn_b4_ax.set_ylim]]
 
 # create data structure to save z-e diff values
 if not_timing:
@@ -311,20 +390,20 @@ tot_time = stop - start
 
 
 # plot genetic PCA after 1/4T timesteps
-# ax2 = fig.add_subplot(322)
-ax3 = plt.subplot(gs[2])
-ax3.set_aspect('equal')
-# ax3.set_title('t = %i' % T)
+plt.sca(gen_af_ax)
 map_genetic_PCA(mod.comm[0], mod.land)
-ax3.set_ylabel('after simulation', fontsize=14)
 
 # plot the individuals' phenotypes
-# ax4 = fig.add_subplot(324)
-ax4 = plt.subplot(gs[3])
+plt.sca(phn_af_ax)
 mod.plot_phenotype(0, 0, mask_rast=mask, size=mark_size, cbar=False)
-[f((-0.5, 39.5)) for f in [plt.xlim, plt.ylim]]
+[f((-0.5, 39.5)) for f in [phn_af_ax.set_xlim, phn_af_ax.set_ylim]]
 
-# plot IBD and IBE
+
+
+#########################
+# create 3d IBD, IBE plot
+#########################
+
 spp_subset = {ind: mod.comm[0][ind] for ind in np.random.choice([*mod.comm[0]],
                                                                 100)}
 gen_dists = calc_dists(spp_subset, allele_freq_diff=False)
@@ -340,81 +419,15 @@ pheno_dists = calc_dists(spp_subset, 'phn', [0])
 # run multiple linear regression of gen on geo and env dists
 mlr_est = sm.Logit(endog=np.array(scaled_gen_dists.T),
                    exog=np.vstack((geo_dists, env_dists)).T).fit()
-#mlr_est = sm.GLM(endog=np.array(scaled_gen_dists.T),
-#                 exog=np.vstack((geo_dists, env_dists)).T,
-#                 family=sm.families.Binomial(sm.families.links.cloglog)).fit()
 
-
-# ax5 = fig.add_subplot(325)
-ax5 = plt.subplot(gs[6])
-ax5.scatter(geo_dists, scaled_gen_dists, alpha=0.05, c='black')
-# plt.scatter(geo_dists, gen_dists, alpha=0.05, c='black')
-# add a regression line (NOTE: doesn't include an intercept by default,
-# so I need to include one manually in the design matrix)
+# create logistic regression (to use in wireframe predicted surface)
 x_preds = np.arange(0, 50.1, 0.1)
 y_preds = np.linspace(0, 1, len(x_preds))
 z_preds = mlr_est.predict(np.vstack((x_preds, y_preds)).T)
-# y_preds = est.predict(np.vstack(([1] * len(x_preds), x_preds)).T)
-ax5.plot(x_preds, z_preds, color='#C33B3B')
-ax5.text(min(geo_dists) + 0.4 * (max(geo_dists) - min(geo_dists)),
-         0.15, 'slope:    %0.3f' % mlr_est.params[0],
-         color='#C33B3B', size=9)
 p_val_lt = mlr_est.pvalues[0] < 0.001
 assert p_val_lt, 'p-value not less than 0.001!'
-ax5.text(min(geo_dists) + 0.4 * (max(geo_dists) - min(geo_dists)),
-         0.05, 'p-value < 0.001',
-         color='#C33B3B', size=9)
-#ax5.text(min(geo_dists) + 0.4 * (max(geo_dists) - min(geo_dists)),
-#         0.45, 'Pseudo-$R^{2}$:   %0.2f' % mlr_est.prsquared,
-#         color='#C33B3B', size=9)
-ax5.set_title('IBD', fontsize=16)
-ax5.set_xlabel('geographic distance', fontsize=14)
-ax5.set_ylabel('genetic distance', fontsize=14)
-# ax5.set_ylim(int(np.floor(min(gen_dists))), int(np.ceil(max(gen_dists))))
-ax5.set_ylim((0, 1))
-# ax5.set_aspect('equal')
-# ax6 = fig.add_subplot(326, sharey=ax5)
 
-
-ax6 = plt.subplot(gs[7], sharey=ax5)
-ax6.scatter(env_dists, scaled_gen_dists, alpha=0.05, c='black')
-# plt.scatter(env_dists, gen_dists, alpha=0.05, c='black')
-# add a regression line (a quadratic regression, to allow for a saturating
-# pattern within the range of x values)
-# x_preds = np.arange(0, 1, 0.01)
-# z_preds = est.predict(x_preds.T)
-# y_preds = est.predict(np.vstack(([1] * len(x_preds), x_preds)).T)
-ax6.plot(y_preds, z_preds, color='#C33B3B')
-ax6.text(min(env_dists) + 0.4 * (max(env_dists) - min(env_dists)),
-         0.15, 'slope:    %0.3f' % mlr_est.params[1],
-         color='#C33B3B', size=9)
-p_val_lt = mlr_est.pvalues[0] < 0.001
-assert p_val_lt, 'p-value not less than 0.001!'
-ax6.text(min(env_dists) + 0.4 * (max(env_dists) - min(env_dists)),
-         0.05, 'p-value < 0.001',
-         color='#C33B3B', size=9)
-#ax6.text(min(env_dists) + 0.4 * (max(env_dists) - min(env_dists)),
-#         0.45, 'Pseudo-$R^{2}$:   %0.2f' % mlr_est.prsquared,
-#         color='#C33B3B', size=9)
-ax6.set_title('IBE', fontsize=16)
-ax6.set_xlabel('environmental distance', fontsize=14)
-# ax6.set_yticks([])
-# ax6.set_aspect('equal')
-
-# TODO: add regression line to each plot
-fig.tight_layout()
-plt.subplots_adjust(left=0.05, bottom=0.07, right=0.98, top=0.96, wspace=0.07,
-                    hspace=0.16)
-plt.savefig(os.path.join(img_dir, 'IBD_IBE.pdf'), format='pdf', dpi=1000)
-
-
-# create 3d animated plot
-plt.rc('animation', html='html5')
-fig3d = plt.figure()
-ax3d = fig3d.add_subplot(111, projection='3d')
-ax3d.set_xlabel('geo', size=15)
-ax3d.set_ylabel('env', size=15)
-ax3d.set_zlabel('gen', size=15)
+# create 3d-plot data
 y_vals = np.arange(0, 1.01, 0.01)
 ys = np.hstack([list(y_vals) for _ in range(len(y_vals))])
 xs = np.hstack([[n] * len(y_vals) for n in np.linspace(0, 50, len(y_vals))])
@@ -422,42 +435,63 @@ zs = mlr_est.predict(np.vstack((xs, ys)).T)
 xs = xs.reshape([len(y_vals)] * 2)
 ys = ys.reshape([len(y_vals)] * 2)
 zs = zs.reshape([len(y_vals)] * 2)
-
-#col3d = ((geo_dists / geo_dists.max()) + (env_dists / env_dists.max())) / 2
 col3d = pheno_dists / pheno_dists.max()
 
-# initialization function: plot the background of each frame
-def init():
-    ax3d.plot_wireframe(xs, ys, zs, color='lightgray', ccount=10, rcount=10,
-                        linestyles='dashed', alpha=0.9, linewidths=0.5)
-    scat = ax3d.scatter(geo_dists, env_dists, scaled_gen_dists,
-                         alpha=0.5, c=col3d, cmap='plasma')
-    #ax3d.plot_surface(xs, ys, zs, color='gray', alpha=0.995)
-    return fig3d,
 
-# animation function. This is called sequentially
-def animate(i):
-    ax3d.view_init(elev=5., azim=i)
-    return fig3d,
+# plot on 3d axes
+for ax in [n1_3d_ax, n2_3d_ax, n3_3d_ax]:
+   ax.scatter(geo_dists, env_dists, scaled_gen_dists,
+              alpha=1, edgecolor='black', c=col3d, cmap='plasma')
 
-# use the init and animate functions to create an animation object
-anim = animation.FuncAnimation(fig3d, animate, init_func=init, frames=359,
-                               interval=5, blit=True)
-# write to file
-anim.save('./IBD_IBE_animation.gif', writer='imagemagick', fps=60)
+fig.show()
 
 
+#########################
+# create 3d animated plot
+#########################
+if make_3d_plot:
+    plt.rc('animation', html='html5')
+    fig3d = plt.figure()
+    ax3d = fig3d.add_subplot(111, projection='3d')
+    ax3d.set_xlabel('geo', size=15)
+    ax3d.set_ylabel('env', size=15)
+    ax3d.set_zlabel('gen', size=15)
+    # initialization function: plot the background of each frame
+    def init():
+        ax3d.plot_wireframe(xs, ys, zs, color='lightgray', ccount=10, rcount=10,
+                            linestyles='dashed', alpha=0.95, linewidths=0.5)
+        scat = ax3d.scatter(geo_dists, env_dists, scaled_gen_dists,
+                             alpha=0.5, c=col3d, cmap='plasma')
+        return fig3d,
+
+    # animation function. This is called sequentially
+    def animate(i):
+        ax3d.view_init(elev=5., azim=i)
+        return fig3d,
+
+    # use the init and animate functions to create an animation object
+    anim = animation.FuncAnimation(fig3d, animate, init_func=init, frames=359,
+                                   interval=5, blit=True)
+    # write to file
+    anim.save('./IBD_IBE_animation.gif', writer='imagemagick', fps=60)
+
+    fig3d.show()
+
+##########################
 # create plot of z-e diffs
+##########################
 z_e_fig = plt.figure()
 ax = z_e_fig.add_subplot(111)
 plt.plot(range(len(z_e_diffs)), z_e_diffs, color='#096075')
 ax.set_xlabel('time')
 ax.set_ylabel(('mean difference between individuals\' phenotypes and '
                'environmental values'))
-plt.show()
+z_e_fig.show()
 
 
+#####################################
 # print out the zone-crossing results
+#####################################
 cross_rate = cross_count / T
 print(("\nThe barrier-zone crossing rate was %0.6f individuals "
       "per time step.\n") % cross_rate)

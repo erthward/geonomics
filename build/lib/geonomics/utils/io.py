@@ -15,7 +15,6 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 import rasterio
-from osgeo import gdal
 
 
 ######################################

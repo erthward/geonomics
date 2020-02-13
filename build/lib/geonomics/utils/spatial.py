@@ -19,15 +19,7 @@ from operator import itemgetter as ig
 from scipy import interpolate
 from scipy.spatial import cKDTree
 from shapely import geometry as g
-import warnings
-
-# optional imports
-try:
-    from nlmpy import nlmpy
-except Exception as e:
-    warnings.warn(("Unable to import module 'nlmpy.nlmpy'. Will not be able to"
-                   " use it package to make NLMpy rasters (neutral landscape "
-                   "models. The following error was raised:\n\t%s\n\n") % e)
+from nlmpy import nlmpy
 
 # set default vonmises params
 s_vonmises.a = -np.inf
@@ -421,26 +413,22 @@ def _make_conductance_surface(rast, mixture=True, approx_len=5000,
 
 # coarse wrapper around the nlmpy package
 def _make_nlmpy_raster(nlmpy_params):
-    if 'nlmpy' in globals():
-        # pop out the name of the function to be called
-        fn_name = nlmpy_params.pop('function')
-        # try to create the nlmpy raster
-        try:
-            # get the function to be called
-            fn = getattr(nlmpy, fn_name)
-            nlm = fn(**nlmpy_params)
-        except Exception as e:
-            raise ValueError(("NLMpy could not generate the raster using the "
-                              "parameters provided. It threw the following "
-                              "error:\n\n\t" "%s\n\n.") % e)
-        # if the nlm generated is not constrained between 0 and 1, rescale
-        # to that range
-        if nlm.min() < 0 or nlm.max() > 1:
-            nlm, min_inval, max_inval = _scale_raster(nlm)
-        return nlm
-    else:
-        raise ModuleNotFoundError(("It appears that 'nlmpy.nlmpy' was not "
-                                   "imported successfully."))
+    # pop out the name of the function to be called
+    fn_name = nlmpy_params.pop('function')
+    # try to create the nlmpy raster
+    try:
+        # get the function to be called
+        fn = getattr(nlmpy, fn_name)
+        nlm = fn(**nlmpy_params)
+    except Exception as e:
+        raise ValueError(("NLMpy could not generate the raster using the "
+                          "parameters provided. It threw the following "
+                          "error:\n\n\t" "%s\n\n.") % e)
+    # if the nlm generated is not constrained between 0 and 1, rescale
+    # to that range
+    if nlm.min() < 0 or nlm.max() > 1:
+        nlm, min_inval, max_inval = _scale_raster(nlm)
+    return nlm
 
 
 # linearly scale a raster to 0 <= x <= 1, and return the min and max input vals

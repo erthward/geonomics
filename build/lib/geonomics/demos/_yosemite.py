@@ -17,6 +17,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import os
 import time
 
+gnx_dir = os.path.split(__file__)[0]
+gnx_dir = os.path.join(*os.path.split(gnx_dir)[:-1])
+DATA_PATH = os.path.join(gnx_dir, "data", "yosemite_demo")
 
 
 def calc_neighborhood_mean_phenotype(mod, window_width=8):
@@ -195,8 +198,9 @@ def _make_params():
                         #parameters for a 'file'-type Layer
                         'file': {
                             #</path/to/file>.<ext>
-                            'filepath': ('./geonomics/data/yosemite_demo/'
-                                         'yosemite_lyrs/tmp_1980-2010.tif'),
+                            'filepath': os.path.join(DATA_PATH,
+                                                     'yosemite_lyrs', 
+                                                     'tmp_1980-2010.tif'),
                             #minimum value to use to rescale the Layer to [0,1]
                             'scale_min_val':                -1.37,
                             #maximum value to use to rescale the Layer to [0,1]
@@ -220,8 +224,9 @@ def _make_params():
                         0: {
                             #array or file for final raster of event, or directory
                             #of files for each stepwise change in event
-                            'change_rast': ('./geonomics/data/yosemite_demo/'
-                                            'yosemite_lyrs/tmp'),
+                            'change_rast': os.path.join(DATA_PATH,
+                                                        'yosemite_lyrs',
+                                                        'tmp'),
     
                             #starting timestep of event
                             'start_t':          509,
@@ -249,8 +254,9 @@ def _make_params():
                         #parameters for a 'file'-type Layer
                         'file': {
                             #</path/to/file>.<ext>
-                            'filepath': ('./geonomics/data/yosemite_demo/'
-                                         'yosemite_lyrs/sdm_1980-2010.tif'),
+                            'filepath': os.path.join(DATA_PATH,
+                                                     'yosemite_lyrs',
+                                                     'sdm_1980-2010.tif'),
                             #minimum value to use to rescale the Layer to [0,1]
                             'scale_min_val':                0,
                             #maximum value to use to rescale the Layer to [0,1]
@@ -274,8 +280,9 @@ def _make_params():
                         0: {
                             #array or file for final raster of event, or directory
                             #of files for each stepwise change in event
-                            'change_rast': ('./geonomics/data/yosemite_demo/'
-                                            'yosemite_lyrs/sdm'),
+                            'change_rast': os.path.join(DATA_PATH,
+                                                        'yosemite_lyrs',
+                                                        'sdm'),
     
                             #starting timestep of event
                             'start_t':          509,
@@ -303,8 +310,9 @@ def _make_params():
                         #parameters for a 'file'-type Layer
                         'file': {
                             #</path/to/file>.<ext>
-                            'filepath': ('./geonomics/data/yosemite_demo/'
-                                         'yosemite_lyrs/ppt_1980-2010.tif'),
+                            'filepath': os.path.join(DATA_PATH,
+                                                     'yosemite_lyrs',
+                                                     'ppt_1980-2010.tif'),
                             #minimum value to use to rescale the Layer to [0,1]
                             'scale_min_val':                81.53713,
                             #maximum value to use to rescale the Layer to [0,1]
@@ -328,8 +336,9 @@ def _make_params():
                         0: {
                             #array or file for final raster of event, or directory
                             #of files for each stepwise change in event
-                            'change_rast': ('./geonomics/data/yosemite_demo/'
-                                            'yosemite_lyrs/ppt'),
+                            'change_rast': os.path.join(DATA_PATH,
+                                                        'yosemite_lyrs',
+                                                        'ppt'),
     
                             #starting timestep of event
                             'start_t':          509,

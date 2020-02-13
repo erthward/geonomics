@@ -120,6 +120,9 @@ Required dependencies:
 
 - `rasterio <https://rasterio.readthedocs.io/en/latest/index.html>`_
 
+Optional dependencies:
+......................
+
 - `nlmpy <http://pypi.org/project/nlmpy/>`_
 
 

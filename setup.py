@@ -45,7 +45,8 @@ setuptools.setup(
     },
     install_requires=['numpy', 'matplotlib', 'pandas>=0.23.4', 'geopandas',
                       'scipy>=1.3.1', 'scikit-learn', 'statsmodels>=0.9.0',
-                      'shapely', 'bitarray', 'pyvcf', 'rasterio', 'nlmpy'],
+                      'shapely', 'bitarray', 'pyvcf', 'rasterio'],
+    extras_requie={'simulation on neutral landscape models': ['nlmpy']},
     python_requires='>=3.5',
     # package_data={
     # 'demos': ['geonomics/demos/yosemite/yosemite_30yr_normals_90x90.tif']

@@ -5,7 +5,7 @@ from . import ops
 from . import sim
 from . import utils
 from . import help
-#from . import demos
+from . import demos
 from .main import *
 
 __docformat__ = 'restructuredtext'

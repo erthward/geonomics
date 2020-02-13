@@ -49,7 +49,7 @@ from geonomics.structs.individual import _make_individual
 from geonomics.structs.species import _make_species
 from geonomics.structs.community import _make_community
 from geonomics.structs import landscape, genome, individual, species, community
-from geonomics.demos import _IBD_IBE, _simult_select, _yosemite
+from . import demos 
 
 #other imports
 import re
@@ -710,19 +710,19 @@ def run_demo(name, save_figs=False, time_it=False, **kwargs):
     """
 
     if name == 'IBD IBE':
-        params = _IBD_IBE._make_params()
+        params = demos._IBD_IBE._make_params()
         params = make_params_dict(params)
-        mod = _IBD_IBE._run(params, save_figs, time_it, **kwargs)
+        mod = demos._IBD_IBE._run(params, save_figs, time_it, **kwargs)
 
     if name == 'simult select':
-        params = _simult_select._make_params()
+        params = demos._simult_select._make_params()
         params = make_params_dict(params)
-        mod = _simult_select._run(params, save_figs, time_it, **kwargs)
+        mod = demos._simult_select._run(params, save_figs, time_it, **kwargs)
 
     if name == 'yosemite':
-        params = _yosemite._make_params()
+        params = demos._yosemite._make_params()
         params = make_params_dict(params)
-        mod = _yosemite._run(params, save_figs, time_it, **kwargs)
+        mod = demos._yosemite._run(params, save_figs, time_it, **kwargs)
 
     else:
         print(('The specified demo ("%s") either is not yet implemented '

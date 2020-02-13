@@ -14,15 +14,8 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
-import warnings
-
-# optional imports
-try:
-    from osgeo import gdal
-except Exception as e:
-    warnings.warn(("Unable to import module 'osgeo.gdal'. Will not be able to "
-                   "use it to make read or write GIS raster files. "
-                   "The following error was raised:\n\t%s\n\n") % e)
+import rasterio
+from osgeo import gdal
 
 
 ######################################
@@ -87,28 +80,24 @@ def _read_raster(filepath, coord_prec, dim=None):
         ulc = (0, 0)
         prj = None
     else:
-        if 'gdal' in globals():
-            rast_file = gdal.Open(filepath)
-            rast = rast_file.ReadAsArray()
-            dim = rast.shape[::-1]
-            # NOTE: From tutorial at https://www.gdal.org/gdal_tutorial.html:
-            # adfGeoTransform[0] /* top left x */
-            # adfGeoTransform[1] /* w-e pixel resolution */
-            # adfGeoTransform[2] /* 0 */
-            # adfGeoTransform[3] /* top left y */
-            # adfGeoTransform[4] /* 0 */
-            # adfGeoTransform[5] /* n-s pixel resolution (negative value) */
-            res = tuple([i for n, i in enumerate(rast_file.GetGeoTransform(
-                                                            )) if n in [1, 5]])
-            res = np.round(res, coord_prec)
-            ulc = tuple([i for n, i in enumerate(rast_file.GetGeoTransform(
-                                                            )) if n in [0, 3]])
-            ulc = np.round(ulc, coord_prec)
-            # get the projection as WKT
-            prj = rast_file.GetProjection()
-        else:
-            raise ModuleNotFoundError(("It appears that 'osgeo.gdal' was not "
-                                       "imported successfully."))
+        rast_file = rasterio.open(filepath)
+        rast = rast_file.read()[0, :, :]
+        dim = rast.shape[::-1]
+        # NOTE: From tutorial at https://www.gdal.org/gdal_tutorial.html:
+        # adfGeoTransform[0] /* top left x */
+        # adfGeoTransform[1] /* w-e pixel resolution */
+        # adfGeoTransform[2] /* 0 */
+        # adfGeoTransform[3] /* top left y */
+        # adfGeoTransform[4] /* 0 */
+        # adfGeoTransform[5] /* n-s pixel resolution (negative value) */
+        res = tuple([i for n, i in enumerate(rast_file.get_transform(
+                                                        )) if n in [1, 5]])
+        res = np.round(res, coord_prec)
+        ulc = tuple([i for n, i in enumerate(rast_file.get_transform(
+                                                        )) if n in [0, 3]])
+        ulc = np.round(ulc, coord_prec)
+        # get the projection as a CRS object
+        prj = rast_file.crs
     return(rast, dim, res, ulc, prj)
 
 
@@ -217,57 +206,44 @@ def _write_txt_array(filepath, lyr):
 
 # write a geotiff from a landscape.Layer object's numpy-array raster
 def _write_geotiff(filepath, lyr):
-    if 'gdal' in globals():
-        filepath = _set_extension(filepath, ['tif', 'tiff'])
-        # TODO: this is a tweak on code from https://gis.stackexchange.com/
-        # questions/58517/python-gdal-save-array-as-raster-with-projection-from-
-        # other-file
-        # get the driver
-        driver = gdal.GetDriverByName('GTiff')
-        # get values
-        # number of pixels in x and y
-        x_pixels = lyr.dim[1]
-        y_pixels = lyr.dim[0]
-        # resolution
-        PIXEL_SIZE = lyr.res[0]
-        # x_min & y_max are the "top-left corner"
-        x_min = lyr.ulc[0]
-        y_max = lyr.ulc[1] + (lyr.dim[1] * lyr.res[1])
-        # get the WKT projection
-        wkt_projection = lyr.prj
-        if wkt_projection is None:
-            # TODO: FOR NOW THIS DEFAULTS TO THE _DEFAULT_PROJ
-            # VARIABLE, BUT THINK ABOUT WHETHER IT MAKES ANY SENSE TO HAVE
-            # SUCH A DEFAULT, AND IF SO, WHETHER OR NOT THERE'S A BETTER
-            # OPTION
-            wkt_projection = _DEFAULT_PROJ
-        dataset = driver.Create(
-           filepath,
-           x_pixels,
-           y_pixels,
-           1,
-           gdal.GDT_Float32, )
-        dataset.SetGeoTransform((
-           x_min,         # 0
-           PIXEL_SIZE,    # 1
-           0,             # 2
-           y_max,         # 3
-           0,             # 4
-           -PIXEL_SIZE))  # 5
-        # set the projection
-        dataset.SetProjection(wkt_projection)
-        # and write to disk
-        dataset.GetRasterBand(1).WriteArray(lyr.rast)
-        dataset.FlushCache()
+    filepath = _set_extension(filepath, ['tif', 'tiff'])
+    # create a dict that contains all the necessary outfile metadata
+    out_meta = {'driver': 'GTiff',
+                'dtype': 'float32',     # always save as continuous data
+                'nodata': None,
+                'width': lyr.dim[0],
+                'height': lyr.dim[1],   
+                'count': 1,             # n layers
+                'tiled': False,
+                'compress': 'lzw',
+                'interleave': 'band'
+               }
+
+    # take the Layer's projection, if it has one, or else just assign
+    # it unprojected lat-lon, WGS84
+    if lyr.prj is None:
+        out_meta['crs'] = rasterio.crs.CRS.from_dict(init='epsg:4326')
     else:
-        raise ModuleNotFoundError(("It appears that 'osgeo.gdal' was not "
-                                   "imported successfully."))
+        out_meta['crs'] = lyr.prj
+
+    # use the res and ulc info to create the transform object
+    aff = rasterio.transform.Affine(res[0],
+                                    0,
+                                    ulc[0],
+                                    0,
+                                    res[1],
+                                    ulc[1]
+                                   )
+    out_meta['transform'] = aff
+
+    with rasterio.open(filepath, 'w', **out_meta) as dst:
+        dst.write(lyr.rast, 1)
+    return
 
 
 #    #########
 #    # Other #
 #    #########
-
 
 # add the correct extension to a filepath, if necessary
 def _set_extension(filepath, ft_ext):

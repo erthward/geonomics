@@ -371,7 +371,7 @@ def _calc_ld(spp, plot = False):
     assert L == np.shape(speciome)[1], ("The length of the 1st dimension "
                             "of speciome doesn't equal spp.genomic_arch.L")
 
-    r2_mat = np.zeros([L]*2)-1 # -1 serves as a 'no data' value
+    r2_mat = np.zeros([L]*2) * np.nan # vals default to NaN
 
     for i in range(L):
         for j in range(i+1, L):
@@ -384,7 +384,9 @@ def _calc_ld(spp, plot = False):
                                                         axis = None))/(N)
             D_1_1 = f11_ij - (f1_i * f1_j)
             r2 = (D_1_1**2)/(f1_i*(1-f1_i)*f1_j*(1-f1_j))
+            # add to both triangular halves, to produce a symmetric matrix
             r2_mat[i,j] = r2
+            r2_mat[j,i] = r2
 
     return(r2_mat)
 

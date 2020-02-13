@@ -375,7 +375,6 @@ def read_parameters_file(filepath):
     """
 
     #first read in file as a block of text
-    print(os.listdir('.'))
     with open(filepath, 'r') as f:
         txt = f.read()
     #find all the layer names and spp names

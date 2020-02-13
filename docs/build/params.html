@@ -539,7 +539,7 @@ the <strong>rast</strong> parameter is given a <code class="code py python docut
 <p>This defines the location and name of the file that should be read in as the
 raster-array for this <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>. Valid file types include a ‘.txt’ file
 containing a 2d <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code>, or any GIS raster file that can be read
-by <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">osgeo</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">gdal</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">Open</span></span></code>. In all cases, the raster-array read in from the
+by <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">rasterio</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">open</span></span></code>. In all cases, the raster-array read in from the
 file must have dimensions equal to the stipulated dimensions of the
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> (as defined in the <strong>dims</strong> parameter, above); otherwise,
 Geonomics will throw an Error. Defaults to a dummy filename that must be
@@ -716,7 +716,7 @@ i.e. passed on to it, at the time it is called).</p>
 <p>reset? Y</p>
 <p>This defines either the final raster of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> change event
 (with valid values being a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">numpy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code> or a string pointing
-to a valid raster file, i.e. a file that can be read by <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">osgeo</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">gdal</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">Open</span></span></code>);
+to a valid raster file, i.e. a file that can be read by <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">rasterio</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">open</span></span></code>);
 or the stepwise series of changes to be made over the course of the
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> change event (with the valid value being a string
 pointing to a directory full of valid raster files).

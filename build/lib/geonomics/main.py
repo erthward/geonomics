@@ -49,6 +49,7 @@ from geonomics.structs.individual import _make_individual
 from geonomics.structs.species import _make_species
 from geonomics.structs.community import _make_community
 from geonomics.structs import landscape, genome, individual, species, community
+from geonomics import demos
 
 #other imports
 import re
@@ -374,6 +375,7 @@ def read_parameters_file(filepath):
     """
 
     #first read in file as a block of text
+    print(os.listdir('.'))
     with open(filepath, 'r') as f:
         txt = f.read()
     #find all the layer names and spp names
@@ -618,7 +620,7 @@ def run_default_model(delete_params_file=True, animate=False):
     """
     Run the default Geonomics model.
 
-    This wll create a parameters file for the default Geonomics model,
+    This will create a parameters file for the default Geonomics model,
     read that in as a model, and run a single iteration of that model.
 
     Parameters
@@ -656,6 +658,78 @@ def run_default_model(delete_params_file=True, animate=False):
         os.remove(os.path.join('.', filename))
     # return the model, in case someone wants to mess with/introspect it
     # afterwards
+    return mod
+
+
+# convenience function for creating a parameters-file for, instantiating, and
+# running the default model, plotting the result, then returning the Model
+# object
+def run_demo(name, save_figs=False, time_it=False, **kwargs):
+    """
+    Run a Geonomics demo.
+
+    This will run whichever of the Geonomics demos is stipulated by the *name*
+    argument.
+
+    Parameters
+    ----------
+    name : str 
+        Can be one of the following values:
+
+            - *'IBD IBE'*: Runs the IBD, IBE demo (example 1 from the methods
+              paper).
+
+            - *'simult select'*: Runs the simultaneous selection demo (example
+              2 from the methods paper).
+
+            - *'yosemite'*: Runs the Yosemite demo (example 3 from the methods
+              paper).
+
+    save_figs : bool, optional, default: False
+        If True, all figures that are produced will be saved to their default
+        filenames in the current working directory.
+
+    time_it : bool, optional, default: False
+        If True, the run time for the main portion of the model (excluding
+        calculation of data for figures and creation of figures, as much as
+        possible) will be calculated, then displayed after the model has run
+        to completion.
+
+    Notes
+    -----
+    Some of the available demos come from the original Geonomics methods paper,
+    Hart and Wang 2020, "Geonomics: forward-time, agent-based, spatially
+    explicit, and arbitrarily complex landscape genomic simulations".
+
+    Returns
+    -------
+    :class:`geonomics.Model`
+        The Model object that was created, after it has run to completion.
+        (If saved to a variable, it can be used for any number of additional
+        runs using the Model.walk method. It can also be used to try out
+        visualization methods, or to introspect its structure.)
+    """
+
+    if name == 'IBD IBE':
+        params = demos._IBD_IBE._make_params()
+        params = make_params_dict(params)
+        mod = demos._IBD_IBE._run(params, save_figs, time_it, **kwargs)
+
+    if name == 'simult select':
+        params = demos._simult_select._make_params()
+        params = make_params_dict(params)
+        mod = demos._simult_select._run(params, save_figs, time_it, **kwargs)
+
+    if name == 'yosemite':
+        params = demos._yosemite._make_params()
+        params = make_params_dict(params)
+        mod = demos._yosemite._run(params, save_figs, time_it, **kwargs)
+
+    else:
+        print(('The specified demo ("%s") either is not yet implemented '
+               'or does not exist!') % name)
+        mod = None
+
     return mod
 
 

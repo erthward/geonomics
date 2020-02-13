@@ -88,7 +88,6 @@
               <p class="caption"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installing-with-conda">Installing with <cite>conda</cite></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installing-with-pip">Installing with <cite>pip</cite></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#required-dependencies">Required dependencies:</a></li>
@@ -183,46 +182,12 @@
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <p>Some Geonomics dependencies (i.e. other Python packages that Geonomics uses)
 depend in turn on a stack of open-source geospatial libraries
-in C (<a class="reference external" href="https://geos.osgeo.org">GEOS</a>, <a class="reference external" href="https://proj.org/">PROJ</a>, <a class="reference external" href="https://www.gdal.org/">and GDAL</a>). They can sometimes be tricky to install.
-Thus, if you are unsure if you already have a working install of those
-libraries, then we recommend <span class="xref std std-ref">Installing with `conda``</span>.</p>
-<p>Alternatively, you can try <span class="xref std std-ref">Installing with `pip``</span>. That will work fine,
-as long as <cite>pip</cite> can successfully install Geonomics’ dependencies as well.</p>
-<p>You can find a list of Geonomics’ <a class="reference internal" href="#dependencies"><span class="std std-ref">Dependencies</span></a> below.</p>
-<div class="section" id="installing-with-conda">
-<h2>Installing with <cite>conda</cite><a class="headerlink" href="#installing-with-conda" title="Permalink to this headline">¶</a></h2>
-<p>You may want to install with <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a>, as it will automatically install
-third-party dependencies (such as <a class="reference external" href="https://geos.osgeo.org">GEOS</a>, <a class="reference external" href="http://pypi.org/project/GDAL/">GDAL</a>, and <a class="reference external" href="https://proj.org/">PROJ</a>) for you
-as well.</p>
-<p>The <cite>conda</cite> software can be installed by following
-the installation instructions on the <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a> webpage.</p>
-<p>Then, Geonomics can be installed using:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda config --env --add channels conda-forge
-conda install geonomics
-</pre></div>
-</div>
-<p>If you prefer, you may first create a new <cite>conda</cite> environment, then install
-Geonomics there. This will avoid potential dependency conflicts with other
-packages using Geonomics’ dependencies. You can do that by running:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create -n gnx
-conda activate gnx
-conda config --env --add channels conda-forge
-conda install <span class="nv">python</span><span class="o">=</span><span class="m">3</span> geonomics
-</pre></div>
-</div>
-<p>Once installed, Geonomics can then be tested by launching a Python prompt and running:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">geonomics</span> <span class="k">as</span> <span class="nn">gnx</span>
-<span class="n">gnx</span><span class="o">.</span><span class="n">run_default_model</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>This will load the Geonomics package, create in your current working
-directory a new Geonomics parameters file containing the default
-parameter values, use that file to instantiate and run a Geonomics model,
-then delete the parameters file (by default).</p>
-</div>
+in C (<a class="reference external" href="https://geos.osgeo.org">GEOS</a>, <a class="reference external" href="https://www.gdal.org/">GDAL</a>, and <a class="reference external" href="https://proj.org/">PROJ</a>).</p>
+<p>They can sometimes be tricky to install. Please make sure you have them installed first.
+Then you can follow the <cite>pip</cite> installation instructions below.</p>
 <div class="section" id="installing-with-pip">
 <h2>Installing with <cite>pip</cite><a class="headerlink" href="#installing-with-pip" title="Permalink to this headline">¶</a></h2>
-<p>If you already have <a class="reference external" href="https://geos.osgeo.org">GEOS</a>, <a class="reference external" href="http://pypi.org/project/GDAL/">GDAL</a>, and <a class="reference external" href="https://proj.org/">PROJ</a> installed, then installing
+<p>If you already have <a class="reference external" href="https://geos.osgeo.org">GEOS</a>, <a class="reference external" href="https://www.gdal.org/">GDAL</a>, and <a class="reference external" href="https://proj.org/">PROJ</a> installed, then installing
 with <a class="reference external" href="https://pip.pypa.io/en/stable/">pip</a> probably will not be an issue.</p>
 <p>The <cite>pip</cite> software can be installed by following
 the installation instructions on the <a class="reference external" href="https://pip.pypa.io/en/stable/">pip</a> webpage.</p>
@@ -256,8 +221,8 @@ then delete the parameters file (by default).</p>
 <li><p><a class="reference external" href="http://shapely.readthedocs.io/en/stable/project.html">shapely</a></p></li>
 <li><p><a class="reference external" href="http://pypi.org/project/bitarray/">bitarray</a></p></li>
 <li><p><a class="reference external" href="http://pyvcf.readthedocs.io/en/latest/">pyvcf</a></p></li>
+<li><p><a class="reference external" href="https://rasterio.readthedocs.io/en/latest/index.html">rasterio</a></p></li>
 <li><p><a class="reference external" href="http://pypi.org/project/nlmpy/">nlmpy</a></p></li>
-<li><p><a class="reference external" href="http://pypi.org/project/GDAL/">GDAL</a></p></li>
 </ul>
 </div>
 </div>

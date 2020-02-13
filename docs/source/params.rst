@@ -439,7 +439,7 @@ reset? Y
 This defines the location and name of the file that should be read in as the
 raster-array for this :py:`Layer`. Valid file types include a '.txt' file
 containing a 2d :py:`np.ndarray`, or any GIS raster file that can be read
-by :py:`osgeo.gdal.Open`. In all cases, the raster-array read in from the
+by :py:`rasterio.open`. In all cases, the raster-array read in from the
 file must have dimensions equal to the stipulated dimensions of the
 :py:`Landscape` (as defined in the **dims** parameter, above); otherwise,
 Geonomics will throw an Error. Defaults to a dummy filename that must be
@@ -690,7 +690,7 @@ reset? Y
 
 This defines either the final raster of the :py:`Landscape` change event
 (with valid values being a :py:`numpy.ndarray` or a string pointing
-to a valid raster file, i.e. a file that can be read by :py:`osgeo.gdal.Open`);
+to a valid raster file, i.e. a file that can be read by :py:`rasterio.open`);
 or the stepwise series of changes to be made over the course of the
 :py:`Landscape` change event (with the valid value being a string
 pointing to a directory full of valid raster files).

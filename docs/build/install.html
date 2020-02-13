@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Quick start" href="quickstart.html" />
+    <link rel="next" title="Getting started" href="quickstart.html" />
     <link rel="prev" title="Geonomics 0.0" href="index.html" /> 
 </head>
 
@@ -88,24 +88,27 @@
               <p class="caption"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installing-with-conda">Installing with <cite>conda</cite></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installing-with-pip">Installing with <cite>pip</cite></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#required-dependencies">Required dependencies:</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#optional-dependencies">Optional dependencies:</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mac-segmentation-fault">Mac Segmentation Fault</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html#really-quick-start"><em>Really</em> Quick Start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="overview.html#motivation">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="procedural_diagram.html">Workflow Diagram</a></li>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="conceptual_diagram.html">Conceptual Diagram</a></li>
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="overview.html#motivation">Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="viz.html">Visualization</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Reference Guide</span></p>
@@ -178,14 +181,52 @@
             
   <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>Geonomics depends on a number of common Python packages. See the
-<a class="reference internal" href="#dependencies"><span class="std std-ref">Dependencies</span></a> section below for details.</p>
+<p>Some Geonomics dependencies (i.e. other Python packages that Geonomics uses)
+depend in turn on a stack of open-source geospatial libraries
+in C (<a class="reference external" href="https://geos.osgeo.org">GEOS</a>, <a class="reference external" href="https://proj.org/">PROJ</a>, <a class="reference external" href="https://www.gdal.org/">and GDAL</a>). They can sometimes be tricky to install.
+Thus, if you are unsure if you already have a working install of those
+libraries, then we recommend <span class="xref std std-ref">Installing with `conda``</span>.</p>
+<p>Alternatively, you can try <span class="xref std std-ref">Installing with `pip``</span>. That will work fine,
+as long as <cite>pip</cite> can successfully install Geonomics’ dependencies as well.</p>
+<p>You can find a list of Geonomics’ <a class="reference internal" href="#dependencies"><span class="std std-ref">Dependencies</span></a> below.</p>
+<div class="section" id="installing-with-conda">
+<h2>Installing with <cite>conda</cite><a class="headerlink" href="#installing-with-conda" title="Permalink to this headline">¶</a></h2>
+<p>You may want to install with <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a>, as it will automatically install
+third-party dependencies (such as <a class="reference external" href="https://geos.osgeo.org">GEOS</a>, <a class="reference external" href="http://pypi.org/project/GDAL/">GDAL</a>, and <a class="reference external" href="https://proj.org/">PROJ</a>) for you
+as well.</p>
+<p>The <cite>conda</cite> software can be installed by following
+the installation instructions on the <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a> webpage.</p>
+<p>Then, Geonomics can be installed using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda config --env --add channels conda-forge
+conda install geonomics
+</pre></div>
+</div>
+<p>If you prefer, you may first create a new <cite>conda</cite> environment, then install
+Geonomics there. This will avoid potential dependency conflicts with other
+packages using Geonomics’ dependencies. You can do that by running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create -n gnx
+conda activate gnx
+conda config --env --add channels conda-forge
+conda install <span class="nv">python</span><span class="o">=</span><span class="m">3</span> geonomics
+</pre></div>
+</div>
+<p>Once installed, Geonomics can then be tested by launching a Python prompt and running:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">geonomics</span> <span class="k">as</span> <span class="nn">gnx</span>
+<span class="n">gnx</span><span class="o">.</span><span class="n">run_default_model</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This will load the Geonomics package, create in your current working
+directory a new Geonomics parameters file containing the default
+parameter values, use that file to instantiate and run a Geonomics model,
+then delete the parameters file (by default).</p>
+</div>
 <div class="section" id="installing-with-pip">
 <h2>Installing with <cite>pip</cite><a class="headerlink" href="#installing-with-pip" title="Permalink to this headline">¶</a></h2>
-<p>To install Geonomics we recommend using
-<cite>pip &lt;https://pypi.org/project/pip/&gt;</cite>. It can be installed by following
-the installation instructions on the <cite>pip &lt;https://pypi.org/project/pip/&gt;</cite>
-webpage. Geonomics can then be installed using:</p>
+<p>If you already have <a class="reference external" href="https://geos.osgeo.org">GEOS</a>, <a class="reference external" href="http://pypi.org/project/GDAL/">GDAL</a>, and <a class="reference external" href="https://proj.org/">PROJ</a> installed, then installing
+with <a class="reference external" href="https://pip.pypa.io/en/stable/">pip</a> probably will not be an issue.</p>
+<p>The <cite>pip</cite> software can be installed by following
+the installation instructions on the <a class="reference external" href="https://pip.pypa.io/en/stable/">pip</a> webpage.</p>
+<p>Then, Geonomics can be installed using:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install geonomics
 </pre></div>
 </div>
@@ -196,7 +237,8 @@ webpage. Geonomics can then be installed using:</p>
 </div>
 <p>This will load the Geonomics package, create in your current working
 directory a new Geonomics parameters file containing the default
-parameter values, then use that file to instantiate and run a Geonomics model.</p>
+parameter values, use that file to instantiate and run a Geonomics model,
+then delete the parameters file (by default).</p>
 </div>
 <div class="section" id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
@@ -207,21 +249,39 @@ parameter values, then use that file to instantiate and run a Geonomics model.</
 <li><p><a class="reference external" href="http://matplotlib.org/">matplotlib</a></p></li>
 <li><p><a class="reference external" href="http://pandas.pydata.org/">pandas</a> (version 0.23.4 or later)</p></li>
 <li><p><a class="reference external" href="http://geopandas.org/">geopandas</a></p></li>
-<li><p><a class="reference external" href="http://www.scipy.org/scipylib/index.html">scipy</a></p></li>
+<li><p><a class="reference external" href="http://www.scipy.org/scipylib/index.html">scipy</a> (version 1.3.1 or later)</p></li>
 <li><p><a class="reference external" href="http://scikit-learn.org/stable/">scikit-learn</a></p></li>
 <li><p><a class="reference external" href="http://www.statsmodels.org/stable/index.html">statsmodels</a> (version
 0.9.0 or later)</p></li>
 <li><p><a class="reference external" href="http://shapely.readthedocs.io/en/stable/project.html">shapely</a></p></li>
 <li><p><a class="reference external" href="http://pypi.org/project/bitarray/">bitarray</a></p></li>
 <li><p><a class="reference external" href="http://pyvcf.readthedocs.io/en/latest/">pyvcf</a></p></li>
-</ul>
-</div>
-<div class="section" id="optional-dependencies">
-<h3>Optional dependencies:<a class="headerlink" href="#optional-dependencies" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
 <li><p><a class="reference external" href="http://pypi.org/project/nlmpy/">nlmpy</a></p></li>
 <li><p><a class="reference external" href="http://pypi.org/project/GDAL/">GDAL</a></p></li>
 </ul>
+</div>
+</div>
+<hr class="docutils" />
+<div class="section" id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+<p>Here is a list of issues that we have seen come up during Geonomics
+installation, each with some suggestions for troubleshooting:</p>
+<div class="section" id="mac-segmentation-fault">
+<h3>Mac Segmentation Fault<a class="headerlink" href="#mac-segmentation-fault" title="Permalink to this headline">¶</a></h3>
+<p><strong>Geonomics installs, but running the default model crashes Python with a
+segmentation fault</strong>:</p>
+<blockquote>
+<div><p>We have only seen this issue on older Macs (ca. 2012-2015). The segmentation
+fault appears to be caused by functions within
+<a class="reference external" href="http://www.scipy.org/scipylib/index.html">scipy</a>’s interpolate module
+(e.g. <cite>scipy.interpolate.griddata</cite>), such as discussed
+<a class="reference external" href="https://stackoverflow.com/questions/59274750/segmentation-fault-when-running-scipy-interpolate">here</a>). The only fix we are aware of, as of now, is to use
+<a class="reference external" href="https://docs.conda.io/en/latest/">conda</a> to set up a clean <cite>conda</cite> environment, the install Geonomics
+and its dependencies there. While we are not sure why, this appears to
+make things all better.</p>
+<p>In <span class="xref std std-ref">Installing with `conda``</span> we have provided code for
+creating a new <cite>conda</cite> environment and installing Geonomics there.</p>
+</div></blockquote>
 </div>
 </div>
 </div>
@@ -234,7 +294,7 @@ parameter values, then use that file to instantiate and run a Geonomics model.</
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="quickstart.html" class="btn btn-neutral float-right" title="Quick start" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="quickstart.html" class="btn btn-neutral float-right" title="Getting started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="index.html" class="btn btn-neutral float-left" title="Geonomics 0.0" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

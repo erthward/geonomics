@@ -9,7 +9,7 @@ Installation
 
 Some Geonomics dependencies (i.e. other Python packages that Geonomics uses)
 depend in turn on a stack of open-source geospatial libraries
-in C (`GEOS`_, `GDAL`_, and `PROJ`_). They can sometimes be tricky to install.
+in C (`GEOS`_, `PROJ`_, `and GDAL`_). They can sometimes be tricky to install.
 Thus, if you are unsure if you already have a working install of those
 libraries, then we recommend :ref:`Installing with \`conda\```.
 
@@ -115,15 +115,13 @@ Required dependencies:
 
 - `pyvcf <http://pyvcf.readthedocs.io/en/latest/>`_
 
-Optional dependencies:
-......................
-
 - `nlmpy <http://pypi.org/project/nlmpy/>`_
 
-- `GDAL (Python package) <http://pypi.org/project/GDAL/>`_
+- `GDAL <http://pypi.org/project/GDAL/>`_
 
 
 
+------------------------------------------------------------
 
 Troubleshooting
 ---------------
@@ -152,7 +150,7 @@ segmentation fault**:
 
 
 
-.. _GDAL: https://www.gdal.org/
+.. _and GDAL: https://www.gdal.org/
 
 .. _GEOS: https://geos.osgeo.org
 

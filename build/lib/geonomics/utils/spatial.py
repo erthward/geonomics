@@ -19,7 +19,13 @@ from operator import itemgetter as ig
 from scipy import interpolate
 from scipy.spatial import cKDTree
 from shapely import geometry as g
-from nlmpy import nlmpy
+
+try:
+    from nlmpy import nlmpy
+    with_nlmpy = True
+except ModuleNotFoundError:
+    print("Module 'nlmpy' not found. Install if desired.")
+    with_nlmpy = False
 
 # set default vonmises params
 s_vonmises.a = -np.inf
@@ -413,21 +419,24 @@ def _make_conductance_surface(rast, mixture=True, approx_len=5000,
 
 # coarse wrapper around the nlmpy package
 def _make_nlmpy_raster(nlmpy_params):
-    # pop out the name of the function to be called
-    fn_name = nlmpy_params.pop('function')
-    # try to create the nlmpy raster
-    try:
-        # get the function to be called
-        fn = getattr(nlmpy, fn_name)
-        nlm = fn(**nlmpy_params)
-    except Exception as e:
-        raise ValueError(("NLMpy could not generate the raster using the "
-                          "parameters provided. It threw the following "
-                          "error:\n\n\t" "%s\n\n.") % e)
-    # if the nlm generated is not constrained between 0 and 1, rescale
-    # to that range
-    if nlm.min() < 0 or nlm.max() > 1:
-        nlm, min_inval, max_inval = _scale_raster(nlm)
+    if with_nlmpy:
+        # pop out the name of the function to be called
+        fn_name = nlmpy_params.pop('function')
+        # try to create the nlmpy raster
+        try:
+            # get the function to be called
+            fn = getattr(nlmpy, fn_name)
+            nlm = fn(**nlmpy_params)
+        except Exception as e:
+            raise ValueError(("NLMpy could not generate the raster using the "
+                              "parameters provided. It threw the following "
+                              "error:\n\n\t" "%s\n\n.") % e)
+        # if the nlm generated is not constrained between 0 and 1, rescale
+        # to that range
+        if nlm.min() < 0 or nlm.max() > 1:
+            nlm, min_inval, max_inval = _scale_raster(nlm)
+    else:
+        print("Module 'nlmpy' not installed. Install to use.")
     return nlm
 
 

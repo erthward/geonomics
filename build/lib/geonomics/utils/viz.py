@@ -32,7 +32,6 @@ from matplotlib.colors import LinearSegmentedColormap
 
 def _check_display():
     if os.environ.get('DISPLAY','') == '':
-        print('\nNOTICE: No display found, so plotting disabled.')
         mpl.use('Agg')
 
 def _choose_cmap(lyr_num):

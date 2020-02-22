@@ -16,5 +16,6 @@ Geonomics - A Python package for running complex landscape genomics simulations
 ===============================================================================
 
 """
-#with open('README.rst', 'r') as f:
-#    __doc__ = __doc__ + f.read()
+with open('README.rst', 'r') as f:
+    __doc__ = __doc__ + f.read()
+

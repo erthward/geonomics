@@ -25,6 +25,7 @@ import numpy as np
 from numpy import random as r
 import random
 import matplotlib as mpl
+viz._check_display()
 import matplotlib.pyplot as plt
 from scipy.stats.distributions import norm
 from collections import Counter as C

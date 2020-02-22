@@ -8,9 +8,14 @@
 Helper functions for assessing the effects of different parameter settings.
 '''
 
+# geonomics imports
+from geonomics.utils.viz import _check_display
+
 # other imports
+import os
 import numpy as np
 import matplotlib as mpl
+_check_display()
 import matplotlib.pyplot as plt
 from copy import deepcopy
 

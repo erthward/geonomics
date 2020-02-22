@@ -7,7 +7,6 @@ Functions for testing burn-in stationarity.
 
 # other imports
 import numpy as np
-import matplotlib.pyplot as plt
 from numpy import random as r
 from scipy import interpolate
 from scipy.spatial import cKDTree

@@ -6,7 +6,7 @@ Defines the Layer and Landscape classes, with their associated methods and
 supporting functions
 '''
 #geonomics imports
-from geonomics.utils.viz import _get_plt_lims, _plot_rasters
+from geonomics.utils.viz import _get_plt_lims, _plot_rasters, _check_display
 from geonomics.utils.io import _write_geotiff, _write_txt_array, _read_raster
 from geonomics.utils.spatial import _scale_raster, _make_nlmpy_raster
 from geonomics.ops.change import _LandscapeChanger
@@ -16,6 +16,7 @@ import numpy as np
 import numpy.random as r
 import random
 import matplotlib as mpl
+_check_display()
 import matplotlib.pyplot as plt
 from collections import Counter as C
 from copy import deepcopy

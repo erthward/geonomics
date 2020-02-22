@@ -11,11 +11,14 @@ components
 
 # geonomics imports
 from geonomics.ops import mutation
+from geonomics.utils.viz import _check_display
 
 # other imports
 import numpy as np
 import pandas as pd
 from numpy import random as r
+import matplotlib as mpl
+_check_display()
 import matplotlib.pyplot as plt
 from collections import OrderedDict as OD
 import warnings

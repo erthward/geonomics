@@ -7,9 +7,12 @@ Functions to implement demographic operations (birth and death).
 
 #geonomics imports
 from geonomics.ops.selection import _calc_prob_death
+from geonomics.utils.viz import _check_display
 
 #other imports
 import numpy as np
+import matplotlib as mpl
+_check_display()
 import matplotlib.pyplot as plt
 from numpy import random as r
 from scipy import interpolate

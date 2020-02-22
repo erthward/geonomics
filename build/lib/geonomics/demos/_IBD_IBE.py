@@ -8,16 +8,21 @@
 # set-up
 ########
 
+# geonomics imports
+from geonomics.utils.viz import _check_display
+
+# other imports
 from copy import deepcopy
 # from itertools import chain
 import numpy as np
 from sklearn.decomposition import PCA
-# import matplotlib as mpl
+import os
+import matplotlib as mpl
+_check_display()
 from matplotlib import animation
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from mpl_toolkits.mplot3d import Axes3D
-import os
 import time
 import statsmodels.api as sm
 

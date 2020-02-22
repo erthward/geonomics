@@ -14,6 +14,7 @@ from geonomics.structs.genome import _set_genomes, _check_enough_mutable_loci
 from geonomics.sim.data import _DataCollector
 from geonomics.sim.stats import _StatsCollector
 from geonomics.utils._str_repr_ import _get_str_spacing
+from geonomics.utils.viz import _check_display
 
 #other imports
 import numpy as np
@@ -21,6 +22,8 @@ import numpy.random as r
 import random
 from copy import deepcopy
 import sys, os, traceback
+import matplotlib as mpl
+_check_display()
 import matplotlib.pyplot as plt
 
 

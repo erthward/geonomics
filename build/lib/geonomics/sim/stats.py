@@ -10,13 +10,16 @@ Classes and functons to implement calculation and output of statistics
 from geonomics.utils.io import (_append_array2d_to_array_stack,
                                 _append_row_to_csv, _write_dict_to_csv)
 from geonomics.ops.selection import _calc_fitness
+from geonomics.utils.viz import _check_display
 
 #other imports
 import numpy as np
 from scipy.stats.stats import pearsonr
 from collections import Counter as C
-import matplotlib.pyplot as plt
 import os
+import matplotlib as mpl
+_check_display()
+import matplotlib.pyplot as plt
 
 
 ######################################

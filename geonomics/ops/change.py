@@ -8,16 +8,19 @@ parameter change operations.
 #geonomics imports
 from geonomics.utils import spatial as spt
 from geonomics.utils import io
+from geonomics.utils.viz import _check_display
 
 #other imports
+import os
 import numpy as np
 import numpy.random as r
+import matplotlib as mpl
+_check_display()
 import matplotlib.pyplot as plt
 from operator import attrgetter as ag
 from collections import OrderedDict as OD
 from collections import Counter as C
 from copy import deepcopy
-import os
 
 
 ######################################

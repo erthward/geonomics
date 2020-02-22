@@ -3,12 +3,18 @@
 
 # flake8: noqa
 
+# geonomics imports
+from geonomics.utils.viz import _check_display
+
+# other imports
+import os
 import numpy as np
+import matplotlib as mpl
+_check_display()
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import time
-import os
 
 
 # define a function to calculate the mean difference between phenotype

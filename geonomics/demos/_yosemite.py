@@ -8,13 +8,17 @@
 #2. Debug all the plotting stuff
 #####################
 
+# geonomics imports
+from geonomics.utils.viz import _check_display
 
+# other imports
+import os
 import numpy as np
 import matplotlib as mpl
+_check_display()
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as patheffects
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import os
 import time
 
 gnx_dir = os.path.split(__file__)[0]

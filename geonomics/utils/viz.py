@@ -9,6 +9,11 @@ import numpy as np
 # import numpy.random as r
 # import random
 import matplotlib as mpl
+import os
+import matplotlib as mpl
+if os.environ.get('DISPLAY','') == '':
+    print('\n\nNOTICE: No display found. Using non-interactive Agg backend\n')
+    mpl.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 # from collections import Counter as C
@@ -24,6 +29,11 @@ from matplotlib.colors import LinearSegmentedColormap
 # FUNCTIONS -------------------------#
 # -----------------------------------#
 ######################################
+
+def _check_display():
+    if os.environ.get('DISPLAY','') == '':
+        print('\nNOTICE: No display found, so plotting disabled.')
+        mpl.use('Agg')
 
 def _choose_cmap(lyr_num):
     cols = {0: 'coolwarm',

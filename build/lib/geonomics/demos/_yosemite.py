@@ -2,10 +2,10 @@
 
 #####################
 #TODO
-#1.  Add a "timing" argument, that I can set to false to run the model without
+
+#Add a "timing" argument, that I can set to false to run the model without
 #plotting, to get an accurate assessment of run time
 
-#2. Debug all the plotting stuff
 #####################
 
 # geonomics imports
@@ -18,57 +18,155 @@ import matplotlib as mpl
 _check_display()
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as patheffects
+from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from mpl_toolkits.mplot3d.axes3d import Axes3D
+from nlmpy import nlmpy
 import time
+import rasterio as rio
+from scipy.stats import norm
+
+try:
+    from pykrige.ok import OrdinaryKriging
+    with_pykrige = True
+except ModuleNotFoundError:
+    print(("NOTE: Module 'pykrige' not found. Yosemite demo 3d plots cannot be"
+          " produced."))
+    with_pykrige = False
+
 
 gnx_dir = os.path.split(__file__)[0]
 gnx_dir = os.path.join(*os.path.split(gnx_dir)[:-1])
 DATA_PATH = os.path.join(gnx_dir, "data", "yosemite_demo")
 
 
-def calc_neighborhood_mean_phenotype(mod, window_width=8):
-    # array to store each cell's mean phenotype value
-    mean_z = np.ones(mod.land.dim)
-    # calc half-window_width
-    hww = int(window_width / 2)
-    # loop over cells
-    for i in range(mod.land.dim[1]):
-        for j in range(mod.land.dim[0]):
-            # get window around each cell
-            i_min = max(i - hww, 0)
-            i_max = min(i + hww, mod.land.dim[1])
-            j_min = max(j - hww, 0)
-            j_max = min(j + hww, mod.land.dim[0])
-            # get all phenotypes in the window
-            zs_in_window = [i.z for i in mod.comm[0].values(
-                ) if ((i_min <= int(i.y) <= i_max) and (
-                    j_min <= int(i.x) <= j_max))]
-            # average the window's phenotypes and add to mean_z
-            # NOTE: if there are no individuals in the window then a NaN is
-            # returned
-            mean_z[i, j] = np.mean(zs_in_window)
-
-    return mean_z
+def krig_phenotype(mod, window_width=8, rel_bandwidth=0.5, max_n_pts=10000):
+    print('Kriging phenotype. Please wait...\n\n')
+    if len(mod.comm[0]) > max_n_pts:
+        inds = np.random.choice([*mod.comm[0].keys()], size=5000,
+                                replace=False)
+    else:
+        inds = np.array([*mod.comm[0].keys()])
+    xs = mod.comm[0]._get_x(inds)
+    ys = mod.comm[0]._get_y(inds)
+    zs = mod.comm[0]._get_z(inds)[:,0]
+    OK = OrdinaryKriging(xs, ys, zs, variogram_model='spherical')
+    gridx = np.arange(0.5, mod.land.dim[0] + 0.5, 1)
+    gridy = np.arange(0.5, mod.land.dim[1] + 0.5, 1)
+    krig_pheno, ss = OK.execute('grid', gridx, gridy)
+    return krig_pheno
 
 
-# define a little function for adding text to each map in the same spot
-def add_text_label(text, x=-120.15, y=38.3, size=12, color='black', lw=4,
-                   fg='w'):
-    txt = plt.text(x, y, text, size=size, color=color)
-    txt.set_path_effects([patheffects.withStroke(linewidth=lw, foreground=fg)])
+# plot 3 change rasters, 1 for each of the 3 landscape layers
+def make_change_fig(mod):
+    change_fig = plt.figure()
+    change_fig_titles = {0: 'temperature',
+                         2: 'precipitation',
+                         1: 'habitat suitability',
+                     }
+    cmaps = ['afmhot_r', 'rainbow_r', 'PiYG']
+    for i, d in enumerate(change_fig_titles.items()):
+        ax = change_fig.add_subplot(1, 3, i + 1)
+        lyr_num = d[0]
+        title = d[1]
+        ax.set_title(title, size=20)
+        af = mod.land[lyr_num]._get_rast_in_native_units()
+        b4 = mod.orig_land[lyr_num]._get_rast_in_native_units()
+        diff = af - b4
+        im = ax.imshow(diff, cmap = cmaps[i])
+        units = '$\Delta$ ' + mod.land[lyr_num].units
+        cb = change_fig.colorbar(im, orientation='horizontal')
+        cb.set_label(label=units, size=13)
+        cb.ax.tick_params(labelsize=9)
+        (xtick_locs, xtick_labs, ytick_locs,
+         ytick_labs) = mod.land[lyr_num]._get_coord_ticks()
+        ax.set_xticks(xtick_locs)
+        ax.set_xticklabels(np.round(xtick_labs, 1), rotation=45, size=7,
+                           color='gray')
+        ax.set_yticks(ytick_locs)
+        ax.set_yticklabels(ytick_labs, size=7, color='gray')
+        ax.set_xlabel('lon', color='gray', size=10)
+        if i == 0:
+            ax.set_ylabel('lat', color='gray', size=10)
+    change_fig.show()
+    return change_fig
 
 
-# function for creating a saving images that imagemagic will stitch into a GIF
-def save_gif_img(t):
+# drape a raster on top of a DEM
+def drape_raster(mod, rast, DEM, cbar_label, gif_filename,
+                 save_figs, make_gifs, cmap='rainbow'):
+    fig3d = plt.figure()
+    ax3d = fig3d.add_subplot(111, projection='3d')
+    ax3d.set_xlabel('lon', color='gray', size=10)
+    ax3d.set_ylabel('lat', color='gray', size=10)
+    ax3d.set_zlabel('alt (m)', color='gray', size=10)
+    # get the x and y coordinates for each cell
+    xi = range(mod.land.dim[0])
+    yi = range(mod.land.dim[1])
+    # use the x and y coords to get a meshgrid
+    X, Y = np.meshgrid(xi, yi)
+    # create a mappable object, to use to make the colorbar
+    mappable = plt.cm.ScalarMappable()
+    mappable.set_array(rast)
+    mappable.set_cmap(cmap)
+
+    # initialization function, which plots the background of each frame
+    def init():
+        # plot the DEM as a surface, coloring its patches by the draped raster
+        surf = ax3d.plot_surface(X, Y, DEM, facecolors=mappable.cmap(rast),
+                                 cmap=mappable.cmap)
+        # create a colorbar
+        cb = plt.colorbar(mappable)
+        cb.set_label(label=cbar_label, size=13)
+        cb.ax.tick_params(labelsize=9)
+        # set the x-, y-, and z-axis ticks and labels
+        (xtlocs, xtlabs, ytlocs, ytlabs) = mod.land[0]._get_coord_ticks()
+        ztlocs = ax.zaxis.get_ticklocs()
+        ztlabs = [int(txt.get_text()) for txt in ax.zaxis.get_ticklabels()]
+        ax.set_xticks(xtlocs)
+        ax.set_xticklabels(np.round(xtlabs, 1), size=7, color='gray')
+        ax.set_yticks(ytlocs)
+        ax.set_yticklabels(np.round(ytlabs, 1), size=7, color='gray')
+        ax.set_zticks(ztlocs)
+        ax.set_zticklabels(np.round(ztlabs, 0), size=7, color='gray')
+
+        return fig3d,
+
+    if make_gifs:
+        # animation function, which will be called sequentially
+        def animate(i):
+            ax3d.view_init(elev=5., azim=i)
+            return fig3d,
+        anim = animation.FuncAnimation(fig3d, animate, init_func=init, frames=359,
+                                       interval=5, blit=True)
+    else:
+        ax3d.view_init(elev=5., azim=115)
+        init()
+
+    if save_figs:
+        try:
+            anim.save(gif_filename, writer='imagemagick', fps=60)
+        except Exception as e:
+            print(('\nCould not use Imagemagick to save the 3D plot\'s '
+                   'GIF.  The following error was thrown:\n\t%s') % e)
+
+    fig3d.show()
+
+    return fig3d
+
+
+# create and save images that Imagemagick will stitch into a GIF
+def save_model_gif(mod, save_figs, make_gifs):
     # set up second figure, for a GIF animation
     mid_col_width = 0.8
-    fig2 = plt.figure(figsize=(6.75 + mid_col_width * 6.75, 5.4))
-    ax2_gs = fig.add_gridspec(1, 3, width_ratios=[1, scnd_col_width, 1])
-    # fig2, axs2 = plt.subplots(1, 2)
-    # fig2.set_tight_layout(True)
-    ax2_1 = fig2.add_subplot(ax2_gs[0, 0])
-    ax2_2 = fig2.add_subplot(ax2_gs[0, 2])
-    fig2.suptitle('Time step: %i' % (t+1), size=20)
+    scnd_col_width = 1
+    gif_fig = plt.figure(figsize=(6.75 + mid_col_width * 6.75, 5.4))
+    ax2_gs = gif_fig.add_gridspec(1, 3, width_ratios=[1, scnd_col_width, 1])
+    # gif_fig, axs2 = plt.subplots(1, 2)
+    # gif_fig.set_tight_layout(True)
+    ax2_1 = gif_fig.add_subplot(ax2_gs[0, 0])
+    ax2_2 = gif_fig.add_subplot(ax2_gs[0, 2])
+    gif_fig.suptitle('Time step: %i' % (mod.t+1), size=20)
     ax2_1.set_title('Temperature', size=12)
     ax2_2.set_title('Habitat suitability', size=12)
     ax2_1.set_xlabel('lon', size=8)
@@ -120,11 +218,11 @@ def save_gif_img(t):
     ax2_2.scatter(xs, ys, c='black', s=0.5)
 
     # save the figure
-    if save_figs and make_gif:
-        fig2.savefig('gif_img_%i.jpg' % (t + 1))
+    if save_figs and make_gifs:
+        gif_fig.savefig('gif_img_%i.jpg' % (mod.t + 1))
 
     # manually close the figure
-    plt.close(fig2)
+    plt.close(gif_fig)
 
 
 
@@ -132,8 +230,8 @@ def _make_params():
 
     # This is a parameters file generated by Geonomics
     # (by the gnx.make_parameters_file() function).
-    
-    
+
+
                        ##  ::::::          :::    :: ::::::::::##
                  ##:::::    ::::   :::      ::    :: :: ::::::::::: :##
               ##::::::::     ::            ::   ::::::::::::::::::::::::##
@@ -151,21 +249,21 @@ def _make_params():
                  ## ::                      ::::                     ##
                        ##                                      ##
                           ## :: ::    :::            ##
-    
-    
+
+
     params = {
     ###############################################################################
-    
+
     ###################
     #### LANDSCAPE ####
     ###################
         'landscape': {
-    
+
         ##############
         #### main ####
         ##############
             'main': {
-    
+
                 # NOTE: The resolution of the rasters is 0.00833 dec. deg.,
                 # which is equal to about 0.00833* 88070.4 = 730.984 m in E-W
                 # and about 0.00833 * 111320 = 927.2956 m in N-S directions.
@@ -173,7 +271,7 @@ def _make_params():
                 # which is = 67.8 hectares.
                 # NOTE: The difference in distance in E-W and N-S is problematic
                 # for distance-based things!!!!
-    
+
                 #y,x (a.k.a. i,j) dimensions of the Landscape
                 'dim':                      (157, 157),
                 #resolution of the Landscape
@@ -183,27 +281,27 @@ def _make_params():
                 #projection of the Landscape
                 'prj':                      None,
                 }, # <END> 'main'
-    
+
         ################
         #### layers ####
         ################
             'layers': {
-    
+
                 #layer name (LAYER NAMES MUST BE UNIQUE!)
                 'tmp': {
-    
+
             #######################################
             #### layer num. 0: init parameters ####
             #######################################
-    
+
                     #initiating parameters for this layer
                     'init': {
-    
+
                         #parameters for a 'file'-type Layer
                         'file': {
                             #</path/to/file>.<ext>
                             'filepath': os.path.join(DATA_PATH,
-                                                     'yosemite_lyrs', 
+                                                     'yosemite_lyrs',
                                                      'tmp_1980-2010.tif'),
                             #minimum value to use to rescale the Layer to [0,1]
                             'scale_min_val':                -1.37,
@@ -213,48 +311,48 @@ def _make_params():
                             'coord_prec':                   8,
                             #units of this file's variable
                             'units':                    '$^∘C$',
-    
+
                             }, # <END> 'file'
-    
+
                         }, # <END> 'init'
-    
+
                 #########################################
                 #### layer num. 0: change parameters ####
                 #########################################
-    
+
                     #landscape-change events for this Layer
                     'change': {
-    
+
                         0: {
                             #array or file for final raster of event, or directory
                             #of files for each stepwise change in event
                             'change_rast': os.path.join(DATA_PATH,
                                                         'yosemite_lyrs',
                                                         'tmp'),
-    
+
                             #starting timestep of event
-                            'start_t':          509,
+                            'start_t':          594,
                             #ending timestep of event
                             'end_t':            594,
                             #number of stepwise changes in event
-                            'n_steps':          18,
+                            'n_steps':          1,
                             }, # <END> event 0
-    
+
                         }, # <END> 'change'
-    
+
                     }, # <END> layer num. 0
-    
-    
+
+
                 #layer name (LAYER NAMES MUST BE UNIQUE!)
                 'hab': {
-    
+
             #######################################
             #### layer num. 1: init parameters ####
             #######################################
-    
+
                     #initiating parameters for this layer
                     'init': {
-    
+
                         #parameters for a 'file'-type Layer
                         'file': {
                             #</path/to/file>.<ext>
@@ -268,49 +366,49 @@ def _make_params():
                             #decimal precision to use for coord-units (ulc & res)
                             'coord_prec':                   8,
                             #units of this file's variable
-                            'units':                    'habitat suitability',
-    
+                            'units':                    'suitability',
+
                             }, # <END> 'file'
-    
+
                         }, # <END> 'init'
-    
+
                 #########################################
                 #### layer num. 1: change parameters ####
                 #########################################
-    
+
                     #landscape-change events for this Layer
                     'change': {
-    
+
                         0: {
                             #array or file for final raster of event, or directory
                             #of files for each stepwise change in event
                             'change_rast': os.path.join(DATA_PATH,
                                                         'yosemite_lyrs',
                                                         'sdm'),
-    
+
                             #starting timestep of event
-                            'start_t':          509,
+                            'start_t':          594,
                             #ending timestep of event
                             'end_t':            594,
                             #number of stepwise changes in event
-                            'n_steps':          18,
+                            'n_steps':          1,
                             }, # <END> event 0
-    
+
                         }, # <END> 'change'
-    
+
                     }, # <END> layer num. 1
-    
-    
+
+
                 #layer name (LAYER NAMES MUST BE UNIQUE!)
                 'ppt': {
-    
+
             #######################################
             #### layer num. 2: init parameters ####
             #######################################
-    
+
                     #initiating parameters for this layer
                     'init': {
-    
+
                         #parameters for a 'file'-type Layer
                         'file': {
                             #</path/to/file>.<ext>
@@ -325,64 +423,64 @@ def _make_params():
                             'coord_prec':                   8,
                             #units of this file's variable
                             'units':                    '$mm/yr$',
-    
+
                             }, # <END> 'file'
-    
+
                         }, # <END> 'init'
-    
+
                 #########################################
                 #### layer num. 0: change parameters ####
                 #########################################
-    
+
                     #landscape-change events for this Layer
                     'change': {
-    
+
                         0: {
                             #array or file for final raster of event, or directory
                             #of files for each stepwise change in event
                             'change_rast': os.path.join(DATA_PATH,
                                                         'yosemite_lyrs',
                                                         'ppt'),
-    
+
                             #starting timestep of event
-                            'start_t':          509,
+                            'start_t':          594,
                             #ending timestep of event
                             'end_t':            594,
                             #number of stepwise changes in event
-                            'n_steps':          18,
+                            'n_steps':          1,
                             }, # <END> event 0
-    
+
                         }, # <END> 'change'
-    
+
                     }, # <END> layer num. 0
-    
-    
-    
+
+
+
         #### NOTE: Individual Layers' sections can be copy-and-pasted (and
         #### assigned distinct keys and names), to create additional Layers.
-    
-    
+
+
                 } # <END> 'layers'
-    
+
             }, # <END> 'landscape'
-    
-    
+
+
     ###############################################################################
-    
+
     ###################
     #### COMMUNITY ####
     ###################
         'comm': {
-    
+
             'species': {
-    
+
                 #species name (SPECIES NAMES MUST BE UNIQUE!)
                 'Sceloporus graciosus': {
-    
+
                 #####################################
                 #### spp num. 0: init parameters ####
                 #####################################
-    
+
                     'init': {
                         #starting number of individs
                         'N':                5000,
@@ -400,13 +498,13 @@ def _make_params():
                         # is covered by S. graciosus' preferred open,
                         # exposed habitat, then that suggests we should
                         # use a K_factor of 67.8 * 208 * 0.1 = 1111.344
-                        'K_factor':         1111.344,
+                        'K_factor':         10,
                         }, # <END> 'init'
-    
+
                 #######################################
                 #### spp num. 0: mating parameters ####
                 #######################################
-    
+
                     'mating'    : {
                         #age(s) at sexual maturity (if tuple, female first)
                         # NOTE: average reproductive age is 2 (i.e. in the third
@@ -444,11 +542,11 @@ def _make_params():
                         #12.457m, the average interannual movement distance
                         'mating_radius':            0.1
                         }, # <END> 'mating'
-    
+
                 ##########################################
                 #### spp num. 0: mortality parameters ####
                 ##########################################
-    
+
                     'mortality'     : {
                         #maximum age
                         # NOTE: 8 is the max age mentioned in Stebbins 1948's
@@ -461,11 +559,11 @@ def _make_params():
                         #width of window used to estimate local pop density
                         'density_grid_window_width':    None,
                         }, # <END> 'mortality'
-    
+
                 #########################################
                 #### spp num. 0: movement parameters ####
                 #########################################
-    
+
                     'movement': {
                         #NOTE: the movement and dispersal Wald distributions
                         # are parameterized based on the finding of
@@ -505,14 +603,14 @@ def _make_params():
                             #length of approximation vectors for distrs
                             'approx_len':           5000,
                             }, # <END> 'move_surf'
-    
+
                         },    # <END> 'movement'
-    
-    
+
+
                 #####################################################
                 #### spp num. 0: genomic architecture parameters ####
                 #####################################################
-    
+
                     'gen_arch': {
                         #file defining custom genomic arch
                         'gen_arch_file':            None,
@@ -549,9 +647,9 @@ def _make_params():
                         'allow_ad_hoc_recomb':      False,
                         #whether to save mutation logs
                         'mut_log':                  False,
-    
+
                         'traits': {
-    
+
                             ###########################
                             ####trait 0 parameters ####
                             ###########################
@@ -576,32 +674,32 @@ def _make_params():
                                 #whether the trait is universally advantageous
                                 'univ_adv':             False
                                 }, # <END> trait 0
-    
-    
+
+
         #### NOTE: Individual Traits' sections can be copy-and-pasted (and
         #### assigned distinct keys and names), to create additional Traits.
-    
-    
+
+
                             }, # <END> 'traits'
-    
+
                         }, # <END> 'gen_arch'
-    
-    
+
+
                     }, # <END> spp num. 0
-    
-    
-    
+
+
+
         #### NOTE: individual Species' sections can be copy-and-pasted (and
         #### assigned distinct keys and names), to create additional Species.
-    
-    
+
+
                 }, # <END> 'species'
-    
+
             }, # <END> 'comm'
-    
-    
+
+
     ##########################################################################
-    
+
     ###############
     #### MODEL ####
     ###############
@@ -612,7 +710,7 @@ def _make_params():
             'burn_T':       50,
             #seed number
             'num':          None,
-    
+
             ###############################
             #### iterations parameters ####
             ###############################
@@ -626,8 +724,8 @@ def _make_params():
                 #whether to burn in each iteration
                 'repeat_burn':      False,
                 }, # <END> 'iterations'
-    
-    
+
+
             ####################################
             #### data-collection parameters ####
             ####################################
@@ -662,16 +760,17 @@ def _make_params():
                     'geo_rast_format':      'geotiff',
                     },
                 }, #<END> 'data'
-    
-    
-            } # <END> 'model'
-    
-        } # <END> params
-    
-    return params
-  
 
-def _run(params, save_figs=False, time_it=False, make_gif=False):
+
+            } # <END> 'model'
+
+        } # <END> params
+
+    return params
+
+
+def _run(params, save_figs=False, time_it=False, make_gifs=False,
+         make_3d_plots=False):
     # set the amount of time before and after climate change
     t_before_cc = 500
     t_after_cc = 100
@@ -694,131 +793,66 @@ def _run(params, save_figs=False, time_it=False, make_gif=False):
     ttl_fontdict = {'fontsize': 15,
                     'name': 'Bitstream Vera Sans'}
 
-    # set up the multipanel plot with gridspec, for the methods-paper figure
-    mid_row_height = 0.1
-    scnd_col_width = 0.1
-    fig = plt.figure(figsize=(6.75 + scnd_col_width * 6.75,
-                              5.4 + mid_row_height * 5.4))
-    #                         constrained_layout=True)
-    gs = fig.add_gridspec(5, 6,
-                          width_ratios=[1, scnd_col_width, 1, 1, 1, 1],
-                          height_ratios=[1, 1, mid_row_height, 1, 1])
-
-
-
     # burn in, then plot starting population, on both rasters
     mod.walk(20000, 'burn')
 
     # run for the first 500 timsteps, before climate change
     for _ in range(t_before_cc):
         mod.walk(1)
-        if save_figs and make_gif:
-            save_gif_img(mod.t)
+        if save_figs and make_gifs:
+            save_model_gif(mod, save_figs, make_gifs)
 
-    # plot the two rasters before climate change
-    # axes for tmp before climate change
-    ax1 = fig.add_subplot(gs[0, 0])
-    mod.plot(lyr=0, ticks=False, cbar='force')
-    add_text_label('A')
-
-    # cbar = plt.colorbar()
-    # cbar.set_label('temperature', size=10, rotation=270)
-
-    # axes for hab before climate change
-    ax2 = fig.add_subplot(gs[1, 0])
-    mod.plot(lyr=1, ticks=False, cbar='force')
-    add_text_label('B')
-
-    # axes for phenotype plot before climate change
-    ax3 = fig.add_subplot(gs[:2, 2:4])
-    mod.plot(lyr=0, cbar=False)
-    coords = mod.comm[0]._get_plot_coords()
-    ax3.scatter(x=coords[:, 0], y=coords[:, 1],
-                c=[i.z[0] for i in mod.comm[0].values()],
-                s=ms, cmap=z_cmap, linewidth=0.5, edgecolor='black',
-                alpha=1, vmin=0, vmax=1)
-    add_text_label('C')
-
-    # axes for neighborhood mean rast before climate change
-    ax4 = fig.add_subplot(gs[:2, 4:])
-    neigh_mean = calc_neighborhood_mean_phenotype(mod)
-    ax4.imshow(neigh_mean, cmap=z_cmap)
-    # add a contour at phenotype = 0.5
-    ax4.contour(neigh_mean, colors=['#17161a'], alpha=0.5,
-                levels=np.array([0.5]))
-    ax4.set_xticks([])
-    ax4.set_yticks([])
-    add_text_label('D', 10, 10)
+    # calculate neigh-mean raster before climate-change
+    if with_pykrige:
+        neigh_mean_b4 = krig_phenotype(mod, save_figs, make_gifs)
 
     # walk for 100 more timesteps, then plot again,
     # at end of climate-change period
     for _ in range(t_after_cc):
         mod.walk(1)
-        if save_figs and make_gif:
-            save_gif_img(mod.t)
+        if save_figs and make_gifs:
+            save_model_gif(mod, save_figs, make_gifs)
 
     # end timer
     if time_it:
         stop = time.time()
         tot_time = stop-start
 
-    # axes for tmp after climate change
-    ax5 = fig.add_subplot(gs[3, 0])
-    mod.plot(lyr=0, ticks=False, cbar='force')
-    add_text_label('E')
+    # calculate neigh-mean raster after climate-change
+    if with_pykrige:
+        neigh_mean_af = krig_phenotype(mod)
 
-    # axes for hab after climate change
-    ax6 = fig.add_subplot(gs[4, 0])
-    mod.plot(lyr=1, ticks=False, cbar='force')
-    add_text_label('F')
-
-    # axes for phenotype plot after climate change
-    ax7 = fig.add_subplot(gs[3:, 2:4])
-    mod.plot(lyr=0, cbar=False)
-    coords = mod.comm[0]._get_plot_coords()
-    plt.scatter(x=coords[:, 0], y=coords[:, 1],
-                c=[i.z[0] for i in mod.comm[0].values()],
-                s=ms, cmap=z_cmap, linewidth=0.5, edgecolor='black',
-                alpha=1, vmin=0, vmax=1)
-    add_text_label('G')
-
-    # axes for neighborhood mean rast after climate change
-    ax8 = fig.add_subplot(gs[3:, 4:])
-    neigh_mean = calc_neighborhood_mean_phenotype(mod)
-    ax8.imshow(neigh_mean, cmap=z_cmap)
-    ax4.contour(neigh_mean, colors=['#17161a'], alpha=0.5,
-                levels=np.array([0.5]))
-    ax8.set_xticks([])
-    ax8.set_yticks([])
-    add_text_label('H', 10, 10)
-
-    plt.show()
-
-    # save plot
-    if save_figs:
-        plt.savefig('yosemite_time_series.png', format='png', dpi=1000)
+        # calculate the difference between the two neigh-mean rasters
+        neigh_mean_diff = neigh_mean_af - neigh_mean_b4
 
     # create and save a population-size plot
     mod.walk(50)
-    fig3 = plt.figure()
-    ax3 = fig.add_subplot(111)
+    Nt_fig = plt.figure()
+    Nt_ax = Nt_fig.add_subplot(111)
     burn_len = mod.burn_t
     line_height = int(10000*np.ceil(max(mod.comm[0].Nt)/10000))
-    plt.plot(range(len(mod.comm[0].Nt)), mod.comm[0].Nt)
-    plt.plot([burn_len, burn_len], [0, line_height], c='red')
-    plt.plot([burn_len+500, burn_len+500], [0, line_height], c='red')
-    plt.plot([burn_len+600, burn_len+600], [0, line_height], c='red')
-    chng_yrs = [int(x[:3]) for x in os.listdir(('./geonomics/examples/yosemite/'
-                                                'yosemite_lyrs/ppt'))]
+    Nt_ax.plot(range(len(mod.comm[0].Nt)), mod.comm[0].Nt)
+    Nt_ax.plot([burn_len, burn_len], [0, line_height], c='red')
+    Nt_ax.plot([burn_len+500, burn_len+500], [0, line_height], c='red')
+    Nt_ax.plot([burn_len+600, burn_len+600], [0, line_height], c='red')
+    chng_lyr_path = os.path.join(DATA_PATH, 'yosemite_lyrs/ppt/')
+    chng_yrs = [int(x[:3]) for x in os.listdir(chng_lyr_path)]
     for yr in chng_yrs:
-        plt.plot([burn_len+yr, burn_len+yr], [0, line_height], ':r', linewidth=0.5)
-    ax3.set_label('time (time steps/years)')
-    ax3.set_ylabel('total population size (individuals)')
-    if savefigs:
-        plt.savefig('yosemite_time_series_pop_size.png', format='png', dpi=1000)
+        Nt_ax.plot([burn_len+yr, burn_len+yr], [0, line_height], ':r',
+                   linewidth=0.5)
+    Nt_ax.set_label('time (time steps/years)')
+    Nt_ax.set_ylabel('total population size (individuals)')
+    if save_figs:
+        Nt_fig.savefig('yosemite_time_series_pop_size.png', format='png',
+                       dpi=1000)
+
+    # make the change-raster plot
+    change_fig = make_change_fig(mod)
+    if save_figs:
+        change_fig.savefig('yosemite_change_fig.png', format='png', dpi=1000)
 
     # create the GIF using imagemagick
-    if make_gif:
+    if make_gifs:
         try:
             os.system('cd %s' % gif_dir)
             os.system(('cd %s; convert -delay 5 -loop 0 `ls -v` '
@@ -827,6 +861,29 @@ def _run(params, save_figs=False, time_it=False, make_gif=False):
         except Exception as e:
             print(('\nCould not use Imagemagick to create the GIF. '
                    'The following error was thrown:\n\t%s') % e)
+
+    # make the draped-raster plot
+    if with_pykrige:
+        DEM = rio.open(os.path.join(DATA_PATH,
+                                    'yosemite_DEM.tif')).read()[0, :, :]
+        if make_3d_plots:
+            plt.rc('animation', html='html5')
+            pheno_drape_fig = drape_raster(mod, neigh_mean_b4, DEM, 'phenotype',
+                                           'yosemite_pheno_drape_fig.gif',
+                                           save_figs, make_gifs,
+                                           cmap='coolwarm')
+        #pheno_chng_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        #    'custom', [(0, plt.cm.coolwarm(0.075)), (1,
+        #                                             plt.cm.coolwarm(0.925))])
+            change_drape_fig = drape_raster(mod, neigh_mean_diff, DEM,
+                                            'change in phenotype',
+                                            'yosemite_pheno_change_drape_fig.gif',
+                                            save_figs, make_gifs, cmap='PuOr_r')
+            if save_figs:
+                pheno_drape_fig.savefig('yosemite_pheno_drape_fig.png',
+                                        format='png', dpi=1000)
+                change_drape_fig.savefig('yosemite_pheno_change_drape_fig.png',
+                                         format='png', dpi=1000)
 
 
     # print out time

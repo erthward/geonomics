@@ -12,7 +12,7 @@ import matplotlib as mpl
 import os
 import matplotlib as mpl
 if os.environ.get('DISPLAY','') == '':
-    print('\n\nNOTICE: No display found. Using non-interactive Agg backend\n')
+    print('\n\nNOTE: No display found. Using non-interactive Agg backend\n')
     mpl.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap

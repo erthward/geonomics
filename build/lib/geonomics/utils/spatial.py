@@ -24,8 +24,9 @@ try:
     from nlmpy import nlmpy
     with_nlmpy = True
 except ModuleNotFoundError:
-    print(("NOTE: Module 'nlmpy' not found. If wishing to simulate on top"
-           " of neutral landscape model rasters, please first install."))
+    print(("NOTE: Module 'nlmpy' not found. To simulate on Neutral "
+           "Landscape Model rasters, this must be installed. "
+           "To install, try using `pip install nlmpy`."))
     with_nlmpy = False
 
 # set default vonmises params

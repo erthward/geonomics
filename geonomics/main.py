@@ -715,12 +715,12 @@ def run_demo(name, save_figs=False, time_it=False, **kwargs):
         params = make_params_dict(params)
         mod = demos._IBD_IBE._run(params, save_figs, time_it, **kwargs)
 
-    if name == 'simult select':
+    elif name == 'simult select':
         params = demos._simult_select._make_params()
         params = make_params_dict(params)
         mod = demos._simult_select._run(params, save_figs, time_it, **kwargs)
 
-    if name == 'yosemite':
+    elif name == 'yosemite':
         params = demos._yosemite._make_params()
         params = make_params_dict(params)
         mod = demos._yosemite._run(params, save_figs, time_it, **kwargs)

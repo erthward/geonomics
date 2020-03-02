@@ -3,15 +3,13 @@
 
 # FOR PACKAGE PUBLICATION:
 
-- add test of stationarity of point-pattern to burn-in tests
+- add test of point-pattern stationarity to burn-in tests
 
 - debug and add tests back in
 
-- rework demo/example scripts, then include a demo/__init__.py to make demos a module
-
-- figure out how to include yosemite package_data in setup.py (see commented-out bit)
-
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
+
+        5 turn the land.dim and lyr.dim objects into a little Dimensions class, not just tuples, so that I don't always forget whether it's in x,y or y,x (i.e. i, j) order!!!
 
         5 sim on non-square landscapes doesn't work!!
 

@@ -17,14 +17,11 @@ import numpy as np
 import matplotlib as mpl
 _check_display()
 import matplotlib.pyplot as plt
-import matplotlib.patheffects as patheffects
 from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d.axes3d import Axes3D
-from nlmpy import nlmpy
 import time
 import rasterio as rio
-from scipy.stats import norm
 
 try:
     from pykrige.ok import OrdinaryKriging

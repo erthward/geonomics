@@ -9,7 +9,7 @@ def readme():
 setuptools.setup(
     name='geonomics',
     # version num.: MAJOR.MINOR.PATCH
-    version='0.0.20',
+    version='0.0.21',
     author='Drew Ellison Hart',
     author_email='drew.ellison.hart@gmail.com',
     description='A package for landscape genomic simulation',
@@ -46,7 +46,8 @@ setuptools.setup(
     install_requires=['numpy', 'matplotlib>=3.0.0', 'pandas>=0.23.4', 'geopandas',
                       'scipy>=1.3.1', 'scikit-learn', 'statsmodels>=0.9.0',
                       'shapely', 'bitarray', 'pyvcf', 'rasterio'],
-    extras_requie={'simulation on neutral landscape models': ['nlmpy']},
+    extras_requie={'simulation on neutral landscape models': ['nlmpy'],
+                   '3d plots for Yosemite demo': ['pykrige']},
     python_requires='>=3.5',
     # package_data={
     # 'demos': ['geonomics/demos/yosemite/yosemite_30yr_normals_90x90.tif']

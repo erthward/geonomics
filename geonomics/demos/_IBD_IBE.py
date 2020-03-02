@@ -584,7 +584,7 @@ def _make_params():
 
 
 def _run(params, save_figs=False, time_it=False,
-         make_3d_plot=False, use_barrier=True):
+         make_3d_plots=False, use_barrier=True):
     """
     use_barrier:
         sets flag to indicate whether or not to use the barrier
@@ -791,14 +791,14 @@ def _run(params, save_figs=False, time_it=False,
     #########################
     # create 3d animated plot
     #########################
-    if make_3d_plot:
+    if make_3d_plots:
         plt.rc('animation', html='html5')
         fig3d = plt.figure()
         ax3d = fig3d.add_subplot(111, projection='3d')
         ax3d.set_xlabel('geo', size=15)
         ax3d.set_ylabel('env', size=15)
         ax3d.set_zlabel('gen', size=15)
-        # initialization function: plot the background of each frame
+        # initialization function, which plots the background of each frame
         def init():
             ax3d.plot_wireframe(xs, ys, zs, color='lightgray', ccount=10, rcount=10,
                                 linestyles='dashed', alpha=0.95, linewidths=0.5)
@@ -806,7 +806,7 @@ def _run(params, save_figs=False, time_it=False,
                                  alpha=0.5, c=col3d, cmap='plasma')
             return fig3d,
 
-        # animation function. This is called sequentially
+        # animation function, which is called sequentially
         def animate(i):
             ax3d.view_init(elev=5., azim=i)
             return fig3d,

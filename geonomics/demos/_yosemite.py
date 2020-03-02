@@ -2,10 +2,10 @@
 
 #####################
 #TODO
-#1.  Add a "timing" argument, that I can set to false to run the model without
+
+#Add a "timing" argument, that I can set to false to run the model without
 #plotting, to get an accurate assessment of run time
 
-#2. Debug all the plotting stuff
 #####################
 
 # geonomics imports
@@ -18,13 +18,21 @@ import matplotlib as mpl
 _check_display()
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as patheffects
+from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 from nlmpy import nlmpy
-from pykrige.ok import OrdinaryKriging
 import time
 import rasterio as rio
 from scipy.stats import norm
+
+try:
+    from pykrige.ok import OrdinaryKriging
+    with_pykrige = True
+except ModuleNotFoundError:
+    print(("NOTE: Module 'pykrige' not found. Yosemite demo 3d plots cannot be"
+          " produced."))
+    with_pykrige = False
 
 
 gnx_dir = os.path.split(__file__)[0]
@@ -32,80 +40,31 @@ gnx_dir = os.path.join(*os.path.split(gnx_dir)[:-1])
 DATA_PATH = os.path.join(gnx_dir, "data", "yosemite_demo")
 
 
-def calc_neighborhood_mean_phenotype(mod, window_width=8,
-                                     rel_bandwidth=0.5):
-    kde = True
-    if kde:
-        print('Now calculating phenotype KDE. Please wait...\n\n')
-        xs = mod.comm[0]._get_x()
-        ys = mod.comm[0]._get_y()
-        zs = mod.comm[0]._get_z()[:,0]
-        OK = OrdinaryKriging(xs, ys, zs, variogram_model='spherical')
-        gridx = np.arange(0.5, mod.land.dim[0] + 0.5, 1)
-        gridy = np.arange(0.5, mod.land.dim[1] + 0.5, 1)
-        z, ss = OK.execute('grid', gridx, gridy)
-        return z
-    if not kde:
-        bandwidth = window_width * rel_bandwidth
-        # array to store each cell's mean phenotype value
-        mean_z = np.ones(mod.land.dim)
-        # calc half-window_width
-        hww = int(window_width / 2)
-        # create the kernel to use for weighting individuals' phenotypes
-        pd = norm(0, bandwidth)
-        # calculate the max prob dens (to normalize weights in the weights lists
-        # below)
-        max_weight = pd.pdf(0)
-        print('max weight is', max_weight)
-        # loop over cells
-        for i in range(mod.land.dim[1]):
-            for j in range(mod.land.dim[0]):
-                # get window around each cell
-                i_min = max(i + 0.5 - hww, 0)
-                i_max = min(i + 0.5 + hww, mod.land.dim[1])
-                j_min = max(j + 0.5 - hww, 0)
-                j_max = min(j + 0.5 + hww, mod.land.dim[0])
-                print(i_min, i_max, j_min, j_max)
-                # get all phenotypes in the window, Gaussian-weighted by their
-                # distances from the window center
-                zs_in_window = []
-                dists_from_center = []
-                effective_zs = []
-                for ind in mod.comm[0].values():
-                    if ((i_min <= ind.y <= i_max)
-                        and (j_min <= ind.x <= j_max)):
-                        print(ind.x, ind.y, 'are inside the zone!')
-                        zs_in_window.append(ind.z[0])
-                        dist = np.sqrt((i + 0.5 - ind.x)**2 + (j + 0.5 - ind.y)**2)
-                        dists_from_center.append(dist)
-                # average the window's phenotypes and add to mean_z
-                # NOTE: if there are no individuals in the window then a NaN is
-                # returned
-                print('ziw')
-                print(zs_in_window)
-                print('dfc')
-                print(dists_from_center)
-                weights = [pd.pdf(d)/max_weight for d in dists_from_center]
-                print('w')
-                print(weights)
-                effective_zs = [zs_in_window[n] * weights[n] for n in range(
-                                                                    len(weights))]
-                print('ez')
-                print(effective_zs)
-                print('\n\n\n------------------\n\n\n')
-                mean_z[i, j] = np.mean(effective_zs)
-
-        return mean_z
+def krig_phenotype(mod, window_width=8, rel_bandwidth=0.5, max_n_pts=10000):
+    print('Kriging phenotype. Please wait...\n\n')
+    if len(mod.comm[0]) > max_n_pts:
+        inds = np.random.choice([*mod.comm[0].keys()], size=5000,
+                                replace=False)
+    else:
+        inds = np.array([*mod.comm[0].keys()])
+    xs = mod.comm[0]._get_x(inds)
+    ys = mod.comm[0]._get_y(inds)
+    zs = mod.comm[0]._get_z(inds)[:,0]
+    OK = OrdinaryKriging(xs, ys, zs, variogram_model='spherical')
+    gridx = np.arange(0.5, mod.land.dim[0] + 0.5, 1)
+    gridy = np.arange(0.5, mod.land.dim[1] + 0.5, 1)
+    krig_pheno, ss = OK.execute('grid', gridx, gridy)
+    return krig_pheno
 
 
 # plot 3 change rasters, 1 for each of the 3 landscape layers
-def make_change_plt(mod):
+def make_change_fig(mod):
     change_fig = plt.figure()
     change_fig_titles = {0: 'temperature',
                          2: 'precipitation',
                          1: 'habitat suitability',
                      }
-    cmaps = ['YlOrRd', 'Spectral', 'PiYG']
+    cmaps = ['afmhot_r', 'rainbow_r', 'PiYG']
     for i, d in enumerate(change_fig_titles.items()):
         ax = change_fig.add_subplot(1, 3, i + 1)
         lyr_num = d[0]
@@ -130,57 +89,84 @@ def make_change_plt(mod):
         if i == 0:
             ax.set_ylabel('lat', color='gray', size=10)
     change_fig.show()
+    return change_fig
 
 
 # drape a raster on top of a DEM
-def drape_raster(mod, rast, DEM, cmap='rainbow'):
+def drape_raster(mod, rast, DEM, cbar_label, gif_filename,
+                 save_figs, make_gifs, cmap='rainbow'):
+    fig3d = plt.figure()
+    ax3d = fig3d.add_subplot(111, projection='3d')
+    ax3d.set_xlabel('lon', color='gray', size=10)
+    ax3d.set_ylabel('lat', color='gray', size=10)
+    ax3d.set_zlabel('alt (m)', color='gray', size=10)
     # get the x and y coordinates for each cell
     xi = range(mod.land.dim[0])
     yi = range(mod.land.dim[1])
     # use the x and y coords to get a meshgrid
     X, Y = np.meshgrid(xi, yi)
-    # create a 3d-axes plot
-    drape_fig = plt.figure()
-    ax = Axes3D(drape_fig)
     # create a mappable object, to use to make the colorbar
     mappable = plt.cm.ScalarMappable()
     mappable.set_array(rast)
     mappable.set_cmap(cmap)
-    # plot the DEM as a surface, coloring its patches by the draped raster
-    surf = ax.plot_surface(X, Y, DEM, facecolors=mappable.cmap(rast),
-                           cmap=mappable.cmap)
-    # create a colorbar
-    cb = plt.colorbar(mappable)
-    cb.set_label(label='index of phenotypic change', size=13)
-    cb.ax.tick_params(labelsize=9)
-    # set the x-, y-, and z-axis ticks and labels
-    (xtlocs, xtlabs, ytlocs, ytlabs) = mod.land[0]._get_coord_ticks()
-    ztlocs = ax.zaxis.get_ticklocs()
-    ztlabs = ax.zaxis.get_ticklabels()
-    ax.set_xticks(xtlocs)
-    ax.set_xticklabels(np.round(xtlabs, 1), rotation=45, size=7, color='gray')
-    ax.set_yticks(ytlocs)
-    ax.set_yticklabels(np.round(ytlabs, 1), size=7, color='gray')
-    ax.set_zticks(ztlocs)
-    ax.set_zticklabels(ztlabs, size=7, color='gray')
-    ax.set_xlabel('lon', color='gray', size=10)
-    ax.set_ylabel('lat', color='gray', size=10)
-    ax.set_zlabel('alt (m)', color='gray', size=10)
-    drape_fig.show()
-    return drape_fig
+
+    # initialization function, which plots the background of each frame
+    def init():
+        # plot the DEM as a surface, coloring its patches by the draped raster
+        surf = ax3d.plot_surface(X, Y, DEM, facecolors=mappable.cmap(rast),
+                                 cmap=mappable.cmap)
+        # create a colorbar
+        cb = plt.colorbar(mappable)
+        cb.set_label(label=cbar_label, size=13)
+        cb.ax.tick_params(labelsize=9)
+        # set the x-, y-, and z-axis ticks and labels
+        (xtlocs, xtlabs, ytlocs, ytlabs) = mod.land[0]._get_coord_ticks()
+        ztlocs = ax.zaxis.get_ticklocs()
+        ztlabs = [int(txt.get_text()) for txt in ax.zaxis.get_ticklabels()]
+        ax.set_xticks(xtlocs)
+        ax.set_xticklabels(np.round(xtlabs, 1), size=7, color='gray')
+        ax.set_yticks(ytlocs)
+        ax.set_yticklabels(np.round(ytlabs, 1), size=7, color='gray')
+        ax.set_zticks(ztlocs)
+        ax.set_zticklabels(np.round(ztlabs, 0), size=7, color='gray')
+
+        return fig3d,
+
+    if make_gifs:
+        # animation function, which will be called sequentially
+        def animate(i):
+            ax3d.view_init(elev=5., azim=i)
+            return fig3d,
+        anim = animation.FuncAnimation(fig3d, animate, init_func=init, frames=359,
+                                       interval=5, blit=True)
+    else:
+        ax3d.view_init(elev=5., azim=115)
+        init()
+
+    if save_figs:
+        try:
+            anim.save(gif_filename, writer='imagemagick', fps=60)
+        except Exception as e:
+            print(('\nCould not use Imagemagick to save the 3D plot\'s '
+                   'GIF.  The following error was thrown:\n\t%s') % e)
+
+    fig3d.show()
+
+    return fig3d
 
 
 # create and save images that Imagemagick will stitch into a GIF
-def save_gif_img(t):
+def save_model_gif(mod, save_figs, make_gifs):
     # set up second figure, for a GIF animation
     mid_col_width = 0.8
-    fig2 = plt.figure(figsize=(6.75 + mid_col_width * 6.75, 5.4))
-    ax2_gs = fig.add_gridspec(1, 3, width_ratios=[1, scnd_col_width, 1])
-    # fig2, axs2 = plt.subplots(1, 2)
-    # fig2.set_tight_layout(True)
-    ax2_1 = fig2.add_subplot(ax2_gs[0, 0])
-    ax2_2 = fig2.add_subplot(ax2_gs[0, 2])
-    fig2.suptitle('Time step: %i' % (t+1), size=20)
+    scnd_col_width = 1
+    gif_fig = plt.figure(figsize=(6.75 + mid_col_width * 6.75, 5.4))
+    ax2_gs = gif_fig.add_gridspec(1, 3, width_ratios=[1, scnd_col_width, 1])
+    # gif_fig, axs2 = plt.subplots(1, 2)
+    # gif_fig.set_tight_layout(True)
+    ax2_1 = gif_fig.add_subplot(ax2_gs[0, 0])
+    ax2_2 = gif_fig.add_subplot(ax2_gs[0, 2])
+    gif_fig.suptitle('Time step: %i' % (mod.t+1), size=20)
     ax2_1.set_title('Temperature', size=12)
     ax2_2.set_title('Habitat suitability', size=12)
     ax2_1.set_xlabel('lon', size=8)
@@ -232,11 +218,11 @@ def save_gif_img(t):
     ax2_2.scatter(xs, ys, c='black', s=0.5)
 
     # save the figure
-    if save_figs and make_gif:
-        fig2.savefig('gif_img_%i.jpg' % (t + 1))
+    if save_figs and make_gifs:
+        gif_fig.savefig('gif_img_%i.jpg' % (mod.t + 1))
 
     # manually close the figure
-    plt.close(fig2)
+    plt.close(gif_fig)
 
 
 
@@ -345,11 +331,11 @@ def _make_params():
                                                         'tmp'),
 
                             #starting timestep of event
-                            'start_t':          509,
+                            'start_t':          594,
                             #ending timestep of event
                             'end_t':            594,
                             #number of stepwise changes in event
-                            'n_steps':          18,
+                            'n_steps':          1,
                             }, # <END> event 0
 
                         }, # <END> 'change'
@@ -401,11 +387,11 @@ def _make_params():
                                                         'sdm'),
 
                             #starting timestep of event
-                            'start_t':          509,
+                            'start_t':          594,
                             #ending timestep of event
                             'end_t':            594,
                             #number of stepwise changes in event
-                            'n_steps':          18,
+                            'n_steps':          1,
                             }, # <END> event 0
 
                         }, # <END> 'change'
@@ -457,11 +443,11 @@ def _make_params():
                                                         'ppt'),
 
                             #starting timestep of event
-                            'start_t':          509,
+                            'start_t':          594,
                             #ending timestep of event
                             'end_t':            594,
                             #number of stepwise changes in event
-                            'n_steps':          18,
+                            'n_steps':          1,
                             }, # <END> event 0
 
                         }, # <END> 'change'
@@ -512,7 +498,7 @@ def _make_params():
                         # is covered by S. graciosus' preferred open,
                         # exposed habitat, then that suggests we should
                         # use a K_factor of 67.8 * 208 * 0.1 = 1111.344
-                        'K_factor':         3,
+                        'K_factor':         10,
                         }, # <END> 'init'
 
                 #######################################
@@ -783,7 +769,8 @@ def _make_params():
     return params
 
 
-def _run(params, save_figs=False, time_it=False, make_gif=False):
+def _run(params, save_figs=False, time_it=False, make_gifs=False,
+         make_3d_plots=False):
     # set the amount of time before and after climate change
     t_before_cc = 500
     t_after_cc = 100
@@ -812,18 +799,19 @@ def _run(params, save_figs=False, time_it=False, make_gif=False):
     # run for the first 500 timsteps, before climate change
     for _ in range(t_before_cc):
         mod.walk(1)
-        if save_figs and make_gif:
-            save_gif_img(mod.t)
+        if save_figs and make_gifs:
+            save_model_gif(mod, save_figs, make_gifs)
 
     # calculate neigh-mean raster before climate-change
-    neigh_mean_b4 = calc_neighborhood_mean_phenotype(mod)
+    if with_pykrige:
+        neigh_mean_b4 = krig_phenotype(mod, save_figs, make_gifs)
 
     # walk for 100 more timesteps, then plot again,
     # at end of climate-change period
     for _ in range(t_after_cc):
         mod.walk(1)
-        if save_figs and make_gif:
-            save_gif_img(mod.t)
+        if save_figs and make_gifs:
+            save_model_gif(mod, save_figs, make_gifs)
 
     # end timer
     if time_it:
@@ -831,10 +819,11 @@ def _run(params, save_figs=False, time_it=False, make_gif=False):
         tot_time = stop-start
 
     # calculate neigh-mean raster after climate-change
-    neigh_mean_af = calc_neighborhood_mean_phenotype(mod)
+    if with_pykrige:
+        neigh_mean_af = krig_phenotype(mod)
 
-    # calculate the difference between the two neigh-mean rasters
-    neigh_mean_diff = neigh_mean_af - neigh_mean_b4
+        # calculate the difference between the two neigh-mean rasters
+        neigh_mean_diff = neigh_mean_af - neigh_mean_b4
 
     # create and save a population-size plot
     mod.walk(50)
@@ -854,15 +843,16 @@ def _run(params, save_figs=False, time_it=False, make_gif=False):
     Nt_ax.set_label('time (time steps/years)')
     Nt_ax.set_ylabel('total population size (individuals)')
     if save_figs:
-        plt.savefig('yosemite_time_series_pop_size.png', format='png', dpi=1000)
+        Nt_fig.savefig('yosemite_time_series_pop_size.png', format='png',
+                       dpi=1000)
 
-    # create the change-raster plot and the draped-raster plot
-    make_change_plt(mod)
-    DEM = rio.open(os.path.join(DATA_PATH, 'yosemite_DEM.tif')).read()[0, :, :]
-    drape_fig = drape_raster(mod, neigh_mean_b4, DEM, cmap='rainbow')
+    # make the change-raster plot
+    change_fig = make_change_fig(mod)
+    if save_figs:
+        change_fig.savefig('yosemite_change_fig.png', format='png', dpi=1000)
 
     # create the GIF using imagemagick
-    if make_gif:
+    if make_gifs:
         try:
             os.system('cd %s' % gif_dir)
             os.system(('cd %s; convert -delay 5 -loop 0 `ls -v` '
@@ -872,9 +862,32 @@ def _run(params, save_figs=False, time_it=False, make_gif=False):
             print(('\nCould not use Imagemagick to create the GIF. '
                    'The following error was thrown:\n\t%s') % e)
 
+    # make the draped-raster plot
+    if with_pykrige:
+        DEM = rio.open(os.path.join(DATA_PATH,
+                                    'yosemite_DEM.tif')).read()[0, :, :]
+        if make_3d_plots:
+            plt.rc('animation', html='html5')
+            pheno_drape_fig = drape_raster(mod, neigh_mean_b4, DEM, 'phenotype',
+                                           'yosemite_pheno_drape_fig.gif',
+                                           save_figs, make_gifs,
+                                           cmap='coolwarm')
+        #pheno_chng_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        #    'custom', [(0, plt.cm.coolwarm(0.075)), (1,
+        #                                             plt.cm.coolwarm(0.925))])
+            change_drape_fig = drape_raster(mod, neigh_mean_diff, DEM,
+                                            'change in phenotype',
+                                            'yosemite_pheno_change_drape_fig.gif',
+                                            save_figs, make_gifs, cmap='PuOr_r')
+            if save_figs:
+                pheno_drape_fig.savefig('yosemite_pheno_drape_fig.png',
+                                        format='png', dpi=1000)
+                change_drape_fig.savefig('yosemite_pheno_change_drape_fig.png',
+                                         format='png', dpi=1000)
+
 
     # print out time
     if time_it:
         print("\n\nModel ran in %0.2f seconds." % tot_time)
 
-    return mod, drape_fig, neigh_mean_diff, neigh_mean_b4
+    return mod

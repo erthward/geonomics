@@ -328,11 +328,11 @@ def _make_params():
                                                         'tmp'),
 
                             #starting timestep of event
-                            'start_t':          594,
+                            'start_t':          509,
                             #ending timestep of event
                             'end_t':            594,
                             #number of stepwise changes in event
-                            'n_steps':          1,
+                            'n_steps':          18,
                             }, # <END> event 0
 
                         }, # <END> 'change'
@@ -384,11 +384,11 @@ def _make_params():
                                                         'sdm'),
 
                             #starting timestep of event
-                            'start_t':          594,
+                            'start_t':          509,
                             #ending timestep of event
                             'end_t':            594,
                             #number of stepwise changes in event
-                            'n_steps':          1,
+                            'n_steps':          18,
                             }, # <END> event 0
 
                         }, # <END> 'change'
@@ -440,11 +440,11 @@ def _make_params():
                                                         'ppt'),
 
                             #starting timestep of event
-                            'start_t':          594,
+                            'start_t':          509,
                             #ending timestep of event
                             'end_t':            594,
                             #number of stepwise changes in event
-                            'n_steps':          1,
+                            'n_steps':          18,
                             }, # <END> event 0
 
                         }, # <END> 'change'

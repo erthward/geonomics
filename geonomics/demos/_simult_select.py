@@ -473,7 +473,9 @@ def _run(params, save_figs=False, time_it=False):
     if time_it:
         start = time.time()
 
-    # RUN THE MODEL WITHOUT LINKAGE
+    # set model name (since not being read in from separate params file)
+    params.model['name'] = 'simult_select_demo'
+
     # make the model
     from .. import make_model
     mod = make_model(params)

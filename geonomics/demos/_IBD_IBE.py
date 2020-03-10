@@ -672,6 +672,9 @@ def _run(params, save_figs=False, time_it=False,
     # prep and make model
     #####################
 
+    # set model name (since the params are'nt being read in from separate file)
+    params.model['name'] = 'IBD_IBE_demo'
+
     # get barrier-zone edges, for tracking crossings
     barr_rast = params['landscape']['layers']['barrier']['init']['defined']['rast']
     zone_edges = np.where(barr_rast[0,:] == 0)[0]

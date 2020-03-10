@@ -9,6 +9,14 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 could add functionality so that a model generates all the change-layer
+        direction surfaces it will need, then offloads them to disk using np.savetxt,
+        then reads them in as they're needed during the runs; and particularly,
+        could do this such that they are made the first time a model is run,
+        then saved in a subdirectory of the model's output directory, so that they
+        won't need to be remade over and over again unless that direcotry
+        has been removed/deleted
+
         5 turn the land.dim and lyr.dim objects into a little Dimensions class, not just tuples, so that I don't always forget whether it's in x,y or y,x (i.e. i, j) order!!!
 
         5 sim on non-square landscapes doesn't work!!

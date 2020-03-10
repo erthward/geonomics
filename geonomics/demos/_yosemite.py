@@ -495,7 +495,7 @@ def _make_params():
                         # is covered by S. graciosus' preferred open,
                         # exposed habitat, then that suggests we should
                         # use a K_factor of 67.8 * 208 * 0.1 = 1111.344
-                        'K_factor':         10,
+                        'K_factor':         1111.344,
                         }, # <END> 'init'
 
                 #######################################
@@ -768,6 +768,7 @@ def _make_params():
 
 def _run(params, save_figs=False, time_it=False, make_gifs=False,
          make_3d_plots=False):
+    params.model['name'] = 'yosemite_demo'
     # set the amount of time before and after climate change
     t_before_cc = 500
     t_after_cc = 100

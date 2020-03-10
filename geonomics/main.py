@@ -49,7 +49,7 @@ from geonomics.structs.individual import _make_individual
 from geonomics.structs.species import _make_species
 from geonomics.structs.community import _make_community
 from geonomics.structs import landscape, genome, individual, species, community
-from geonomics import demos 
+from geonomics import demos
 
 #other imports
 import re

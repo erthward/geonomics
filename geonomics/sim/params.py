@@ -1037,6 +1037,7 @@ def _make_params_dict(params):
 def _read_params_file(filepath):
     #get the filename (minus path and extension) as the model name
     name = os.path.splitext(os.path.split(filepath)[-1])[0]
+    print("MODEL NAME IS %S" % name)
     #create a namespace to read the params dict into
     ns = {}
     #read and execute the file (to create a plain dict called 'params')

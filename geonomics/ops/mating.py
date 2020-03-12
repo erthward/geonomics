@@ -148,9 +148,25 @@ def _draw_n_births(num_pairs, n_births_distr_lambda):
 # function for mating a chosen mating-pair
 def _do_mating_sngl_offspr(spp, pair, recomb_paths):
     # generate a gamete for each member of mating pair, stack, and transpose
+    seg_info = [spp.gen_arch._recomb_paths._get_recomb_segment_info(
+                                                path) for path in recomb_paths]
     new_genome = np.vstack(
       [spp[ind].g.flatten()[[*recomb_paths.pop()]] for ind in pair]).T
-    return new_genome
+    new_seg_info = []
+
+
+    #TODO: FIGURE OUT THIS SECTION
+    for seg_info_set, parent_id in zip(seg_info, pair):
+        new_seg_info_set = []
+        for seg in seg_info_set:
+            parent_node = spp[parent_id]._node_ids[seg[0]]
+            new_seg_info_set.append((parent_node, seg[1], seg[2]))
+        new_seg_info.append(new_seg_info_set)
+    #seg_info = [[(spp[ind].node_ids[homologue],
+                  #L, R) for homologue, L, R in info] for info in seg_info]
+
+
+    return new_genome, newseg_info
 
 
 def _do_mating_sngl_pair(spp, pair, n_offspring, recomb_paths):

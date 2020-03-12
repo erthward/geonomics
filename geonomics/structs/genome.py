@@ -47,6 +47,41 @@ class _RecombinationPaths:
         return paths
 
 
+    # takes a recombination path, returns a zip object containing the
+    # recombination segments' info, formatted as a zip object containing:
+        # 1.) homologue id (0 or 1, identifying the right or left side
+        # of the parent's genome, which in turn match up to either the first or
+        # second values in the parent's Individual._node_ids attribute);
+        # 2.) left edge of the segment;
+        # 3.) right edge
+    def _get_recomb_segment_info(self, recomb_path):
+        # NOTE: using recomb_path[1], not recomb_path[0], because the 1th
+        # position indicates or not the first value on the right side of
+        # the genome (i.e. homologue 1) will be used. Thus, if it is 1 then
+        # it is True that that position's genotype will be used, and thus
+        # homologue 1 is the starting homologue. If False, then it will not
+        # used, so homologue 0's first value will be used instead.
+        start_homologue = int(recomb_path[1])
+        evens = np.int8([*recomb_path[::2]])
+        diffs = evens[1:] - evens[:-1]
+        # NOTE: return the 0th element of the np.where output because
+        # that function returns a tuple of arrays by default,
+        # so that it will work for np arrays of arbitrary dimenstionality
+        recomb_locs = np.where(diffs != 0)[0] + 0.5
+        # NOTE: adding start_homologue to n then taking modulus 2 gives us an
+        #       alternating list of 0s & 1s,
+        #       regardless of whether the start homologue is 0 or 1
+        # NOTE: taking range(len(recomb_locs) + 1) because adding 1 gives us
+        #       a list of homologue ids for each of the n+1 segments
+        #       created by the n recombination events
+        homologues = [(n + start_homologue) % 2 for n in range(len(
+                                                            recomb_locs) + 1)]
+        L = [0] + [*recomb_locs]
+        R = [*recomb_locs] + [self._L]
+        segs = zip(homologues, L, R)
+        return segs
+
+
 class Trait:
     def __init__(self, idx, name, phi, n_loci, mu, layer, alpha_distr_mu,
                  alpha_distr_sigma, max_alpha_mag, gamma, univ_adv):

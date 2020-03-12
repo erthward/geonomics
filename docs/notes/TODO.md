@@ -9,6 +9,10 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 go through and make private anything that it makes sense to make private
+          (because right now some things are private and some are not, without good
+           rhyme or reason)
+
         5 could add functionality so that a model generates all the change-layer
         direction surfaces it will need, then offloads them to disk using np.savetxt,
         then reads them in as they're needed during the runs; and particularly,

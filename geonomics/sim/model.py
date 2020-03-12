@@ -509,11 +509,11 @@ class Model:
             #verbose output
             if self._verbose:
                 print('Creating the burn-in function queue...\n\n')
-            self.burn_fn_queue = self._make_fn_queue(burn = True)
+            self.burn_fn_queue = self._make_fn_queue(burn=True)
         #verbose output
         if self._verbose:
             print('Creating the main function queue...\n\n')
-        self.main_fn_queue = self._make_fn_queue(burn = False)
+        self.main_fn_queue = self._make_fn_queue(burn=False)
 
 
     #method to create the simulation functionality, as a function queue 
@@ -586,7 +586,7 @@ class Model:
 
     #method to generate timestep_verbose_output
     def _print_timestep_info(self, mode):
-        verbose_msg = '%s:\t%i:%i\n' % (mode, self.it,
+        verbose_msg = '%s:\tit=%i:\tt=%i\n' % (mode, self.it,
                                 [self.burn_t if mode == 'burn' else self.t][0])
         spps_submsgs = ''.join(['\tspecies: %s%sN=%i\t(births=%i\tdeaths=%i)\n' %
                         (spp.name,
@@ -611,8 +611,9 @@ class Model:
                     break
             if self._verbose:
                 self._print_timestep_info(mode)
-            #if the burn-in is complete, reassign the genomes if needed
-            #and then set self.comm.burned = True
+            # if the burn-in is complete, reassign the genomes if needed,
+            # set the tskit.TableCollection tables if needed,
+            # and then set self.comm.burned = True
             if np.all([spp.burned for spp in self.comm.values()]):
                 if self.reassign_genomes:
                     for spp in self.comm.values():
@@ -622,8 +623,9 @@ class Model:
                                 print(('Assigning genomes for '
                                     'species "%s"...\n\n') % spp.name)
                             _set_genomes(spp, self.burn_T, self.T)
+                            spp._set_table_collection()
                     #and then set the reassign_genomes attribute to False, so
-                    #that they won'r get reassigned again during this iteration
+                    #that they won't get reassigned again during this iteration
                     self.reassign_genomes = False
                 #mark the community as burned in
                 self.comm.burned = True
@@ -774,13 +776,13 @@ class Model:
         Creating the burn-in function queue...
         Creating the main function queue...
         Running burn-in, iteration 0...
-        burn:   0:0
+        burn:   it=0:   t=0
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
-        burn:   0:1
+        burn:   it=0:   t=1
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
-        burn:   0:2
+        burn:   it=0:   t=2
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
         .
@@ -912,13 +914,13 @@ class Model:
         Creating the burn-in function queue...
         Creating the main function queue...
         Running burn-in, iteration 0...
-        burn:   0:0
+        burn:   it=0:   t=0
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
-        burn:   0:1
+        burn:   it=0:   t=1
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
-        burn:   0:2
+        burn:   it=0:   t=2
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
         .
@@ -929,13 +931,13 @@ class Model:
         Burn-in complete.
         >>> #now run in main mode for 50 timesteps
         >>> mod.walk(T = 50, mode = 'main')
-         main:   1:0
+         main:   it=1:  t=0
                  species: spp_0                         N=131    (births=35      deaths=214)
          .......................................................................................
-         main:   1:1
+         main:   it=1:  t=1
                  species: spp_0                         N=129    (births=35      deaths=214)
          .......................................................................................
-         main:   1:2
+         main:   it=1:  t=2
                  species: spp_0                         N=133    (births=35      deaths=214)
          .......................................................................................
          .

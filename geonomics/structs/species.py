@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 from scipy.stats.distributions import norm
 from collections import Counter as C
 from collections import OrderedDict as OD
+import tskit
 from copy import deepcopy
 from operator import itemgetter
 from operator import attrgetter
@@ -192,6 +193,13 @@ class Species(OD):
             "must be an instance of the genome.GenomicArchitecture class "
             "or else None.")
 
+        # create a tskit.TableCollection object, if the species uses genomes
+        if self.gen_arch is not None:
+            self._tc = tskit.TableCollection()
+            self._tc.sequence_length = self.gen_arch.L
+        else:
+            self._tc = None
+
         #set the selection attribute, to indicate whether or not
         #natural selection should be implemented for the species
         self.selection = (self.gen_arch is not None and
@@ -350,9 +358,22 @@ class Species(OD):
         #copy the keys, for use in mutation.do_mutation()
         keys_list = [*offspring_keys]
 
+
+        # TODO: I added a line just below here to get the seg_info. Then I
+        # added a spot near the bottom of this method where the edges info
+        # should be added. But the way I have things right now, I haven't
+        # actually matched the parents' nodes values to each of the segments
+        # in the seg_info that will be added to the table. Need to figure out
+        # that as the next step (had been working on doing this within the
+        # mating._do_mating_sngl_offspr function, but not sure this will
+        # actually fit best there), and then also associate the correct child
+        # node id, and then I can pass all that info to tc.edges.add_row().
+
         if not burn and self.gen_arch is not None:
             recomb_paths = self.gen_arch._recomb_paths._get_paths(
                                                             total_births*2)
+            seg_info = [self.gen_arch._recomb_paths._get_recomb_segment_info(
+                        path) for path in recomb_paths]
             new_genomes = _do_mating(self, mating_pairs,
                                                     n_births, recomb_paths)
 
@@ -385,8 +406,6 @@ class Species(OD):
                 if self.gen_arch is not None:
                     if burn:
                         new_genome = np.array([0])
-                    elif self.gen_arch is None:
-                        new_genome = None
                     else:
                         new_genome = new_genomes[n_pair][n]
                 else:
@@ -404,6 +423,25 @@ class Species(OD):
                     and self.gen_arch.traits is not None
                     and not burn):
                     self[offspring_key]._set_z(self.gen_arch)
+
+                #update the tskit tables as needed
+                loc = [ind.x, ind.y]
+                if self.gen_arch.traits is not None:
+                    loc = loc + ind.z + [ind.fit]
+                offspring_ind_id = self._tc.individuals.add_row(location=loc)
+                self[offspring_key]._individuals_id = offspring_ind_id
+
+                # add rows to the nodes table, setting the 'flags' column vals
+                # to 0 (to indicate they're not considered sample nodes),
+                # and setting the 'individual' column vals to ids returned from
+                # tc.individuals.add_row(), then adding the returned tskit
+                # Node ids to Individual_node_ids attribute (which is a list)
+                self[offspring_key]._node_ids.extend([self._tc.nodes.add_row(
+                    flags=1, time=self.t,
+                    individual=offspring_ind_id) for _ in range(
+                                                            self.gen_arch.x)])
+
+                # add edges to the tskit edges table
 
         # sample all individuals' environment values, to initiate for offspring
         self._set_e(land)
@@ -513,6 +551,53 @@ class Species(OD):
     def _set_dens_grids(self, land, widow_width = None):
         self._dens_grids = spt._DensityGridStack(land = land,
                                 window_width = self.density_grid_window_width)
+
+
+    # method to fill the tskit.TableCollection's tables (to be called
+    # after the model has burned in
+    def _set_table_collection(self):
+        for ind in self.values():
+            # get the 'location' column info, which will include the x and y
+            # positions of an individual, as well as the individual's
+            # phenotypes and fitness, if traits are being used
+            loc = [ind.x, ind.y]
+            if self.gen_arch.traits is not None:
+                loc = loc + ind.z + [ind.fit]
+            # add a new row to the individuals table, setting the location
+            # column's value to loc
+            # TODO: decide if I should use the 'metadata' column
+            ind_id = self._tc.individuals.add_row(location=loc)
+            ind._individuals_id = ind_id
+
+            # add rows to the nodes table, setting the 'flags' column vals to 0
+            # (to indicate they're not considered sample nodes),
+            # and setting the 'individual' column vals to ids returned from
+            # tc.individuals.add_row(), then adding the returned tskit
+            # Node ids to Individual_node_ids attribute (which is a list)
+            ind._node_ids.extend([self._tc.nodes.add_row(flags=1, time=-1,
+                individual=ind_id) for _ in range(self.gen_arch.x)])
+
+
+        # add one row to the sites table for each genomic locus
+        # NOTE: will use the metadata column to store 'n' or '<#>'
+        #       for each locus, where 'n' indicates neutrality,
+        #       and '<#>' is the id-number of the trait for a
+        #       trait-associated non-neutral locus
+        # TODO: decide what to do if neutral sites later become deleterious
+        # TODO: decide what to do about ancestral state of sites that are
+        #       starting out already segregating (for now, setting to default
+        #       to '0')
+        for locus in self.gen_arch.neut_loci:
+            self._tc.sites.add_row(position=float(locus), ancestral_state='0',
+                                   metadata='n'.encode('ascii'))
+        for locus in self.gen_arch.nonneut_loci:
+            for trt_num, trt in self.gen_arch.traits.items():
+                if locus in trt.loci:
+                    self._tc.sites.add_row(position=float(locus),
+                                           ancestral_state='0',
+                                           metadata=str(trt_num).encode(
+                                                                    'ascii'))
+        # TODO: add provenances row
 
 
     # method to get individs' environment values

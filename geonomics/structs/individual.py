@@ -43,6 +43,11 @@ class Individual:
         self.z = []
         self.fit = None
 
+        # add attributes to hold the Individual's tskit Individuals id
+        # and Nodes ids
+        self._individuals_id = None
+        self._node_ids = []
+
         assert type(self.x) == float and self.x >= 0, ("invalid value "
                                 "for x: %s, %s") % (str(self.x), type(self.x))
         assert type(self.y) == float and self.y >= 0, ("invalid value "

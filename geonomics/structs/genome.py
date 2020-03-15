@@ -47,14 +47,13 @@ class _RecombinationPaths:
         return paths
 
 
-    # takes a recombination path, returns a zip object containing the
-    # recombination segments' info, formatted as a zip object containing:
-        # 1.) homologue id (0 or 1, identifying the right or left side
-        # of the parent's genome, which in turn match up to either the first or
-        # second values in the parent's Individual._node_ids attribute);
+    # takes a recombination path and a parent's node ids, returns a zip object
+    # containing the recombination segments' info, as a zip object containing:
+        # 1.) node id for parent's id (corresponding to the id in the
+        # tskit.TableCollection.nodes table);
         # 2.) left edge of the segment;
         # 3.) right edge
-    def _get_recomb_segment_info(self, recomb_path):
+    def _get_recomb_segment_info(self, recomb_path, node_ids):
         # NOTE: using recomb_path[1], not recomb_path[0], because the 1th
         # position indicates or not the first value on the right side of
         # the genome (i.e. homologue 1) will be used. Thus, if it is 1 then
@@ -67,7 +66,18 @@ class _RecombinationPaths:
         # NOTE: return the 0th element of the np.where output because
         # that function returns a tuple of arrays by default,
         # so that it will work for np arrays of arbitrary dimenstionality
-        recomb_locs = np.where(diffs != 0)[0] + 0.5
+        # NOTE: adding 1 to to the recomb location implements a paradigm in
+        # which the genome can be recombined into maximum L distinct edges,
+        # where L is the genome length, and in which each of those
+        # minimum-length segments is occupied by a single site (the site
+        # corresponging to the site represented by a single site's genotype in
+        # Geonomics' numpy array genomes) that sits at the segment's far left;
+        # in other words, the genome is modeled like:
+        #   |0___|1___|2___|3___|....|L___|
+        # where the numbers represent the numpy arrays' locus indexes, and
+        # their positions relative to the segments represent their positions
+        # on the tskit segments
+        recomb_locs = np.where(diffs != 0)[0] + 1
         # NOTE: adding start_homologue to n then taking modulus 2 gives us an
         #       alternating list of 0s & 1s,
         #       regardless of whether the start homologue is 0 or 1
@@ -76,9 +86,10 @@ class _RecombinationPaths:
         #       created by the n recombination events
         homologues = [(n + start_homologue) % 2 for n in range(len(
                                                             recomb_locs) + 1)]
+        homol_nodes = node_ids[homologues]
         L = [0] + [*recomb_locs]
         R = [*recomb_locs] + [self._L]
-        segs = zip(homologues, L, R)
+        segs = zip(homol_nodes, L, R)
         return segs
 
 
@@ -200,19 +211,20 @@ class GenomicArchitecture:
     def _make_mut_fns_dict(self):
         mut_fns = {}
         if self.mu_neut > 0:
-            def fn(spp, offspring):
-                mutation._do_neutral_mutation(spp, offspring)
-            mut_fns.update({'neut': fn})
+            def neut_fn(spp, offspring):
+                return(mutation._do_neutral_mutation(spp, offspring))
+            mut_fns.update({'neut': neut_fn})
         if self.mu_delet > 0:
-            def fn(spp, offspring):
-                mutation._do_deleterious_mutation(spp, offspring)
-            mut_fns.update({'delet': fn})
+            def delet_fn(spp, offspring):
+                return(mutation._do_deleterious_mutation(spp, offspring))
+            mut_fns.update({'delet': delet_fn})
         if self.traits is not None:
             for trait_num in self.traits:
                 if self.traits[trait_num].mu > 0:
-                    def fn(spp, offspring, trait_num=trait_num):
-                        mutation._do_trait_mutation(spp, offspring, trait_num)
-                    mut_fns.update({'t%i' % trait_num: fn})
+                    def trait_fn(spp, offspring, trait_num=trait_num):
+                        return(mutation._do_trait_mutation(spp, offspring,
+                                                           trait_num))
+                    mut_fns.update({'t%i' % trait_num: trait_fn})
         return mut_fns
 
     # method to draw mutation types for any number of mutations chosen
@@ -221,8 +233,8 @@ class GenomicArchitecture:
         type_dict = {'neut': self.mu_neut,
                      'delet': self.mu_delet}
         if self.traits is not None:
-            [type_dict.update(item) for item in {'t%i' % (
-                            k): v.mu for k, v in self.traits.items()}.items()]
+            trait_dict = {'t%i' % (k): v.mu for k, v in self.traits.items()}
+            type_dict.update(trait_dict)
         types = []
         probs = []
         for k, v in type_dict.items():

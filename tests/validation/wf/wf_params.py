@@ -245,6 +245,8 @@ params = {
         'burn_T':       30,
         #seed number
         'num':          None,
+        #time step interval for simplification of tskit tables
+        'tskit_simp_interval':      100,
 
         ###############################
         #### iterations parameters ####
@@ -299,3 +301,4 @@ params = {
         } # <END> 'model'
 
     } # <END> params
+

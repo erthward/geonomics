@@ -128,6 +128,9 @@ params = {
         'burn_T':       30,
         #seed number
         'num':          None,
+        #time step interval for simplication of tskit tables
+        'tskit_simp_interval':      100,
+
 %s
 %s
 %s
@@ -420,7 +423,7 @@ GENOME_PARAMS = '''
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
                     #whether to generate recombination paths at each timestep
-                    'allow_ad_hoc_recomb':       False,
+                    'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
                     'mut_log':                  False,
 %s

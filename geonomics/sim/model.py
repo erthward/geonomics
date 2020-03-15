@@ -98,6 +98,10 @@ class Model:
         #beginning of the timestep
         self.t = -1
 
+        # get the tskit-table simplification interval
+        # (will only be used if there are genomes in any species)
+        self._tskit_simp_interval = m_params.tskit_simp_interval
+
         #get the number of model iterations to run
         self.n_its = m_params.its.n_its
         #set the its list
@@ -641,6 +645,22 @@ class Model:
                     break
             if self._verbose:
                 self._print_timestep_info(mode)
+            # sort and simplify tskit tables, if needed
+            if (self.t + 1) % self._tskit_simp_interval == 0 and self.t !=-1:
+                for spp in self.comm.values():
+                    if spp.gen_arch is not None:
+                        if self._verbose:
+                            print(('\n\nnow sorting and simplifying '
+                                   'tskit tables'))
+                            print("\tNUMBER EDGES BEFORE SIMPLIFICATION:",
+                                  self.comm[0]._tc.edges.num_rows)
+                            print("\tNUMBER INDIVIDS BEFORE SIMPLIFICATION:",
+                                  self.comm[0]._tc.individuals.num_rows)
+                            spp._do_sort_simp_table_collection()
+                            print("\n\tNUMBER EDGES AFTER SIMPLIFICATION: ",
+                                  self.comm[0]._tc.edges.num_rows)
+                            print("\tNUMBER INDIVIDS AFTER SIMPLIFICATION: ",
+                                  self.comm[0]._tc.individuals.num_rows)
 
         #then check if any species are extinct and
         #return the correpsonding boolean
@@ -651,6 +671,7 @@ class Model:
                 'Iteration %i aborting.\n\n') % (' & '.join(
                 ['"' + spp.name + '"' for spp in self.comm.values(
                                                 ) if spp.extinct]), self.it))
+
         return(extinct)
 
 

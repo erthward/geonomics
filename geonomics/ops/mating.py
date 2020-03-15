@@ -147,26 +147,26 @@ def _draw_n_births(num_pairs, n_births_distr_lambda):
 
 # function for mating a chosen mating-pair
 def _do_mating_sngl_offspr(spp, pair, recomb_paths):
-    # generate a gamete for each member of mating pair, stack, and transpose
+    # generate the segment info for each parent's new, recombined gamete
+    # NOTE: reverse the order of the recomb_paths object so that the resulting
+    # segment info objects' order matches the order in which the recombination
+    # paths are popped in the following line of code (because they will pop
+    # off the right end of their list)
     seg_info = [spp.gen_arch._recomb_paths._get_recomb_segment_info(
-                                                path) for path in recomb_paths]
+                path, np.array([spp[pair[i]]._nodes_tab_ids[
+                homol] for homol in range(
+                spp.gen_arch.x)])) for i,path in enumerate(recomb_paths[::-1])]
+    # generate each parent's new, recombined gamete (and make into a new genome
+    # by stacking and transposing)
+    # NOTE: the first path winds up the left side of the new genome, thus
+    # homologue 0; this ensures that the first segment-info object in the
+    # `seg_info` list and the first (i.e. left) half of the new genome
+    # both correspond to the genomic material inherited from the first of the
+    # two parents whose ids are listed in `pair`
     new_genome = np.vstack(
       [spp[ind].g.flatten()[[*recomb_paths.pop()]] for ind in pair]).T
-    new_seg_info = []
 
-
-    #TODO: FIGURE OUT THIS SECTION
-    for seg_info_set, parent_id in zip(seg_info, pair):
-        new_seg_info_set = []
-        for seg in seg_info_set:
-            parent_node = spp[parent_id]._node_ids[seg[0]]
-            new_seg_info_set.append((parent_node, seg[1], seg[2]))
-        new_seg_info.append(new_seg_info_set)
-    #seg_info = [[(spp[ind].node_ids[homologue],
-                  #L, R) for homologue, L, R in info] for info in seg_info]
-
-
-    return new_genome, newseg_info
+    return new_genome, seg_info
 
 
 def _do_mating_sngl_pair(spp, pair, n_offspring, recomb_paths):
@@ -178,7 +178,7 @@ def _do_mating_sngl_pair(spp, pair, n_offspring, recomb_paths):
 
 # function for mating a chosen mating-pair
 def _do_mating(spp, mating_pairs, n_offspring, recomb_paths):
-    # use list of number of offsrpring per mating pair to create
+    # use list of number of offspring per mating pair to create
     # list of start and stop indices for subsetting the recomb paths into
     # groups of paths to be used for each gamete-production event for each pair
     start_stop_idxs = np.hstack((0, np.cumsum([2*n for n in n_offspring])))
@@ -190,4 +190,3 @@ def _do_mating(spp, mating_pairs, n_offspring, recomb_paths):
     new_genomes = list(starmap(_do_mating_sngl_pair, zip(repeat(spp),
                                     mating_pairs, n_offspring, pairs_paths)))
     return new_genomes
-

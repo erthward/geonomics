@@ -45,8 +45,8 @@ class Individual:
 
         # add attributes to hold the Individual's tskit Individuals id
         # and Nodes ids
-        self._individuals_id = None
-        self._node_ids = []
+        self._individuals_tab_id = None
+        self._nodes_tab_ids = {}
 
         assert type(self.x) == float and self.x >= 0, ("invalid value "
                                 "for x: %s, %s") % (str(self.x), type(self.x))
@@ -85,6 +85,13 @@ class Individual:
     # set the individual's genome
     def _set_g(self, genome):
         self.g = genome
+
+    # set the individual's tskit.TableCollection.nodes table's node ids
+    # NOTE: node ids must be fed in 0-to-x order, where x is the species'
+    # ploidy, because they will be assigned to the 0, 1, ..., x-keyed values
+    # of the Individual._nodes_tab_ids dict according to that order
+    def _set_nodes_tab_ids(self, *node_ids):
+        self._nodes_tab_ids.update({i:id for i, id in enumerate(node_ids)})
 
     # get the individual's x,y location as a tuple
     def _get_loc(self):

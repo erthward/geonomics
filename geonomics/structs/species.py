@@ -195,8 +195,7 @@ class Species(OD):
 
         # create a tskit.TableCollection object, if the species uses genomes
         if self.gen_arch is not None:
-            self._tc = tskit.TableCollection()
-            self._tc.sequence_length = self.gen_arch.L
+            self._tc = tskit.TableCollection(sequence_length=self.gen_arch.L)
         else:
             self._tc = None
 
@@ -358,24 +357,18 @@ class Species(OD):
         #copy the keys, for use in mutation.do_mutation()
         keys_list = [*offspring_keys]
 
-
-        # TODO: I added a line just below here to get the seg_info. Then I
-        # added a spot near the bottom of this method where the edges info
-        # should be added. But the way I have things right now, I haven't
-        # actually matched the parents' nodes values to each of the segments
-        # in the seg_info that will be added to the table. Need to figure out
-        # that as the next step (had been working on doing this within the
-        # mating._do_mating_sngl_offspr function, but not sure this will
-        # actually fit best there), and then also associate the correct child
-        # node id, and then I can pass all that info to tc.edges.add_row().
-
         if not burn and self.gen_arch is not None:
             recomb_paths = self.gen_arch._recomb_paths._get_paths(
                                                             total_births*2)
-            seg_info = [self.gen_arch._recomb_paths._get_recomb_segment_info(
-                        path) for path in recomb_paths]
-            new_genomes = _do_mating(self, mating_pairs,
-                                                    n_births, recomb_paths)
+            # NOTE: this gives us a hierarchically organized list,
+            # containing both the offspring's new genomes and their
+            # segment information (to be added to the
+            # tskit.TableCollection.edges table), organized as a sublist for
+            # each pair, then a subtuple within that, containing a new genome
+            # and then a 2-tuple of segments info for each of the new
+            # offspring's homologues
+            genomes_and_segs = _do_mating(self, mating_pairs,
+                                          n_births, recomb_paths)
 
         for n_pair, pair in enumerate(mating_pairs):
 
@@ -407,7 +400,8 @@ class Species(OD):
                     if burn:
                         new_genome = np.array([0])
                     else:
-                        new_genome = new_genomes[n_pair][n]
+                        new_genome = genomes_and_segs[n_pair][n][0]
+                        genome_segs = genomes_and_segs[n_pair][n][1]
                 else:
                     new_genome = None
 
@@ -424,24 +418,50 @@ class Species(OD):
                     and not burn):
                     self[offspring_key]._set_z(self.gen_arch)
 
-                #update the tskit tables as needed
-                loc = [ind.x, ind.y]
-                if self.gen_arch.traits is not None:
-                    loc = loc + ind.z + [ind.fit]
-                offspring_ind_id = self._tc.individuals.add_row(location=loc)
-                self[offspring_key]._individuals_id = offspring_ind_id
+                # during the main phase, for species with genomes,
+                # update the tskit tables
+                if (self.gen_arch is not None
+                    and not burn):
+                    loc = [offspring_x, offspring_y]
+                    if self.gen_arch.traits is not None:
+                        loc = (loc + self[offspring_key].z +
+                            [self[offspring_key].fit])
+                    offspring_ind_id = self._tc.individuals.add_row(
+                        location=loc,
+                        # NOTE: using the metadata column to store to gnx
+                        # individual idx, for later matching to update
+                        # Individual._individuals_tab_id after tskit's simplify
+                        # algorithm filters individuals
+                        metadata=offspring_key.to_bytes(length=4,
+                                                        byteorder='little'))
+                    self[offspring_key]._individuals_tab_id = offspring_ind_id
 
-                # add rows to the nodes table, setting the 'flags' column vals
-                # to 0 (to indicate they're not considered sample nodes),
-                # and setting the 'individual' column vals to ids returned from
-                # tc.individuals.add_row(), then adding the returned tskit
-                # Node ids to Individual_node_ids attribute (which is a list)
-                self[offspring_key]._node_ids.extend([self._tc.nodes.add_row(
-                    flags=1, time=self.t,
-                    individual=offspring_ind_id) for _ in range(
+                    # add rows to the nodes table, setting
+                    # the 'flags' column vals to 0
+                    # (to indicate they're not considered sample nodes),
+                    # and setting the 'individual' column vals to ids
+                    # returned from tc.individuals.add_row(), then adding
+                    # the returned tskit Node ids to Individual_nodes_tab_ids
+                    # attribute (which is a list)
+                    # NOTE: make time negative so that parent time is always
+                    # greater than child time (as it would be expressed in the
+                    # coalescent, except that we can't use positive numbers
+                    # here because we want to allow for the possibility
+                    # that a model could be walked for any arbitrary
+                    # number of time steps)
+                    self[offspring_key]._set_nodes_tab_ids(*[self._tc.nodes.add_row(
+                        flags=1, time=-self.t,
+                        individual=offspring_ind_id) for _ in range(
                                                             self.gen_arch.x)])
 
-                # add edges to the tskit edges table
+                    # add edges to the tskit edges table
+                    # NOTE: `[*seg_set]` is necessary to star-unpack
+                    # the zip object
+                    edge_id = [self._tc.edges.add_row(
+                        parent=seg[0], left=seg[1], right=seg[2],
+                        child=self[offspring_key]._nodes_tab_ids[homol]
+                        ) for homol, seg_set in enumerate(
+                        genome_segs) for seg in [*seg_set]]
 
         # sample all individuals' environment values, to initiate for offspring
         self._set_e(land)
@@ -565,18 +585,28 @@ class Species(OD):
                 loc = loc + ind.z + [ind.fit]
             # add a new row to the individuals table, setting the location
             # column's value to loc
-            # TODO: decide if I should use the 'metadata' column
-            ind_id = self._tc.individuals.add_row(location=loc)
-            ind._individuals_id = ind_id
+            # NOTE: using the metadata column to store to gnx
+            # individual idx, for later matching to update
+            # Individual._individuals_tab_id after tskit's simplify
+            # algorithm filters individuals
+            ind_id = self._tc.individuals.add_row(location=loc,
+                metadata=ind.idx.to_bytes(length=4, byteorder='little'))
+            ind._individuals_tab_id = ind_id
 
             # add rows to the nodes table, setting the 'flags' column vals to 0
             # (to indicate they're not considered sample nodes),
             # and setting the 'individual' column vals to ids returned from
             # tc.individuals.add_row(), then adding the returned tskit
-            # Node ids to Individual_node_ids attribute (which is a list)
-            ind._node_ids.extend([self._tc.nodes.add_row(flags=1, time=-1,
-                individual=ind_id) for _ in range(self.gen_arch.x)])
+            # Node ids to Individual_nodes_tab_ids attribute (which is a list)
+            # NOTE: make time the negative of -1 (i.e. the negative of the
+            # starting time step used in Geonomics), so that parent time
+            # is always greater than child time (as it would be expressed
+            # in the coalescent, except that we can't use positive numbers
+            # here because we want to allow for the possibility that a model
+            # could be walked for any arbitrary number of time steps)
 
+            ind._set_nodes_tab_ids(*[self._tc.nodes.add_row(flags=1, time=1,
+                individual=ind_id) for _ in range(self.gen_arch.x)])
 
         # add one row to the sites table for each genomic locus
         # NOTE: will use the metadata column to store 'n' or '<#>'
@@ -587,17 +617,146 @@ class Species(OD):
         # TODO: decide what to do about ancestral state of sites that are
         #       starting out already segregating (for now, setting to default
         #       to '0')
-        for locus in self.gen_arch.neut_loci:
-            self._tc.sites.add_row(position=float(locus), ancestral_state='0',
-                                   metadata='n'.encode('ascii'))
-        for locus in self.gen_arch.nonneut_loci:
-            for trt_num, trt in self.gen_arch.traits.items():
-                if locus in trt.loci:
-                    self._tc.sites.add_row(position=float(locus),
-                                           ancestral_state='0',
-                                           metadata=str(trt_num).encode(
-                                                                    'ascii'))
-        # TODO: add provenances row
+        # NOTE: By looping overall all loci at once, rather than looping first
+        # over neutral then non-neutral or vice versa, each locus' site id
+        # in the sites table winds up identical to its index in the genome,
+        # such that we have no need to separately track the mapping
+        # of site ids onto positions
+        for locus in range(self.gen_arch.L):
+            if locus in self.gen_arch.neut_loci:
+                site_id = self._tc.sites.add_row(position=float(locus),
+                                                 ancestral_state='0',
+                                                 metadata='n'.encode('ascii'))
+            elif locus in self.gen_arch.nonneut_loci:
+                for trt_num, trt in self.gen_arch.traits.items():
+                    if locus in trt.loci:
+                        site_id = self._tc.sites.add_row(position=float(locus),
+                                                         ancestral_state='0',
+                                                         metadata=str(
+                                                             trt_num).encode(
+                                                             'ascii'))
+
+        # TODO: ADD PROVENANCES ROW!
+
+
+    # method to sort and simplify the TableCollection,
+    # and update Individuals' node IDs
+    # NOTE: rather than deduplicate sites (and sometimes
+    # computer parent sites), as recommended by tskit's docs,
+    # we only have to sort and simplify here, because we have
+    # chosen to just add all simulated sites to the sites table (in
+    # Species._set_table_collection) at the simulation's outset,
+    # and also to only allow an infinite-sites model
+    # (FOR NOW, anyhow... could relax these constraints later, if desired,
+    # in which case would need to revamp this approach)
+    def _do_sort_simp_table_collection(self, check_nodes=False,
+                                       check_individuals=False):
+        # sort the TableCollection
+        self._tc.sort()
+        # get an array of all the current individuals' nodes,
+        # the nodes for which the tables will be simplified
+        curr_nodes = np.hstack([[*ind._nodes_tab_ids.values(
+                                                )] for ind in self.values()])
+        # run code necessary for checing that individuals' table ids are
+        # correctly assigned, if requested
+        if check_individuals:
+        # NOTE: this check will only work for models that have at least one
+        # trait, because only those models will have at least 3 values in the 
+        # location column's value (and only the values after the first 2 will
+        # be the same across an individual's lifetime, since they move position
+        # frequently but do not cahnge phenotype at all)
+
+            meta_b4 = self._tc.individuals.metadata
+            loc = self._tc.individuals.location
+            locoff = self._tc.individuals.location_offset
+            loc_b4_by_table_ids = {
+                table_id: (loc[locoff[table_id]: locoff[
+                    table_id+1]]) for table_id in range(len(
+                                                self._tc.individuals.flags))}
+            z0_b4 = {ind.idx: loc_b4_by_table_ids[
+                        ind._individuals_tab_id][2] for ind in self.values()}
+
+        # now simplify the tables and get the new ids output 
+        # from the tc.simplify method
+        # NOTE: we are not using the ouput, but it is an array where
+        # each value is the new node ID of the node that was in that index's
+        # row position in the old nodes table (and -1 if that node was
+        # dropped during simplication); see tskit docs for details
+        output = self._tc.simplify(curr_nodes, filter_individuals=True)
+
+        # make an Nx3 np array containing 1.) gnx ids, 2.) the new
+        # homologue 0 node ids, and 3.) the new homologue 1 node ids,
+        # in each its 3 cols; then loop over its rows to update
+        # each individual's _nodes_tab_ids attribute
+        inds_gnx_ids = np.array([*self]).reshape((len(self), 1))
+        new_ids = np.hstack((inds_gnx_ids, np.array([*range(len(
+            inds_gnx_ids) * 2)]).reshape((len(inds_gnx_ids), 2))))
+        for id, n0, n1 in new_ids:
+            self[id]._nodes_tab_ids.update({0:n0, 1:n1})
+
+        # update Individuals' table ids (Individual._individuals_tab_id attribute)
+        ind_meta = self._tc.individuals.metadata
+        if check_individuals:
+            print('b4', len(meta_b4), 'af', len(ind_meta))
+        ind_off = self._tc.individuals.metadata_offset
+        new_individuals_tab_id = {int.from_bytes(
+            ind_meta[ind_off[i]: ind_off[i+1]].tobytes(),
+            'little'): i for i in range(len(ind_off) - 1)}
+        [setattr(ind, '_individuals_tab_id',
+                 new_individuals_tab_id[id]) for id, ind in self.items()]
+
+        # check that individuals' nodes-table ids were correclty updated,
+        # if the check is requested
+        if check_nodes:
+            import pandas as pd
+            #create another identically structured Nx3 np array, to hold the
+            #individuals' gnx ids and their node ids according to the tskit
+            #nodes table (for cross-checking)
+            new_ids_from_tables = np.ones((len(inds_gnx_ids), 3)) * np.nan
+            new_ids_from_tables[:,0] = inds_gnx_ids[:,0]
+            nodedf = pd.DataFrame({k:v for k, v in self._tc.nodes.asdict(
+                ).items() if k in ['time', 'individual']})
+            ind_table_ids = [self[idx[
+                            0]]._individuals_tab_id for idx in inds_gnx_ids]
+            # loop over individuals' gnx ids and corresponding table row ids,
+            # filling up the comparison table
+            for ind, idx in zip(inds_gnx_ids[:,0], ind_table_ids):
+                subdf = nodedf[nodedf['individual'] == idx]
+                print('...\ngnx id:', ind, '\ttable id:', idx)
+                print('gnx node ids:  ', [*self[ind]._nodes_tab_ids.values()])
+                print('table node ids:', [*subdf.index])
+                node_id_vals = [*subdf.index]
+                row_idx = np.where(new_ids_from_tables[:,0] == ind)[0][0]
+                new_ids_from_tables[row_idx, 1:] = node_id_vals
+            # now make sure tabls are identical
+            assert np.all(new_ids_from_tables == new_ids), ("All the node "
+                                                            "ids don't match!")
+            print('ALL NODE IDS APPEAR CORRECTLY REASSIGNED\n')
+
+        # check that individuals' individuals-table ids were correclty updated,
+        # if the check is requested
+        if check_individuals:
+            # check that individuals' table ids were correctly reassigned, by
+            # way of assuring that individuals, as indexed by both their old
+            # and their new individuals-table ids, have identical phenotypes
+            loc = self._tc.individuals.location
+            locoff = self._tc.individuals.location_offset
+            loc_af_by_table_ids = {
+                table_id: (loc[locoff[table_id]: locoff[
+                    table_id+1]]) for table_id in range(len(
+                                                self._tc.individuals.flags))}
+            z0_af = {ind.idx: loc_af_by_table_ids[
+                        ind._individuals_tab_id][2] for ind in self.values()}
+            print(z0_af)
+            z0_check = [z0 == z0_b4[idx] for idx, z0 in z0_af.items()]
+            for idx in [*self]:
+                print(idx, ' b4 ', z0_b4[idx])
+                print(idx, ' af ', z0_af[idx])
+                print('..................')
+            assert np.all(z0_check), ('phenotypes are not the same! '
+                                      ' (MAKE SURE YOU USED A MODEL WITH '
+                                      ' AT LEAST ONE TRAIT!)')
+            print('ALL INDIVIDUAL IDS APPEAR CORRECTLY REASSIGNED\n')
 
 
     # method to get individs' environment values

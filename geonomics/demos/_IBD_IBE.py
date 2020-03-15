@@ -559,6 +559,8 @@ def _make_params():
             'burn_T':       30,
             #seed number
             'num':          None,
+            #time step interval for simplification of tskit tables
+            'tskit_simp_interval':      100,
 
             ###############################
             #### iterations parameters ####
@@ -854,3 +856,4 @@ def _run(params, save_figs=False, time_it=False,
         print("\n\nModel ran in %0.2f seconds." % tot_time)
 
     return mod
+

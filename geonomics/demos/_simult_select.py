@@ -394,6 +394,8 @@ def _make_params():
             'burn_T':       60,
             #seed number
             'num':          None,
+            #time step interval for simplification of tskit tables
+            'tskit_simp_interval':      100,
 
             ###############################
             #### iterations parameters ####
@@ -554,4 +556,5 @@ def _run(params, save_figs=False, time_it=False):
         plt.savefig('sim_sel_z-e_plot.png', format='png', dpi=1000)
 
     return mod
+
 

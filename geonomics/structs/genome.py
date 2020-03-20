@@ -816,10 +816,10 @@ def _check_enough_mutable_loci(spp, burn_T, T):
                                                           neut_loci_remaining))
 
 
-# function to reset genomes after burn-in
-def _set_genomes(spp, burn_T, T):
+# reset genomes after burn-in
+def _set_empty_genomes(spp, burn_T, T):
     # use mean n_births at tail end of burn-in to estimate number of mutations,
-    # and randomly choose set of neutral loci
+    # then randomly choose set of neutral loci
     # of that length to go into the spp.gen_arch._mutable_loci attribute
     n_muts = mutation._calc_estimated_total_mutations(spp, burn_T, T)
     # add a small number if n_muts evaluates to 0
@@ -849,11 +849,47 @@ def _set_genomes(spp, burn_T, T):
         spp.gen_arch._mutable_loci.update(muts)
         # set those loci's p values to 0 (i.e. non-segregating)
         spp.gen_arch.p[np.array([*muts])] = 0
-    # now reassign genotypes to all individuals, using gen_arch.p
-    [ind._set_g(_draw_genome(spp.gen_arch)) for ind in spp.values()]
-    # and then reset the individuals' phenotypes
+    # set all-0 genomes for all individuals
+    [ind._set_g(np.zeros((spp.gen_arch.L,
+                           spp.gen_arch.x))) for ind in spp.values()]
+    return
+
+
+# function to generate mutations, after burn-in,
+# and to assign them to a species' TableCollection's  current nodes,
+# to produce the starting 1-allele frequencies parameterized for the species
+def _make_starting_mutations(spp, tables):
+    # get the starting frequencies for each site
+    start_freqs = spp.gen_arch.p
+
+    # get a set of all homologues, as tuples of (individual id, homologue idx)
+    homologues = [*zip(np.repeat([*spp], 2),
+                         [*range(spp.gen_arch.x)] * len(spp))]
+
+    # make mutations for each site
+    for site, freq in enumerate(start_freqs):
+        # generate the number of mutations for this locus
+        n_mutations = int(round(2 * len(spp) * freq, 0))
+        # make sure we don't mutate either all or none of the population's
+        # homologues, unless called for
+        if n_mutations == len(spp) * 2 and freq < 1:
+            n_mutations -= 1
+        if n_mutations == 0 and freq > 0:
+            n_mutations = 1
+        #randomly choose and mutate n_mutations homologues from the population 
+        np.random.shuffle(homologues)
+        homologues_to_mutate = homologues[:n_mutations]
+        for ind, homol in homologues_to_mutate:
+            spp[ind].g[site, homol] = 1
+            node_id = spp[ind]._nodes_tab_ids[homol]
+            tables.mutations.add_row(site, node=node_id, parent=-1,
+                                     derived_state='1')
+
+    # and then reset the individuals' phenotypes, if needed
     if spp.gen_arch.traits is not None:
         [ind._set_z(spp.gen_arch) for ind in spp.values()]
+
+    return
 
 
 # method for loading a pickled genomic architecture
@@ -862,3 +898,5 @@ def read_pickled_genomic_architecture(filename):
     with open(filename, 'rb') as f:
         gen_arch = cPickle.load(f)
     return gen_arch
+
+

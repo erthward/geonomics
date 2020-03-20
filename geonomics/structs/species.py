@@ -9,7 +9,9 @@ Defines the Species class, with its associated methods and supporting functions
 
 #geonomics imports
 from geonomics.utils import viz, spatial as spt
-from geonomics.structs.genome import _make_genomic_architecture
+from geonomics.structs.genome import (_make_genomic_architecture,
+                                      _set_empty_genomes,
+                                      _make_starting_mutations)
 from geonomics.structs.landscape import Layer
 from geonomics.structs.individual import Individual, _make_individual
 from geonomics.ops.movement import _do_movement, _do_dispersal
@@ -31,6 +33,7 @@ from scipy.stats.distributions import norm
 from collections import Counter as C
 from collections import OrderedDict as OD
 import tskit
+import msprime
 from copy import deepcopy
 from operator import itemgetter
 from operator import attrgetter
@@ -449,8 +452,9 @@ class Species(OD):
                     # here because we want to allow for the possibility
                     # that a model could be walked for any arbitrary
                     # number of time steps)
-                    self[offspring_key]._set_nodes_tab_ids(*[self._tc.nodes.add_row(
-                        flags=1, time=-self.t,
+                    self[offspring_key]._set_nodes_tab_ids(
+                        *[self._tc.nodes.add_row(flags=1, time=-self.t,
+                                                 population=0,
                         individual=offspring_ind_id) for _ in range(
                                                             self.gen_arch.x)])
 
@@ -462,6 +466,7 @@ class Species(OD):
                         child=self[offspring_key]._nodes_tab_ids[homol]
                         ) for homol, seg_set in enumerate(
                         genome_segs) for seg in [*seg_set]]
+                    
 
         # sample all individuals' environment values, to initiate for offspring
         self._set_e(land)
@@ -575,7 +580,73 @@ class Species(OD):
 
     # method to fill the tskit.TableCollection's tables (to be called
     # after the model has burned in
-    def _set_table_collection(self):
+    def _set_genomes_and_tables(self, burn_T, T):
+        # set the species' neutral and non-netural loci,
+        # and set genomes to all zeros
+        _set_empty_genomes(self, burn_T, T)
+
+        # simulate a coalescent ancestry with number of samples equal to our
+        # species' number of haploid genomes (i.e. 2*N_0)
+        ts = msprime.simulate(len(self) * 2, Ne=1000, length=self.gen_arch.L)
+
+        # then grab the simulation's tree, and the tree's TableCollection
+        # NOTE: the TreeSequence object only has one tree,
+        # because no recombination was used in the sim
+        tree = ts.first()
+        tables = ts.dump_tables()
+
+        # set the sequence length
+        #tables.sequence_length = self.gen_arch.L
+        # clear the mutations table
+        tables.mutations.clear()
+
+        # loop over all sites, so that each site's row goes into
+        # the sites table in order (such that 1.) there's no need
+        # to track how gnx sites map onto sites-table row ids,
+        # and 2.) there will be no need to deduplicate sites later on)
+        for site in range(self.gen_arch.L):
+            #determine whether this is a neutral or non-neutral site
+            if site in self.gen_arch.neut_loci:
+                metadata='n'.encode('ascii')
+            elif site in self.gen_arch.nonneut_loci:
+                metadata='t'.encode('ascii')
+            # add the variant's site to the sites table
+            tables.sites.add_row(position=site, ancestral_state='0',
+                                 metadata=metadata)
+
+        # grab the nodes flags, which are 1 for current nodes,
+        # 0 for past nodes, into two separate objects
+        current_nodes = [*np.where(tables.nodes.flags == 1)[0]]
+        # reverse, so that I can pop nodes off the 'front'
+        current_nodes = current_nodes[::-1]
+        past_nodes = [*np.where(tables.nodes.flags != 1)[0]]
+        # create an empty list, to fill up the individual ids for each node
+        # NOTE: setting to a vector of -1 initially, to easily check that
+        # all values have been assigned at the end by asking if all >= 0 
+        nodes_tab_individual_col = np.int32(np.ones(len(
+                                                    tables.nodes.flags))*-1)
+
+        # NOTE: there are no requirements or restrictions for the individuals
+        # and nodes tables (e.g. order, etc.), and thus the tables' order
+        # is not affected by the TableCollection.simplify algorithm.
+        # So, I could add either current or past individuals and nodes first;
+        # choosing to add past first, so that all 'real' individuals
+        # from the start of the geonomics simulation forward will
+        # wind up having their individuals and nodes rows in a single
+        # block at the tables' bottoms
+
+        # add an individual to the individuals table for
+        # each coalescent-simulated node before the current time
+        # NOTE: adding no metadata, and no location, to indicate that this is
+        # a 'fake' individual, invented just to match up to the nodes
+        # simulated for the starting population
+        for node in past_nodes:
+            ind_id = tables.individuals.add_row(flags=0)
+            # store its individual id in the nodes table's individuals column
+            nodes_tab_individual_col[node] = ind_id
+
+        # create and add to the individuals table a new row for
+        # each real individual
         for ind in self.values():
             # get the 'location' column info, which will include the x and y
             # positions of an individual, as well as the individual's
@@ -585,58 +656,45 @@ class Species(OD):
                 loc = loc + ind.z + [ind.fit]
             # add a new row to the individuals table, setting the location
             # column's value to loc
-            # NOTE: using the metadata column to store to gnx
+            # NOTE: using the metadata column to store to the gnx
             # individual idx, for later matching to update
             # Individual._individuals_tab_id after tskit's simplify
             # algorithm filters individuals
-            ind_id = self._tc.individuals.add_row(location=loc,
+            ind_id = tables.individuals.add_row(flags=1, location=loc,
                 metadata=ind.idx.to_bytes(length=4, byteorder='little'))
             ind._individuals_tab_id = ind_id
 
-            # add rows to the nodes table, setting the 'flags' column vals to 0
-            # (to indicate they're not considered sample nodes),
-            # and setting the 'individual' column vals to ids returned from
-            # tc.individuals.add_row(), then adding the returned tskit
-            # Node ids to Individual_nodes_tab_ids attribute (which is a list)
-            # NOTE: make time the negative of -1 (i.e. the negative of the
-            # starting time step used in Geonomics), so that parent time
-            # is always greater than child time (as it would be expressed
-            # in the coalescent, except that we can't use positive numbers
-            # here because we want to allow for the possibility that a model
-            # could be walked for any arbitrary number of time steps)
+            # assign the individual 2 randomly chosen nodes from
+            # the current time step, and associate the individual's
+            # _individuals_tab_id with those 2 nodes in some data
+            # structure to collect this
+            ind_node_ids =[current_nodes.pop() for _ in range(self.gen_arch.x)]
+            ind._set_nodes_tab_ids(*ind_node_ids)
+            # add this individual's ind_id to the
+            # nodes_tab_individual_col list, once for each node
+            nodes_tab_individual_col[ind_node_ids] = ind_id
+        # make sure that all nodes were assigned to individuals
+        assert np.all(nodes_tab_individual_col >= 0), ('Some nodes not '
+                                                       'given individs')
 
-            ind._set_nodes_tab_ids(*[self._tc.nodes.add_row(flags=1, time=1,
-                individual=ind_id) for _ in range(self.gen_arch.x)])
+        nodes_cols = tables.nodes.asdict()
+        # use the node_tab_individual_col data structure to reset
+        # the individuals column in the nodes table
+        nodes_cols['individual'][:] = nodes_tab_individual_col
+        # increment all the birth times by 1, so that all individuals are
+        # marked as having been born before the start of the model's main phase
+        nodes_cols['time'] += 1
+        tables.nodes.set_columns(**nodes_cols)
 
-        # add one row to the sites table for each genomic locus
-        # NOTE: will use the metadata column to store 'n' or '<#>'
-        #       for each locus, where 'n' indicates neutrality,
-        #       and '<#>' is the id-number of the trait for a
-        #       trait-associated non-neutral locus
-        # TODO: decide what to do if neutral sites later become deleterious
-        # TODO: decide what to do about ancestral state of sites that are
-        #       starting out already segregating (for now, setting to default
-        #       to '0')
-        # NOTE: By looping overall all loci at once, rather than looping first
-        # over neutral then non-neutral or vice versa, each locus' site id
-        # in the sites table winds up identical to its index in the genome,
-        # such that we have no need to separately track the mapping
-        # of site ids onto positions
-        for locus in range(self.gen_arch.L):
-            if locus in self.gen_arch.neut_loci:
-                site_id = self._tc.sites.add_row(position=float(locus),
-                                                 ancestral_state='0',
-                                                 metadata='n'.encode('ascii'))
-            elif locus in self.gen_arch.nonneut_loci:
-                for trt_num, trt in self.gen_arch.traits.items():
-                    if locus in trt.loci:
-                        site_id = self._tc.sites.add_row(position=float(locus),
-                                                         ancestral_state='0',
-                                                         metadata=str(
-                                                             trt_num).encode(
-                                                             'ascii'))
+        # add sufficient mutations, at only current nodes, to produce
+        # the starting 1-allele frequencies parameterized for this species
+        _make_starting_mutations(self, tables)
 
         # TODO: ADD PROVENANCES ROW!
+
+        # assign as the species' TableCollection
+        self._tc = tables
+        return
 
 
     # method to sort and simplify the TableCollection,
@@ -682,7 +740,8 @@ class Species(OD):
         # each value is the new node ID of the node that was in that index's
         # row position in the old nodes table (and -1 if that node was
         # dropped during simplication); see tskit docs for details
-        output = self._tc.simplify(curr_nodes, filter_individuals=True)
+        output = self._tc.simplify(curr_nodes, filter_individuals=True,
+                                   filter_sites=False)
 
         # make an Nx3 np array containing 1.) gnx ids, 2.) the new
         # homologue 0 node ids, and 3.) the new homologue 1 node ids,
@@ -694,7 +753,8 @@ class Species(OD):
         for id, n0, n1 in new_ids:
             self[id]._nodes_tab_ids.update({0:n0, 1:n1})
 
-        # update Individuals' table ids (Individual._individuals_tab_id attribute)
+        # update Individuals' table ids
+        # (i.e. their Individual._individuals_tab_id attributes)
         ind_meta = self._tc.individuals.metadata
         if check_individuals:
             print('b4', len(meta_b4), 'af', len(ind_meta))
@@ -875,6 +935,15 @@ class Species(OD):
         if return_format=='individual':
             inds = [self[ind] for ind in inds]
         return(inds)
+
+    # method to reduce a spp to some chosen number, by randomly removing
+    # N_curr_t - n individuals
+    def _reduce(self, n):
+        inds = [*self]
+        keep = np.random.choice(inds, n, replace=False)
+        for ind in inds:
+            if ind not in keep:
+                self.pop(ind)
 
     #use the kd_tree attribute to find nearest neighbors either
     #within the species, if within == True, or between the species
@@ -1524,4 +1593,5 @@ def read_pickled_spp(filename):
     with open(filename, 'rb') as f:
         spp = cPickle.load(f)
     return spp
+
 

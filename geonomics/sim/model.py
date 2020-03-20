@@ -10,7 +10,7 @@ Defines the core Model class, as well as its public and private methods
 #geonomics imports
 from geonomics.structs.landscape import _make_landscape
 from geonomics.structs.community import _make_community
-from geonomics.structs.genome import _set_genomes, _check_enough_mutable_loci
+from geonomics.structs.genome import  _check_enough_mutable_loci
 from geonomics.sim.data import _DataCollector
 from geonomics.sim.stats import _StatsCollector
 from geonomics.utils._str_repr_ import _get_str_spacing
@@ -624,10 +624,9 @@ class Model:
                         if spp.gen_arch is not None:
                             #verbose output
                             if self._verbose:
-                                print(('Assigning genomes for '
+                                print(('\nAssigning genomes for '
                                     'species "%s"...\n\n') % spp.name)
-                            _set_genomes(spp, self.burn_T, self.T)
-                            spp._set_table_collection()
+                            spp._set_genomes_and_tables(self.burn_T, self.T)
                     #and then set the reassign_genomes attribute to False, so
                     #that they won't get reassigned again during this iteration
                     self.reassign_genomes = False

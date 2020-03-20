@@ -9,6 +9,8 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 generate a better, parameter-informative, print output for genomic architecture
+
         5 go through and make private anything that it makes sense to make private
           (because right now some things are private and some are not, without good
            rhyme or reason)

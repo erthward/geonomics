@@ -33,18 +33,18 @@ import bitarray
 
 
 class _RecombinationPaths:
-    def __init__(self, L, recomb_paths=None, fixed_r=None):
+    def __init__(self, L, recomb_events=None, fixed_r=None):
         self._L = L
-        self.recomb_paths = recomb_paths
+        self.recomb_events = recomb_events
         self._fixed_r = fixed_r
-        self._gen_paths_ad_hoc = self.recomb_paths is None
+        self._gen_paths_ad_hoc = self.recomb_events is None
 
-    def _get_paths(self, n):
+    def _get_events(self, n):
         if self._gen_paths_ad_hoc:
-            paths = _get_bitarray_subsetters_fixed_r(n, self._L, self._fixed_r)
+            events = _get_bitarray_subsetters_fixed_r(n, self._L, self._fixed_r)
         else:
-            paths = random.sample(self.recomb_paths, n)
-        return paths
+            events = random.sample(self.recomb_events, n)
+        return events
 
 
     # takes a recombination path and a parent's node ids, returns a zip object
@@ -53,42 +53,17 @@ class _RecombinationPaths:
         # tskit.TableCollection.nodes table);
         # 2.) left edge of the segment;
         # 3.) right edge
-    def _get_recomb_segment_info(self, recomb_path, node_ids):
-        # NOTE: using recomb_path[1], not recomb_path[0], because the 1th
-        # position indicates or not the first value on the right side of
-        # the genome (i.e. homologue 1) will be used. Thus, if it is 1 then
-        # it is True that that position's genotype will be used, and thus
-        # homologue 1 is the starting homologue. If False, then it will not
-        # used, so homologue 0's first value will be used instead.
-        start_homologue = int(recomb_path[1])
-        evens = np.int8([*recomb_path[::2]])
-        diffs = evens[1:] - evens[:-1]
-        # NOTE: return the 0th element of the np.where output because
-        # that function returns a tuple of arrays by default,
-        # so that it will work for np arrays of arbitrary dimenstionality
-        # NOTE: adding 1 to to the recomb location implements a paradigm in
-        # which the genome can be recombined into maximum L distinct edges,
-        # where L is the genome length, and in which each of those
-        # minimum-length segments is occupied by a single site (the site
-        # corresponging to the site represented by a single site's genotype in
-        # Geonomics' numpy array genomes) that sits at the segment's far left;
-        # in other words, the genome is modeled like:
-        #   |0___|1___|2___|3___|....|L___|
-        # where the numbers represent the numpy arrays' locus indexes, and
-        # their positions relative to the segments represent their positions
-        # on the tskit segments
-        recomb_locs = np.where(diffs != 0)[0] + 1
+    def _get_recomb_segment_info(self, recomb_breakpoints, node_ids):
+        # NOTE: THIS WILL ONLY WORK FOR DIPLOIDY!
+        start_homologue = np.random.binomial(1, 0.5)
+        # get left and right ends of each segment
+        L = [0] + [*recomb_breakpoints]
+        R = [*recomb_breakpoints] + [self._L]
         # NOTE: adding start_homologue to n then taking modulus 2 gives us an
         #       alternating list of 0s & 1s,
         #       regardless of whether the start homologue is 0 or 1
-        # NOTE: taking range(len(recomb_locs) + 1) because adding 1 gives us
-        #       a list of homologue ids for each of the n+1 segments
-        #       created by the n recombination events
-        homologues = [(n + start_homologue) % 2 for n in range(len(
-                                                            recomb_locs) + 1)]
+        homologues = [(n + start_homologue) % 2 for n in range(len(L))]
         homol_nodes = node_ids[homologues]
-        L = [0] + [*recomb_locs]
-        R = [*recomb_locs] + [self._L]
         segs = zip(homol_nodes, L, R)
         return segs
 
@@ -113,11 +88,19 @@ class Trait:
         self.loci = np.int64([])
         self.alpha = np.array([])
 
-    def _get_phi(self, spp):
+    def _get_phi(self, spp, individs=None):
         if type(self.phi) in (float, int):
-            phi = np.array([self.phi]*len(spp))
+            if individs is not None:
+                phi = np.array([self.phi]*len(individs))
+            else:
+                phi = np.array([self.phi]*len(spp))
         else:
-            phi = self.phi[spp.cells[:, 1], spp.cells[:, 0]]
+            if individs is not None:
+                cells = dict(zip([*spp], spp.cells))
+                cells = np.vstack([cells[k] for k in individs])
+                phi = self.phi[cells[:, 1], cells[:, 0]]
+            else:
+                phi = self.phi[spp.cells[:, 1], spp.cells[:, 0]]
         return(phi)
 
     def _set_loci(self, loci):
@@ -157,7 +140,7 @@ class GenomicArchitecture:
 
         # The recombination-paths object will be assigned here; used to
         # speed up large quantities of binomial draws needed for recombination
-        self._recomb_paths = None
+        self._recomb_events = None
         # Get the allow_ad_hoc_recomb param, to determine whether or not to
         # allow the model to simulate recombination paths ad hoc (rather than
         # generate them at the beginning and then shuffle and draw from them
@@ -329,10 +312,15 @@ class GenomicArchitecture:
                                                   effects))
 
     # method for creating and assigning the r_lookup attribute
-    def _make_recomb_paths(self):
-        self._recomb_paths = _RecombinationPaths(self.L,
-                                                 *_make_recomb_paths_bitarrays(
-                                                                        self))
+    #def _make_recomb_paths(self):
+    #    self._recomb_paths = _RecombinationPaths(self.L,
+    #                                             *_make_recomb_paths_bitarrays(self))
+
+    # create and assign the recomb events' breakpoints
+    def _make_recomb_events(self):
+        self._recomb_events = _RecombinationPaths(self.L,
+                                                 _calc_recomb_breakpoints(
+                                                 self.p))
 
     # method for plotting all allele frequencies for the species
     def _plot_allele_frequencies(self, spp):
@@ -540,6 +528,13 @@ def _make_recomb_array(g_params, recomb_values):
     return(recomb_array, sorted(l_c))
 
 
+# draw n sets of recombination breakpoints, to be used for n recomb events
+def _calc_recomb_breakpoints(p, n_sets=100_000):
+    sets = [np.where(np.random.binomial(1, p[1:]))[0] + 1 for _ in range(
+                                                                       n_sets)]
+    return sets
+
+
 # function to create a lookup array, for raster recombination of larger
 # numbers of loci on the fly
 # NOTE: size argument ultimately determines the minimum distance between
@@ -592,7 +587,7 @@ def _make_recomb_paths_bitarrays(genomic_architecture,
         # and set fixed_r to None
         fixed_r = None
 
-    # instead, if recombination rates are homoegenous, then just return None
+    # instead, if recombination rates are homogeneous, then just return None
     # for the bitarrays, and return the fixed recombination rate as fixed_r,
     # because recombinants will be quickly generated on the fly
     else:
@@ -762,7 +757,7 @@ def _make_genomic_architecture(spp_params, land):
         gen_arch.neut_loci.union(gen_arch.nonneut_loci))) == 0, assert_msg
 
     # create the r_lookup attribute
-    gen_arch._make_recomb_paths()
+    gen_arch._make_recomb_events()
 
     return gen_arch
 
@@ -884,10 +879,6 @@ def _make_starting_mutations(spp, tables):
             node_id = spp[ind]._nodes_tab_ids[homol]
             tables.mutations.add_row(site, node=node_id, parent=-1,
                                      derived_state='1')
-
-    # and then reset the individuals' phenotypes, if needed
-    if spp.gen_arch.traits is not None:
-        [ind._set_z(spp.gen_arch) for ind in spp.values()]
 
     return
 

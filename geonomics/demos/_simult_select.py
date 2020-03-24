@@ -44,12 +44,12 @@ def _make_params():
                  ## ::::     ::           ::   ::::::::::::::##
                ##::::::                       ::::::::: :::::: :##
              ## :    :::                    :::    ::    :::::::::##
-            ##ggggg eeee ooo   n   n   ooo   m   m iiiii  cccc ssss##
-           ##g     e    o   o  nn  n  o   o  m   m   i   c     s    ##
-           ##g     eee o     o n n n o     o mm mm   i   c     sssss##
-           ##g ggg eee o     o n  nn o     o m m m   i   c         s##
-           ##g   g e    o   o  n   n  o   o  m   m   i   c        ss##
-            ##gggg  eeee ooo   n   n   ooo   m   m iiiii  cccc ssss##
+            ##GGGGG EEEE OOO   N   N   OOO   M   M IIIII  CCCC SSSS##
+           ##G     E    O   O  NN  N  O   O  M   M   I   C     S    ##
+           ##G     EEE O     O N N N O     O MM MM   I   C     SSSSS##
+           ##G GGG EEE O     O N  NN O     O M M M   I   C         S##
+           ##G   G E    O   O  N   N  O   O  M   M   I   C        SS##
+            ##GGGG  EEEE OOO   N   N   OOO   M   M IIIII  CCCC SSSS##
              ##  ::::::::        ::::::::::::  :       ::  ::   : ##
                ##  ::::              :::::::  ::     ::::::::  :##
                  ## :::               :::::: ::       ::::::  ##

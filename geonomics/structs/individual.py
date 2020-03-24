@@ -9,7 +9,7 @@ functions
 '''
 
 #geonomics imports
-from geonomics.structs.genome import _draw_genome
+#from geonomics.structs.genome import _draw_genome
 from geonomics.ops.movement import _do_dispersal
 from geonomics.ops.selection import _calc_phenotype
 
@@ -25,10 +25,9 @@ import numpy.random as r
 ######################################
 
 class Individual:
-    def __init__(self, idx, x, y, age=0, new_genome=None, sex=None):
+    def __init__(self, idx, x, y, age=0, sex=None):
+        self.g = None
         self.idx = idx
-        #individual's x-ploid genome
-        self.g = new_genome
         #x and y coords
         self.x = float(x)
         self.y = float(y)
@@ -74,9 +73,9 @@ class Individual:
         self.e = e
 
     # set the individual's phenotype (attribute z) for all traits
-    def _set_z(self, genomic_architecture):
-        self.z = [_calc_phenotype(self, genomic_architecture,
-            trait) for trait in genomic_architecture.traits.values()]
+    #def _set_z(self, genomic_architecture):
+    #    self.z = [_calc_phenotype(self, genomic_architecture,
+    #        trait) for trait in genomic_architecture.traits.values()]
 
     # set the individual's fitness
     def _set_fit(self, fit):
@@ -105,8 +104,7 @@ class Individual:
 ######################################
 
 def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
-        new_genome = None, sex=None, parental_centerpoint = None,
-        age=0, burn=False):
+                     sex=None, parental_centerpoint = None, age=0, burn=False):
 
     """Create a new individual.
 
@@ -143,10 +141,12 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
         if not offspring:
             #if this is not for the burn-in, draw a proper genome
             if not burn:
-                new_genome = _draw_genome(genomic_architecture)
+                pass
+                #new_genome = _draw_genome(genomic_architecture)
             #otherwise, just a dummy genome
             else:
-                new_genome = np.atleast_2d([0,0])
+                pass
+                #new_genome = np.atleast_2d([0,0])
 
     #set the sex, if necessary
     if sex is None:
@@ -154,6 +154,5 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
         #decide to implement sex chroms, or spp.sex_ratio
         sex = r.binomial(1,0.5)
 
-    return Individual(idx = idx, x = x, y = y, age = age,
-                                        new_genome = new_genome, sex = sex)
+    return Individual(idx = idx, x = x, y = y, age = age, sex = sex)
 

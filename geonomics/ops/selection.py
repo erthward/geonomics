@@ -18,7 +18,7 @@ from collections import OrderedDict as OD
 # -----------------------------------#
 ######################################
 
-#Get the phenotypic values of all individuals for a given trait
+#Get the phenotypic value of an individual for a given trait
 def _calc_phenotype(ind, gen_arch, trait):
     #get number of loci and their allelic effect sizes
     n_loci = trait.n_loci
@@ -42,23 +42,24 @@ def _calc_phenotype(ind, gen_arch, trait):
     return(phenotype)
 
 
-def _calc_fitness_one_trait(t, e, z, spp):
-    fit = 1 - t._get_phi(spp)*(abs((
+def _calc_fitness_one_trait(t, e, z, spp, individs=None):
+    fit = 1 - t._get_phi(spp, individs=individs)*(abs((
                 e[:,t.lyr_num]**(not t.univ_adv)) - z[:,t.idx])**t.gamma)
     return(fit)
 
 
-def _calc_fitness_traits(spp, trait_num = None):
+def _calc_fitness_traits(spp, trait_num=None, individs=None):
     traits = spp.gen_arch.traits.values()
     #subset for single trait, if indicated
     if trait_num is not None:
         traits = [list(traits)[trait_num]]
     #get all individuals' environmental values
-    e = spp._get_e()
+    e = spp._get_e(individs=individs)
     #get all individuals' phenotypes
-    z = spp._get_z()
+    z = spp._get_z(individs=individs)
     #create lambda function with current e, z, and spp objects
-    calc_fitness_lambda = lambda t: _calc_fitness_one_trait(t, e, z, spp)
+    calc_fitness_lambda = lambda t: _calc_fitness_one_trait(t, e, z, spp,
+                                                            individs)
     #map the calc_sngl_trait_fitness function to all traits, then
     #calculate overall fitness as product of
     #fitness for each trait
@@ -69,13 +70,17 @@ def _calc_fitness_traits(spp, trait_num = None):
     return(fit)
 
 
-def _calc_fitness_deleterious_mutations(spp):
+def _calc_fitness_deleterious_mutations(spp, individs=None):
     #create an np.array that has individuals in rows and their
     #diploid genotypes for each of the deleterious loci in the cols
     #(0, 1, or 2, to facilitate the fitness math, because s values
     #(i.e. selection coefficients) are expressed per allele)
-    deletome = np.sum(np.stack([ind.g[[*spp.gen_arch.delet_loci.keys(
-                                    )],:] for ind in spp.values()]), axis = 2)
+    delet_gts = spp._get_genotypes_or_phenotypes(
+                                    loci=[*spp.gen_arch.delet_loci.keys()],
+                                    individs=individs, biallelic=False,
+                                    as_array=True)
+    #delet_gts = {ind: np.sum(gt, axis=1) for ind, gt in delet_gts.items()}
+    #deletome = np.vstack(delet_gts.values())
     fit = 1 - np.multiply(deletome, np.array(
                                         [*spp.gen_arch.delet_loci.values()]))
     fit = fit.prod(axis = 1)
@@ -84,19 +89,22 @@ def _calc_fitness_deleterious_mutations(spp):
 
 #one function to calculate total fitness, including traits and deleterious
 #loci, as applicable
-def _calc_fitness(spp, trait_num=None):
+def _calc_fitness(spp, trait_num=None, individs=None):
+    if individs is None:
+        individs=[*spp]
     #set a default w array
-    w = np.array([1]*len(spp))
+    w = np.array([1]*len(individs))
     #get trait-related fitness, if traits
     if (spp.gen_arch.traits is not None
         and len(spp.gen_arch.traits) > 0):
-        w = w * _calc_fitness_traits(spp, trait_num = trait_num)
+        w = w * _calc_fitness_traits(spp, trait_num = trait_num,
+                                     individs=individs)
     #if fitness is not supposed to be calculated for a specific trait, and if 
     #species has deleterious mutations, then get the fitnesses related to 
     #the deleterious traits (i.e. operationalize background selection)
     if (trait_num is None and
         len(spp.gen_arch.delet_loci) > 0):
-            w = w * _calc_fitness_deleterious_mutations(spp)
+            w = w * _calc_fitness_deleterious_mutations(spp, individs=individs)
     return w
 
 
@@ -106,7 +114,7 @@ def _calc_fitness(spp, trait_num=None):
 #there, and the selection coefficient(s) on the trait(s)
 def _calc_prob_death(spp, d):
     #get the fitness values (while also setting all individ.fit attributes)
-    w = spp._calc_fitness()
+    w = spp._get_fit()[:len(d)]
     death_probs = 1-(1-d)*w
     assert (death_probs >= 0).all() and (death_probs <= 1).all(), ("Some "
                         "death-probability values outside the 0-to-1 range.")

@@ -10,7 +10,7 @@ mod = gnx.make_model(dir + file)
 mod.walk(1000, 'burn')
 
 # reduce the population to just 3
-mod.comm[0]._reduce(10)
+mod.comm[0]._reduce(3)
 
 # randomly choose 3 loci and make them fixed for either 0 or 1
 #fixed_loci = np.random.choice(range(10), 3, replace=False)

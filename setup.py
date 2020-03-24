@@ -1,6 +1,5 @@
 import setuptools
 
-
 def readme():
     with open("README.rst", 'r') as f:
         return f.read()
@@ -48,7 +47,7 @@ setuptools.setup(
                       'shapely', 'bitarray', 'pyvcf', 'rasterio'],
     extras_requie={'simulation on neutral landscape models': ['nlmpy'],
                    '3d plots for Yosemite demo': ['pykrige']},
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     # package_data={
     # 'demos': ['geonomics/demos/yosemite/yosemite_30yr_normals_90x90.tif']
     # },

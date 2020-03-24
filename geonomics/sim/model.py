@@ -1335,7 +1335,7 @@ class Model:
 
 
     #wrapper around Species._plot_genotype
-    def plot_genotype(self, spp, locus, lyr=None, by_dominance=False,
+    def plot_genotype(self, spp, locus, lyr=None, with_dominance=False,
                       individs=None, text=False, edge_color='black',
                       text_color='black', cbar=True, size=25, text_size = 9,
                       alpha=1, zoom_width=None, x=None, y=None, ticks=None,
@@ -1366,7 +1366,7 @@ class Model:
             to None, which will cause all Layers to be plotted as an overlay
             of transparent rasters, each with a different colormap.
 
-        by_dominance : bool, optional, default: False
+        with_dominance : bool, optional, default: False
             If False, the Individuals will be colored by their actual genotypes
             (i.e. a 0|0 homozygote will be depicted as 0, a 1|1 homozygote as
             1, and a 0|1 heterozygote as 0.5). If True, then the dominance
@@ -1459,7 +1459,8 @@ class Model:
         spp._plot_genotype(locus=locus, lyr_num=lyr_num, individs=individs,
                            text=text, size=size, text_size=text_size,
                            edge_color=edge_color, text_color=text_color,
-                           cbar=cbar, alpha=alpha, by_dominance=by_dominance,
+                           cbar=cbar, alpha=alpha,
+                           with_dominance=with_dominance,
                            zoom_width=zoom_width, x=x, y=y, ticks=ticks,
                            mask_rast=None)
         #add spp name

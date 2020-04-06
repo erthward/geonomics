@@ -9,7 +9,6 @@ functions
 '''
 
 #geonomics imports
-#from geonomics.structs.genome import _draw_genome
 from geonomics.ops.movement import _do_dispersal
 from geonomics.ops.selection import _calc_phenotype
 
@@ -25,9 +24,13 @@ import numpy.random as r
 ######################################
 
 class Individual:
-    def __init__(self, idx, x, y, age=0, sex=None):
-        self.g = None
+    def __init__(self, idx, x, y, age=0, new_genome=None, sex=None):
         self.idx = idx
+        #individual's x-ploid genome (NOTE: make np.int8 to minimize mem)
+        if new_genome is not None:
+            self.g = np.int8(new_genome)
+        else:
+            self.g = new_genome
         #x and y coords
         self.x = float(x)
         self.y = float(y)
@@ -73,9 +76,9 @@ class Individual:
         self.e = e
 
     # set the individual's phenotype (attribute z) for all traits
-    #def _set_z(self, genomic_architecture):
-    #    self.z = [_calc_phenotype(self, genomic_architecture,
-    #        trait) for trait in genomic_architecture.traits.values()]
+    def _set_z(self, genomic_architecture):
+        self.z = [_calc_phenotype(self, genomic_architecture,
+            trait) for trait in genomic_architecture.traits.values()]
 
     # set the individual's fitness
     def _set_fit(self, fit):
@@ -84,6 +87,12 @@ class Individual:
     # set the individual's genome
     def _set_g(self, genome):
         self.g = genome
+
+    # add a row of zeros to the individual's genome at the given index
+    def _add_new_locus(self, idx):
+        self.g = np.vstack((self.g[:idx, :],
+                            [0, 0],
+                            self.g[idx:, :]))
 
     # set the individual's tskit.TableCollection.nodes table's node ids
     # NOTE: node ids must be fed in 0-to-x order, where x is the species'
@@ -104,7 +113,8 @@ class Individual:
 ######################################
 
 def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
-                     sex=None, parental_centerpoint = None, age=0, burn=False):
+        new_genome=None, sex=None, parental_centerpoint=None,
+        age=0, burn=False):
 
     """Create a new individual.
 
@@ -135,24 +145,13 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
         x = np.clip(x, 0, dim[0]-0.001)
         y = np.clip(y, 0, dim[1]-0.001)
 
-    #set the genome, if necessary
-    if genomic_architecture is not None or new_genome is not None:
-        #if not offspring (i.e. a new random individual), draw a new genome
-        if not offspring:
-            #if this is not for the burn-in, draw a proper genome
-            if not burn:
-                pass
-                #new_genome = _draw_genome(genomic_architecture)
-            #otherwise, just a dummy genome
-            else:
-                pass
-                #new_genome = np.atleast_2d([0,0])
-
     #set the sex, if necessary
     if sex is None:
         #NOTE: For now sex randomly chosen at 50/50. Change if
         #decide to implement sex chroms, or spp.sex_ratio
         sex = r.binomial(1,0.5)
 
-    return Individual(idx = idx, x = x, y = y, age = age, sex = sex)
+    individual = Individual(idx=idx, x=x, y=y, age=age,
+                            new_genome=new_genome, sex=sex)
+    return individual
 

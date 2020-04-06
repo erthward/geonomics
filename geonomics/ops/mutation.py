@@ -65,63 +65,60 @@ def _do_neutral_mutation(spp, offspring, locus=None, individ=None):
 
 
 # do a non-neutral mutation for a single Individual, chosen from the offspring
-def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None):
-    #choose a new locus, if not provided
+def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None,
+                           trait_nums=None, delet_s=None):
+    # choose a new locus, if not provided
     if locus is None:
-        locus = r.choice([*spp.gen_arch._mutable_loci])
-        assert locus in spp.gen_arch._mutable_loci, ('The locus provided '
-                                    'is not in spp.gen_arch.mutable_loci.')
-    #remove the locus from the mutable_loci and neut_loci sets
-    spp.gen_arch._mutable_loci.remove(locus)
-    spp.gen_arch.neut_loci.remove(locus)
-    #add the locus to the nonneut_loci set
-    spp.gen_arch.nonneut_loci.update({locus})
-    #draw an individual to mutate from the list of offspring provided,
-    #unless individ is provided
+        locus = spp.gen_arch._mutables.pop()
+    # otherwise, remove it from the mutables
+    else:
+        spp.gen_arch._mutables.remove(locus)
+    # draw an individual to mutate from the list of offspring provided,
+    # unless individ is provided
     if individ is None:
         individ = r.choice(offspring)
+
+    # add the locus to the gen_arch.nonneut_loci array
+    idx = spp.gen_arch._add_nonneut_locus(locus, trait_nums, delet_s)
     #TODO: Need to check that the individual provided is among the list of
     #offspring? Or make offspring an optional arg too?
     #create the mutation
     homol = r.binomial(1, 0.5)
-    spp[individ].g[locus, homol] = 1
+    # add a new row for this locus, with '0' genotypes,
+    # to the individuals' genotype arrays
+    spp._add_new_locus(idx, locus)
+    # mutate the chosen individual's chosen homologue's genotype to 1
+    spp[individ].g[idx, homol] = 1
     # add a row to the tskit.TableCollection.mutations table
     _do_add_row_muts_table(spp, individ, homol, locus)
     return(individ, locus)
 
 
 # do a trait mutation for a single Individual, chosen from the offspring
-def _do_trait_mutation(spp, offspring, trait_num, alpha=None,
+def _do_trait_mutation(spp, offspring, trait_nums, alpha=None,
                                         locus=None, individ=None):
     #run the do_nonneutral_mutation function, to select locus
     #and individ (unless already provided) and update
-    #the mutable_loci, neut_loci, and nonneut_loci sets, and 
+    #the mutable_loci, neut_loci, and nonneut_loci, and 
     #change one of this locus' alleles to 1 in the mutated individual
     individ, locus = _do_nonneutral_mutation(spp=spp, offspring=offspring,
-                                             locus=locus, individ=individ)
-    #choose an effect size for this locus, if not provided
-    if alpha is None:
-        alpha = spp.gen_arch._draw_trait_alpha(trait_num)
-    #update the trait's loci and alpha attributes accordingly
-    spp.gen_arch._set_trait_loci(trait_num, mutational=True, loci=locus,
-                                 alpha=alpha)
-    #return the locus and individual
+                                             locus=locus, individ=individ,
+                                             trait_nums=trait_nums)
     return(individ, locus)
 
 
 # do a deleterious mutation for a single Individual, chosen from the offspring
 def _do_deleterious_mutation(spp, offspring, locus=None, s=None, individ=None):
+    #choose a selection coefficient for this locus, if not provided
+    if s is None:
+        s = spp.gen_arch._draw_delet_s()
     #run the do_nonneutral_mutation function, to select locus and individ
     #(unless already provided) and update the mutable_loci, neut_loci, and 
     #nonneut_loci sets, and change one of this locus' alleles to 1 in
     #the mutated individual
     individ, locus = _do_nonneutral_mutation(spp=spp, offspring=offspring,
-                                             locus=locus, individ=individ)
-    #choose a selection coefficient for this locus, if not provided
-    if s is None:
-        s = spp.gen_arch._draw_delet_s()
-    #update the spp.gen_arch.delet_loci OrderedDict
-    spp.gen_arch.delet_loci.update({locus: s})
+                                             locus=locus, individ=individ,
+                                             delet_s=s)
     #return the locus and individual
     return(individ, locus)
 

@@ -10,14 +10,15 @@ Defines the Species class, with its associated methods and supporting functions
 #geonomics imports
 from geonomics.utils import viz, spatial as spt
 from geonomics.structs.genome import (_make_genomic_architecture,
-                                      _set_empty_genomes,
+                                      _check_mutation_rates,
                                       _make_starting_mutations)
 from geonomics.structs.landscape import Layer
 from geonomics.structs.individual import Individual, _make_individual
 from geonomics.ops.movement import _do_movement, _do_dispersal
 from geonomics.ops.mating import _find_mates, _draw_n_births, _do_mating
 from geonomics.ops.selection import _calc_fitness
-from geonomics.ops.mutation import _do_mutation
+from geonomics.ops.mutation import (_do_mutation,
+                                    _calc_estimated_total_mutations)
 from geonomics.ops.demography import _do_pop_dynamics, _calc_logistic_soln
 from geonomics.ops.change import _SpeciesChanger
 from geonomics.sim import burnin
@@ -202,9 +203,6 @@ class Species(OD):
         else:
             self._tc = None
 
-        # create an attribute to hold a TreeSequence object
-        self._ts = None
-
         #set the selection attribute, to indicate whether or not
         #natural selection should be implemented for the species
         self.selection = (self.gen_arch is not None and
@@ -360,12 +358,13 @@ class Species(OD):
         if len(offspring_keys) > 0:
             self.max_ind_idx = max(offspring_keys)
 
-        #copy the keys, for use below in do_mutation, _set_z, _calc_fitness
+        #copy the keys, for use in mutation.do_mutation()
         keys_list = [*offspring_keys]
 
         if not burn and self.gen_arch is not None:
-            recomb_events = self.gen_arch._recomb_events._get_events(
-                                                            total_births*2)
+            recomb_keys = [*r.randint(low=0,
+                                      high=self.gen_arch.recombinations._n,
+                                      size=total_births*2)]
             # NOTE: this gives us a hierarchically organized list,
             # containing both the offspring's new genomes and their
             # segment information (to be added to the
@@ -373,7 +372,8 @@ class Species(OD):
             # each pair, then a subtuple within that, containing a new genome
             # and then a 2-tuple of segments info for each of the new
             # offspring's homologues
-            seg_sets = _do_mating(self, mating_pairs, n_births, recomb_events)
+            genomes_and_segs = _do_mating(self, mating_pairs,
+                                          n_births, recomb_keys)
 
         for n_pair, pair in enumerate(mating_pairs):
 
@@ -402,31 +402,36 @@ class Species(OD):
 
                 #set the new_genome correctly
                 if self.gen_arch is not None:
-                    if burn:
-                        pass
-                        #new_genome = np.array([0])
+                    if not burn:
+                        new_genome = genomes_and_segs[n_pair][n][0]
+                        genome_segs = genomes_and_segs[n_pair][n][1]
                     else:
-                        #new_genome = genomes_and_segs[n_pair][n][0]
-                        segs = seg_sets[n_pair][n]
+                        new_genome=None
                 else:
-                    #new_genome = None
-                    pass
+                    new_genome = None
 
                 #create the new individual
-                self[offspring_key] = Individual(idx = offspring_key,
-                                                 age = age, x = offspring_x,
-                                                 y = offspring_y, sex = sex)
+                self[offspring_key] = Individual(idx=offspring_key, age=age,
+                                                 new_genome=new_genome,
+                                                 x=offspring_x, y=offspring_y,
+                                                 sex=sex)
+
+                #set new individual's phenotype (won't be set
+                #during burn-in, because no genomes assigned;
+                #won't be set if the species has no gen_arch)
+                if (self.gen_arch is not None
+                    and self.gen_arch.traits is not None
+                    and not burn):
+                    self[offspring_key]._set_z(self.gen_arch)
 
                 # during the main phase, for species with genomes,
                 # update the tskit tables
                 if (self.gen_arch is not None
                     and not burn):
                     loc = [offspring_x, offspring_y]
-                    #if self.gen_arch.traits is not None:
-                    #    loc = (loc + [*self[offspring_key].z] +
-                    #        [self[offspring_key].fit])
-                    #print(loc)
-                    #print(self[offspring_key].fit)
+                    if self.gen_arch.traits is not None:
+                        loc = (loc + self[offspring_key].z +
+                            [self[offspring_key].fit])
                     offspring_ind_id = self._tc.individuals.add_row(
                         location=loc,
                         # NOTE: using the metadata column to store to gnx
@@ -461,31 +466,21 @@ class Species(OD):
                     # the zip object
                     edge_id = [self._tc.edges.add_row(
                         parent=seg[0], left=seg[1], right=seg[2],
+                        # TODO: DOES THIS LINE THROW AN ERROR B/C IT LOOPS
+                        # OVER >2 seg_sets, SO INDEXING FOR homol = >1 IS
+                        # A KEY ERROR FOR A DICT WITH KEYS 0 AND 1?
                         child=self[offspring_key]._nodes_tab_ids[homol]
                         ) for homol, seg_set in enumerate(
-                        segs) for seg in [*seg_set]]
+                        genome_segs) for seg in [*seg_set]]
 
-        # do mutation if necessary
-        if self.mutate and not burn:
-             _do_mutation(keys_list, self, log = self.mut_log)
 
         # sample all individuals' environment values, to initiate for offspring
         self._set_e(land)
         self._set_coords_and_cells()
 
-        #set new individuals' phenotypes (won't be set
-        #during burn-in, because no genomes assigned;
-        #won't be set if the species has no gen_arch)
-        if (self.gen_arch is not None and self.gen_arch.traits is not None
-            and not burn):
-
-            # update the TreeSequence object
-            self._tc.sort()
-            self._ts = self._tc.tree_sequence()
-            #vars = self._tc.tree_sequence().variants(samples=
-
-            self._set_z(individs=keys_list)
-            self._calc_fitness(set_fit=True, individs=keys_list)
+        # do mutation if necessary
+        if self.mutate and not burn:
+             _do_mutation(keys_list, self, log = self.mut_log)
 
 
     #method to do species dynamics
@@ -551,7 +546,24 @@ class Species(OD):
         else:
             return dens
 
-    #method to set the individuals' environment values 
+    # method to set the species' genomes to all zeros (after burn-in),
+    # if the species has any nonneutral loci or has non-zero nonneutral
+    # mutation rates
+    def _set_null_genomes(self):
+        if (len(self.gen_arch.nonneut_loci) > 0 or
+            (self.gen_arch.traits is not None and
+             len([trt.mu > 0 for trt in self.gen_arch.traits]) > 0) or
+            self.gen_arch.mu_delet > 0):
+            [ind._set_g(np.zeros(
+                (len(self.gen_arch.nonneut_loci),
+                    self.gen_arch.x))) for ind in self.values()]
+
+    # add new row to the individuals' numpy arrays, for a given mutation locus
+    def _add_new_locus(self, idx, locus):
+        # insert a row of ones in each individual's genotype array 
+        [ind._add_new_locus(idx) for ind in self.values()]
+
+    #method to set the individuals' environment values
     def _set_e(self, land, individs = None):
         if individs is None:
             inds_to_set = self.values()
@@ -564,28 +576,17 @@ class Species(OD):
             ind.x)] for lyr in land.values()]) for ind in inds_to_set]
 
     #method to set the individuals' phenotype attributes 
-    def _set_z(self, individs=None):
-        if individs == None:
-            individs = [*self]
-        z_dicts = [self._get_genotypes_or_phenotypes(
-                                    with_dominance=self.gen_arch._use_dom,
-                                    individs=individs, trait=trt.idx,
-                                    ) for trt in self.gen_arch.traits.values()]
-        [setattr(self[ind], 'z', np.hstack(
-                    [d[ind] for d in z_dicts])) for ind in individs];
+    def _set_z(self):
+        [ind._set_z(self.gen_arch) for ind in self.values()];
 
     #method to set the individuals' fitness attributes
-    def _set_fit(self, fit, individs=None):
-        if individs is None:
-            individs = [*self]
-        [self[ind]._set_fit(f) for ind, f in zip(individs, fit)];
-
+    def _set_fit(self, fit):
+        [ind._set_fit(f) for ind, f in zip(self.values(), fit)];
 
     #method to set species' coords and cells arrays
     def _set_coords_and_cells(self):
         self.coords = self._get_coords()
         self.cells = np.int32(np.floor(self.coords))
-
 
     #method to set the species' kd_tree attribute (a spatial._KDTree)
     def _set_kd_tree(self, leafsize = 100):
@@ -598,12 +599,22 @@ class Species(OD):
                                 window_width = self.density_grid_window_width)
 
 
-    # method to fill the tskit.TableCollection's tables (to be called
-    # after the model has burned in
+    # method to set the species' genomes, check for adequate mutable loci,
+    # and fill the tskit.TableCollection's tables
+    # (to be called after the model has burned in)
     def _set_genomes_and_tables(self, burn_T, T):
         # set the species' neutral and non-netural loci,
         # and set genomes to all zeros
-        _set_empty_genomes(self, burn_T, T)
+        self._set_null_genomes()
+
+        # use mean n_births at tail end of burn-in to estimate number of
+        # mutations for this species, then warn the user if there is or may be
+        # inadequate space for the parameterized mutation rate (because only
+        # using infinite-sites mutation)
+        est_tot_muts = _calc_estimated_total_mutations(self, burn_T, T)
+
+        # check whether there are adequate mutable loci for this species
+        _check_mutation_rates(self.gen_arch, est_tot_muts, burn_T, T)
 
         # simulate a coalescent ancestry with number of samples equal to our
         # species' number of haploid genomes (i.e. 2*N_0)
@@ -714,14 +725,6 @@ class Species(OD):
 
         # assign as the species' TableCollection
         self._tc = tables
-        self._tc.sort()
-        self._ts = self._tc.tree_sequence()
-        
-        # set individuals' phenotypes and fitness, if necessary
-        if self.gen_arch.traits is not None:
-            self._set_z()
-            self._calc_fitness(set_fit=True)
-
         return
 
 
@@ -736,8 +739,7 @@ class Species(OD):
     # (FOR NOW, anyhow... could relax these constraints later, if desired,
     # in which case would need to revamp this approach)
     def _do_sort_simp_table_collection(self, check_nodes=False,
-                                       check_individuals=False,
-                                       check_genotypes=False):
+                                       check_individuals=False):
         # sort the TableCollection
         self._tc.sort()
         # get an array of all the current individuals' nodes,
@@ -785,8 +787,8 @@ class Species(OD):
         # update Individuals' table ids
         # (i.e. their Individual._individuals_tab_id attributes)
         ind_meta = self._tc.individuals.metadata
-        #if check_individuals:
-            #print('b4', len(meta_b4), 'af', len(ind_meta))
+        if check_individuals:
+            print('b4', len(meta_b4), 'af', len(ind_meta))
         ind_off = self._tc.individuals.metadata_offset
         new_individuals_tab_id = {int.from_bytes(
             ind_meta[ind_off[i]: ind_off[i+1]].tobytes(),
@@ -811,16 +813,16 @@ class Species(OD):
             # filling up the comparison table
             for ind, idx in zip(inds_gnx_ids[:,0], ind_table_ids):
                 subdf = nodedf[nodedf['individual'] == idx]
-                #print('...\ngnx id:', ind, '\ttable id:', idx)
-                #print('gnx node ids:  ', [*self[ind]._nodes_tab_ids.values()])
-                #print('table node ids:', [*subdf.index])
+                print('...\ngnx id:', ind, '\ttable id:', idx)
+                print('gnx node ids:  ', [*self[ind]._nodes_tab_ids.values()])
+                print('table node ids:', [*subdf.index])
                 node_id_vals = [*subdf.index]
                 row_idx = np.where(new_ids_from_tables[:,0] == ind)[0][0]
                 new_ids_from_tables[row_idx, 1:] = node_id_vals
             # now make sure tabls are identical
             assert np.all(new_ids_from_tables == new_ids), ("All the node "
                                                             "ids don't match!")
-            print('PASS: all node IDs appear correctly reassigned\n')
+            print('ALL NODE IDS APPEAR CORRECTLY REASSIGNED\n')
 
         # check that individuals' individuals-table ids were correclty updated,
         # if the check is requested
@@ -836,30 +838,16 @@ class Species(OD):
                                                 self._tc.individuals.flags))}
             z0_af = {ind.idx: loc_af_by_table_ids[
                         ind._individuals_tab_id][2] for ind in self.values()}
-            #print(z0_af)
+            print(z0_af)
             z0_check = [z0 == z0_b4[idx] for idx, z0 in z0_af.items()]
             for idx in [*self]:
                 print(idx, ' b4 ', z0_b4[idx])
                 print(idx, ' af ', z0_af[idx])
                 print('..................')
             assert np.all(z0_check), ('phenotypes are not the same! '
-                                      ' (MAKE SURE YOU USED A MODEL WITH'
+                                      ' (MAKE SURE YOU USED A MODEL WITH '
                                       ' AT LEAST ONE TRAIT!)')
-            print("PASS: all individuals' IDs appear correctly reassigned\n")
-        if check_genotypes:
-            whether_genotypes_match = []
-            samples = [[*ind._nodes_tab_ids.values()] for ind in self.values()]
-            samples = np.int32(np.hstack(samples))
-            vars = self._tc.tree_sequence().variants(samples=samples)
-            for site in range(self.gen_arch.L):
-                gnx_genotypes = np.hstack([ind.g[site,
-                                                 :] for ind in self.values()])
-                tskit_genotypes = next(vars).genotypes
-                res = np.all(gnx_genotypes == tskit_genotypes)
-                whether_genotypes_match.append(res)
-            final_res = np.all(whether_genotypes_match)
-            assert final_res, "genotypes did not all match!"
-            print("PASS: all individuals' genotypes appear correct\n")
+            print('ALL INDIVIDUAL IDS APPEAR CORRECTLY REASSIGNED\n')
 
 
     # method to get individs' environment values
@@ -879,76 +867,25 @@ class Species(OD):
                 e = np.array(ig(e))
         return e
 
+    def _get_genotype(self, locus, biallelic=False, individs=None,
+                                                        by_dominance=True):
 
-    def _get_genotypes_or_phenotypes(self, loci=None, biallelic=False,
-                                     individs=None, with_dominance=True,
-                                     trait=None, as_array=False):
-        # ensure that biallelic is True, if phenotypes are requested
-        if trait is not None:
-            biallelic = False
-        # get the list of loci
-        if loci is None:
-            if trait is None:
-                loci = [*range(self.gen_arch.L)]
-            else:
-                loci = self.gen_arch.traits[trait].loci
-        # get the list of individuals
         if individs is None:
             individs = [*self]
-        # and get the list of their nodes
-        samples = np.int32(np.hstack([[*self[ind]._nodes_tab_ids.values(
-                                                    )] for ind in individs]))
-        assert len(samples) == self.gen_arch.x * len(individs), ('Number of '
-                                                                 'nodes does '
-                                                                 'not match '
-                                                                 'number of '
-                                                                 'individs!')
 
-        # sort the TableCollection and get the TreeSequence
-        #self._tc.sort()
-        #ts = self._tc.tree_sequence()
+        if biallelic:
+            return {i: self[i].g[locus, :] for i in [*self] if i in individs}
 
-        # get the genotypes for requested individuals at all requested loci
-        genotypes = [var.genotypes for n, var in enumerate(self._ts.variants(
-                                                samples=samples)) if n in loci]
-        genotypes = np.vstack(genotypes)
-        genotypes = {ind: genotypes[:, i: i + 2] for ind, i in zip(
-                individs, [*range(0, len(self) * self.gen_arch.x, 2)])}
-
-        # calculate non-biallelic or dominance-based genotypes, if needed
-        if not biallelic:
-            genotypes = {ind: np.mean(gt,
-                                      axis=1) for ind, gt in genotypes.items()}
-            if with_dominance == True:
-                d = self.gen_arch.dom[loci]
-                genotypes = {ind: np.clip(gt * (1 + d), a_min=None,
-                                   a_max=1) for ind, gt in genotypes.items()}
-        # multiply by an array of factors, if requested (i.e. in order to
-        # calculate effect sizes, for phenotype calculation)
-        if trait is not None:
-            if len(self.gen_arch.traits[trait].loci) > 1:
-                phenotypes = {ind: 0.5 + np.sum(
-                         gt * self.gen_arch.traits[trait].alpha) for ind,
-                         gt in genotypes.items()}
+        else:
+            if by_dominance == True:
+                d = self.gen_arch.dom[locus]
             else:
-                phenotypes = {ind: gt[0] for ind, gt in genotypes.items()}
-            # return as an N x L array (or 2N x L, if biallelic),
-            # rather than a dict, if requested
-            if as_array:
-                if biallelic:
-                    phenotypes = np.hstack([pt for pt in phenotypes.values(
-                                                                        )]).T
-                else:
-                    phenotypes = np.vstack([pt for pt in phenotypes.values()])
-            return phenotypes
-        # return as an N x L array (or 2N x L, if biallelic),
-        # rather than a dict, if requested
-        if as_array:
-            if biallelic:
-                genotypes = np.hstack([gt for gt in genotypes.values()]).T
-            else:
-                genotypes = np.vstack([gt for gt in genotypes.values()])
-        return genotypes
+                d = 0
+            genotypes = np.array(
+              [ind.g[locus] for i, ind in self.items() if i in individs])
+            genotypes = np.mean(genotypes, axis = 1)
+            genotypes = np.clip(genotypes * (1 + d), a_min = None, a_max = 1)
+            return dict(zip(individs, genotypes))
 
     #convenience method for getting a scalar attribute for some or all individs
     def _get_scalar_attr(self, attr_name, individs=None):
@@ -975,11 +912,11 @@ class Species(OD):
         fits = self._get_scalar_attr('fit', individs=individs)
         return fits
 
-    def _calc_fitness(self, trait_num=None, set_fit=True, individs=None):
-        fit = _calc_fitness(self, trait_num=trait_num, individs=individs)
+    def _calc_fitness(self, trait_num = None, set_fit = True):
+        fit = _calc_fitness(self, trait_num = trait_num)
         #set individuals' fitness attributes, if indicated
         if set_fit:
-            self._set_fit(fit, individs=individs)
+            self._set_fit(fit)
         return fit
 
     def _get_dom(self, locus):
@@ -1152,14 +1089,13 @@ class Species(OD):
     def _plot_genotype(self, locus, lyr_num=None, individs=None,
                        text=False, size=25, text_size = 9, edge_color='black',
                        text_color='black', cbar=True, alpha=1,
-                       with_dominance=False, zoom_width=None, x=None, y=None,
+                       by_dominance=False, zoom_width=None, x=None, y=None,
                        ticks=None, mask_rast=None):
 
-        if with_dominance == True:
-            genotypes = self._get_genotypes_or_phenotypes([locus],
-                                                          with_dominance=True)
+        if by_dominance == True:
+            genotypes = self._get_genotype(locus, by_dominance=True)
         else:
-            genotypes = self._get_genotypes_or_phenotypes([locus])
+            genotypes = self._get_genotype(locus)
 
         if individs is not None:
             genotypes = {i:v for i,v in genotypes.items() if i in individs}
@@ -1193,18 +1129,16 @@ class Species(OD):
         # get the trait's lyr_num, if no lyr_num provided
         lyr_num = self.gen_arch.traits[trait].lyr_num
 
-        #z = OD(zip([*self], self._get_z()[:, trait]))
-        z = self._get_genotypes_or_phenotypes(trait=trait, individs=individs,
-                                              as_array=True)
-        #if individs is not None:
-        #    z = {i: v for i, v in z.items() if i in individs}
+        z = OD(zip([*self], self._get_z()[:, trait]))
+        if individs is not None:
+            z = {i: v for i, v in z.items() if i in individs}
 
         # get the correct cmap for this trait's layer
         pt_cmap = viz._choose_cmap(self.gen_arch.traits[trait].lyr_num)
 
         points = self._plot(lyr_num = lyr_num, land = land,
                             individs = individs, text = text,
-                            color = z, pt_cmap = pt_cmap,
+                            color = list(z.values()), pt_cmap = pt_cmap,
                             edge_color = edge_color, text_color = text_color,
                             cbar = cbar, size = size, text_size = text_size,
                             alpha = alpha, zoom_width = zoom_width, x = x,
@@ -1609,8 +1543,8 @@ def _make_species(land, name, idx, spp_params, burn=False, verbose=False):
     spp._set_kd_tree()
 
     #set phenotypes, if the species has genomes
-    #if spp.gen_arch is not None and not burn:
-    #    spp._set_z()
+    if spp.gen_arch is not None and not burn:
+        [ind._set_z(spp.gen_arch) for ind in spp.values()]
 
     #make density_grid
     spp._set_dens_grids(land)

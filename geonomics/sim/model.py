@@ -10,7 +10,6 @@ Defines the core Model class, as well as its public and private methods
 #geonomics imports
 from geonomics.structs.landscape import _make_landscape
 from geonomics.structs.community import _make_community
-from geonomics.structs.genome import  _check_enough_mutable_loci
 from geonomics.sim.data import _DataCollector
 from geonomics.sim.stats import _StatsCollector
 from geonomics.utils._str_repr_ import _get_str_spacing
@@ -733,10 +732,6 @@ class Model:
                     "iteration %i.\n\n") % self.it)
             return
 
-        #check each species has enough mutable loci
-        for spp in self.comm.values():
-            _check_enough_mutable_loci(spp, self.burn_T, self.T)
-
         #loop over the timesteps, running the run_main function repeatedly
         for t in range(self.T):
             #run a main timestep
@@ -1009,8 +1004,6 @@ class Model:
             # exit if burn-in is complete
             if mode == 'burn' and self.comm.burned:
                 # verbose output
-                if self._verbose:
-                    print('Burn-in complete.\n\n')
                 break
             # reset mode, if mode is 'burn' and there is no mod.burn_fn_queue
             if mode == 'burn' and self.burn_fn_queue is None:

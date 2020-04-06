@@ -82,7 +82,12 @@ def _read_raster(filepath, coord_prec, dim=None):
         rast_file = rasterio.open(filepath)
         rast = rast_file.read()[0, :, :]
         dim = rast.shape[::-1]
-        # NOTE: From tutorial at https://www.gdal.org/gdal_tutorial.html:
+        # NOTE: rasterio has switched to using the proper affine transform
+        # matrix as the dataset.transform attribute (see, for example,
+        # https://www.perrygeo.com/python-affine-transforms.html). However, the
+        # get_transform() method still returns the affine transform's tuple
+        # in GDAL format, which is specified (according to the
+        # tutorial at https://www.gdal.org/gdal_tutorial.html) as:
         # adfGeoTransform[0] /* top left x */
         # adfGeoTransform[1] /* w-e pixel resolution */
         # adfGeoTransform[2] /* 0 */

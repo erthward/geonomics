@@ -10,14 +10,15 @@ Defines the Species class, with its associated methods and supporting functions
 #geonomics imports
 from geonomics.utils import viz, spatial as spt
 from geonomics.structs.genome import (_make_genomic_architecture,
-                                      _set_empty_genomes,
+                                      _check_mutation_rates,
                                       _make_starting_mutations)
 from geonomics.structs.landscape import Layer
 from geonomics.structs.individual import Individual, _make_individual
 from geonomics.ops.movement import _do_movement, _do_dispersal
 from geonomics.ops.mating import _find_mates, _draw_n_births, _do_mating
 from geonomics.ops.selection import _calc_fitness
-from geonomics.ops.mutation import _do_mutation
+from geonomics.ops.mutation import (_do_mutation,
+                                    _calc_estimated_total_mutations)
 from geonomics.ops.demography import _do_pop_dynamics, _calc_logistic_soln
 from geonomics.ops.change import _SpeciesChanger
 from geonomics.sim import burnin
@@ -361,8 +362,9 @@ class Species(OD):
         keys_list = [*offspring_keys]
 
         if not burn and self.gen_arch is not None:
-            recomb_paths = self.gen_arch._recomb_paths._get_paths(
-                                                            total_births*2)
+            recomb_keys = [*r.randint(low=0,
+                                      high=self.gen_arch.recombinations._n,
+                                      size=total_births*2)]
             # NOTE: this gives us a hierarchically organized list,
             # containing both the offspring's new genomes and their
             # segment information (to be added to the
@@ -371,7 +373,7 @@ class Species(OD):
             # and then a 2-tuple of segments info for each of the new
             # offspring's homologues
             genomes_and_segs = _do_mating(self, mating_pairs,
-                                          n_births, recomb_paths)
+                                          n_births, recomb_keys)
 
         for n_pair, pair in enumerate(mating_pairs):
 
@@ -400,18 +402,19 @@ class Species(OD):
 
                 #set the new_genome correctly
                 if self.gen_arch is not None:
-                    if burn:
-                        new_genome = np.array([0])
-                    else:
+                    if not burn:
                         new_genome = genomes_and_segs[n_pair][n][0]
                         genome_segs = genomes_and_segs[n_pair][n][1]
+                    else:
+                        new_genome=None
                 else:
                     new_genome = None
 
                 #create the new individual
-                self[offspring_key] = Individual(
-                    idx = offspring_key, age = age, new_genome = new_genome,
-                                x = offspring_x, y = offspring_y, sex = sex)
+                self[offspring_key] = Individual(idx=offspring_key, age=age,
+                                                 new_genome=new_genome,
+                                                 x=offspring_x, y=offspring_y,
+                                                 sex=sex)
 
                 #set new individual's phenotype (won't be set
                 #during burn-in, because no genomes assigned;
@@ -463,10 +466,13 @@ class Species(OD):
                     # the zip object
                     edge_id = [self._tc.edges.add_row(
                         parent=seg[0], left=seg[1], right=seg[2],
+                        # TODO: DOES THIS LINE THROW AN ERROR B/C IT LOOPS
+                        # OVER >2 seg_sets, SO INDEXING FOR homol = >1 IS
+                        # A KEY ERROR FOR A DICT WITH KEYS 0 AND 1?
                         child=self[offspring_key]._nodes_tab_ids[homol]
                         ) for homol, seg_set in enumerate(
                         genome_segs) for seg in [*seg_set]]
-                    
+
 
         # sample all individuals' environment values, to initiate for offspring
         self._set_e(land)
@@ -540,7 +546,24 @@ class Species(OD):
         else:
             return dens
 
-    #method to set the individuals' environment values 
+    # method to set the species' genomes to all zeros (after burn-in),
+    # if the species has any nonneutral loci or has non-zero nonneutral
+    # mutation rates
+    def _set_null_genomes(self):
+        if (len(self.gen_arch.nonneut_loci) > 0 or
+            (self.gen_arch.traits is not None and
+             len([trt.mu > 0 for trt in self.gen_arch.traits]) > 0) or
+            self.gen_arch.mu_delet > 0):
+            [ind._set_g(np.zeros(
+                (len(self.gen_arch.nonneut_loci),
+                    self.gen_arch.x))) for ind in self.values()]
+
+    # add new row to the individuals' numpy arrays, for a given mutation locus
+    def _add_new_locus(self, idx, locus):
+        # insert a row of ones in each individual's genotype array 
+        [ind._add_new_locus(idx) for ind in self.values()]
+
+    #method to set the individuals' environment values
     def _set_e(self, land, individs = None):
         if individs is None:
             inds_to_set = self.values()
@@ -560,12 +583,10 @@ class Species(OD):
     def _set_fit(self, fit):
         [ind._set_fit(f) for ind, f in zip(self.values(), fit)];
 
-
     #method to set species' coords and cells arrays
     def _set_coords_and_cells(self):
         self.coords = self._get_coords()
         self.cells = np.int32(np.floor(self.coords))
-
 
     #method to set the species' kd_tree attribute (a spatial._KDTree)
     def _set_kd_tree(self, leafsize = 100):
@@ -578,12 +599,22 @@ class Species(OD):
                                 window_width = self.density_grid_window_width)
 
 
-    # method to fill the tskit.TableCollection's tables (to be called
-    # after the model has burned in
+    # method to set the species' genomes, check for adequate mutable loci,
+    # and fill the tskit.TableCollection's tables
+    # (to be called after the model has burned in)
     def _set_genomes_and_tables(self, burn_T, T):
         # set the species' neutral and non-netural loci,
         # and set genomes to all zeros
-        _set_empty_genomes(self, burn_T, T)
+        self._set_null_genomes()
+
+        # use mean n_births at tail end of burn-in to estimate number of
+        # mutations for this species, then warn the user if there is or may be
+        # inadequate space for the parameterized mutation rate (because only
+        # using infinite-sites mutation)
+        est_tot_muts = _calc_estimated_total_mutations(self, burn_T, T)
+
+        # check whether there are adequate mutable loci for this species
+        _check_mutation_rates(self.gen_arch, est_tot_muts, burn_T, T)
 
         # simulate a coalescent ancestry with number of samples equal to our
         # species' number of haploid genomes (i.e. 2*N_0)

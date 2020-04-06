@@ -23,8 +23,8 @@ def _calc_phenotype(ind, gen_arch, trait):
     #get number of loci and their allelic effect sizes
     n_loci = trait.n_loci
     alpha = trait.alpha
-    #get the mean genotype array
-    genotype = np.mean(ind.g[trait.loci], axis = 1)
+    #get the mean genotype array (using the trait's locus index)
+    genotype = np.mean(ind.g[trait.loc_idx], axis = 1)
     #use dominance, if required (to save considerable compute time otherwise)
     if gen_arch._use_dom:
         #get the dominance values
@@ -74,10 +74,9 @@ def _calc_fitness_deleterious_mutations(spp):
     #diploid genotypes for each of the deleterious loci in the cols
     #(0, 1, or 2, to facilitate the fitness math, because s values
     #(i.e. selection coefficients) are expressed per allele)
-    deletome = np.sum(np.stack([ind.g[[*spp.gen_arch.delet_loci.keys(
-                                    )],:] for ind in spp.values()]), axis = 2)
-    fit = 1 - np.multiply(deletome, np.array(
-                                        [*spp.gen_arch.delet_loci.values()]))
+    deletome = np.sum(np.stack([ind.g[
+            spp.gen_arch.delet_loc_idx, :] for ind in spp.values()]), axis = 2)
+    fit = 1 - np.multiply(deletome, spp.gen_arch.delet_loci_s)
     fit = fit.prod(axis = 1)
     return(fit)
 

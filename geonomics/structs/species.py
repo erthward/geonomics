@@ -579,6 +579,10 @@ class Species(OD):
     def _set_z(self):
         [ind._set_z(self.gen_arch) for ind in self.values()];
 
+    #method for setting an individual's phenotype
+    def _set_z_individ(self, individ):
+        self[individ]._set_z(self.gen_arch)
+
     #method to set the individuals' fitness attributes
     def _set_fit(self, fit):
         [ind._set_fit(f) for ind, f in zip(self.values(), fit)];
@@ -886,6 +890,75 @@ class Species(OD):
             genotypes = np.mean(genotypes, axis = 1)
             genotypes = np.clip(genotypes * (1 + d), a_min = None, a_max = 1)
             return dict(zip(individs, genotypes))
+
+
+    def _get_genotypes(self, loci=None, individs=None, biallelic=True,
+                       as_dict=False):
+        # make sure as_dict and biallelic are True or False
+        assert as_dict in [True, False], ("The 'as_dict' argument "
+                                          "must be either "
+                                          "True or False.")
+
+        assert biallelic in [True, False], ("The 'biallelic' argument "
+                                          "must be either "
+                                          "True or False.")
+
+        # get the list of loci
+        if loci is not None:
+            assert np.iterable(loci), ("The 'loci' argument needs "
+                                       "either None or "
+                                       "an iterable of locus indices.")
+        # get the list of individuals
+        if individs is None:
+            individs = [*self]
+        else:
+            assert np.iterable(individs), ("The 'individs' argument needs "
+                                       "an iterable of individual IDs.")
+
+        # sort the TableCollection and get the TreeSequence
+        self._tc.sort()
+        ts = self._tc.tree_sequence()
+
+        # get the list of the individuals' nodes
+        samples = np.int32(np.hstack([[*self[ind]._nodes_tab_ids.values(
+                                                    )] for ind in individs]))
+        assert len(samples) == self.gen_arch.x * len(individs), ('Number of '
+                                                                 'nodes does '
+                                                                 'not match '
+                                                                 'number of '
+                                                                 'individs!')
+
+        # get haplotypes for all samples
+        haps = [np.int8([*hap]) for n, hap in zip(
+                                            np.where(self._tc.nodes.flags)[0],
+                                            ts.haplotypes()) if n in samples]
+
+        # get the genotypes by combining each consecutive group
+        # of x haplotypes, where x is the ploidy
+        grouped_haps = zip(*[haps[i::self.gen_arch.x] for i in range(
+                                                        self.gen_arch.x)])
+        gts = [np.vstack(h).T for h in grouped_haps]
+
+        # subset loci, if needed
+        if loci is not None:
+            gts = [gt[loci, :] for gt in gts]
+
+        # get mean genotype for each individual, if necessary
+        if not biallelic:
+            gts = [np.mean(gt, axis=1) for gt in gts]
+
+        # stack into the speciome, if dict not requested
+        # (dims are N x L x X, where N=num individs, L=num loci,
+        #  and X=ploidy if biallelic=True, else X=1 if False)
+        if not as_dict:
+            gts = np.stack(gts)
+
+        # or else cast as dict
+        else:
+            gts = {individ: gt for individ, gt in zip(individs, gts)}
+
+        return gts
+
 
     #convenience method for getting a scalar attribute for some or all individs
     def _get_scalar_attr(self, attr_name, individs=None):

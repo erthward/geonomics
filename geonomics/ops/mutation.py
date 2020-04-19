@@ -9,6 +9,7 @@ Functions to implement mutation operations
 import numpy as np
 from numpy import random as r
 import random
+import re
 
 
 #------------------------------------
@@ -48,17 +49,18 @@ def _do_neutral_mutation(spp, offspring, locus=None, individ=None):
                                        'is not in spp.keys().')
     #randomly choose a locus from among the mutables, if not provided
     if locus is None:
-        locus = r.choice([*spp.gen_arch._mutable_loci])
+        locus = spp.gen_arch._mutables.pop()
     else:
-        assert locus in spp.gen_arch._mutable_loci, ('The locus provided '
-                            'is not in the spp.gen_arch._mutable_loci set.')
-    #remove the locus from the mutable_loci set
-    spp.gen_arch._mutable_loci.remove(locus)
+        assert locus in spp.gen_arch._mutables, ('The locus provided '
+                                                 'is not in the list of '
+                                                 'valid mutable loci '
+                                                 '(spp.gen_arch._mutables).')
     #randomly choose a homologue on which to place the mutation
     #in the individual
     homol = r.binomial(1,0.5)
-    #then mutate this individual at this locus
-    spp[individ].g[locus, homol] = 1
+    # NOTE: not mutating the individual's genome because we're only tracking
+    # non-neutral mutations now
+
     # add a row to the tskit.TableCollection.mutations table
     _do_add_row_muts_table(spp, individ, homol, locus)
     return(individ, locus)
@@ -89,6 +91,8 @@ def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None,
     spp._add_new_locus(idx, locus)
     # mutate the chosen individual's chosen homologue's genotype to 1
     spp[individ].g[idx, homol] = 1
+    # update the individual's phenotype
+    spp._set_z_individ(individ)
     # add a row to the tskit.TableCollection.mutations table
     _do_add_row_muts_table(spp, individ, homol, locus)
     return(individ, locus)
@@ -157,10 +161,11 @@ def _do_mutation(offspring, spp, log=None):
                 spp.gen_arch._planned_muts._set_next()
 
         #execute all functions in the queue
-        for fn in mut_queue:
+        for i, fn in enumerate(mut_queue):
             individ, locus = fn(spp, offspring)
-            log_msg = ('MUTATION:\n\t INDIVIDUAL %i,  '
-                'LOCUS %i\n\t timestep %i\n\n') % (individ, locus, spp.t)
+            log_msg = ('MUTATION: %s\n\t INDIVIDUAL %i,  '
+                'LOCUS %i\n\t timestep %i\n\n') % (muts[0], individ,
+                                                   locus, spp.t)
             if log:
                 with open(log, 'a') as f:
                     f.write(log_msg)

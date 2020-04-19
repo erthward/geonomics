@@ -396,8 +396,6 @@ GENOME_PARAMS = '''
                     'gen_arch_file':            %s,
                     #num of loci
                     'L':                        100,
-                    #num of chromosomes
-                    'l_c':                      [100],
                     #starting allele frequency (None to draw freqs randomly)
                     'start_p_fixed':            0.5,
                     #whether to start neutral locus freqs at 0
@@ -424,6 +422,8 @@ GENOME_PARAMS = '''
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    #num of crossing-over events (i.e. recombs) to simulate
+                    'n_recomb_sims':            10_000,
                     #whether to generate recombination paths at each timestep
                     'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
@@ -1061,7 +1061,7 @@ def _read_params_file(filepath):
 def _make_custom_genomic_architecture_file(filepath):
     #create the dataframe for the CSV file
     cols = ('locus', 'p', 'dom', 'r', 'trait', 'alpha')
-    row0 = ([0], [np.nan], [np.nan], [0.5], [np.nan], [np.nan])
+    row0 = ([0], [np.nan], [np.nan], [np.nan], [np.nan], [np.nan])
     df_dict = dict(zip(cols, row0))
     df = pd.DataFrame.from_dict(df_dict)
     #write it to file, without the index

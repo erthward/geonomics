@@ -19,16 +19,16 @@ from collections import OrderedDict as OD
 ######################################
 
 #Get the phenotypic values of all individuals for a given trait
-def _calc_phenotype(ind, gen_arch, trait):
+def _calc_phenotype(ind, gen_arch, trait_num):
     #get number of loci and their allelic effect sizes
-    n_loci = trait.n_loci
-    alpha = trait.alpha
+    n_loci = gen_arch.traits[trait_num].n_loci
+    alpha = gen_arch.traits[trait_num].alpha
     #get the mean genotype array (using the trait's locus index)
-    genotype = np.mean(ind.g[trait.loc_idx], axis = 1)
+    genotype = np.mean(ind.g[gen_arch.traits[trait_num].loc_idx], axis = 1)
     #use dominance, if required (to save considerable compute time otherwise)
     if gen_arch._use_dom:
         #get the dominance values
-        dom = gen_arch.dom[trait.loci]
+        dom = gen_arch.dom[gen_arch.traits[trait_num].loci]
         #update the genotype array by accounting for dominance at each locus
         genotype = np.clip(genotype * (1 + dom), a_min = None, a_max = 1)
     #if polygenic, multiply genotype by alpha (i.e. effect size) 

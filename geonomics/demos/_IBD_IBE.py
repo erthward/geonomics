@@ -23,6 +23,7 @@ from matplotlib import animation
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from mpl_toolkits.mplot3d import Axes3D
+from copy import deepcopy
 import time
 import statsmodels.api as sm
 
@@ -124,11 +125,11 @@ def calc_euc(x, y):
 # calculate lower-triangular of PCA-bsaed Euclidean genetic distances between
 # all individuals, using a 'speciome' (2d array of all individs' genomes)
 def calc_dists(species, dist_type='gen', env_lyrs=None, return_flat=True,
-               allele_freq_diff=False):
+               allele_freq_diff=False, biallelic=False):
     # calculate genetic distance as the euclidean distance between individuals
     # in genetic PC space
     if dist_type == 'gen':
-        speciome = np.mean(np.stack([i.g for i in species.values()]), axis=2)
+        speciome = species._get_genotypes(biallelic=biallelic)
         if not allele_freq_diff:
             pca = PCA()
             vals = pca.fit_transform(speciome)
@@ -470,7 +471,7 @@ def _make_params():
                         #num of chromosomes
                         'l_c':                      [100],
                         #whether starting allele frequencies should be fixed at 0.5
-                        'start_p_fixed':            True,
+                        'start_p_fixed':            0.5,
                         #genome-wide per-base neutral mut rate (0 to disable)
                         'mu_neut':                  0,
                         #genome-wide per-base deleterious mut rate (0 to disable)
@@ -493,6 +494,8 @@ def _make_params():
                         'n_recomb_paths_mem':       int(1e4),
                         #total number of recomb paths to simulate
                         'n_recomb_paths_tot':       int(1e5),
+                        'n_recomb_sims':            10000,
+                        'start_neut_zero':          True,
                         'allow_ad_hoc_recomb':      False,
                         #whether to save mutation logs
                         'mut_log':                  False,
@@ -750,9 +753,13 @@ def _run(params, save_figs=False, time_it=False,
     # create 3d IBD, IBE plot
     #########################
 
-    spp_subset = {ind: mod.comm[0][ind] for ind in np.random.choice([*mod.comm[0]],
-                                                                    100)}
-    gen_dists = calc_dists(spp_subset, allele_freq_diff=False)
+    spp_subset = deepcopy(mod.comm[0])
+    rand_inds = spp_subset._get_random_individuals(100)
+    all_inds = [*spp_subset]
+    for ind in all_inds:
+        if ind not in rand_inds:
+            spp_subset.pop(ind)
+    gen_dists = calc_dists(spp_subset, biallelic=False, allele_freq_diff=False)
     scaled_gen_dists = gen_dists/gen_dists.max()
     assert (np.all(scaled_gen_dists >= 0)
             and np.all(scaled_gen_dists <= 1)), ('Scaled genetic dist is outside '

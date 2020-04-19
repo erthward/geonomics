@@ -270,7 +270,7 @@ def _make_params():
                 # for distance-based things!!!!
 
                 #y,x (a.k.a. i,j) dimensions of the Landscape
-                'dim':                      (157, 157),
+                'dim':                      (90, 90),
                 #resolution of the Landscape
                 'res':                      (0, 0),
                 #upper-left corner of the Landscape
@@ -299,7 +299,7 @@ def _make_params():
                             #</path/to/file>.<ext>
                             'filepath': os.path.join(DATA_PATH,
                                                      'yosemite_lyrs',
-                                                     'tmp_1980-2010.tif'),
+                                                     'tmp_1980-2010_90x90.tif'),
                             #minimum value to use to rescale the Layer to [0,1]
                             'scale_min_val':                -1.37,
                             #maximum value to use to rescale the Layer to [0,1]
@@ -355,7 +355,7 @@ def _make_params():
                             #</path/to/file>.<ext>
                             'filepath': os.path.join(DATA_PATH,
                                                      'yosemite_lyrs',
-                                                     'sdm_1980-2010.tif'),
+                                                     'sdm_1980-2010_90x90.tif'),
                             #minimum value to use to rescale the Layer to [0,1]
                             'scale_min_val':                0,
                             #maximum value to use to rescale the Layer to [0,1]
@@ -411,7 +411,7 @@ def _make_params():
                             #</path/to/file>.<ext>
                             'filepath': os.path.join(DATA_PATH,
                                                      'yosemite_lyrs',
-                                                     'ppt_1980-2010.tif'),
+                                                     'ppt_1980-2010_90x90.tif'),
                             #minimum value to use to rescale the Layer to [0,1]
                             'scale_min_val':                81.53713,
                             #maximum value to use to rescale the Layer to [0,1]
@@ -495,7 +495,8 @@ def _make_params():
                         # is covered by S. graciosus' preferred open,
                         # exposed habitat, then that suggests we should
                         # use a K_factor of 67.8 * 208 * 0.1 = 1111.344
-                        'K_factor':         1111.344,
+                        # NOTE: dividing by 10 for tractability
+                        'K_factor':         1111.344 / 10,
                         }, # <END> 'init'
 
                 #######################################
@@ -613,20 +614,18 @@ def _make_params():
                         'gen_arch_file':            None,
                         #num of loci
                         'L':                        100,
-                        #num of chromosomes
-                        'l_c':                      [100],
-                        #whether starting allele frequencies should be fixed
+                        #starting allele freq (None to draw freqs randomly)
                         #at 0.5
-                        'start_p_fixed':            True,
+                        'start_p_fixed':            0.5,
                         #genome-wide per-base neutral mut rate (0 to disable)
                         'mu_neut':                  0,
                         #genome-wide per-base deleterious mut rate
                         #(0 to disable)
                         'mu_delet':                 0,
                         #shape of distr of deleterious effect sizes
-                        'delet_alpha_distr_shape':  0.2,
+                        'delet_alpha_distr_shape':  0.01,
                         #scale of distr of deleterious effect sizes
-                        'delet_alpha_distr_scale':  0.2,
+                        'delet_alpha_distr_scale':  100,
                         #alpha of distr of recomb rates
                         'r_distr_alpha':            None,
                         #beta of distr of recomb rates
@@ -641,6 +640,8 @@ def _make_params():
                         'n_recomb_paths_mem':       int(1e4),
                         #total number of recomb paths to simulate
                         'n_recomb_paths_tot':       int(1e5),
+                        'n_recomb_sims':            10000,
+                        'start_neut_zero':          True,
                         'allow_ad_hoc_recomb':      False,
                         #whether to save mutation logs
                         'mut_log':                  False,
@@ -865,7 +866,7 @@ def _run(params, save_figs=False, time_it=False, make_gifs=False,
     # make the draped-raster plot
     if with_pykrige:
         DEM = rio.open(os.path.join(DATA_PATH,
-                                    'yosemite_DEM.tif')).read()[0, :, :]
+                                    'yosemite_DEM_90x90.tif')).read()[0, :, :]
         if make_3d_plots:
             plt.rc('animation', html='html5')
             pheno_drape_fig = drape_raster(mod, neigh_mean_b4, DEM, 'phenotype',

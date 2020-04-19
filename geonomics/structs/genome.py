@@ -63,9 +63,10 @@ class Recombinations:
         (self._positions,
          self._rates,
          self._events) = _draw_recombination_events(self._n, positions,
-                                                  self._r_distr_alpha,
-                                                  self._r_distr_beta,
-                                                  recomb_rates)
+                                                    self._r_distr_alpha,
+                                                    self._r_distr_beta,
+                                                    recomb_rates,
+                                                    self._L)
 
     def _get_events(self, size):
         events = random.sample(self._events, size)
@@ -479,7 +480,7 @@ def _make_traits(traits_params, land):
 
 # simulate recombination events
 def _draw_recombination_events(n, positions, alpha=None, beta=None,
-                               recomb_rates=None):
+                               recomb_rates=None, genome_length=None):
     """
     NOTE: Positions and recomb_rates must be provided already sorted!
     """
@@ -490,9 +491,10 @@ def _draw_recombination_events(n, positions, alpha=None, beta=None,
     else:
         positions = np.int32(np.array(positions))
     if recomb_rates is not None:
-        assert len(r) == len(positions), ("Lengths of provided recombination "
-                                          "rates and recombination "
-                                          "positions don't match!")
+        assert len(recomb_rates) == len(positions), ("Lengths of provided "
+                                                     "recombination "
+                                                     "rates and recombination "
+                                                     "positions don't match!")
     elif (alpha is not None and beta is not None):
         recomb_rates = np.clip(np.random.beta(a=alpha, b=beta,
                                               size=len(positions)),
@@ -500,7 +502,11 @@ def _draw_recombination_events(n, positions, alpha=None, beta=None,
     elif alpha is not None:
         recomb_rates = np.ones(len(positions)) * alpha
     else:
-        recomb_rates = np.ones(len(positions)) * 0.5
+        #NOTE: if no alpha and beta values were provided for the recomb-rate
+        # beta distribution, set all interlocus recomb rates to a value that
+        # results in an average of one recombination per gamete produced
+        homog_recomb_rate = 1 / genome_length
+        recomb_rates = np.ones(len(positions)) * homog_recomb_rate
     events = [positions[np.where(r.binomial(1,
                                             recomb_rates))] for _ in range(n)]
     # recast it as an int-keyed dict, so that when I use the recombination
@@ -546,7 +552,6 @@ def _make_genomic_architecture(spp_params, land):
                                   "subtending that Trait as indicated by the "
                                   "'n_loci' key in its section of the "
                                   "parameters file.")
-
                     assert n_loci_in_file == trt.n_loci, assert_msg
 
     # get the sex parameter and add it as an item in g_params
@@ -629,8 +634,9 @@ def _make_genomic_architecture(spp_params, land):
     # now that all nonneutral loci have been selected, 
     # set each trait's loc_idx (which maps a trait's numeric loci to
     # their index positions in individuals' genomes)
-    for trt in gen_arch.traits.values():
-        trt._set_loc_idx(gen_arch.nonneut_loci)
+    if gen_arch.traits is not None:
+        for trt in gen_arch.traits.values():
+            trt._set_loc_idx(gen_arch.nonneut_loci)
 
     assert_msg = ("The union of the gen_arch.neut_loci and "
                   "gen_arch.nonneut_loci sets does not contain all loci "

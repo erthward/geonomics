@@ -277,11 +277,11 @@ def _make_params():
                         #file defining custom genomic arch
                         'gen_arch_file':            None,
                         #num of loci
-                        'L':                        20,
+                        'L':                        1000,
                         #num of chromosomes
-                        'l_c':                      [20],
+                        'l_c':                      [1000],
                         #whether starting allele frequencies should be fixed at 0.5
-                        'start_p_fixed':            True,
+                        'start_p_fixed':            0.5,
                         #genome-wide per-base neutral mut rate (0 to disable)
                         'mu_neut':                  0,
                         #genome-wide per-base deleterious mut rate (0 to disable)
@@ -304,6 +304,8 @@ def _make_params():
                         'n_recomb_paths_mem':       int(1e4),
                         #total number of recomb paths to simulate
                         'n_recomb_paths_tot':       int(1e5),
+                        'n_recomb_sims':            10000,
+                        'start_neut_zero':          True,
                         'allow_ad_hoc_recomb':      False,
                         #whether to save mutation logs
                         'mut_log':                  False,

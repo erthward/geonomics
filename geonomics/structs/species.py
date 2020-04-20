@@ -11,7 +11,10 @@ Defines the Species class, with its associated methods and supporting functions
 from geonomics.utils import viz, spatial as spt
 from geonomics.structs.genome import (_make_genomic_architecture,
                                       _check_mutation_rates,
-                                      _make_starting_mutations)
+                                      _make_starting_mutations,
+                                      _get_lineage_dicts,
+                                      _get_lineage_dicts_one_tree,
+                                      _get_treenums)
 from geonomics.structs.landscape import Layer
 from geonomics.structs.individual import Individual, _make_individual
 from geonomics.ops.movement import _do_movement, _do_dispersal
@@ -200,8 +203,10 @@ class Species(OD):
         # create a tskit.TableCollection object, if the species uses genomes
         if self.gen_arch is not None:
             self._tc = tskit.TableCollection(sequence_length=self.gen_arch.L)
+            self._tc_sorted_and_simplified = False
         else:
             self._tc = None
+            self._tc_sorted_and_simplified = None
 
         #set the selection attribute, to indicate whether or not
         #natural selection should be implemented for the species
@@ -742,14 +747,14 @@ class Species(OD):
     # and also to only allow an infinite-sites model
     # (FOR NOW, anyhow... could relax these constraints later, if desired,
     # in which case would need to revamp this approach)
-    def _do_sort_simp_table_collection(self, check_nodes=False,
-                                       check_individuals=False):
+    def _sort_simplify_table_collection(self, check_nodes=False,
+                                        check_individuals=False):
         # sort the TableCollection
         self._tc.sort()
         # get an array of all the current individuals' nodes,
         # the nodes for which the tables will be simplified
-        curr_nodes = np.hstack([[*ind._nodes_tab_ids.values(
-                                                )] for ind in self.values()])
+        curr_nodes = self._get_nodes()
+
         # run code necessary for checing that individuals' table ids are
         # correctly assigned, if requested
         if check_individuals:
@@ -852,6 +857,99 @@ class Species(OD):
                                       ' (MAKE SURE YOU USED A MODEL WITH '
                                       ' AT LEAST ONE TRAIT!)')
             print('ALL INDIVIDUAL IDS APPEAR CORRECTLY REASSIGNED\n')
+        
+        # set the sorted_and_simplified flag to True
+        self._tc_sorted_and_simplified = True
+
+
+    # get the nodes-table IDs for all individuals
+    def _get_nodes(self, individs=None):
+        if individs is None:
+            individs = [*self]
+        nodes = np.hstack([[*self[i]._nodes_tab_ids.values(
+                                                        )] for i in individs])
+        return nodes
+
+
+    ##########################################
+    # FUNCTIONS FROM TRACK_SPATIAL_PEDIGREE.PY
+    ##########################################
+
+    # for a sample of nodes and a sample of loci, get the
+    # loci-sequentially ordered dict of lineage dicts
+    # (containing each node in a child node's lineage as the
+    # key and its birth-time and birth-location as a length-2 list of values
+    def _get_lineage_dicts(self, loci, nodes=None, drop_before_sim=True,
+                           time_before_present=True,
+                           max_time_ago=None,
+                           min_time_ago=None):
+        if nodes is None:
+            #sort and simplify the TableCollection, if needed
+            if not self._tc_sorted_and_simplified:
+                self._sort_simplify_table_collection()
+            nodes = self._get_nodes()
+        lin_dicts = _get_lineage_dicts(self, nodes, loci, t_curr=self.t,
+                                       drop_before_sim=drop_before_sim,
+                                       time_before_present=time_before_present,
+                                       max_time_ago=max_time_ago,
+                                       min_time_ago=min_time_ago)
+        return lin_dicts
+
+
+    # check whether specified individuals have coalesced at specified loci
+    # (within the forward-time Geonomics run, of course, since by design
+    # everything coalesces in the ms-generated pre-simulation pedigree)
+    def _check_coalescence(self, individs=None, loci=None, all_loci=False):
+        #sort and simplify the TableCollection, if needed
+        if not self._tc_sorted_and_simplified:
+            self._sort_simplify_table_collection()
+        if individs is None:
+            individs = [*self]
+        # get the node IDs
+        nodes = self._get_nodes(individs=individs)
+        if loci is None:
+            loci = [*range(self.gen_arch.L)]
+        # NOTE: if running into memory issues when getting the lineage dicts
+        # all at once for simulations with large pop sizes and large nums of
+        # loci then should try instead getting them 1 by 1 in the loop below
+        lin_dicts = self._get_lineage_dicts(loci, nodes=nodes)
+        result = {}
+        for loc, lin_dict in lin_dicts.items():
+            # get the number of unique oldest nodes across the lineage dict
+            oldest_nodes = [[*lin_dict[node].keys(
+                                            )][-1] for node in lin_dict.keys()]
+            n_unique_nodes = len(np.unique(oldest_nodes))
+            result[loc] = n_unique_nodes == 1
+        # check coalescence across all loci, if requested
+        if all_loci:
+            result = np.all([*result.values()])
+        return result
+
+    
+    # calculate stats for the lineages of a given set of nodes and loci;
+    # returns dict of struct: {k=stat, v={k=loc, v=[val_node1 ... val_node_N]}}
+    def _calc_lineage_stats(self, individs=None, nodes=None, loci=None,
+                            stats=['dir', 'dist', 'time', 'speed']):
+        # get all nodes for the provided individuals, or for all individuals,
+        # if nodes IDs not provided
+        if nodes is None:
+            #sort and simplify the TableCollection, if needed
+            if not self._tc_sorted_and_simplified:
+                self._sort_simplify_table_collection()
+            nodes = self._get_nodes(individs)
+        # get all loci, if loci not provided
+        if loci is None:
+            loci = [*range(self.gen_arch.L)]
+        lin_dicts = self._get_lineage_dicts(loci, nodes=nodes)
+        stats = {stat: {} for stat in stats}
+        for stat in stats:
+            for loc in loci:
+                loc_stat_list = []
+                for node in nodes:
+                    loc_stat_list.append(_calc_lineage_stat(
+                                            lin_dicts[loc][node], stat=stat))
+                stats[stat][loc] = loc_stat_list
+        return stats
 
 
     # method to get individs' environment values
@@ -1434,6 +1532,95 @@ class Species(OD):
                                     surf.surf.shape[1])]
 
 
+    # plot the lineage for a given node and locus
+    def _plot_lineages(self, locus, land, nodes=None, individs=None,
+                       phenotype=None, lyr_num=0, jitter=True, alpha=0.5,
+                       size=25, add_roots=False):
+        if nodes is None:
+            #sort and simplify the TableCollection, if needed 
+            if not self._tc_sorted_and_simplified:
+                self._sort_simplify_table_collection()
+            nodes = self._get_nodes(individs=individs)
+
+        # grab the TableCollection and its TreeSequence
+        tc = self._tc
+        try:
+            ts = tc.tree_sequence()
+        except Exception:
+            raise Exception(("The species' TableCollection must be sorted and "
+                             "simplified before this method is called."))
+
+        node_curr_locs = [[i.x, i.y] for n in nodes for i in self.values(
+                        ) if n in i._nodes_tab_ids.values()]
+
+        # get the tree for this locus
+        tree = ts.aslist()[_get_treenums(ts, [locus])[0]]
+        # get the lineage_dict (with birth times and birth locations)
+        lin_dict = _get_lineage_dicts_one_tree(tc, tree, nodes, self.t)
+        # create start-color values for nodes' separate lineage tracks
+        start_cols = [mpl.colors.to_hex(plt.cm.Set1_r(n)) for n in np.linspace(
+                                                                0, 0.85, 8)]
+        #start_cols = ['#ffa114', '#ff1956', '#e419ff', '#4f6fff', '#4fffdf',
+        #             '#87ff4f']
+        # plot the species, either with or without phenotype-painting
+        if phenotype is None:
+            self._plot(lyr_num=lyr_num, land=land, size=size)
+        else:
+            self._plot_phenotype(phenotype, land=land, size=size)
+        ax = plt.gca()
+        # extract and plot the series of points for each node
+        for i, node in enumerate(nodes):
+            start_col = start_cols[i % len(start_cols)]
+            locs = np.vstack([v[1] for v in lin_dict[node].values()])
+            if jitter:
+                locs = locs + np.random.normal(0, 0.01,
+                                            size=locs.size).reshape(locs.shape)
+            # create linear interpolation of colors for plotting
+            color_nums = np.int8(np.linspace(0, 100, locs.shape[0]-1))
+            colors =[viz._calc_reshaded_color(start_col,
+                                              num) for num in color_nums]
+            # create a linear interpolation of linewidths
+            linewidths = np.linspace(3, 0.85, locs.shape[0]-1)
+            for n, color in enumerate(colors):
+                ax.plot(locs[n:n+2, 0], locs[n:n+2, 1], linestyle='--',
+                        marker='o', markersize=size**(1/2), color=color,
+                        linewidth=linewidths[n], alpha=alpha)
+            # plot the nodes' current locations and their birth locations,
+            # connected by a thin black line
+            node_curr_loc = node_curr_locs[i]
+            node_birth_loc = locs[0, :]
+            dx, dy = [node_curr_loc[i] - node_birth_loc[i] for i in range(2)]
+            plt.plot([node_birth_loc[0], node_curr_loc[0]],
+                     [node_birth_loc[1], node_curr_loc[1]],
+                     color=start_col, linestyle='solid', alpha=alpha,
+                     linewidth=1)
+        if add_roots:
+            self._plot_lineage_roots(tc, tree)
+        plt.show()
+
+    
+    # plot the lineage for a given node and locus
+    def _plot_lineage_roots(self, tc, tree, alpha=0.8, size=75):
+        # get the nodes
+        all_nodes = self._get_nodes()
+
+        # get the lineage dict for all nodes
+        lin_dict = _get_lineage_dicts_one_tree(tc, tree, all_nodes, self.t)
+
+        # get the roots for all distinct lineages at this locus
+        root_nodes = np.unique([[*lin_dict[n].keys()][-1] for n in all_nodes])
+
+        # get birth locations for each root node
+        root_individs = [tc.nodes[n].individual for n in root_nodes]
+        root_locs = [tc.individuals[i].location for i in root_individs]
+
+        # extract and plot the series of points for each node
+        for x, y in root_locs:
+            # plot the root nodes' birth locations
+            plt.scatter(x, y, c='white', s=size, alpha=alpha, marker='s')
+        plt.show()
+    
+
     # method for plotting a species' population pyramid
     def _plot_demographic_pyramid(self):
         #make dict of female and male colors
@@ -1697,5 +1884,4 @@ def read_pickled_spp(filename):
     with open(filename, 'rb') as f:
         spp = cPickle.load(f)
     return spp
-
 

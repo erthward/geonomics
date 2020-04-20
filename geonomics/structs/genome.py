@@ -24,6 +24,8 @@ from collections import OrderedDict as OD
 import warnings
 import random
 import bisect
+import bitarray
+import tskit
 
 ######################################
 # -----------------------------------#
@@ -42,6 +44,9 @@ class MutationRateError(Exception):
 class Recombinations:
     def __init__(self, L, positions, n, r_distr_alpha, r_distr_beta,
                  recomb_rates):
+        # define the bitarray unit corresponding to each homologue
+        self._bitarray_dict= {0: '10', 1: '01'}
+
         # genome length
         self._L = L
         # organize the potential recombination breakpoint positions
@@ -49,6 +54,13 @@ class Recombinations:
             positions = np.arange(self._L)
         else:
             positions.sort()
+        positions = [*positions]
+        # optimize the data-type, to save some memory
+        if len(positions) <= 2**16:
+            self._positions = np.int16(np.array(positions))
+        else:
+            self._positions = np.int32(np.array(positions))
+
         # number of recombination events to simulate and cache for the model
         # NOTE: the higher this number, the more accurately geonomics
         #       will simulate the stipulated recombination rates
@@ -57,20 +69,125 @@ class Recombinations:
         # recombination rates can be drawn
         self._r_distr_alpha = r_distr_alpha
         self._r_distr_beta = r_distr_beta
+        # get the recombination rates
+        if recomb_rates is not None:
+            assert len(recomb_rates) == len(positions), ("Lengths of provided "
+                                                         "recombination "
+                                                         "rates and "
+                                                         "recombination "
+                                                         "positions don't "
+                                                         "match!")
+            assert recomb_rates[0] == 0, ("The first recombination rate (i.e. "
+                                          "index 0) must be 0 (because no "
+                                          "recombination can be modeled as "
+                                          "taking place prior to the first "
+                                          "locus being simulated).")
+            self._rates = recomb_rates
+        else:
+            self._rates = self._draw_recombination_rates()
+
+    def _set_events(self, use_subsetters, nonneutral_loci):
         # set the potential recombination breakpoints, their recombination
         # rates, and the cache of simulated recombination events to be used
         # by the model
-        (self._positions,
-         self._rates,
-         self._events) = _draw_recombination_events(self._n, positions,
-                                                    self._r_distr_alpha,
-                                                    self._r_distr_beta,
-                                                    recomb_rates,
-                                                    self._L)
+        (self._breakpoints,
+         self._subsetters) = self._draw_recombination_events(
+                use_subsetters=use_subsetters, nonneutral_loci=nonneutral_loci)
+        self._set_seg_info()
 
     def _get_events(self, size):
         events = random.sample(self._events, size)
         return events
+     
+    def _get_subsetter(self, event_key):
+        return self._subsetters[event_key]
+
+
+    # update all the recombination subsetters in accord with a new non-neutral
+    # mutation
+    def _update_subsetters(self, mutation_loc, genotype_arr_mutation_idx):
+        for k in self._subsetters.keys():
+            subsetter_homologue = bisect.bisect_left(self._breakpoints[k],
+                                                     mutation_loc) % 2
+            subsetter_idx = genotype_arr_mutation_idx * 2
+            self._subsetters[k] = self._subsetters[k][:subsetter_idx] + [
+                                  self._bitarray_dict[subsetter_homologue]] + [
+                                  self._subsetters[k][subsetter_idx:]]
+
+
+    # draw recombination rates as needed according to parameter values
+    def _draw_recombination_rates(self):
+        if (self._r_distr_alpha is not None and self._r_distr_beta is not None):
+            recomb_rates = np.clip(np.random.beta(a=self._r_distr_alpha,
+                                                  b=self._r_distr_beta,
+                                                  size=len(self._positions)),
+                                   a_min=0, a_max=0.5)
+        elif self._r_distr_alpha is not None:
+            recomb_rates = np.ones(len(self._positions)) * self._r_distr_alpha
+        else:
+            #NOTE: if no alpha and beta values were provided for the recomb-rate
+            # beta distribution, set all interlocus recomb rates to a value that
+            # results in an average of one recombination per gamete produced
+            homog_recomb_rate = 1 / self._L
+            recomb_rates = np.ones(len(self._positions)) * homog_recomb_rate
+        # set the 0th rate to 0 (because this will ensure that all recombination
+        # paths start on homologue 0, such that when the start homologue of a
+        # certain gamete equals 1 and its genome array is L-R flipped before
+        # subsetting, the effective start homologue of the new, subsetted gamete
+        # will actually be 1)
+        recomb_rates[0] = 0
+        return recomb_rates
+    
+    
+    # simulate recombination events
+    def _draw_recombination_events(self, use_subsetters, nonneutral_loci):
+        """
+        NOTE: Positions and recomb_rates must be provided already sorted!
+        """
+        # create the breakpoints dict
+        recombinations = [r.binomial(1, self._rates) for _ in range(self._n)]
+        breakpoints = [self._positions[np.where(
+                                        recomb)] for recomb in recombinations]
+        # recast it as an int-keyed dict, so that when I use the recombination
+        # events to simulate recombination I don't have to pass around the long
+        # arrays, but instead can just random keys to index them out on the fly
+        breakpoints = dict(zip(range(len(breakpoints)), breakpoints))
+   
+        if use_subsetters:
+            # get the recombination paths used to make the bitarray subsetters
+            if len(nonneutral_loci) > 0:
+                recomb_paths = [np.cumsum(
+                                    recomb) % 2 for recomb in recombinations]
+                # grab just the values at the nonneutral loci
+                # (because the subsetters will be used only for subsetting
+                # the non-neutral genotypes carried with the individuals)
+                paths = [path[nonneutral_loci] for path in recomb_paths]
+                subsetters = [bitarray.bitarray(''.join([self._bitarray_dict[
+                            step] for step in path])) for path in paths]
+                # recast as integer-indexed dict
+            else:
+                subsetters = [bitarray.bitarray() for _ in range(
+                                                        len(recombinations))]
+            subsetters = dict(zip(range(len(subsetters)), subsetters))
+            assert len(breakpoints) == len(subsetters)
+        else:
+            subsetters = None
+        return (breakpoints, subsetters)
+
+    
+    # calculate the left and right segment edges for each recombination event
+    def _set_seg_info(self):
+        seg_info = {}
+        for k, recomb in self._breakpoints.items():
+            # NOTE: adding 0.5 to all recombination breakpoints, to indicate
+            # that reocmbination 'actually' happens halfway between
+            # a pair of loci, (i.e. it actually subsets Individuals'
+            # genomes in that way) without having the hold all the 0.5's
+            # in the Recombinations._events data struct (to save on memory)
+            left = np.array([0] + [*recomb + 0.5])
+            right = np.array([*recomb + 0.5] + [self._L])
+            seg_info[k] = (left, right)
+        self._seg_info = seg_info
 
 
    # take a recombination event key and a parent's node ids,
@@ -79,27 +196,13 @@ class Recombinations:
         # tskit.TableCollection.nodes table);
         # 2.) left end of the segment (inclusive, according to tskit)
         # 3.) right end (exclusive)
-    def _get_recombination_seg_info(self, start_homologue, event_key,
+    def _get_seg_info(self, start_homologue, event_key,
                                     node_ids):
-        # NOTE: adding 0.5 to all recombination breakpoints, to indicate
-        # that reocmbination 'actually' happens halfway between a pair of loci,
-        # (i.e. it actually subsets Individuals' genomes in that way)
-        # without having the hold all the 0.5's in the Recombinations._events
-        # data struct (to save on memory)
-        left = np.array([0] + [*self._events[event_key] + 0.5])
-        right = np.array([*self._events[event_key] + 0.5] + [self._L])
+        left, right = self._seg_info[event_key]
         homologue_nodes = node_ids[[(i + start_homologue) % 2 for i in range(
                                                                    len(left))]]
         seg_info = zip(homologue_nodes, left, right)
         return seg_info
-
-
-    def _get_recombination_subsetter(self, start_homologue, locs, event_key):
-        homol_idxs = [(start_homologue + bisect.bisect_left(
-                        self._events[event_key], loc) % 2) % 2 for loc in locs]
-        locus_idxs = range(len(locs))
-        subsetter = (locus_idxs, homol_idxs)
-        return subsetter
 
 
 class Trait:
@@ -219,6 +322,8 @@ class GenomicArchitecture:
         if self.traits is not None:
             mus = mus + [trt.mu for trt in self.traits.values()]
         self._mu_tot = sum(mus)
+        # save the nonneutral mutation rate
+        self._mu_nonneut = self._mu_tot - self.mu_neut
 
         # set a placeholder for the species' mutable loci
         # (to be filled after burn-in)
@@ -478,44 +583,6 @@ def _make_traits(traits_params, land):
     return(traits)
 
 
-# simulate recombination events
-def _draw_recombination_events(n, positions, alpha=None, beta=None,
-                               recomb_rates=None, genome_length=None):
-    """
-    NOTE: Positions and recomb_rates must be provided already sorted!
-    """
-    positions = [*positions]
-    # optimize the data type, to save some memory
-    if len(positions) <= 2**16:
-        positions = np.int16(np.array(positions))
-    else:
-        positions = np.int32(np.array(positions))
-    if recomb_rates is not None:
-        assert len(recomb_rates) == len(positions), ("Lengths of provided "
-                                                     "recombination "
-                                                     "rates and recombination "
-                                                     "positions don't match!")
-    elif (alpha is not None and beta is not None):
-        recomb_rates = np.clip(np.random.beta(a=alpha, b=beta,
-                                              size=len(positions)),
-                               a_min=0, a_max=0.5)
-    elif alpha is not None:
-        recomb_rates = np.ones(len(positions)) * alpha
-    else:
-        #NOTE: if no alpha and beta values were provided for the recomb-rate
-        # beta distribution, set all interlocus recomb rates to a value that
-        # results in an average of one recombination per gamete produced
-        homog_recomb_rate = 1 / genome_length
-        recomb_rates = np.ones(len(positions)) * homog_recomb_rate
-    events = [positions[np.where(r.binomial(1,
-                                            recomb_rates))] for _ in range(n)]
-    # recast it as an int-keyed dict, so that when I use the recombination
-    # events to simulate recombination I don't have to pass around the long
-    # arrays, but instead can just random keys to index them out on the fly
-    events = dict(zip(range(len(events)), events))
-    return (np.array([*positions]), recomb_rates, events)
-
-
 # build the genomic architecture
 def _make_genomic_architecture(spp_params, land):
     # get the genome parameters
@@ -661,6 +728,11 @@ def _make_genomic_architecture(spp_params, land):
     else:
         gen_arch.p = gen_arch_file['p'].values
 
+    # set the recombination events
+    use_subsetters = (len(gen_arch.nonneut_loci) > 0 or
+                      gen_arch._mu_nonneut > 0)
+    gen_arch.recombinations._set_events(use_subsetters, gen_arch.nonneut_loci)
+
     return gen_arch
 
 
@@ -755,3 +827,183 @@ def read_pickled_genomic_architecture(filename):
     with open(filename, 'rb') as f:
         gen_arch = cPickle.load(f)
     return gen_arch
+
+
+##########################################################################
+# FUNCTIONS FOR WORKING WITH THE SPATIAL PEDGREE SAVED IN tskit STRUCTURES
+##########################################################################
+
+# for a sample of nodes and a sample of loci, get the
+# loci-sequentially ordered dict of lineage dicts
+# (containing each node in a child node's lineage as the
+# key and its birth-time and birth-location as a length-2 list of values
+def _get_lineage_dicts(spp, nodes, loci, t_curr, drop_before_sim=True,
+                       time_before_present=True, max_time_ago=None,
+                       min_time_ago=None):
+    # make sure the TableCollection is sorted, then get the TreeSequence
+    try:
+        ts = spp._tc.tree_sequence()
+    except Exception:
+        raise Exception(("The species' TableCollection must be sorted and "
+                         "simplified before this method is called."))
+    # get the tree numbers corresponding to each locus
+    treenums = _get_treenums(ts, loci)
+    # get the trees
+    trees = ts.aslist()
+    # create the output data structure
+    lineage_dicts = {}
+    # get the lineage_dict for each locus
+    for loc, treenum in zip(loci, treenums):
+        # store the lineage dicts for the current locus
+        lineage_dicts_curr_loc = _get_lineage_dicts_one_tree(spp._tc,
+                                    trees[treenum], nodes, t_curr,
+                                    drop_before_sim=drop_before_sim,
+                                    time_before_present=time_before_present,
+                                    max_time_ago=max_time_ago,
+                                    min_time_ago=min_time_ago)
+        lineage_dicts[loc] = lineage_dicts_curr_loc
+    return lineage_dicts
+
+
+# for a sample of nodes, and for a given tree,
+# get dicts of each node's lineage nodes with their birth locs and birth times
+def _get_lineage_dicts_one_tree(tc, tree, nodes, t_curr, drop_before_sim=True,
+                                time_before_present=True, max_time_ago=None,
+                                min_time_ago=None):
+    #create an output master dict
+    lineage_dicts = {}
+    # get each sample node's lineage dict
+    for node in nodes:
+        lineage = _get_lineage(tree, [node])
+        lineage_dict =dict(zip(lineage, _get_lineage_times_and_locs(
+                                    tc, lineage, t_curr,
+                                    drop_before_sim=drop_before_sim,
+                                    time_before_present=time_before_present)))
+
+         # filter for time, if requested
+        if max_time_ago is not None or min_time_ago is not None:
+            # if only one time limit was set, set the other correctly, based on
+            # whether or not time is expressed as time before present
+            if max_time_ago is None:
+                max_time_ago = np.inf
+            if min_time_ago is None:
+                min_time_ago = -np.inf
+            # filter by time
+            lineage_dict = {node: val for node, val in lineage_dict.items() if (
+                            min_time_ago <= val[0] <= max_time_ago)}
+
+        lineage_dicts[node] = lineage_dict
+
+    return lineage_dicts
+
+
+# get birth-locations and times of nodes along a pedigree
+def _get_lineage_times_and_locs(tc, lineage, t_curr, drop_before_sim=True,
+                                time_before_present=True):
+    locs = []
+    times = []
+    for node in lineage:
+        time = tc.nodes[node].time
+        # NOTE: optionally drop all nodes from before the simulation
+        # (i.e. nodes which were added to TableCollection by
+        # backward-time simulation with ms); THIS IS THE DEFAULT
+        # (or include all, if drop_before_sim is False)
+        if (drop_before_sim and time < 0) or not drop_before_sim:
+            times.append(time)
+            individ = tc.nodes[node].individual
+            loc = tc.individuals[individ].location
+            locs.append(loc)
+    # express times as time before present, if requested
+    if time_before_present:
+        # NOTE: need to make t_curr negative, to reflect the fact that time is
+        # stored as positive integeres in Geonomics data structures but as
+        # negative integers in tskit TableCollection (because they require time
+        # expressed as time before present, so using positive integers would
+        # not allow models to be run indefinitely, for exploratory/fun purposes
+        times = [t - -t_curr for t in times]
+    return(zip(times, locs))
+
+
+# recursive algorithm for getting all parents of a node
+def _get_lineage(tree, nodes):
+    parent = tree.parent(nodes[-1])
+    if parent == tskit.NULL:
+        return(nodes)
+    else:
+        nodes.append(parent)
+        return(_get_lineage(tree, nodes))
+
+
+# get a dict of the interval (i.e. tree) number
+# keyed to each locus in a list of loci
+def _get_treenums(ts, loci, as_dict=False):
+    interval_right_ends = [t.get_interval()[1] for t in ts.trees()]
+    treenums = [bisect.bisect_left(interval_right_ends, loc) for loc in loci]
+    if as_dict:
+        treenums = {loc: treenum for loc, treenum in zip(loci, treenums)}
+    return(treenums)
+
+
+# calculate a stat for the lineage corresponding to the provided lineage_dict
+def _calc_lineage_stat(lin_dict, stat):
+    assert stat in ['dirn', 'dist', 'time', 'speed'], ("The only valid "
+                                                       "statistics are: "
+                                                       "direction ('dir'), "
+                                                       "distance ('dist'), "
+                                                       "time ('time'), "
+                                                       "and speed ('speed').")
+    fn_dict = {'dir': _calc_lineage_direction,
+               'dist': _calc_lineage_distance,
+               'time': _calc_lineage_time,
+               'speed': _calc_lineage_speed
+              }
+    val = fn_dict[stat](lin_dict)
+    return val
+
+
+# calculate the angular direction of gene flow along a locus' lineage
+def _calc_lineage_direction(lin_dict):
+    # get x and y distances between beginning and ending points
+    beg_loc = [*lin_dict.values()][0][1]
+    end_loc = [*lin_dict.values()][-1][1]
+    x_diff, y_diff = [end_loc[i] - beg_loc[i] for i in range(2)]
+    # get the counterclockwise angle, expressed in degrees
+    # from the vector (X,Y) = (1,0),
+    # with 0 to 180 in quadrants 1 & 2, 0 to -180 in quadrants 3 & 4
+    ang = np.rad2deg(np.arctan2(y_diff, x_diff))
+    # convert to all positive values, 0 - 360
+    if ang < 0:
+        ang += 360
+    #convert to all positive clockwise angles, expressed as 0 at compass north
+    # (i.e. angles clockwise from vector (X,Y) = (0,1)
+    ang = (-ang + 90) % 360
+    return ang
+
+
+# calculate the geographic distance (in cell widths)
+# of gene flow along a locus' lineage
+def _calc_lineage_distance(lin_dict):
+    # get x and y distances between beginning and ending points
+    beg_loc = [*lin_dict.values()][0][1]
+    end_loc = [*lin_dict.values()][-1][1]
+    x_diff, y_diff = [end_loc[i] - beg_loc[i] for i in range(2)]
+    #Pythagoras
+    dist = np.sqrt(x_diff**2 + y_diff**2)
+    return dist
+
+
+# calculate the total time to the simulation's MRCA of a locus' lineage
+def _calc_lineage_time(lin_dict):
+    beg_time = [*lin_dict.values()][0][0]
+    end_time = [*lin_dict.values()][-1][0]
+    time = end_time - beg_time
+    return time
+
+
+# calculate the speed of gene flow in a lineage (in cell widths/time steps)
+def _calc_lineage_speed(lin_dict):
+    dist = _calc_lineage_distance(lin_dict)
+    time = _calc_lineage_time(lin_dict)
+    speed = dist/time
+    return speed
+

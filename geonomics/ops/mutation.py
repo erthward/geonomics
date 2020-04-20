@@ -72,7 +72,7 @@ def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None,
     # choose a new locus, if not provided
     if locus is None:
         locus = spp.gen_arch._mutables.pop()
-    # otherwise, remove it from the mutables
+    # otherwise, remove from the mutables the locus that was provided
     else:
         spp.gen_arch._mutables.remove(locus)
     # draw an individual to mutate from the list of offspring provided,
@@ -95,6 +95,8 @@ def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None,
     spp._set_z_individ(individ)
     # add a row to the tskit.TableCollection.mutations table
     _do_add_row_muts_table(spp, individ, homol, locus)
+    # update the recombination subsetters
+    spp.gen_arch.recombinations._update_subsetters(locus, idx)
     return(individ, locus)
 
 

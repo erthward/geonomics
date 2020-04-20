@@ -155,7 +155,7 @@ def _do_mating_sngl_offspr(spp, pair, recomb_keys):
     # segment info objects' order matches the order in which the recombination
     # paths are popped in the following line of code (because they will pop
     # off the right end of their list)
-    seg_info = [spp.gen_arch.recombinations._get_recombination_seg_info(
+    seg_info = [spp.gen_arch.recombinations._get_seg_info(
                     start_homologue=start_homologues[i],
                     event_key=k,
                     node_ids=np.array([spp[pair[i]]._nodes_tab_ids[
@@ -170,12 +170,14 @@ def _do_mating_sngl_offspr(spp, pair, recomb_keys):
     # both correspond to the genomic material inherited from the first of the
     # two parents whose ids are listed in `pair`
     if len(spp.gen_arch.nonneut_loci) > 0:
-        subsetters = [spp.gen_arch.recombinations._get_recombination_subsetter(
-                         start_homologue=start_homologues[i],
-                         locs=spp.gen_arch.nonneut_loci,
-                         event_key=k) for i, k in enumerate(recomb_keys)]
-        new_genome = [spp[ind].g[subsetter] for ind, subsetter in zip(pair,
-                                                                   subsetters)]
+        subsetters = [spp.gen_arch.recombinations._get_subsetter(
+                                        event_key=k) for k in recomb_keys]
+        #NOTE: flip the genome L-R before subsetting, if the start homologue is
+        # 1, then flatten genome and subset
+        new_genome = [np.fliplr(spp[ind].g).flatten(
+            )[[*sub]] if hom else spp[ind].g.flatten(
+            )[[*sub]] for ind, hom, sub in zip(pair, 
+                                               start_homologues, subsetters)]
         new_genome = np.vstack(new_genome).T
     else:
         new_genome = None

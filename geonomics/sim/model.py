@@ -641,6 +641,12 @@ class Model:
                     fn()
                 else:
                     break
+            # set each species' flag that indicates whether or not the
+            # TableCollection is sorted and simplified to False
+            for spp in self.comm.values():
+                if spp._tc_sorted_and_simplified:
+                    spp._tc_sorted_and_simplified = False
+
             if self._verbose:
                 self._print_timestep_info(mode)
             # sort and simplify tskit tables, if needed
@@ -654,7 +660,7 @@ class Model:
                                   self.comm[0]._tc.edges.num_rows)
                             print("\tNUMBER INDIVIDS BEFORE SIMPLIFICATION:",
                                   self.comm[0]._tc.individuals.num_rows)
-                            spp._do_sort_simp_table_collection()
+                            spp._sort_simplify_table_collection()
                             print("\n\tNUMBER EDGES AFTER SIMPLIFICATION: ",
                                   self.comm[0]._tc.edges.num_rows)
                             print("\tNUMBER INDIVIDS AFTER SIMPLIFICATION: ",

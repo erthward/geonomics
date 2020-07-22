@@ -2432,7 +2432,7 @@ size of each :py:`Species` in a :py:`Community`.)
 
 
 
-**seed**
+**num**
 
 .. code-block:: python
 
@@ -2449,6 +2449,33 @@ This indicates whether or not to set the seeds of the random number
 generators (by calling :py:`np.random.seed` and :py:`random.seed`)
 before building and running a :py:`Model`. If value is an integer, the seeds
 will be set to that value. If value is :py:`None`, seeds will not be set.
+
+
+
+
+**tskit_simp_interval**
+
+.. code-block:: python
+
+          #time step interval for simplification of tskit tables
+          'tskit_simp_interval':          100,
+
+:py:`int`
+
+default: 100
+
+reset? N
+       
+This sets the interval, in timesteps,
+between subsequent :py:`tskit` simplifications.
+Defaults to simplifying every 100 timesteps, as suggested by the
+tskit package authors (see 
+`here <https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006581>`_
+). This most likely need not be changed, but for simulations
+with especially large population and/or genome sizes the user may
+wish to experiment with reducing this interval so as to improve performance.
+
+
 
 --------------------
 

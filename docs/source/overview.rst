@@ -58,12 +58,21 @@ Genomes, :py:`GenomicArchitecture`, and :py:`Trait` objects
 ===========================================================
 
 :py:`Individual` objects 
-(see :ref:`:py:\`Individual\`, :py:\`Species\`, and :py:\`Community\` objects`, below)
+(see :ref:`:py:\`Individual\`, :py:\`Species\`,
+and :py:\`Community\` objects`, below)
 can optionally be assigned genomes.
-If they are, each :py:`Individual`'s genome is modeled as a 
-2-by-L Numpy array (where 2 is the ploidy, currently fixed at
-diploidy, and L is genome length) containing 0s and 1s (because
-Geonomics strictly models biallelic SNPs, i.e SNPs with '0'- and '1'-alleles). 
+If they are, each :py:`Individual`'s genome is conceptually modeled as a 
+2-by-L array (where 2 is the ploidy, currently fixed at
+diploidy, and L is the genome length) containing 0s and 1s (because
+Geonomics strictly models biallelic SNPs, i.e SNPs with '0'- and '1'-alleles).
+(In actuality, Geonomics stores genomes by combining 
+Numpy arrays for non-neutral genotypes with a `tskit`_ :py:`TableCollection`
+for neutral genotypes and for the current population's spatial pedigree.
+Although this makes for more complicated data structures,
+it optimizes information retention while minimizing memory usage,
+keeping Geonomics fast yet nonetheless enabling powerful
+spatiotemporal population genomics research.
+See :ref:`:py:\`tskit.tables.TableCollection\``, below, for details.)
 
 The parameter L, as well as numerous other genomic parameters (including 
 locus-wise starting frequencies of the 1 alleles; locus-wise dominance effects;
@@ -73,9 +82,9 @@ globally deleterious, and adaptive loci), are controlled by the
 :py:`Individual` belongs. (For the full and detailed list of attributes in a 
 :py:`GenomicArchitecture` object, see its class documentation, below.)
 The genomes of the initial :py:`Individual`\s 
-in a simulation, as well as those of 
-:py:`Individual`\s in subsequent generations, are either drawn
-or recombined, and are mutated, according to the values stipulated 
+in a simulation are drawn, and those of 
+:py:`Individual`\s in subsequent generations are recombined (and optionally
+mutated) according to the values stipulated 
 by the :py:`GenomicArchitecture` of
 their :py:`Species`. The user can create a species with a 
 :py:`GenomicArchitecture` and with corresponding
@@ -100,10 +109,11 @@ underlying that :py:`Trait` and the effect sizes (i.e. 'alpha') of those loci:
    z_{i,t} = null\_genotype + \sum_{l = 0}^{n} \alpha_{t,l} g_{i,l}
 
 where :math:`z_{i,t}` is the phenotype of :py:`Individual` i for trait t, 
-:math:`g_{i, l}` is the genotype of the :py:`Individual` at that locus, and 
-:math:`\alpha_{t,l}` is the effect size of that locus for that trait.
+:math:`g_{i, l}` is the effective genotype of :py:`Individual` :math:`i`
+at locus :math:`l`, and 
+:math:`\alpha_{t,l}` is the effect size of locus :math:`l` for trait :math:`t`.
 
-The 'null phenotype' refers determines what would be the phenotypic value that
+The 'null phenotype' represents the phenotypic value for
 an :py:`Individual` who is homozygyous for
 the 0 allele at all loci for a trait.
 For monogenic traits the null phenotype is 0 and the effect size is fixed at 
@@ -313,8 +323,9 @@ a population of 50,000 individuals, using various window widths:
 .. image:: DensityGridStack_ww_100.jpg
    :align: center
 
-And this plot shows how :py:`_DensityGridStack` creation (plot titled 'make')
-and runtime ('calc')scale with window-width for that :py:`Landscape`:
+And this plot shows how :py:`_DensityGridStack` creation
+(plot titled 'making') and runtime (plot titled 'calc')
+scale with window-width for that :py:`Landscape`:
 
 .. image:: densitygridstack_compute_times.png
    :align: center
@@ -326,6 +337,38 @@ The :py:`_KDTree` class is just a wrapper around :py:`scipy.spatial.cKDTree`.
 It provides an optimized algorithm (the kd-tree) for finding 
 neighboring points within a given search radius.
 This class is used for all neighbor-searching operations (e.g. mate-search).
+
+:py:`tskit.tables.TableCollection`
+----------------------------------
+
+To enable easy recording of the pedigree of a simulated :py:`Species`,
+Geonomics depends on the Python package `tskit`_ (software
+that originated as improvements made to the data structures
+and algorithms used by the popular forward-time simulator `msprime`_).
+Geonomics uses the :py:`tskit` tables API to store the full history of
+individuals, genotypes, mating events, and recombinations for
+a :py:`Species` in a :py:`TableCollection` object.
+This data structure is initiated with a random pedigree
+that is backwards-time simulated using :py:`msprime`
+and used as a stand-in (viz. meaningless) pedigree
+for a :py:`Species`' starting population.
+It is then updated with each timestep's forward-time simulation information,
+and it is periodically simplified as recommended by the :py:`tskit` authors
+using :py:`tskit`'s simplification algorithm.
+(The simplification interval can be parameterized by the user.)
+Because each individual is stored along with its x,y birth location,
+a :py:`TableCollection` thus
+contains the full spatial pedigree of a :py:`Species`' current population.
+Geonomics additionally provides some wrapper functions,
+implemented as :py:`Species` methods,
+for converting the :py:`TableCollection` to a :py:`TreeSequence`,
+and for calculating statistics and creating visualizations from these
+two data structures. (For further details regarding :py:`tskit`,
+see the Python package
+`documentation <https://tskit.readthedocs.io/en/latest/index.html>`_
+and the associated peer-reviewed
+`paper <https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006581>`_.)
+
 
 :py:`_RecombinationPaths`
 -------------------------
@@ -633,3 +676,7 @@ to some of the life-history parameters of a :py:`Species` (e.g. birth rate;
 the lambda parameter of the Poisson distribution determining the number of 
 offspring of mating events). This functionality is currently minimalistic, 
 but will be more facilitated in future versions.
+
+
+.. _tskit: https://tskit.readthedocs.io/en/latest/index.html
+.. _msprime: https://msprime.readthedocs.io/en/stable/

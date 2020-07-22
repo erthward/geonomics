@@ -107,12 +107,32 @@ class Recombinations:
     # mutation
     def _update_subsetters(self, mutation_loc, genotype_arr_mutation_idx):
         for k in self._subsetters.keys():
+            # determine whether the number of crossovers that has happened up
+            # to the mutation's locus has been even (in which case the
+            # recomb path is 'back' on homologue 0) or odd (in which
+            # case it is on homologue 1)
+            # NOTE: this is because all recomb paths start on homologue 0,
+            #       then are used either for subsetting starting from either
+            #       homol 0 or homol 1 on the fly in mating.py using the 
+            #       variable start_homologues
+            #       in function _do_mating_singl_offspring
             subsetter_homologue = bisect.bisect_left(self._breakpoints[k],
                                                      mutation_loc) % 2
+            # use the bitarray_dict to get the 2-digit binary string
+            # corresponding to the homologue that the recomb path is on
+            # when it reaches mutation_loc, to be inserted into the subsetter
+            # in the appropriate location
+            subsetter_insert = self._bitarray_dict[subsetter_homologue]
+            # find the insertion-point index of the current subsetter 
+            # (just twice the non-neutral genotype array's index)
             subsetter_idx = genotype_arr_mutation_idx * 2
-            self._subsetters[k] = self._subsetters[k][:subsetter_idx] + [
-                                  self._bitarray_dict[subsetter_homologue]] + [
-                                  self._subsetters[k][subsetter_idx:]]
+            # create the new subsetter by concatenating:
+            #  1. the original subsetter, up to but excluding the insertion pt
+            #  2. the insert
+            #  3. the remainder of the original subsetter
+            new_subsetter = (self._subsetters[k][:subsetter_idx] +
+                subsetter_insert + self._subsetters[k][subsetter_idx:])
+            self._subsetters[k] = new_subsetter
 
 
     # draw recombination rates as needed according to parameter values
@@ -946,7 +966,7 @@ def _get_treenums(ts, loci, as_dict=False):
 
 # calculate a stat for the lineage corresponding to the provided lineage_dict
 def _calc_lineage_stat(lin_dict, stat):
-    assert stat in ['dirn', 'dist', 'time', 'speed'], ("The only valid "
+    assert stat in ['dir', 'dist', 'time', 'speed'], ("The only valid "
                                                        "statistics are: "
                                                        "direction ('dir'), "
                                                        "distance ('dist'), "
@@ -964,8 +984,10 @@ def _calc_lineage_stat(lin_dict, stat):
 # calculate the angular direction of gene flow along a locus' lineage
 def _calc_lineage_direction(lin_dict):
     # get x and y distances between beginning and ending points
-    beg_loc = [*lin_dict.values()][0][1]
-    end_loc = [*lin_dict.values()][-1][1]
+    # (begins at the bottom of the lineage dict, furthest back in time)
+    beg_loc = [*lin_dict.values()][-1][1]
+    # (ends at the top of the lineage dict, in the current time step)
+    end_loc = [*lin_dict.values()][0][1]
     x_diff, y_diff = [end_loc[i] - beg_loc[i] for i in range(2)]
     # get the counterclockwise angle, expressed in degrees
     # from the vector (X,Y) = (1,0),

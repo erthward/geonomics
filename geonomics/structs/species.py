@@ -14,7 +14,8 @@ from geonomics.structs.genome import (_make_genomic_architecture,
                                       _make_starting_mutations,
                                       _get_lineage_dicts,
                                       _get_lineage_dicts_one_tree,
-                                      _get_treenums)
+                                      _get_treenums,
+                                      _calc_lineage_stat)
 from geonomics.structs.landscape import Layer
 from geonomics.structs.individual import Individual, _make_individual
 from geonomics.ops.movement import _do_movement, _do_dispersal
@@ -857,7 +858,7 @@ class Species(OD):
                                       ' (MAKE SURE YOU USED A MODEL WITH '
                                       ' AT LEAST ONE TRAIT!)')
             print('ALL INDIVIDUAL IDS APPEAR CORRECTLY REASSIGNED\n')
-        
+
         # set the sorted_and_simplified flag to True
         self._tc_sorted_and_simplified = True
 
@@ -925,11 +926,12 @@ class Species(OD):
             result = np.all([*result.values()])
         return result
 
-    
+
     # calculate stats for the lineages of a given set of nodes and loci;
     # returns dict of struct: {k=stat, v={k=loc, v=[val_node1 ... val_node_N]}}
     def _calc_lineage_stats(self, individs=None, nodes=None, loci=None,
-                            stats=['dir', 'dist', 'time', 'speed']):
+                            stats=['dir', 'dist', 'time', 'speed'],
+                            max_time_ago=None, min_time_ago=None):
         # get all nodes for the provided individuals, or for all individuals,
         # if nodes IDs not provided
         if nodes is None:
@@ -940,7 +942,9 @@ class Species(OD):
         # get all loci, if loci not provided
         if loci is None:
             loci = [*range(self.gen_arch.L)]
-        lin_dicts = self._get_lineage_dicts(loci, nodes=nodes)
+        lin_dicts = self._get_lineage_dicts(loci, nodes=nodes,
+                                            max_time_ago=max_time_ago,
+                                            min_time_ago=min_time_ago)
         stats = {stat: {} for stat in stats}
         for stat in stats:
             for loc in loci:
@@ -1533,15 +1537,24 @@ class Species(OD):
 
 
     # plot the lineage for a given node and locus
-    def _plot_lineages(self, locus, land, nodes=None, individs=None,
-                       phenotype=None, lyr_num=0, jitter=True, alpha=0.5,
-                       size=25, add_roots=False):
+    def _plot_gene_flow(self, locus, style, land, nodes=None, individs=None,
+                       color=None, phenotype=None, lyr_num=0, jitter=True,
+                       alpha=0.5, size=25, add_roots=False):
+        assert style in ['lineage', 'vector'], ("The style argument must be "
+                                                "given either 'lineage' or "
+                                                "'vector' as a value.")
         if nodes is None:
+            # get a random selection of n individuals, if individs' value is int
+            if isinstance(individs, int):
+                individs = np.random.choice([*self], individs, replace=False)
             #sort and simplify the TableCollection, if needed 
             if not self._tc_sorted_and_simplified:
                 self._sort_simplify_table_collection()
             nodes = self._get_nodes(individs=individs)
 
+        # sort and simplify the TableCollection if needed
+        if not self._tc_sorted_and_simplified:
+            self._sort_simplify_table_collection()
         # grab the TableCollection and its TreeSequence
         tc = self._tc
         try:
@@ -1557,11 +1570,12 @@ class Species(OD):
         tree = ts.aslist()[_get_treenums(ts, [locus])[0]]
         # get the lineage_dict (with birth times and birth locations)
         lin_dict = _get_lineage_dicts_one_tree(tc, tree, nodes, self.t)
-        # create start-color values for nodes' separate lineage tracks
-        start_cols = [mpl.colors.to_hex(plt.cm.Set1_r(n)) for n in np.linspace(
-                                                                0, 0.85, 8)]
-        #start_cols = ['#ffa114', '#ff1956', '#e419ff', '#4f6fff', '#4fffdf',
-        #             '#87ff4f']
+        if color is None:
+            # create start-color values for nodes' separate lineage tracks
+            colors = [mpl.colors.to_hex(plt.cm.Set1_r(
+                                        n)) for n in np.linspace(0, 0.85, 8)]
+        else:
+            colors = [color for _ in range(8)]
         # plot the species, either with or without phenotype-painting
         if phenotype is None:
             self._plot(lyr_num=lyr_num, land=land, size=size)
@@ -1570,35 +1584,59 @@ class Species(OD):
         ax = plt.gca()
         # extract and plot the series of points for each node
         for i, node in enumerate(nodes):
-            start_col = start_cols[i % len(start_cols)]
-            locs = np.vstack([v[1] for v in lin_dict[node].values()])
-            if jitter:
-                locs = locs + np.random.normal(0, 0.01,
-                                            size=locs.size).reshape(locs.shape)
-            # create linear interpolation of colors for plotting
-            color_nums = np.int8(np.linspace(0, 100, locs.shape[0]-1))
-            colors =[viz._calc_reshaded_color(start_col,
-                                              num) for num in color_nums]
-            # create a linear interpolation of linewidths
-            linewidths = np.linspace(3, 0.85, locs.shape[0]-1)
-            for n, color in enumerate(colors):
-                ax.plot(locs[n:n+2, 0], locs[n:n+2, 1], linestyle='--',
-                        marker='o', markersize=size**(1/2), color=color,
-                        linewidth=linewidths[n], alpha=alpha)
+            start_col = colors[i % len(colors)]
+            if style == 'lineage':
+                locs = np.vstack([v[1] for v in lin_dict[node].values()])
+                if jitter:
+                    locs = locs + np.random.normal(0, 0.01,
+                                                size=locs.size).reshape(locs.shape)
+                # create list of colors for plotting, using linearly interpolated
+                # colors if the color argument was not provided, 
+                # or else just using the solid color provided to the color argument
+                color_nums = np.int8(np.linspace(0, 100, locs.shape[0]-1))
+                if color is None:
+                    plot_colors =[viz._calc_reshaded_color(start_col,
+                                                  num) for num in color_nums]
+                else:
+                    plot_colors = [start_col for num in color_nums]
+                # create a linear interpolation of linewidths
+                linewidths = np.linspace(3, 0.85, locs.shape[0]-1)
+                for n, col in enumerate(plot_colors):
+                    # NOTE need to use only the first 2 values in the location
+                    # data because subsequent values are used
+                    # to store individuals' phenotypes and fitness
+                    ax.plot(locs[n:n+2, 0], locs[n:n+2, 1], linestyle='solid',
+                            marker='o', markersize=size**(1/2), color=col,
+                            linewidth=linewidths[n], alpha=alpha)
+            elif style == 'vector':
+                # get the start and end locations
+                # NOTE need to take only the first 2 values in the location
+                # data because subsequent values are used to store individuals' 
+                # phenotypes and fitness
+                beg_loc = [*lin_dict[node].values()][-1][1][:2]
+                end_loc = [*lin_dict[node].values()][0][1][:2]
+                dx, dy = [end_loc[i] - beg_loc[i] for i in range(2)]
+                # plot the vector
+                # NOTE: SHOULD I BE FITTING A REGRESSION LINE TO THE X AND Y
+                # LOCATIONS, TO GET THE 'AVERAGE' VECTOR, RATHER THAN JUST
+                # PLOTTING THE VECTOR BETWEEN THE OLDEST AND CURRENT POSITIONS
+                # (WHICH COULD EASILY MISREPRESENT THE OVERALL TREND BECAUSE 
+                # OF CHANCE ATYPICAL LOCATIONS FOR EITHER OF THOSE TWO POSITIONS
+                ax.arrow(*beg_loc, dx, dy, color=start_col,
+                         width=0.05, head_width=0.4, length_includes_head=True)
             # plot the nodes' current locations and their birth locations,
             # connected by a thin black line
             node_curr_loc = node_curr_locs[i]
-            node_birth_loc = locs[0, :]
-            dx, dy = [node_curr_loc[i] - node_birth_loc[i] for i in range(2)]
+            node_birth_loc = [*lin_dict[node].values()][0][1]
             plt.plot([node_birth_loc[0], node_curr_loc[0]],
                      [node_birth_loc[1], node_curr_loc[1]],
-                     color=start_col, linestyle='solid', alpha=alpha,
-                     linewidth=1)
+                     color=start_col, linestyle=':', alpha=alpha,
+                     linewidth=1.2)
+
         if add_roots:
             self._plot_lineage_roots(tc, tree)
-        plt.show()
 
-    
+
     # plot the lineage for a given node and locus
     def _plot_lineage_roots(self, tc, tree, alpha=0.8, size=75):
         # get the nodes
@@ -1619,7 +1657,7 @@ class Species(OD):
             # plot the root nodes' birth locations
             plt.scatter(x, y, c='white', s=size, alpha=alpha, marker='s')
         plt.show()
-    
+
 
     # method for plotting a species' population pyramid
     def _plot_demographic_pyramid(self):

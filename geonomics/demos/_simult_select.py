@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# sim_sel.py
+# _simult_select.py
 
 # flake8: noqa
 

@@ -79,11 +79,14 @@ def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None,
     # unless individ is provided
     if individ is None:
         individ = r.choice(offspring)
-
+    else:
+        assert individ in offspring, ('Individual provided for mutation (%i) '
+                                      'does not appear to be among the '
+                                      'list of current-timestep '
+                                      'offspring (%s)') % (individ,
+                                                           str(offspring))
     # add the locus to the gen_arch.nonneut_loci array
     idx = spp.gen_arch._add_nonneut_locus(locus, trait_nums, delet_s)
-    #TODO: Need to check that the individual provided is among the list of
-    #offspring? Or make offspring an optional arg too?
     #create the mutation
     homol = r.binomial(1, 0.5)
     # add a new row for this locus, with '0' genotypes,

@@ -9,6 +9,9 @@
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
 
+        5 add a param 'recomb_path_refresh_interval' that defaults to 0
+          but that if set to larger interval will redraw new paths at that interval
+
         5 generate a better, parameter-informative, print output for genomic architecture
 
         5 go through and make private anything that it makes sense to make private

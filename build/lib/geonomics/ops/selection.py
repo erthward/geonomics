@@ -19,16 +19,16 @@ from collections import OrderedDict as OD
 ######################################
 
 #Get the phenotypic values of all individuals for a given trait
-def _calc_phenotype(ind, gen_arch, trait):
+def _calc_phenotype(ind, gen_arch, trait_num):
     #get number of loci and their allelic effect sizes
-    n_loci = trait.n_loci
-    alpha = trait.alpha
-    #get the mean genotype array
-    genotype = np.mean(ind.g[trait.loci], axis = 1)
+    n_loci = gen_arch.traits[trait_num].n_loci
+    alpha = gen_arch.traits[trait_num].alpha
+    #get the mean genotype array (using the trait's locus index)
+    genotype = np.mean(ind.g[gen_arch.traits[trait_num].loc_idx], axis = 1)
     #use dominance, if required (to save considerable compute time otherwise)
     if gen_arch._use_dom:
         #get the dominance values
-        dom = gen_arch.dom[trait.loci]
+        dom = gen_arch.dom[gen_arch.traits[trait_num].loci]
         #update the genotype array by accounting for dominance at each locus
         genotype = np.clip(genotype * (1 + dom), a_min = None, a_max = 1)
     #if polygenic, multiply genotype by alpha (i.e. effect size) 
@@ -74,10 +74,9 @@ def _calc_fitness_deleterious_mutations(spp):
     #diploid genotypes for each of the deleterious loci in the cols
     #(0, 1, or 2, to facilitate the fitness math, because s values
     #(i.e. selection coefficients) are expressed per allele)
-    deletome = np.sum(np.stack([ind.g[[*spp.gen_arch.delet_loci.keys(
-                                    )],:] for ind in spp.values()]), axis = 2)
-    fit = 1 - np.multiply(deletome, np.array(
-                                        [*spp.gen_arch.delet_loci.values()]))
+    deletome = np.sum(np.stack([ind.g[
+            spp.gen_arch.delet_loc_idx, :] for ind in spp.values()]), axis = 2)
+    fit = 1 - np.multiply(deletome, spp.gen_arch.delet_loci_s)
     fit = fit.prod(axis = 1)
     return(fit)
 

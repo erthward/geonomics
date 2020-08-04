@@ -146,32 +146,65 @@ def _draw_n_births(num_pairs, n_births_distr_lambda):
 
 
 # function for mating a chosen mating-pair
-def _do_mating_sngl_offspr(spp, pair, recomb_paths):
-    # generate a gamete for each member of mating pair, stack, and transpose
-    new_genome = np.vstack(
-      [spp[ind].g.flatten()[[*recomb_paths.pop()]] for ind in pair]).T
-    return new_genome
+def _do_mating_sngl_offspr(spp, pair, recomb_keys):
+    # choose a start homologue
+    # NOTE: for now, this will only work for diploidy
+    start_homologues = r.binomial(1, 0.5, 2)
+    # generate the segment info for each parent's new, recombined gamete
+    # NOTE: reverse the order of the recomb_paths object so that the resulting
+    # segment info objects' order matches the order in which the recombination
+    # paths are popped in the following line of code (because they will pop
+    # off the right end of their list)
+    seg_info = [spp.gen_arch.recombinations._get_seg_info(
+                    start_homologue=start_homologues[i],
+                    event_key=k,
+                    node_ids=np.array([spp[pair[i]]._nodes_tab_ids[
+                             homol] for homol in range(
+                             spp.gen_arch.x)])
+                   ) for i, k in enumerate(recomb_keys)]
+    # generate each parent's new, recombined gamete (and make into a new genome
+    # by stacking and transposing)
+    # NOTE: the first path winds up the left side of the new genome, thus
+    # homologue 0; this ensures that the first segment-info object in the
+    # `seg_info` list and the first (i.e. left) half of the new genome
+    # both correspond to the genomic material inherited from the first of the
+    # two parents whose ids are listed in `pair`
+    if len(spp.gen_arch.nonneut_loci) > 0:
+        subsetters = [spp.gen_arch.recombinations._get_subsetter(
+                                        event_key=k) for k in recomb_keys]
+        #NOTE: flip the genome L-R before subsetting, if the start homologue is
+        # 1, then flatten genome and subset
+        new_genome = [np.fliplr(spp[ind].g).flatten(
+            )[[*sub]] if hom else spp[ind].g.flatten(
+            )[[*sub]] for ind, hom, sub in zip(pair, 
+                                               start_homologues, subsetters)]
+        new_genome = np.vstack(new_genome).T
+    else:
+        new_genome = None
+
+    return new_genome, seg_info
 
 
-def _do_mating_sngl_pair(spp, pair, n_offspring, recomb_paths):
+def _do_mating_sngl_pair(spp, pair, n_offspring, pairs_recomb_keys):
     # generate a list of n offspring for the given pair
     offspring = [_do_mating_sngl_offspr(spp, pair,
-        [recomb_paths.pop() for _ in range(2)]) for off in range(n_offspring)]
+                                        [pairs_recomb_keys.pop(
+                                        ) for _ in range(2)]) for off in range(
+                                                                  n_offspring)]
     return offspring
 
 
 # function for mating a chosen mating-pair
-def _do_mating(spp, mating_pairs, n_offspring, recomb_paths):
-    # use list of number of offsrpring per mating pair to create
+def _do_mating(spp, mating_pairs, n_offspring, recomb_keys):
+    # use list of number of offspring per mating pair to create
     # list of start and stop indices for subsetting the recomb paths into
     # groups of paths to be used for each gamete-production event for each pair
     start_stop_idxs = np.hstack((0, np.cumsum([2*n for n in n_offspring])))
     # get the recombination paths to be used by each pair
-    pairs_paths = [recomb_paths[start_stop_idxs[i]: start_stop_idxs[i + 1]] for
-                   i in range(len(n_offspring))]
+    pairs_recomb_keys = [recomb_keys[start_stop_idxs[i]: start_stop_idxs[
+                                    i + 1]] for i in range(len(n_offspring))]
     # use the pairs' paths to produce recombinant genomes for each pair (where
     # number of genomes equals that pair's number of offspring)
     new_genomes = list(starmap(_do_mating_sngl_pair, zip(repeat(spp),
-                                    mating_pairs, n_offspring, pairs_paths)))
+                               mating_pairs, n_offspring, pairs_recomb_keys)))
     return new_genomes
-

@@ -49,7 +49,7 @@ from geonomics.structs.individual import _make_individual
 from geonomics.structs.species import _make_species
 from geonomics.structs.community import _make_community
 from geonomics.structs import landscape, genome, individual, species, community
-from geonomics import demos 
+from geonomics import demos
 
 #other imports
 import re
@@ -235,13 +235,13 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
     Creating the burn-in function queue...
     Creating the main function queue...
     Running burn-in, iteration 0...
-    burn:   0:0
+    burn:   it=0:   t=0
             species: spp_0                         N=250    (births=35      deaths=214)
     .......................................................................................
-    burn:   0:1
+    burn:   it=0:  t=1
             species: spp_0                         N=250    (births=35      deaths=214)
     .......................................................................................
-    burn:   0:2
+    burn:   it=0:  t=2
             species: spp_0                         N=250    (births=35      deaths=214)
     .......................................................................................
     .

@@ -317,9 +317,13 @@ def _make_lyr_series(lyr, change_rast, start_t, end_t, n_steps,
         if isinstance(change_rast, np.ndarray):
             #NOTE: this resets dim from the argument that was fed in
             dim = change_rast.shape
-            ulc = None
-            res = None
-            prj = None
+            # NOTE: setting ulc, res, and prj to the same values as the layer
+            # provided to the layer argument, so that the None values don't
+            # throw an error in line 515's assertion below, but in reality
+            # there might be a better, 'safer' way to handle this
+            ulc = lyr.ulc
+            res = lyr.res
+            prj = lyr.prj
         elif os.path.isfile(change_rast):
             #NOTE: this resets dim from the argument that was fed in
             change_rast, dim, res, ulc, prj = io._read_raster(change_rast,

@@ -22,7 +22,9 @@ _check_display()
 from matplotlib import animation
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
+from copy import deepcopy
 import time
 import statsmodels.api as sm
 
@@ -121,14 +123,14 @@ def calc_euc(x, y):
     return euc
 
 
-# calculate lower-triangular of PCA-bsaed Euclidean genetic distances between
+# calculate lower-triangular of PCA-based Euclidean genetic distances between
 # all individuals, using a 'speciome' (2d array of all individs' genomes)
 def calc_dists(species, dist_type='gen', env_lyrs=None, return_flat=True,
-               allele_freq_diff=False):
+               allele_freq_diff=False, biallelic=False):
     # calculate genetic distance as the euclidean distance between individuals
     # in genetic PC space
     if dist_type == 'gen':
-        speciome = np.mean(np.stack([i.g for i in species.values()]), axis=2)
+        speciome = species._get_genotypes(biallelic=biallelic)
         if not allele_freq_diff:
             pca = PCA()
             vals = pca.fit_transform(speciome)
@@ -193,6 +195,11 @@ def calc_mean_z_e_diff(spp, trait_num=0):
     return mean_diff
 
 
+# define a function to calculate individuals' mean fitness
+def calc_mean_fitness(spp):
+    return np.mean(spp._calc_fitness())
+
+
 def track_horiz_crossing(mod, zone_edges, tracker, count):
     """track all horizontal crossing of some vertical zone on the landscape,
     delineated by x-axis bounds in zone_edges argument, so that the model can
@@ -228,6 +235,16 @@ def track_horiz_crossing(mod, zone_edges, tracker, count):
             tracker[idx] = curr_side
     return count
 
+
+# function for setting a precise number of axis ticks, rounded to a fixed
+# number of digits
+def fix_yax_n_ticks_digits(ax, vals, n_ticks, n_digits):
+    minval = min(vals)
+    maxval = max(vals)
+    tick_vals = np.linspace(minval, maxval, n_ticks)
+    tick_labs = [('%%0.%if' % n_digits) % v for v in tick_vals]
+    ax.set_yticks(tick_vals)
+    ax.set_yticklabels(tick_labs)
 
 
 # set some plotting params
@@ -470,7 +487,7 @@ def _make_params():
                         #num of chromosomes
                         'l_c':                      [100],
                         #whether starting allele frequencies should be fixed at 0.5
-                        'start_p_fixed':            True,
+                        'start_p_fixed':            0.5,
                         #genome-wide per-base neutral mut rate (0 to disable)
                         'mu_neut':                  0,
                         #genome-wide per-base deleterious mut rate (0 to disable)
@@ -493,6 +510,8 @@ def _make_params():
                         'n_recomb_paths_mem':       int(1e4),
                         #total number of recomb paths to simulate
                         'n_recomb_paths_tot':       int(1e5),
+                        'n_recomb_sims':            10000,
+                        'start_neut_zero':          True,
                         'allow_ad_hoc_recomb':      False,
                         #whether to save mutation logs
                         'mut_log':                  False,
@@ -559,6 +578,8 @@ def _make_params():
             'burn_T':       30,
             #seed number
             'num':          None,
+            #time step interval for simplification of tskit tables
+            'tskit_simp_interval':      100,
 
             ###############################
             #### iterations parameters ####
@@ -596,28 +617,78 @@ def _run(params, save_figs=False, time_it=False,
     ###############
     # set up figure
     ###############
-    fig = plt.figure(figsize=(6.75, 9.25))
-    fig.tight_layout()
+    nrows = 14 
+    ncols = 8
+    ratio = ncols/nrows
+    vert_size = 11 # length of figure's vertical dimension
+    fig = plt.figure(figsize=(vert_size, vert_size*ratio))
     plt.subplots_adjust(left=0.05, bottom=0.07, right=0.98, top=0.96, wspace=0.07,
                         hspace=0.16)
-    gs = gridspec.GridSpec(3, 9, height_ratios=[1, 1, 1.5])
+    gs = gridspec.GridSpec(nrows, ncols,
+                          height_ratios=[1]*8 + [1.5]*6,
+                          width_ratios=[1,1,1,0.7,0.7,1,1,1])
+
+    #fig bounds
+    gen_b4_top = 0
+    gen_b4_bot = 4
+    gen_b4_L = 0
+    gen_b4_R = 3
+
+    gen_af_top = 0
+    gen_af_bot = 4
+    gen_af_L = 5
+    gen_af_R = 8
+
+    ze_fit_top = 2
+    ze_fit_bot = 6
+    ze_fit_L = 3
+    ze_fit_R = 5
+
+    phn_b4_top = 4
+    phn_b4_bot = 8
+    phn_b4_L = 0
+    phn_b4_R = 3
+
+    phn_af_top = 4
+    phn_af_bot = 8
+    phn_af_L = 5
+    phn_af_R = 8
+
+    n1_3d_top = 8
+    n1_3d_bot = 14
+    n1_3d_L = 0
+    n1_3d_R = 4
+
+    n3_3d_top = 8
+    n3_3d_bot = 14
+    n3_3d_L = 4
+    n3_3d_R = 8
 
     # BEFORE-SIM AXES
-    gen_b4_ax = fig.add_subplot(gs[0, 1:4], aspect='equal')
-    gen_b4_ax.set_title('genotype', fontdict=ttl_fontdict)
-    gen_b4_ax.set_ylabel('before simulation', fontdict=ax_fontdict)
-    phn_b4_ax = fig.add_subplot(gs[0, 5:8], aspect='equal')
-    phn_b4_ax.set_title('phenotype', fontdict=ttl_fontdict)
+    gen_b4_ax = fig.add_subplot(gs[gen_b4_top:gen_b4_bot,
+                                   gen_b4_L:gen_b4_R], aspect='equal')
+    gen_b4_ax.set_ylabel('genotype', fontdict=ax_fontdict)
+    gen_b4_ax.set_title('before simulation', fontdict=ttl_fontdict)
+    phn_b4_ax = fig.add_subplot(gs[phn_b4_top:phn_b4_bot,
+                                   phn_b4_L:phn_b4_R], aspect='equal')
+    phn_b4_ax.set_ylabel('phenotype', fontdict=ax_fontdict)
 
     # AFTER-SIM AXES
-    gen_af_ax = fig.add_subplot(gs[1, 1:4], aspect='equal')
-    gen_af_ax.set_ylabel('after simulation', fontdict=ax_fontdict)
-    phn_af_ax = fig.add_subplot(gs[1, 5:8], aspect='equal')
+    gen_af_ax = fig.add_subplot(gs[gen_af_top:gen_af_bot,
+                                   gen_af_L:gen_af_R], aspect='equal')
+    gen_af_ax.set_title('after simulation', fontdict=ttl_fontdict)
+    gen_af_ax.set_ylabel('genotype', fontdict=ax_fontdict)
+    phn_af_ax = fig.add_subplot(gs[phn_af_top:phn_af_bot,
+                                   phn_af_L:phn_af_R], aspect='equal')
+    phn_af_ax.set_ylabel('phenotype', fontdict=ax_fontdict)
 
+    #--------
     # 3D AXES
-        #1
-    n1_3d_ax = fig.add_subplot(gs[2, 0:3], projection='3d')
-    n1_3d_ax.view_init(elev=1, azim=90)
+    #--------
+    # num 1
+    n1_3d_ax = fig.add_subplot(gs[n1_3d_top:n1_3d_bot,
+                                  n1_3d_L:n1_3d_R], projection='3d')
+    n1_3d_ax.view_init(elev=3, azim=83)
     n1_3d_ax.set_xlabel('$\longleftarrow$ Geo. Dist.', size=9, labelpad=-13)
     #n1_3d_ax.set_ylabel(' ' * 35 + '$\longleftarrow$ Env. Dist.', size=9,
     #                    labelpad=20)
@@ -628,20 +699,25 @@ def _run(params, save_figs=False, time_it=False,
     n1_3d_ax.set_yticklabels([])
     n1_3d_ax.set_zticklabels([])
     n1_3d_ax.set_title("", pad=-260)
-        #2
-    n2_3d_ax = fig.add_subplot(gs[2, 3:6], projection='3d')
-    n2_3d_ax.view_init(elev=25, azim=225)
-    n2_3d_ax.set_xlabel('Geo. Dist. $\longrightarrow$', size=9, labelpad=-13)
-    n2_3d_ax.set_ylabel('$\longleftarrow$ Env. Dist.', size=9, labelpad=-13)
-    n2_3d_ax.zaxis.set_rotate_label(False)
-    n2_3d_ax.set_zlabel('Gen. Dist. $\longrightarrow$', size=9, labelpad=-13,
-                        rotation=90)
-    n2_3d_ax.set_xticklabels([])
-    n2_3d_ax.set_yticklabels([])
-    n2_3d_ax.set_zticklabels([])
-        #3
-    n3_3d_ax = fig.add_subplot(gs[2, 6:9], projection='3d')
-    n3_3d_ax.view_init(elev=1, azim=0)
+    # num 2
+    ze_fit_ax_L = fig.add_subplot(gs[ze_fit_top:ze_fit_bot,
+                                     ze_fit_L:ze_fit_R])
+    ze_fit_ax_R = ze_fit_ax_L.twinx()
+    #n2_3d_ax = fig.add_subplot(gs[2, 3:6], projection='3d')
+    #n2_3d_ax.view_init(elev=25, azim=225)
+    #n2_3d_ax.set_xlabel('Geo. Dist. $\longrightarrow$', size=9, labelpad=-13)
+    #n2_3d_ax.set_ylabel('$\longleftarrow$ Env. Dist.', size=9, labelpad=-13)
+    #n2_3d_ax.zaxis.set_rotate_label(False)
+    #n2_3d_ax.set_zlabel('Gen. Dist. $\longrightarrow$', size=9, labelpad=-13,
+    #                    rotation=90)
+    #n2_3d_ax.set_xticklabels([])
+    #n2_3d_ax.set_yticklabels([])
+    #n2_3d_ax.set_zticklabels([])
+
+    # num 3
+    n3_3d_ax = fig.add_subplot(gs[n3_3d_top:n3_3d_bot,
+                                  n3_3d_L:n3_3d_R], projection='3d')
+    n3_3d_ax.view_init(elev=3, azim=7)
     #n3_3d_ax.set_xlabel('$\longleftarrow$ Geo. Dist.' + ' ' * 25, size=9,
     #                    labelpad=10)
     n3_3d_ax.set_ylabel('Env. Dist. $\longrightarrow$', size=9, labelpad=-13)
@@ -671,6 +747,9 @@ def _run(params, save_figs=False, time_it=False,
     #####################
     # prep and make model
     #####################
+
+    # set model name (since the params are'nt being read in from separate file)
+    params.model['name'] = 'IBD_IBE_demo'
 
     # get barrier-zone edges, for tracking crossings
     barr_rast = params['landscape']['layers']['barrier']['init']['defined']['rast']
@@ -710,17 +789,20 @@ def _run(params, save_figs=False, time_it=False,
 
     # create data structure to save z-e diff values
     if not time_it:
-        z_e_diffs = []
+        mean_z_e_diffs = []
+        mean_fits = []
 
     # run model for T timesteps
     for t in range(T):
         if not time_it:
-            z_e_diffs.append(calc_mean_z_e_diff(mod.comm[0]))
+            mean_z_e_diffs.append(calc_mean_z_e_diff(mod.comm[0]))
+            mean_fits.append(calc_mean_fitness(mod.comm[0]))
             cross_count = track_horiz_crossing(mod, zone_edges, cross_tracker,
                                                cross_count)
         mod.walk(1)
     if not time_it:
-        z_e_diffs.append(calc_mean_z_e_diff(mod.comm[0]))
+        mean_z_e_diffs.append(calc_mean_z_e_diff(mod.comm[0]))
+        mean_fits.append(calc_mean_fitness(mod.comm[0]))
         cross_count = track_horiz_crossing(mod, zone_edges, cross_tracker,
                                            cross_count)
 
@@ -745,9 +827,13 @@ def _run(params, save_figs=False, time_it=False,
     # create 3d IBD, IBE plot
     #########################
 
-    spp_subset = {ind: mod.comm[0][ind] for ind in np.random.choice([*mod.comm[0]],
-                                                                    100)}
-    gen_dists = calc_dists(spp_subset, allele_freq_diff=False)
+    spp_subset = deepcopy(mod.comm[0])
+    rand_inds = spp_subset._get_random_individuals(100)
+    all_inds = [*spp_subset]
+    for ind in all_inds:
+        if ind not in rand_inds:
+            spp_subset.pop(ind)
+    gen_dists = calc_dists(spp_subset, biallelic=False, allele_freq_diff=False)
     scaled_gen_dists = gen_dists/gen_dists.max()
     assert (np.all(scaled_gen_dists >= 0)
             and np.all(scaled_gen_dists <= 1)), ('Scaled genetic dist is outside '
@@ -780,13 +866,37 @@ def _run(params, save_figs=False, time_it=False,
 
 
     # plot on 3d axes
-    for ax in [n1_3d_ax, n2_3d_ax, n3_3d_ax]:
+    for ax in [n1_3d_ax, n3_3d_ax]:#, n2_3d_ax]:
        ax.scatter(geo_dists, env_dists, scaled_gen_dists,
-                  alpha=1, edgecolor='black', c=col3d, cmap='plasma')
+                  alpha=0.7, edgecolor='black', c=col3d, cmap='plasma')
+    
+    ##########################
+    # create plot of z-e diffs
+    ##########################
 
+    L_color = '#096075'
+    R_color = '#bf2659'
+    ze_fit_ax_L.set_xlabel('time (steps)')
+    ze_fit_ax_L.set_ylabel(('mean $|z-e|$)'), color=L_color)
+    ze_fit_ax_L.tick_params(axis='y', labelcolor=L_color, labelrotation=45)
+    ze_fit_ax_L.plot(range(len(mean_z_e_diffs)), mean_z_e_diffs, color=L_color)
+    fix_yax_n_ticks_digits(ze_fit_ax_L, mean_z_e_diffs, 5, 2)
+    ze_fit_ax_R.set_ylabel('mean fitness', color=R_color)
+    ze_fit_ax_R.tick_params(axis='y', labelcolor=R_color, labelrotation=-45)
+    ze_fit_ax_R.plot(range(len(mean_fits)), mean_fits, color=R_color)
+    fix_yax_n_ticks_digits(ze_fit_ax_R, mean_fits, 5, 3)
+    #ax.set_xlabel('time')
+    #ax.set_ylabel(('mean difference between individuals\' phenotypes and '
+    #               'environmental values'))
+    #z_e_fig.show()
+    #if save_figs:
+    #    fig.savefig('IBD_IBE_z-e_plot.png', format='png', dpi=1000)
+
+    fig.tight_layout()
     fig.show()
     if save_figs:
             fig.savefig('IBD_IBE.png', format='png', dpi=1000)
+
 
     #########################
     # create 3d animated plot
@@ -825,19 +935,6 @@ def _run(params, save_figs=False, time_it=False,
 
         fig3d.show()
 
-    ##########################
-    # create plot of z-e diffs
-    ##########################
-    z_e_fig = plt.figure()
-    ax = z_e_fig.add_subplot(111)
-    plt.plot(range(len(z_e_diffs)), z_e_diffs, color='#096075')
-    ax.set_xlabel('time')
-    ax.set_ylabel(('mean difference between individuals\' phenotypes and '
-                   'environmental values'))
-    z_e_fig.show()
-    if save_figs:
-        fig.savefig('IBD_IBE_z-e_plot.png', format='png', dpi=1000)
-
 
     #####################################
     # print out the zone-crossing results
@@ -851,3 +948,4 @@ def _run(params, save_figs=False, time_it=False,
         print("\n\nModel ran in %0.2f seconds." % tot_time)
 
     return mod
+

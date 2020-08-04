@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# sim_sel.py
+# _simult_select.py
 
 # flake8: noqa
 
@@ -44,12 +44,12 @@ def _make_params():
                  ## ::::     ::           ::   ::::::::::::::##
                ##::::::                       ::::::::: :::::: :##
              ## :    :::                    :::    ::    :::::::::##
-            ##ggggg eeee ooo   n   n   ooo   m   m iiiii  cccc ssss##
-           ##g     e    o   o  nn  n  o   o  m   m   i   c     s    ##
-           ##g     eee o     o n n n o     o mm mm   i   c     sssss##
-           ##g ggg eee o     o n  nn o     o m m m   i   c         s##
-           ##g   g e    o   o  n   n  o   o  m   m   i   c        ss##
-            ##gggg  eeee ooo   n   n   ooo   m   m iiiii  cccc ssss##
+            ##GGGGG EEEE OOO   N   N   OOO   M   M IIIII  CCCC SSSS##
+           ##G     E    O   O  NN  N  O   O  M   M   I   C     S    ##
+           ##G     EEE O     O N N N O     O MM MM   I   C     SSSSS##
+           ##G GGG EEE O     O N  NN O     O M M M   I   C         S##
+           ##G   G E    O   O  N   N  O   O  M   M   I   C        SS##
+            ##GGGG  EEEE OOO   N   N   OOO   M   M IIIII  CCCC SSSS##
              ##  ::::::::        ::::::::::::  :       ::  ::   : ##
                ##  ::::              :::::::  ::     ::::::::  :##
                  ## :::               :::::: ::       ::::::  ##
@@ -277,11 +277,11 @@ def _make_params():
                         #file defining custom genomic arch
                         'gen_arch_file':            None,
                         #num of loci
-                        'L':                        20,
+                        'L':                        1000,
                         #num of chromosomes
-                        'l_c':                      [20],
+                        'l_c':                      [1000],
                         #whether starting allele frequencies should be fixed at 0.5
-                        'start_p_fixed':            True,
+                        'start_p_fixed':            0.5,
                         #genome-wide per-base neutral mut rate (0 to disable)
                         'mu_neut':                  0,
                         #genome-wide per-base deleterious mut rate (0 to disable)
@@ -304,6 +304,8 @@ def _make_params():
                         'n_recomb_paths_mem':       int(1e4),
                         #total number of recomb paths to simulate
                         'n_recomb_paths_tot':       int(1e5),
+                        'n_recomb_sims':            10000,
+                        'start_neut_zero':          True,
                         'allow_ad_hoc_recomb':      False,
                         #whether to save mutation logs
                         'mut_log':                  False,
@@ -394,6 +396,8 @@ def _make_params():
             'burn_T':       60,
             #seed number
             'num':          None,
+            #time step interval for simplification of tskit tables
+            'tskit_simp_interval':      100,
 
             ###############################
             #### iterations parameters ####
@@ -473,7 +477,9 @@ def _run(params, save_figs=False, time_it=False):
     if time_it:
         start = time.time()
 
-    # RUN THE MODEL WITHOUT LINKAGE
+    # set model name (since not being read in from separate params file)
+    params.model['name'] = 'simult_select_demo'
+
     # make the model
     from .. import make_model
     mod = make_model(params)
@@ -552,4 +558,5 @@ def _run(params, save_figs=False, time_it=False):
         plt.savefig('sim_sel_z-e_plot.png', format='png', dpi=1000)
 
     return mod
+
 

@@ -10,7 +10,6 @@ Defines the core Model class, as well as its public and private methods
 #geonomics imports
 from geonomics.structs.landscape import _make_landscape
 from geonomics.structs.community import _make_community
-from geonomics.structs.genome import _set_genomes, _check_enough_mutable_loci
 from geonomics.sim.data import _DataCollector
 from geonomics.sim.stats import _StatsCollector
 from geonomics.utils._str_repr_ import _get_str_spacing
@@ -97,6 +96,10 @@ class Model:
         #is unrun, and so that the first timestep will default to 0 at the 
         #beginning of the timestep
         self.t = -1
+
+        # get the tskit-table simplification interval
+        # (will only be used if there are genomes in any species)
+        self._tskit_simp_interval = m_params.tskit_simp_interval
 
         #get the number of model iterations to run
         self.n_its = m_params.its.n_its
@@ -509,11 +512,11 @@ class Model:
             #verbose output
             if self._verbose:
                 print('Creating the burn-in function queue...\n\n')
-            self.burn_fn_queue = self._make_fn_queue(burn = True)
+            self.burn_fn_queue = self._make_fn_queue(burn=True)
         #verbose output
         if self._verbose:
             print('Creating the main function queue...\n\n')
-        self.main_fn_queue = self._make_fn_queue(burn = False)
+        self.main_fn_queue = self._make_fn_queue(burn=False)
 
 
     #method to create the simulation functionality, as a function queue 
@@ -586,7 +589,7 @@ class Model:
 
     #method to generate timestep_verbose_output
     def _print_timestep_info(self, mode):
-        verbose_msg = '%s:\t%i:%i\n' % (mode, self.it,
+        verbose_msg = '%s:\tit=%i:\tt=%i\n' % (mode, self.it,
                                 [self.burn_t if mode == 'burn' else self.t][0])
         spps_submsgs = ''.join(['\tspecies: %s%sN=%i\t(births=%i\tdeaths=%i)\n' %
                         (spp.name,
@@ -611,19 +614,20 @@ class Model:
                     break
             if self._verbose:
                 self._print_timestep_info(mode)
-            #if the burn-in is complete, reassign the genomes if needed
-            #and then set self.comm.burned = True
+            # if the burn-in is complete, reassign the genomes if needed,
+            # set the tskit.TableCollection tables if needed,
+            # and then set self.comm.burned = True
             if np.all([spp.burned for spp in self.comm.values()]):
                 if self.reassign_genomes:
                     for spp in self.comm.values():
                         if spp.gen_arch is not None:
                             #verbose output
                             if self._verbose:
-                                print(('Assigning genomes for '
+                                print(('\nAssigning genomes for '
                                     'species "%s"...\n\n') % spp.name)
-                            _set_genomes(spp, self.burn_T, self.T)
+                            spp._set_genomes_and_tables(self.burn_T, self.T)
                     #and then set the reassign_genomes attribute to False, so
-                    #that they won'r get reassigned again during this iteration
+                    #that they won't get reassigned again during this iteration
                     self.reassign_genomes = False
                 #mark the community as burned in
                 self.comm.burned = True
@@ -637,8 +641,30 @@ class Model:
                     fn()
                 else:
                     break
+            # set each species' flag that indicates whether or not the
+            # TableCollection is sorted and simplified to False
+            for spp in self.comm.values():
+                if spp._tc_sorted_and_simplified:
+                    spp._tc_sorted_and_simplified = False
+
             if self._verbose:
                 self._print_timestep_info(mode)
+            # sort and simplify tskit tables, if needed
+            if (self.t + 1) % self._tskit_simp_interval == 0 and self.t !=-1:
+                for spp in self.comm.values():
+                    if spp.gen_arch is not None:
+                        if self._verbose:
+                            print(('\n\nnow sorting and simplifying '
+                                   'tskit tables'))
+                            print("\tNUMBER EDGES BEFORE SIMPLIFICATION:",
+                                  self.comm[0]._tc.edges.num_rows)
+                            print("\tNUMBER INDIVIDS BEFORE SIMPLIFICATION:",
+                                  self.comm[0]._tc.individuals.num_rows)
+                            spp._sort_simplify_table_collection()
+                            print("\n\tNUMBER EDGES AFTER SIMPLIFICATION: ",
+                                  self.comm[0]._tc.edges.num_rows)
+                            print("\tNUMBER INDIVIDS AFTER SIMPLIFICATION: ",
+                                  self.comm[0]._tc.individuals.num_rows)
 
         #then check if any species are extinct and
         #return the correpsonding boolean
@@ -649,6 +675,7 @@ class Model:
                 'Iteration %i aborting.\n\n') % (' & '.join(
                 ['"' + spp.name + '"' for spp in self.comm.values(
                                                 ) if spp.extinct]), self.it))
+
         return(extinct)
 
 
@@ -711,10 +738,6 @@ class Model:
                     "iteration %i.\n\n") % self.it)
             return
 
-        #check each species has enough mutable loci
-        for spp in self.comm.values():
-            _check_enough_mutable_loci(spp, self.burn_T, self.T)
-
         #loop over the timesteps, running the run_main function repeatedly
         for t in range(self.T):
             #run a main timestep
@@ -774,13 +797,13 @@ class Model:
         Creating the burn-in function queue...
         Creating the main function queue...
         Running burn-in, iteration 0...
-        burn:   0:0
+        burn:   it=0:   t=0
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
-        burn:   0:1
+        burn:   it=0:   t=1
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
-        burn:   0:2
+        burn:   it=0:   t=2
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
         .
@@ -912,13 +935,13 @@ class Model:
         Creating the burn-in function queue...
         Creating the main function queue...
         Running burn-in, iteration 0...
-        burn:   0:0
+        burn:   it=0:   t=0
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
-        burn:   0:1
+        burn:   it=0:   t=1
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
-        burn:   0:2
+        burn:   it=0:   t=2
                 species: spp_0                         N=250    (births=35      deaths=214)
         .......................................................................................
         .
@@ -929,13 +952,13 @@ class Model:
         Burn-in complete.
         >>> #now run in main mode for 50 timesteps
         >>> mod.walk(T = 50, mode = 'main')
-         main:   1:0
+         main:   it=1:  t=0
                  species: spp_0                         N=131    (births=35      deaths=214)
          .......................................................................................
-         main:   1:1
+         main:   it=1:  t=1
                  species: spp_0                         N=129    (births=35      deaths=214)
          .......................................................................................
-         main:   1:2
+         main:   it=1:  t=2
                  species: spp_0                         N=133    (births=35      deaths=214)
          .......................................................................................
          .
@@ -987,8 +1010,6 @@ class Model:
             # exit if burn-in is complete
             if mode == 'burn' and self.comm.burned:
                 # verbose output
-                if self._verbose:
-                    print('Burn-in complete.\n\n')
                 break
             # reset mode, if mode is 'burn' and there is no mod.burn_fn_queue
             if mode == 'burn' and self.burn_fn_queue is None:
@@ -1313,7 +1334,7 @@ class Model:
 
 
     #wrapper around Species._plot_genotype
-    def plot_genotype(self, spp, locus, lyr=None, by_dominance=False,
+    def plot_genotype(self, spp, locus, lyr=None, with_dominance=False,
                       individs=None, text=False, edge_color='black',
                       text_color='black', cbar=True, size=25, text_size = 9,
                       alpha=1, zoom_width=None, x=None, y=None, ticks=None,
@@ -1344,7 +1365,7 @@ class Model:
             to None, which will cause all Layers to be plotted as an overlay
             of transparent rasters, each with a different colormap.
 
-        by_dominance : bool, optional, default: False
+        with_dominance : bool, optional, default: False
             If False, the Individuals will be colored by their actual genotypes
             (i.e. a 0|0 homozygote will be depicted as 0, a 1|1 homozygote as
             1, and a 0|1 heterozygote as 0.5). If True, then the dominance
@@ -1437,7 +1458,8 @@ class Model:
         spp._plot_genotype(locus=locus, lyr_num=lyr_num, individs=individs,
                            text=text, size=size, text_size=text_size,
                            edge_color=edge_color, text_color=text_color,
-                           cbar=cbar, alpha=alpha, by_dominance=by_dominance,
+                           cbar=cbar, alpha=alpha,
+                           with_dominance=with_dominance,
                            zoom_width=zoom_width, x=x, y=y, ticks=ticks,
                            mask_rast=None)
         #add spp name

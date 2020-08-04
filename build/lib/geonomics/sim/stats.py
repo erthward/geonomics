@@ -366,7 +366,7 @@ def _calc_ld(spp, plot = False):
     #exactly what's going on and be sure everything checks out. WARNING:
     # stats.py:117: RuntimeWarning: invalid value encountered in double_scalars
 
-    speciome = _get_speciome(spp)
+    speciome = spp._get_genotypes()
     n = np.shape(speciome)[0] #num individs
     x = np.shape(speciome)[2] #ploidy
     N = n*x
@@ -400,7 +400,7 @@ def _calc_het(spp, mean=False):
     #get pop size
     N = len(spp)
     #get the speciome
-    speciome = _get_speciome(spp)
+    speciome = spp._get_genotypes()
     #calculate the frequency of heterozygotes, locus-wise
     het = np.sum(np.mean(speciome, axis = 2) == 0.5, axis = 0)/N
     #get the mean heterozygosity, if mean argument is True
@@ -413,7 +413,7 @@ def _calc_maf(spp):
     #get two times the pop size
     two_N = 2*len(spp)
     #get the speciome
-    speciome = _get_speciome(spp)
+    speciome = spp._get_genotypes()
     #get the frequencies of 1-alleles for all loci
     freqs_1 = np.sum(np.sum(speciome, axis = 2), axis = 0)/two_N
     #find all loci where the 1-allele is the major allele
@@ -433,11 +433,3 @@ def _calc_mean_fitness(spp):
     else:
         mean_fit = np.nan
     return(mean_fit)
-
-
-#helper function for creating a 3-d array of all individuals' genotypes
-#(a 'speciome')
-def _get_speciome(spp):
-    speciome = np.stack([ind.g for ind in spp.values()])
-    return(speciome)
-

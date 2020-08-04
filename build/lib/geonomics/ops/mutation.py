@@ -9,6 +9,7 @@ Functions to implement mutation operations
 import numpy as np
 from numpy import random as r
 import random
+import re
 
 
 #------------------------------------
@@ -29,7 +30,16 @@ def _calc_estimated_total_mutations(spp, burn_T, T):
     est = int(2.5 * est)
     return est
 
+# add a row to the tskit.TableCollection.mutations table for a new mutation
+def _do_add_row_muts_table(spp, individ, homol, locus):
+    # update the tskit.TableCollection.mutations table
+    node_id = spp[individ]._nodes_tab_ids[homol]
+    mut_id = spp._tc.mutations.add_row(site=locus, node=node_id,
+                                       derived_state='1')
+    return mut_id
 
+
+# do a neutral mutation for a single Individual, chosen from the offspring
 def _do_neutral_mutation(spp, offspring, locus=None, individ=None):
     #randomly choose an individual to mutate, if not provided
     if individ is None:
@@ -39,81 +49,95 @@ def _do_neutral_mutation(spp, offspring, locus=None, individ=None):
                                        'is not in spp.keys().')
     #randomly choose a locus from among the mutables, if not provided
     if locus is None:
-        locus = r.choice([*spp.gen_arch._mutable_loci])
+        locus = spp.gen_arch._mutables.pop()
     else:
-        assert locus in spp.gen_arch._mutable_loci, ('The locus provided '
-                            'is not in the spp.gen_arch._mutable_loci set.')
-    #remove the locus from the mutable_loci set
-    spp.gen_arch._mutable_loci.remove(locus)
-    #randomly choose a chromosome on which to place the mutation
+        assert locus in spp.gen_arch._mutables, ('The locus provided '
+                                                 'is not in the list of '
+                                                 'valid mutable loci '
+                                                 '(spp.gen_arch._mutables).')
+    #randomly choose a homologue on which to place the mutation
     #in the individual
-    chrom = r.binomial(1,0.5)
-    #then mutate this individual at this locus
-    spp[individ].g[locus,chrom] = 1
+    homol = r.binomial(1,0.5)
+    # NOTE: not mutating the individual's genome because we're only tracking
+    # non-neutral mutations now
+
+    # add a row to the tskit.TableCollection.mutations table
+    _do_add_row_muts_table(spp, individ, homol, locus)
     return(individ, locus)
 
 
-def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None):
-    #choose a new locus, if not provided
+# do a non-neutral mutation for a single Individual, chosen from the offspring
+def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None,
+                           trait_nums=None, delet_s=None):
+    # choose a new locus, if not provided
     if locus is None:
-        locus = r.choice([*spp.gen_arch._mutable_loci])
-        assert locus in spp.gen_arch._mutable_loci, ('The locus provided '
-                                    'is not in spp.gen_arch.mutable_loci.')
-    #remove the locus from the mutable_loci and neut_loci sets
-    spp.gen_arch._mutable_loci.remove(locus)
-    spp.gen_arch.neut_loci.remove(locus)
-    #add the locus to the nonneut_loci set
-    spp.gen_arch.nonneut_loci.update({locus})
-    #draw an individual to mutate from the list of offspring provided,
-    #unless individ is provided
+        locus = spp.gen_arch._mutables.pop()
+    # otherwise, remove from the mutables the locus that was provided
+    else:
+        spp.gen_arch._mutables.remove(locus)
+    # draw an individual to mutate from the list of offspring provided,
+    # unless individ is provided
     if individ is None:
         individ = r.choice(offspring)
-    #TODO: Need to check that the individual provided is among the list of
-    #offspring? Or make offspring an optional arg too?
+    else:
+        assert individ in offspring, ('Individual provided for mutation (%i) '
+                                      'does not appear to be among the '
+                                      'list of current-timestep '
+                                      'offspring (%s)') % (individ,
+                                                           str(offspring))
+    # add the locus to the gen_arch.nonneut_loci array
+    idx = spp.gen_arch._add_nonneut_locus(locus, trait_nums, delet_s)
     #create the mutation
-    spp[individ].g[locus,r.binomial(1, 0.5)] = 1
-    #return the locus and individual
-    return(locus, individ)
+    homol = r.binomial(1, 0.5)
+    # add a new row for this locus, with '0' genotypes,
+    # to the individuals' genotype arrays
+    spp._add_new_locus(idx, locus)
+    # mutate the chosen individual's chosen homologue's genotype to 1
+    spp[individ].g[idx, homol] = 1
+    # update the individual's phenotype
+    spp._set_z_individ(individ)
+    # add a row to the tskit.TableCollection.mutations table
+    _do_add_row_muts_table(spp, individ, homol, locus)
+    # update the recombination subsetters
+    spp.gen_arch.recombinations._update_subsetters(locus, idx)
+    return(individ, locus)
 
 
-def _do_trait_mutation(spp, offspring, trait_num, alpha=None,
+# do a trait mutation for a single Individual, chosen from the offspring
+def _do_trait_mutation(spp, offspring, trait_nums, alpha=None,
                                         locus=None, individ=None):
     #run the do_nonneutral_mutation function, to select locus
     #and individ (unless already provided) and update
-    #the mutable_loci, neut_loci, and nonneut_loci sets, and 
+    #the mutable_loci, neut_loci, and nonneut_loci, and 
     #change one of this locus' alleles to 1 in the mutated individual
-    locus, individ = _do_nonneutral_mutation(spp = spp, offspring = offspring,
-                                            locus = locus, individ = individ)
-    #choose an effect size for this locus, if not provided
-    if alpha is None:
-        alpha = spp.gen_arch._draw_trait_alpha(trait_num)
-    #update the trait's loci and alpha attributes accordingly
-    spp.gen_arch._set_trait_loci(trait_num, mutational = True, loci = locus,
-                                                                alpha = alpha)
-    #return the locus and individual
-    return(locus, individ)
+    individ, locus = _do_nonneutral_mutation(spp=spp, offspring=offspring,
+                                             locus=locus, individ=individ,
+                                             trait_nums=trait_nums)
+    return(individ, locus)
 
 
+# do a deleterious mutation for a single Individual, chosen from the offspring
 def _do_deleterious_mutation(spp, offspring, locus=None, s=None, individ=None):
+    #choose a selection coefficient for this locus, if not provided
+    if s is None:
+        s = spp.gen_arch._draw_delet_s()
     #run the do_nonneutral_mutation function, to select locus and individ
     #(unless already provided) and update the mutable_loci, neut_loci, and 
     #nonneut_loci sets, and change one of this locus' alleles to 1 in
     #the mutated individual
-    locus, individ = _do_nonneutral_mutation(spp = spp, offspring = offspring,
-                                             locus = locus, individ = individ)
-    #choose a selection coefficient for this locus, if not provided
-    if s is None:
-        s = spp.gen_arch._draw_delet_s()
-    #update the spp.gen_arch.delet_loci OrderedDict
-    spp.gen_arch.delet_loci.update({locus: s})
+    individ, locus = _do_nonneutral_mutation(spp=spp, offspring=offspring,
+                                             locus=locus, individ=individ,
+                                             delet_s=s)
     #return the locus and individual
-    return(locus, individ)
+    return(individ, locus)
 
 
+#TODO: COMPLETE THIS?
 def _do_planned_mutation(planned_mut_params):
     pass
 
 
+# do mutations for a list of offspring
 def _do_mutation(offspring, spp, log=None):
     #draw number of mutations from a binomial trial with number of trials equal
     #to len(offspring)*spp.gen_arch.L and prob = sum(all mutation rates)
@@ -142,14 +166,13 @@ def _do_mutation(offspring, spp, log=None):
                 spp.gen_arch._planned_muts._set_next()
 
         #execute all functions in the queue
-        for fn in mut_queue:
+        for i, fn in enumerate(mut_queue):
             individ, locus = fn(spp, offspring)
-            log_msg = ('MUTATION:\n\t INDIVIDUAL %i,  '
-                'LOCUS %i\n\t timestep %i\n\n') % (individ, locus, spp.t)
+            log_msg = ('MUTATION: %s\n\t INDIVIDUAL %i,  '
+                'LOCUS %i\n\t timestep %i\n\n') % (muts[0], individ,
+                                                   locus, spp.t)
             if log:
                 with open(log, 'a') as f:
                     f.write(log_msg)
             print(log_msg)
             mut_loci_exhausted = False
-
-

@@ -23,7 +23,9 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict as OD
 import warnings
 import random
+import bisect
 import bitarray
+import tskit
 
 ######################################
 # -----------------------------------#
@@ -32,19 +34,195 @@ import bitarray
 ######################################
 
 
-class _RecombinationPaths:
-    def __init__(self, L, recomb_paths=None, fixed_r=None):
-        self._L = L
-        self.recomb_paths = recomb_paths
-        self._fixed_r = fixed_r
-        self._gen_paths_ad_hoc = self.recomb_paths is None
+# an error to raise if a simulation is not given enough neutral loci to fit
+# the total number of expected mutations over the total parameterized runtime
+# under the infinite sites model
+class MutationRateError(Exception):
+    pass
 
-    def _get_paths(self, n):
-        if self._gen_paths_ad_hoc:
-            paths = _get_bitarray_subsetters_fixed_r(n, self._L, self._fixed_r)
+
+class Recombinations:
+    def __init__(self, L, positions, n, r_distr_alpha, r_distr_beta,
+                 recomb_rates):
+        # define the bitarray unit corresponding to each homologue
+        self._bitarray_dict= {0: '10', 1: '01'}
+
+        # genome length
+        self._L = L
+        # organize the potential recombination breakpoint positions
+        if positions is None:
+            positions = np.arange(self._L)
         else:
-            paths = random.sample(self.recomb_paths, n)
-        return paths
+            positions.sort()
+        positions = [*positions]
+        # optimize the data-type, to save some memory
+        if len(positions) <= 2**16:
+            self._positions = np.int16(np.array(positions))
+        else:
+            self._positions = np.int32(np.array(positions))
+
+        # number of recombination events to simulate and cache for the model
+        # NOTE: the higher this number, the more accurately geonomics
+        #       will simulate the stipulated recombination rates
+        self._n = n
+        # alpha and beta parameters for the beta distribution from which
+        # recombination rates can be drawn
+        self._r_distr_alpha = r_distr_alpha
+        self._r_distr_beta = r_distr_beta
+        # get the recombination rates
+        if recomb_rates is not None:
+            assert len(recomb_rates) == len(positions), ("Lengths of provided "
+                                                         "recombination "
+                                                         "rates and "
+                                                         "recombination "
+                                                         "positions don't "
+                                                         "match!")
+            assert recomb_rates[0] == 0, ("The first recombination rate (i.e. "
+                                          "index 0) must be 0 (because no "
+                                          "recombination can be modeled as "
+                                          "taking place prior to the first "
+                                          "locus being simulated).")
+            self._rates = recomb_rates
+        else:
+            self._rates = self._draw_recombination_rates()
+
+    def _set_events(self, use_subsetters, nonneutral_loci):
+        # set the potential recombination breakpoints, their recombination
+        # rates, and the cache of simulated recombination events to be used
+        # by the model
+        (self._breakpoints,
+         self._subsetters) = self._draw_recombination_events(
+                use_subsetters=use_subsetters, nonneutral_loci=nonneutral_loci)
+        self._set_seg_info()
+
+    def _get_events(self, size):
+        events = random.sample(self._events, size)
+        return events
+     
+    def _get_subsetter(self, event_key):
+        return self._subsetters[event_key]
+
+
+    # update all the recombination subsetters in accord with a new non-neutral
+    # mutation
+    def _update_subsetters(self, mutation_loc, genotype_arr_mutation_idx):
+        for k in self._subsetters.keys():
+            # determine whether the number of crossovers that has happened up
+            # to the mutation's locus has been even (in which case the
+            # recomb path is 'back' on homologue 0) or odd (in which
+            # case it is on homologue 1)
+            # NOTE: this is because all recomb paths start on homologue 0,
+            #       then are used either for subsetting starting from either
+            #       homol 0 or homol 1 on the fly in mating.py using the 
+            #       variable start_homologues
+            #       in function _do_mating_singl_offspring
+            subsetter_homologue = bisect.bisect_left(self._breakpoints[k],
+                                                     mutation_loc) % 2
+            # use the bitarray_dict to get the 2-digit binary string
+            # corresponding to the homologue that the recomb path is on
+            # when it reaches mutation_loc, to be inserted into the subsetter
+            # in the appropriate location
+            subsetter_insert = self._bitarray_dict[subsetter_homologue]
+            # find the insertion-point index of the current subsetter 
+            # (just twice the non-neutral genotype array's index)
+            subsetter_idx = genotype_arr_mutation_idx * 2
+            # create the new subsetter by concatenating:
+            #  1. the original subsetter, up to but excluding the insertion pt
+            #  2. the insert
+            #  3. the remainder of the original subsetter
+            new_subsetter = (self._subsetters[k][:subsetter_idx] +
+                subsetter_insert + self._subsetters[k][subsetter_idx:])
+            self._subsetters[k] = new_subsetter
+
+
+    # draw recombination rates as needed according to parameter values
+    def _draw_recombination_rates(self):
+        if (self._r_distr_alpha is not None and self._r_distr_beta is not None):
+            recomb_rates = np.clip(np.random.beta(a=self._r_distr_alpha,
+                                                  b=self._r_distr_beta,
+                                                  size=len(self._positions)),
+                                   a_min=0, a_max=0.5)
+        elif self._r_distr_alpha is not None:
+            recomb_rates = np.ones(len(self._positions)) * self._r_distr_alpha
+        else:
+            #NOTE: if no alpha and beta values were provided for the recomb-rate
+            # beta distribution, set all interlocus recomb rates to a value that
+            # results in an average of one recombination per gamete produced
+            homog_recomb_rate = 1 / self._L
+            recomb_rates = np.ones(len(self._positions)) * homog_recomb_rate
+        # set the 0th rate to 0 (because this will ensure that all recombination
+        # paths start on homologue 0, such that when the start homologue of a
+        # certain gamete equals 1 and its genome array is L-R flipped before
+        # subsetting, the effective start homologue of the new, subsetted gamete
+        # will actually be 1)
+        recomb_rates[0] = 0
+        return recomb_rates
+    
+    
+    # simulate recombination events
+    def _draw_recombination_events(self, use_subsetters, nonneutral_loci):
+        """
+        NOTE: Positions and recomb_rates must be provided already sorted!
+        """
+        # create the breakpoints dict
+        recombinations = [r.binomial(1, self._rates) for _ in range(self._n)]
+        breakpoints = [self._positions[np.where(
+                                        recomb)] for recomb in recombinations]
+        # recast it as an int-keyed dict, so that when I use the recombination
+        # events to simulate recombination I don't have to pass around the long
+        # arrays, but instead can just random keys to index them out on the fly
+        breakpoints = dict(zip(range(len(breakpoints)), breakpoints))
+   
+        if use_subsetters:
+            # get the recombination paths used to make the bitarray subsetters
+            if len(nonneutral_loci) > 0:
+                recomb_paths = [np.cumsum(
+                                    recomb) % 2 for recomb in recombinations]
+                # grab just the values at the nonneutral loci
+                # (because the subsetters will be used only for subsetting
+                # the non-neutral genotypes carried with the individuals)
+                paths = [path[nonneutral_loci] for path in recomb_paths]
+                subsetters = [bitarray.bitarray(''.join([self._bitarray_dict[
+                            step] for step in path])) for path in paths]
+                # recast as integer-indexed dict
+            else:
+                subsetters = [bitarray.bitarray() for _ in range(
+                                                        len(recombinations))]
+            subsetters = dict(zip(range(len(subsetters)), subsetters))
+            assert len(breakpoints) == len(subsetters)
+        else:
+            subsetters = None
+        return (breakpoints, subsetters)
+
+    
+    # calculate the left and right segment edges for each recombination event
+    def _set_seg_info(self):
+        seg_info = {}
+        for k, recomb in self._breakpoints.items():
+            # NOTE: adding 0.5 to all recombination breakpoints, to indicate
+            # that reocmbination 'actually' happens halfway between
+            # a pair of loci, (i.e. it actually subsets Individuals'
+            # genomes in that way) without having the hold all the 0.5's
+            # in the Recombinations._events data struct (to save on memory)
+            left = np.array([0] + [*recomb + 0.5])
+            right = np.array([*recomb + 0.5] + [self._L])
+            seg_info[k] = (left, right)
+        self._seg_info = seg_info
+
+
+   # take a recombination event key and a parent's node ids,
+   # return a zip object containing 
+        # 1.) node id for parent's id (corresponding to the id in the
+        # tskit.TableCollection.nodes table);
+        # 2.) left end of the segment (inclusive, according to tskit)
+        # 3.) right end (exclusive)
+    def _get_seg_info(self, start_homologue, event_key,
+                                    node_ids):
+        left, right = self._seg_info[event_key]
+        homologue_nodes = node_ids[[(i + start_homologue) % 2 for i in range(
+                                                                   len(left))]]
+        seg_info = zip(homologue_nodes, left, right)
+        return seg_info
 
 
 class Trait:
@@ -65,6 +243,7 @@ class Trait:
         self.univ_adv = univ_adv
 
         self.loci = np.int64([])
+        self.loc_idx = np.int64([])
         self.alpha = np.array([])
 
     def _get_phi(self, spp):
@@ -75,22 +254,52 @@ class Trait:
         return(phi)
 
     def _set_loci(self, loci):
+        # set the loci
         self.loci = np.hstack((self.loci, np.array([*loci])))
+        self.loci.sort()
+        # set the number of loci
         self.n_loci = self.loci.size
+
+    def _set_loc_idx(self, nonneut_loci):
+        # set an index of the loci's indices in the nonneut_loci object,
+        # to use when subsetting for the trait's genotypes
+        self.loc_idx = np.array([np.where(
+                                nonneut_loci == n)[0][0] for n in self.loci])
+
+    def _add_locus(self, locus, alpha, idx):
+        # get insertion index for the locus 
+        insert_pt = bisect.bisect_left(self.loci, locus)
+        # insert in the loci
+        self.loci = np.hstack((self.loci[:insert_pt],
+                               locus,
+                               self.loci[insert_pt:]))
+
+        # insert the effect size for the locus
+        self.alpha= np.hstack((self.alpha[:insert_pt],
+                               alpha,
+                               self.alpha[insert_pt:]))
+
+        # insert in the loc_idx
+        # NOTE: add 1 to all superseding locus indexes, to account for
+        # locus newly inserted into genotype arrays
+        self.loc_idx = np.hstack((self.loc_idx[:insert_pt],
+                                  idx,
+                                  self.loc_idx[insert_pt:] + 1))
+
+        # increment the number of loci
+        self.n_loci += 1
 
 
 class GenomicArchitecture:
-    def __init__(self, p, dom, r, g_params, land):
+    def __init__(self, dom, g_params, land, recomb_rates=None,
+                 recomb_positions=None):
         # ploidy (NOTE: for now will be 2 by default; later could consider
         # enabling polyploidy)
         self.x = 2
         # total length (i.e. number of markers)
         self.L = g_params.L
-        # length of each chromosome
-        self.l_c = g_params.l_c
-        # Dict of allele frequencies for the 1-alleles for all (numbered by
-        # keys) chromosomes in haploid genome
-        self.p = p
+        # placeholder for the starting allele freqs for all loci
+        self.p = None
         # True/False regarding whether to allow a locus to affect the
         # phenotype of more than one trait; defaults to False
         self.pleiotropy = g_params.pleiotropy
@@ -99,85 +308,82 @@ class GenomicArchitecture:
         # set the _use_dom attribute based on whether any loci have a 1 for
         # their dominance value
         self._use_dom = np.any(self.dom)
+        # whether or not to use sexes for this species
         self.sex = g_params.sex
-        # Dict of recombination rates between each locus and the next,
-        # for all chroms
-        # (NOTE: first will be forced to 1/float(x), to effect independent
-        # segregation of chroms, after which recomb occurs as a
-        # crossing-over path down the chroms
-        self.r = r
-        self._n_recomb_paths_mem = g_params.n_recomb_paths_mem
-        self._n_recomb_paths_tot = g_params.n_recomb_paths_tot
 
-        # The recombination-paths object will be assigned here; used to
-        # speed up large quantities of binomial draws needed for recombination
-        self._recomb_paths = None
-        # Get the allow_ad_hoc_recomb param, to determine whether or not to
-        # allow the model to simulate recombination paths ad hoc (rather than
-        # generate them at the beginning and then shuffle and draw from them
-        # during the model run)
-        # NOTE: this only works for homogeneous recombination across a genome
-        # NOTE: this is significantly slower than pre-
-        # generated recomb paths for combinations of large values of L (genome
-        # size) and large values of N (mean pop size), but it allows combos of
-        # very large values of those params to be run with less memory expense,
-        # and it models exact recombination, rather than approximating it
-        self._allow_ad_hoc_recomb = g_params.allow_ad_hoc_recomb
         # genome-wide neutral mutation rate
         self.mu_neut = g_params.mu_neut
-        # a set to keep track of all loci that don't influence the
+        # array to keep track of all loci that don't influence the
         # phenotypes of any trait; defaults to all loci, then will be updated
-        self.neut_loci = set(range(self.L))
-        # a set to keep track of all loci that influence the phenotype of at
-        # least one trait; after burn-in, will be updated
-        self.nonneut_loci = set()
+        self.neut_loci = np.array(range(self.L))
+        # array to keep track of all loci that influence the phenotype of at
+        # least one trait; after burn-in, will be updated as needed
+        self.nonneut_loci = np.array([])
 
         # genome-wide deleterious mutation rate
         self.mu_delet = g_params.mu_delet
-        self.delet_loci = OD()
         self.delet_alpha_distr_shape = g_params.delet_alpha_distr_shape
         self.delet_alpha_distr_scale = g_params.delet_alpha_distr_scale
+
+
+        # arrays to track deleterious loci, their genotype indices, and their
+        # strengths of selection
+        self.delet_loci = np.int64([])
+        self.delet_loc_idx = np.int64([])
+        self.delet_loci_s = np.array([])
 
         # add a dict of Trait objects, if necessary
         self.traits = None
         if 'traits' in [*g_params]:
             self.traits = _make_traits(g_params.traits, land)
 
-        # a set containing eligible loci for mutation; after burn-in,
-        # will be updated
-        self._mutable_loci = set()
         # set self._mu_tot, the total per-site, per-generation mutation rate
         mus = [mu for mu in (self.mu_neut, self.mu_delet) if mu is not None]
         if self.traits is not None:
             mus = mus + [trt.mu for trt in self.traits.values()]
         self._mu_tot = sum(mus)
+        # save the nonneutral mutation rate
+        self._mu_nonneut = self._mu_tot - self.mu_neut
+
+        # set a placeholder for the species' mutable loci
+        # (to be filled after burn-in)
+        self._mutables = None
+
         # attribute that will be replaced with the estimated total number of
         # mutations per iteration, once it's estimated at the end of the first
         # burn-in
-        self._est_tot_muts_per_it = None
         self._mut_fns = self._make_mut_fns_dict()
         # set ._planned_muts to None, for now (this is not yet implemented,
         # but thinking about it
         self._planned_muts = None
+
+        # The recombination-paths object will be assigned here; used to
+        # speed up large quantities of binomial draws needed for recombination
+        self.recombinations = Recombinations(self.L, recomb_positions,
+                                             g_params.n_recomb_sims,
+                                             g_params.r_distr_alpha,
+                                             g_params.r_distr_beta,
+                                             recomb_rates)
 
     # method to make a _mut_fns dict, containing a function
     # for each type of mutation for this species
     def _make_mut_fns_dict(self):
         mut_fns = {}
         if self.mu_neut > 0:
-            def fn(spp, offspring):
-                mutation._do_neutral_mutation(spp, offspring)
-            mut_fns.update({'neut': fn})
+            def neut_fn(spp, offspring):
+                return(mutation._do_neutral_mutation(spp, offspring))
+            mut_fns.update({'neut': neut_fn})
         if self.mu_delet > 0:
-            def fn(spp, offspring):
-                mutation._do_deleterious_mutation(spp, offspring)
-            mut_fns.update({'delet': fn})
+            def delet_fn(spp, offspring):
+                return(mutation._do_deleterious_mutation(spp, offspring))
+            mut_fns.update({'delet': delet_fn})
         if self.traits is not None:
             for trait_num in self.traits:
                 if self.traits[trait_num].mu > 0:
-                    def fn(spp, offspring, trait_num=trait_num):
-                        mutation._do_trait_mutation(spp, offspring, trait_num)
-                    mut_fns.update({'t%i' % trait_num: fn})
+                    def trait_fn(spp, offspring, trait_num=trait_num):
+                        return(mutation._do_trait_mutation(spp, offspring,
+                                                           [trait_num]))
+                    mut_fns.update({'t%i' % trait_num: trait_fn})
         return mut_fns
 
     # method to draw mutation types for any number of mutations chosen
@@ -186,8 +392,8 @@ class GenomicArchitecture:
         type_dict = {'neut': self.mu_neut,
                      'delet': self.mu_delet}
         if self.traits is not None:
-            [type_dict.update(item) for item in {'t%i' % (
-                            k): v.mu for k, v in self.traits.items()}.items()]
+            trait_dict = {'t%i' % (k): v.mu for k, v in self.traits.items()}
+            type_dict.update(trait_dict)
         types = []
         probs = []
         for k, v in type_dict.items():
@@ -233,7 +439,7 @@ class GenomicArchitecture:
         # if this is not the result of a point mutation, but instead
         # either an initial setup or manually introduced, then grab the
         # number of loci to be assigned
-        if mutational is False:
+        if not mutational:
             n = self.traits[trait_num].n_loci
             assert n <= self.L, ("The number of loci parameterized for "
                                  "trait number %i ('n_loci') is greater "
@@ -249,7 +455,7 @@ class GenomicArchitecture:
                                                     "to be repeated.")
         # else, draw loci randomly, either allowing pleiotropy or not
         elif not self.pleiotropy:
-            loci = set(r.choice([*self.neut_loci], size=n, replace=False))
+            loci = set(r.choice(self.neut_loci, size=n, replace=False))
         elif self.pleiotropy:
             loci = set(r.choice(range(self.L), size=n, replace=False))
         # update the trait's loci
@@ -257,8 +463,9 @@ class GenomicArchitecture:
         # add these loci to self.non-neutral and remove from
         # self.neut_loci, to keep track of all loci underlying any
         # traits (for purpose of avoiding pleiotropy)
-        self.nonneut_loci.update(loci)
-        self.neut_loci.difference_update(loci)
+        self.nonneut_loci = np.array(sorted([*self.nonneut_loci] + [*loci]))
+        self.neut_loci = np.array(sorted([*set(self.neut_loci).difference(
+                                                    set(self.nonneut_loci))]))
         # if the effect size(s) is/are provided, use those
         if alpha is not None:
             if not np.iterable(alpha):
@@ -281,11 +488,46 @@ class GenomicArchitecture:
         self.traits[trait_num].alpha = np.hstack((self.traits[trait_num].alpha,
                                                   effects))
 
-    # method for creating and assigning the r_lookup attribute
-    def _make_recomb_paths(self):
-        self._recomb_paths = _RecombinationPaths(self.L,
-                                                 *_make_recomb_paths_bitarrays(
-                                                                        self))
+    # add a nonneutral locus to the genomic architecture
+    # NOTE: either trait_nums or delet_s must be non-None,
+    # and trait_nums must be iterable (if not None)
+    def _add_nonneut_locus(self, locus, trait_nums=None, delet_s=None):
+        # remove from the neut_loci array
+        self.neut_loci = np.delete(self.neut_loci,
+                                   np.where(self.neut_loci == locus))
+        # add the locus to the nonneut_loci array
+        idx = bisect.bisect_left(self.nonneut_loci, locus)
+        self.nonneut_loci = np.hstack((self.nonneut_loci[:idx],
+                                       locus,
+                                       self.nonneut_loci[idx:]))
+
+        # add the locus to either trait loci, if necessary
+        if trait_nums is not None and delet_s is None:
+            for n in trait_nums:
+                alpha = self._draw_trait_alpha(n)[0]
+                self.traits[n]._add_locus(locus, alpha, idx)
+        # or else add to the deleterious loci
+        elif delet_s is not None and trait_nums is None:
+            del_idx = bisect.bisect_left(self.delet_loci, locus)
+            # add the locus, its genome-index (for subsetting individuals'
+            # genomes when calculating fitness), and its strength of selection
+            # to the deleterious locus trackers
+            self.delet_loci = np.hstack((self.delet_loci[:del_idx],
+                                         locus,
+                                         self.delet_loci[del_idx:]))
+            self.delet_loc_idx = np.hstack((self.delet_loc_idx[:del_idx],
+                                         idx,
+                                         self.delet_loc_idx[del_idx:]))
+            self.delet_loci_s = np.hstack((self.delet_loci_s[:del_idx],
+                                         delet_s,
+                                         self.delet_loci_s[del_idx:]))
+
+        #TODO REMOVE NEXT 2 LINES AFTER TESTING
+        else:
+            assert True == False, "BOTH TRAITS_NUMS AND DELET_S CANT BE NONE!"
+
+        return idx
+
 
     # method for plotting all allele frequencies for the species
     def _plot_allele_frequencies(self, spp):
@@ -314,11 +556,6 @@ class GenomicArchitecture:
 # generate allele_freqs
 def _draw_allele_freqs(l):
     return(r.beta(1, 1, l))
-
-
-# simulate genotypes
-def _draw_genotype(p):
-    return(r.binomial(1, p))
 
 
 def _make_traits(traits_params, land):
@@ -366,208 +603,6 @@ def _make_traits(traits_params, land):
     return(traits)
 
 
-# simulate linkage values
-def _draw_r(g_params, recomb_rate_fn=None):
-
-    # use custom recomb_fn, if provided
-    if recomb_rate_fn is not None:
-        recomb_array = np.array([max(0, min(0.5,
-                                recomb_rate_fn())) for locus in range(
-                                g_params.L)])
-        return(recomb_array)
-
-    # otherwise, use default function with either default or custom param vals
-    else:
-        L = g_params.L
-
-        # if either or both distribution parameters are None, then set all
-        # recomb rates to 0.5
-        if (g_params.r_distr_alpha is None and g_params.r_distr_beta is None):
-            recomb_array = np.array([0.5]*L)
-        # or fix the recomb rates at r_distr_alpha if it has a numeric value
-        # but r_distr_beta is None
-        elif ((g_params.r_distr_alpha is not None)
-              and (g_params.r_distr_beta is None)):
-            recomb_array = np.array([g_params.r_distr_alpha]*L)
-        # or throw an error if r_distr_beta is non-None but alpha is None
-        elif ((g_params.r_distr_alpha is None)
-              and (g_params.r_distr_beta is not None)):
-            raise ValueError(("The genomic architecture's 'r_distr_beta' "
-                              "argument cannot have a numeric value if "
-                              "'r_distr_alpha' is None."))
-        # or if they both have numeric values, then draw the recombination
-        # rates from a beta distribution
-        else:
-            recomb_array = np.clip(r.beta(a=g_params.r_distr_alpha,
-                                   b=g_params.r_distr_beta, size=L),
-                                   a_min=0, a_max=0.5)
-
-        return(recomb_array)
-
-
-def _get_chrom_breakpoints(l_c, L):
-    breakpoints = np.array([0]+list(np.cumsum(sorted(l_c))[:-1]))
-    assert_msg = ("The breakpoints assigned will not produce chromosomes "
-                  "of the correct length.")
-    assert np.alltrue(np.diff(np.array(
-        list(breakpoints) + [L])) == np.array(sorted(l_c))), assert_msg
-    return(breakpoints)
-
-
-# carry out recombination using lookup array in a GenomicArchitecture object
-def _make_recombinants(r_lookup, n_recombinants):
-    recombinants = np.array([r.choice(r_lookup[i, ],
-                            size=n_recombinants,
-                            replace=True) for i in range(len(r_lookup))])
-    recombinants = np.cumsum(recombinants, axis=0) % 2
-    return(recombinants)
-
-
-# method to simulate recombination for a genomic arch with a fixed recomb rate
-def _get_bitarray_subsetters_fixed_r(n, L, fixed_r):
-    # TODO: make this work for n individs at once!
-    indep_assort = r.binomial(n=1, p=0.5, size=n).reshape((n, 1))
-    n_recombs = r.binomial(n=n*(L-1), p=fixed_r)
-    sites = r.choice(a=range(n*(L-1)), size=n_recombs, replace=False)
-    recombs = np.zeros(n*(L-1))
-    recombs[sites] = 1
-    recombs = np.cumsum(recombs.reshape((n,L-1)), axis=1) % 2
-    paths = np.hstack((indep_assort, (recombs + indep_assort) % 2))
-    subsetters = [_make_bitarray_recomb_subsetter(path) for path in paths]
-    #conglom_subsetter = _make_bitarray_recomb_subsetter(paths.flatten())
-    #subsetters = [*np.array(conglom_subsetter).reshape((n, 2 * L))]
-    return subsetters
-
-
-def _make_recomb_array(g_params, recomb_values):
-    # get L (num of loci) and l_c (if provided; num of loci per
-    # chromsome) from the genome params dict
-    L = g_params.L
-    if ('l_c' in g_params.keys() and g_params['l_c'] is None
-            and len(g_params['l_c']) > 1):
-        l_c = g_params.l_c
-        # and if l_c provided, check chrom lenghts sum to total number of loci
-        assert sum(l_c) == L, ("The chromosome lengths provided do not sum to "
-                               "the number of loci provided.")
-    else:
-        l_c = [L]
-
-    # if g_params.recomb_array (i.e a linkage map) manually provided (will
-    # break if not a list, tuple, or np.array), then set that as the
-    # recomb_array, and check that len(recomb_array) == L
-    if recomb_values is not None:
-        assert len(recomb_values) == L, ("The length of the the table is the "
-                                         "custom genomic-architecture file "
-                                         "must be equal to the stipulated "
-                                         "genome length ('L').")
-        recomb_array = recomb_values[:]
-
-    # otherwise, create recomb array
-    else:
-        # if a custom recomb_fn is provided, grab it
-        if 'recomb_rate_custom_fn' in g_params.values():
-            if g_params['recomb_rate_custom_fn'] is not None:
-                recomb_rate_fn = g_params.recomb_rate_custom_fn
-                assert callable(recomb_rate_fn), ("The 'recomb_rate_custom_fn'"
-                                                  " provided in the "
-                                                  "parameters appears not "
-                                                  "to be defined properly as "
-                                                  "a callable function.")
-                # then call the _draw_r() function for each locus,
-                # using custom recomb_fn
-                recomb_array = _draw_r(g_params, recomb_fn=recomb_rate_fn)
-
-        # otherwise, use the default _draw_r function to draw recomb rates
-        else:
-            recomb_array = _draw_r(g_params)
-
-    # if more than one chromosome (i.e. if l_c provided in g_params dict and of
-    # length >1), set recomb rate at the appropriate chrom breakpoints to 0.5
-    if len(l_c) > 1:
-        bps = _get_chrom_breakpoints(l_c, L)
-        recomb_array[bps] = 0.5
-    # NOTE: Always set the first locus r = 0.5, to ensure independent
-    # assortment of homologous chromosomes
-    recomb_array[0] = 0.5
-
-    return(recomb_array, sorted(l_c))
-
-
-# function to create a lookup array, for raster recombination of larger
-# numbers of loci on the fly
-# NOTE: size argument ultimately determines the minimum distance between
-# probabilities (i.e. recombination rates) that can be modeled this way
-def _make_recomb_paths_bitarrays(genomic_architecture,
-                                 lookup_array_size=10000,
-                                 n_recomb_paths_tot=100000):
-    # only make bitarrays if recombination rates are heterogeneous
-    if (len(np.unique(genomic_architecture.r[1:])) > 1
-        or not genomic_architecture._allow_ad_hoc_recomb):
-
-        if genomic_architecture._n_recomb_paths_mem is not None:
-            lookup_array_size = genomic_architecture._n_recomb_paths_mem
-
-        if genomic_architecture._n_recomb_paths_tot is not None:
-            n_recomb_paths_tot = genomic_architecture._n_recomb_paths_tot
-
-        # raise a warning if the smallest recombination rate is smaller
-        # than the precision that can be modeled using the chosen number
-        # of recombination paths to be held in memory (i.e. n_recomb_paths_mem,
-        # in the params file; lookup_array_size in the arguments here)
-        if 1/lookup_array_size > min(genomic_architecture.r):
-            warnings.warn(("The number of recombination paths to be held in "
-                           "memory (i.e. parameter 'n_recomb_paths_mem' in the"
-                           " parameters file) provides for less precision in "
-                           "Geonomics' approximation of recombination rates "
-                           "than the minimum non-zero recombination rate "
-                           "stipulated in your genomic architecture. (The "
-                           "precision of this estimation is determined by "
-                           "1/n_recomb_paths_mem.) Consider either increasing "
-                           "n_recomb_paths_mem or increasing your minimum "
-                           "non-zero recombination rate."))
-
-        lookup_array = np.zeros((len(genomic_architecture.r),
-                                 lookup_array_size), dtype=np.int8)
-
-        for i, rate in enumerate(genomic_architecture.r):
-            # NOTE: taking the max of the count within lookup_array_size that
-            # represents the recombination rate and the integer of testing
-            # rate != 0 ensures that for every nonzero recombination rate
-            # we get at least a single recombination path that recombines
-            # at that locus
-            lookup_array[i, 0:max(int(round(lookup_array_size * rate)),
-                                  int(rate != 0))] = 1
-
-        recomb_paths = _make_recombinants(lookup_array, n_recomb_paths_tot).T
-        bitarrays = tuple([_make_bitarray_recomb_subsetter(
-                                                    p) for p in recomb_paths])
-
-        # and set fixed_r to None
-        fixed_r = None
-
-    # instead, if recombination rates are homoegenous, then just return None
-    # for the bitarrays, and return the fixed recombination rate as fixed_r,
-    # because recombinants will be quickly generated on the fly
-    else:
-        fixed_r = np.unique(genomic_architecture.r)[0]
-        bitarrays = None
-
-    return bitarrays, fixed_r
-
-
-def _make_bitarray_recomb_subsetter(recomb_path):
-    chrom1 = bitarray.bitarray([*recomb_path.ravel()])
-    chrom0 = chrom1[:]
-    chrom0.invert()
-    #chrom0 = bitarray.bitarray([*np.invert(chrom1)])
-    # NOTE: This will create a binary subsetter than can be used to subset a
-    # 2 x L genome that's been flatted into a 1 x 2L vector (hence the
-    # intercalated use of ba and ba_inv)
-    subsetter = bitarray.bitarray([val for item in [*zip(
-                                            chrom0, chrom1)] for val in item])
-    return(subsetter)
-
-
 # build the genomic architecture
 def _make_genomic_architecture(spp_params, land):
     # get the genome parameters
@@ -584,17 +619,6 @@ def _make_genomic_architecture(spp_params, land):
             # on each row's values further down)
             gen_arch_file['trait'] = [str(v) for v in gen_arch_file['trait']]
             gen_arch_file['alpha'] = [str(v) for v in gen_arch_file['alpha']]
-            assert_msg = ('The custom genomic architecture file must contain '
-                          'a table with number of rows equal to the genome '
-                          'length stipulated in the genome parameters '
-                          '(params.comm[<spp_name>].gen_arch.L).')
-
-            assert len(gen_arch_file) == g_params.L, assert_msg
-            assert_msg = ("The 'locus' column of the custom genomic "
-                          "architecture file must contain serial integers "
-                          "from 0 to 1 - the length of the table.")
-            assert np.all(gen_arch_file['locus'].values ==
-                          np.array([*range(len(gen_arch_file))])), assert_msg
             assert (np.all(
                 (gen_arch_file['dom'] == 0) + gen_arch_file['dom'] == 1)), (
                 "The 'dom' column of the custom genomic architecture file "
@@ -615,31 +639,21 @@ def _make_genomic_architecture(spp_params, land):
                                   "subtending that Trait as indicated by the "
                                   "'n_loci' key in its section of the "
                                   "parameters file.")
-
                     assert n_loci_in_file == trt.n_loci, assert_msg
 
-    # also get the sex parameter and add it as an item in g_params
+    # get the sex parameter and add it as an item in g_params
     g_params['sex'] = spp_params.mating.sex
 
-    # draw locus-wise 1-allele frequencies, unless provided in
-    # custom gen-arch file
-    if gen_arch_file is None:
-        if g_params.start_p_fixed:
-            p = np.array([0.5]*g_params.L)
-        else:
-            p = _draw_allele_freqs(g_params.L)
-    else:
-        p = gen_arch_file['p'].values
-
-    # get the custom recomb_values, if provided in a custom gen-arch file
-    recomb_values = None
+    # get the custom recomb_rates and recomb_positions from the
+    # custom gen-arch file, if provided
+    # NOTE: add 0.5 to each locus' position, because each recombination rate
+    #       stipulated in gen_arch file is construed as the recombination rate
+    #       at the midway point between that locus and the subsequent one
+    recomb_rates = None
+    recomb_positions = None
     if gen_arch_file is not None:
-        recomb_values = gen_arch_file['r'].values
-        assert recomb_values[0] == 0.5, ("The top recombination rate value "
-                                         "in the custom genomic-architecture "
-                                         "file's 'r' column must be set "
-                                         "to 0.5, to effect independent "
-                                         "assortment of sister chromatids.")
+        recomb_rates = gen_arch_file['r'].values[:-1]
+        recomb_positions = gen_arch_file['locus'].values[:-1] + 0.5
 
     # set locus-wise dominance values for the 1-alleles, using the 'dom' value
     # in the gen_arch params, unless a gen_arch_file was provided
@@ -651,14 +665,9 @@ def _make_genomic_architecture(spp_params, land):
         # get the 'dom' column from the gen_arch_file
         dom = gen_arch_file['dom'].values
 
-    r, l_c = _make_recomb_array(g_params, recomb_values=recomb_values)
-    # in case g_params.l_c was missing or None, because only a single
-    # chromosome is being simulated, then replace g_params.l_c with
-    # the returned l_c value
-    g_params.l_c = l_c
-
     # now make the gen_arch object
-    gen_arch = GenomicArchitecture(p, dom, r, g_params, land)
+    gen_arch = GenomicArchitecture(dom, g_params, land,
+                                   recomb_rates, recomb_positions)
 
     # set the loci and effect sizes for each trait, using the custom gen-arch
     # file, if provided
@@ -686,7 +695,8 @@ def _make_genomic_architecture(spp_params, land):
             alphas[trt_num] = np.concatenate([np.array(row['alpha'])[
                 [n == trt_num for n in row[
                     'trait']]] for i, row in gen_arch_file.iterrows()])
-        # check that we got the same length of loci and effects for each trait
+        # check that we got the same length of loci and effect sizes for
+        # a trait, for all traits
         for trt_num in loci.keys():
             assert_msg = ("Expected to receive the same number of loci and "
                           "alphas (i.e. effect sizes) for trait number %i, "
@@ -708,105 +718,127 @@ def _make_genomic_architecture(spp_params, land):
             for trait_num in gen_arch.traits.keys():
                 gen_arch._set_trait_loci(trait_num, mutational=False)
 
+    # now that all nonneutral loci have been selected, 
+    # set each trait's loc_idx (which maps a trait's numeric loci to
+    # their index positions in individuals' genomes)
+    if gen_arch.traits is not None:
+        for trt in gen_arch.traits.values():
+            trt._set_loc_idx(gen_arch.nonneut_loci)
+
     assert_msg = ("The union of the gen_arch.neut_loci and "
                   "gen_arch.nonneut_loci sets does not contain all loci "
                   "indicated by gen_arch.L")
     assert len(set(range(gen_arch.L)).difference(
-        gen_arch.neut_loci.union(gen_arch.nonneut_loci))) == 0, assert_msg
+        set(gen_arch.neut_loci).union(
+        set(gen_arch.nonneut_loci)))) == 0, assert_msg
 
-    # create the r_lookup attribute
-    gen_arch._make_recomb_paths()
+    # draw locus-wise 1-allele frequencies, unless provided in
+    # custom gen-arch file
+    if gen_arch_file is None:
+        if g_params.start_p_fixed is not None:
+            assert 0 <= g_params.start_p_fixed <= 1, ("If a starting allele "
+                                                      "frequency value is "
+                                                      "provided then it must "
+                                                      "be between 0 and 1.")
+            gen_arch.p = np.array([g_params.start_p_fixed]*g_params.L)
+            if g_params.start_neut_zero:
+                gen_arch.p[gen_arch.neut_loci] = 0
+        else:
+            gen_arch.p = _draw_allele_freqs(g_params.L)
+    else:
+        gen_arch.p = gen_arch_file['p'].values
+
+    # set the recombination events
+    use_subsetters = (len(gen_arch.nonneut_loci) > 0 or
+                      gen_arch._mu_nonneut > 0)
+    gen_arch.recombinations._set_events(use_subsetters, gen_arch.nonneut_loci)
 
     return gen_arch
 
 
-# make genome
-def _draw_genome(genomic_architecture):
-    # NOTE: if for some reason any loci are not properly set to either 0 or 1,
-    # they will stick out as 9s
-    new_genome = np.ones([genomic_architecture.L, genomic_architecture.x],
-                         dtype=np.int8) * 9
-    for homologue in range(genomic_architecture.x):
-        new_genome[:, homologue] = _draw_genotype(genomic_architecture.p)
+# reset genomes after burn-in
+def _check_mutation_rates(gen_arch, est_tot_muts, burn_T, T):
+    # if there do not appear to be enough space in the simulated genome for
+    # the expected number of mutations then warn the user of that
+    if est_tot_muts > 0.75 * len(
+        [loc for loc in range(
+                    gen_arch.L) if loc not in gen_arch.nonneut_loci]):
+        raise MutationRateError(("This species has been "
+                                 "parameterized with too few neutral "
+                                 "loci to accommodate the expected "
+                                 "number of mutations. (Geonomics only "
+                                 "uses an infinite sites model.) "
+                                 "Please tweak some combination of "
+                                 "the genome length, model run time, "
+                                 "or mutation rates."))
 
-    assert type(new_genome) == np.ndarray, ("A new genome must be an instance "
-                                            "of numpy.ndarray")
-    assert np.shape(new_genome) == (genomic_architecture.L,
-                                    genomic_architecture.x), ("A new genome "
-                                                              "must wind up "
-                                                              "with shape = "
-                                                              "(L, ploidy).")
-
-    return(new_genome)
-
-
-# check whether a GenomicArchitecture has enough mutable loci to provide
-# for all the mutations expected during a Model run (i.e. iteration)
-def _check_enough_mutable_loci(spp, burn_T, T):
-    # grab the estimated total number of muts per iteration, if it's already
-    # been estimated
-    if spp.gen_arch._est_tot_muts_per_it is not None:
-        n_muts = spp.gen_arch._est_tot_muts_per_it
-    # otherwise estimate it, then store it at spp.gen_arch._est_tot_muts_per_it
-    else:
-        n_muts = mutation._calc_estimated_total_mutations(spp, burn_T, T)
-        spp.gen_arch._est_tot_muts_per_it = n_muts
-    neut_loci_remaining = spp.gen_arch.L - len(spp.gen_arch.nonneut_loci)
-    # throw error if n_muts is greater than the number of
-    # available mutable loci
-    if n_muts > neut_loci_remaining:
-        raise ValueError(("Before a Model is run, Geonomics sets aside a set "
-                          "of loci where mutations can occur (known as "
-                          "'mutable loci'). The mutation rates in this "
-                          "parameterization imply that at least %i mutable "
-                          "loci will be needed to provide space for all "
-                          "mutations expected over the course of the each "
-                          "Model iteration, but only %i non-neutral loci are "
-                          "available. Either the mutation rates must be "
-                          "reduced, the runtime of each iteration must be "
-                          "reduced, the genome length must be increased, or "
-                          "some combination thereof.") % (n_muts,
-                                                          neut_loci_remaining))
-
-
-# function to reset genomes after burn-in
-def _set_genomes(spp, burn_T, T):
-    # use mean n_births at tail end of burn-in to estimate number of mutations,
-    # and randomly choose set of neutral loci
-    # of that length to go into the spp.gen_arch._mutable_loci attribute
-    n_muts = mutation._calc_estimated_total_mutations(spp, burn_T, T)
-    # add a small number if n_muts evaluates to 0
-    neut_loci_remaining = spp.gen_arch.L - len(spp.gen_arch.nonneut_loci)
-    if n_muts == 0:
-        n_muts = min(int(np.ceil(0.1 * neut_loci_remaining)),
-                     neut_loci_remaining)
-    n_muts = min(n_muts, neut_loci_remaining)
 
     # skip this step and force the neutral mutation rate to 0, if there are no
     # neutral loci in the genome as it was configured
-    if len(spp.gen_arch.neut_loci) == 0:
-        warnings.warn(('This species has been parameterized without any'
-               ' neutral loci, leaving no place for mutations (neutral or not)'
-               ' to land. Thus all mutation rates will be forced to 0.'))
-        spp.gen_arch.mu_neut = 0
-        spp.gen_arch.mu_delet = 0
-        for trt in spp.gen_arch.traits.values():
+    if len(gen_arch.neut_loci) == 0:
+        raise MutationRateError(("This species has been parameterized "
+                                 "with non-zero mutation rates but "
+                                 "without any neutral loci, leaving no target "
+                                 "for mutations. Please tweak the genome "
+                                 "length and/or mutation rates."))
+        gen_arch.mu_neut = 0
+        gen_arch.mu_delet = 0
+        for trt in gen_arch.traits.values():
             trt.mu = 0
     # or just outright skip this step if the parameterization included only
     # mutation rates of 0
-    elif spp.gen_arch._mu_tot == 0:
+    elif gen_arch._mu_tot == 0:
         pass
-    # otherwise choose and update mutable loci
+    # otherwise, set the mutable loci
     else:
-        muts = set(r.choice([*spp.gen_arch.neut_loci], n_muts, replace=False))
-        spp.gen_arch._mutable_loci.update(muts)
-        # set those loci's p values to 0 (i.e. non-segregating)
-        spp.gen_arch.p[np.array([*muts])] = 0
-    # now reassign genotypes to all individuals, using gen_arch.p
-    [ind._set_g(_draw_genome(spp.gen_arch)) for ind in spp.values()]
-    # and then reset the individuals' phenotypes
+        mutables = [*set(range(gen_arch.L)).difference(
+                                            set(gen_arch.nonneut_loci))]
+        r.shuffle(mutables)
+        gen_arch._mutables = [*mutables]
+    return
+
+
+# function to generate mutations, after burn-in,
+# and to assign them to a species' TableCollection's  current nodes,
+# to produce the starting 1-allele frequencies parameterized for the species
+def _make_starting_mutations(spp, tables):
+    # get the starting frequencies for each site
+    start_freqs = spp.gen_arch.p
+
+    # get a set of all homologues, as tuples of (individual id, homologue idx)
+    homologues = [*zip(np.repeat([*spp], 2),
+                         [*range(spp.gen_arch.x)] * len(spp))]
+
+    # make mutations for each site
+    for site, freq in enumerate(start_freqs):
+        # generate the number of mutations for this locus
+        n_mutations = int(round(2 * len(spp) * freq, 0))
+        # make sure we don't mutate either all or none of the population's
+        # homologues, unless called for
+        if n_mutations == len(spp) * 2 and freq < 1:
+            n_mutations -= 1
+        if n_mutations == 0 and freq > 0:
+            n_mutations = 1
+        #randomly choose and mutate n_mutations homologues from the population 
+        np.random.shuffle(homologues)
+        homologues_to_mutate = homologues[:n_mutations]
+        for ind, homol in homologues_to_mutate:
+            # create a mutation in the individual's genome, if this is a
+            # non-neutral locus
+            if site in spp.gen_arch.nonneut_loci:
+                spp[ind].g[np.where(spp.gen_arch.nonneut_loci == site),
+                           homol] = 1
+            # get the homologue's nodes-table id,
+            # then add a row to the mutations table
+            node_id = spp[ind]._nodes_tab_ids[homol]
+            tables.mutations.add_row(site, node=node_id, parent=-1,
+                                     derived_state='1')
+
+    # and then reset the individuals' phenotypes, if needed
     if spp.gen_arch.traits is not None:
         [ind._set_z(spp.gen_arch) for ind in spp.values()]
+
+    return
 
 
 # method for loading a pickled genomic architecture
@@ -815,3 +847,185 @@ def read_pickled_genomic_architecture(filename):
     with open(filename, 'rb') as f:
         gen_arch = cPickle.load(f)
     return gen_arch
+
+
+##########################################################################
+# FUNCTIONS FOR WORKING WITH THE SPATIAL PEDGREE SAVED IN tskit STRUCTURES
+##########################################################################
+
+# for a sample of nodes and a sample of loci, get the
+# loci-sequentially ordered dict of lineage dicts
+# (containing each node in a child node's lineage as the
+# key and its birth-time and birth-location as a length-2 list of values
+def _get_lineage_dicts(spp, nodes, loci, t_curr, drop_before_sim=True,
+                       time_before_present=True, max_time_ago=None,
+                       min_time_ago=None):
+    # make sure the TableCollection is sorted, then get the TreeSequence
+    try:
+        ts = spp._tc.tree_sequence()
+    except Exception:
+        raise Exception(("The species' TableCollection must be sorted and "
+                         "simplified before this method is called."))
+    # get the tree numbers corresponding to each locus
+    treenums = _get_treenums(ts, loci)
+    # get the trees
+    trees = ts.aslist()
+    # create the output data structure
+    lineage_dicts = {}
+    # get the lineage_dict for each locus
+    for loc, treenum in zip(loci, treenums):
+        # store the lineage dicts for the current locus
+        lineage_dicts_curr_loc = _get_lineage_dicts_one_tree(spp._tc,
+                                    trees[treenum], nodes, t_curr,
+                                    drop_before_sim=drop_before_sim,
+                                    time_before_present=time_before_present,
+                                    max_time_ago=max_time_ago,
+                                    min_time_ago=min_time_ago)
+        lineage_dicts[loc] = lineage_dicts_curr_loc
+    return lineage_dicts
+
+
+# for a sample of nodes, and for a given tree,
+# get dicts of each node's lineage nodes with their birth locs and birth times
+def _get_lineage_dicts_one_tree(tc, tree, nodes, t_curr, drop_before_sim=True,
+                                time_before_present=True, max_time_ago=None,
+                                min_time_ago=None):
+    #create an output master dict
+    lineage_dicts = {}
+    # get each sample node's lineage dict
+    for node in nodes:
+        lineage = _get_lineage(tree, [node])
+        lineage_dict =dict(zip(lineage, _get_lineage_times_and_locs(
+                                    tc, lineage, t_curr,
+                                    drop_before_sim=drop_before_sim,
+                                    time_before_present=time_before_present)))
+
+         # filter for time, if requested
+        if max_time_ago is not None or min_time_ago is not None:
+            # if only one time limit was set, set the other correctly, based on
+            # whether or not time is expressed as time before present
+            if max_time_ago is None:
+                max_time_ago = np.inf
+            if min_time_ago is None:
+                min_time_ago = -np.inf
+            # filter by time
+            lineage_dict = {node: val for node, val in lineage_dict.items() if (
+                            min_time_ago <= val[0] <= max_time_ago)}
+
+        lineage_dicts[node] = lineage_dict
+
+    return lineage_dicts
+
+
+# get birth-locations and times of nodes along a pedigree
+def _get_lineage_times_and_locs(tc, lineage, t_curr, drop_before_sim=True,
+                                time_before_present=True):
+    locs = []
+    times = []
+    for node in lineage:
+        time = tc.nodes[node].time
+        # NOTE: optionally drop all nodes from before the simulation
+        # (i.e. nodes which were added to TableCollection by
+        # backward-time simulation with ms); THIS IS THE DEFAULT
+        # (or include all, if drop_before_sim is False)
+        if (drop_before_sim and time < 0) or not drop_before_sim:
+            times.append(time)
+            individ = tc.nodes[node].individual
+            loc = tc.individuals[individ].location
+            locs.append(loc)
+    # express times as time before present, if requested
+    if time_before_present:
+        # NOTE: need to make t_curr negative, to reflect the fact that time is
+        # stored as positive integeres in Geonomics data structures but as
+        # negative integers in tskit TableCollection (because they require time
+        # expressed as time before present, so using positive integers would
+        # not allow models to be run indefinitely, for exploratory/fun purposes
+        times = [t - -t_curr for t in times]
+    return(zip(times, locs))
+
+
+# recursive algorithm for getting all parents of a node
+def _get_lineage(tree, nodes):
+    parent = tree.parent(nodes[-1])
+    if parent == tskit.NULL:
+        return(nodes)
+    else:
+        nodes.append(parent)
+        return(_get_lineage(tree, nodes))
+
+
+# get a dict of the interval (i.e. tree) number
+# keyed to each locus in a list of loci
+def _get_treenums(ts, loci, as_dict=False):
+    interval_right_ends = [t.get_interval()[1] for t in ts.trees()]
+    treenums = [bisect.bisect_left(interval_right_ends, loc) for loc in loci]
+    if as_dict:
+        treenums = {loc: treenum for loc, treenum in zip(loci, treenums)}
+    return(treenums)
+
+
+# calculate a stat for the lineage corresponding to the provided lineage_dict
+def _calc_lineage_stat(lin_dict, stat):
+    assert stat in ['dir', 'dist', 'time', 'speed'], ("The only valid "
+                                                       "statistics are: "
+                                                       "direction ('dir'), "
+                                                       "distance ('dist'), "
+                                                       "time ('time'), "
+                                                       "and speed ('speed').")
+    fn_dict = {'dir': _calc_lineage_direction,
+               'dist': _calc_lineage_distance,
+               'time': _calc_lineage_time,
+               'speed': _calc_lineage_speed
+              }
+    val = fn_dict[stat](lin_dict)
+    return val
+
+
+# calculate the angular direction of gene flow along a locus' lineage
+def _calc_lineage_direction(lin_dict):
+    # get x and y distances between beginning and ending points
+    # (begins at the bottom of the lineage dict, furthest back in time)
+    beg_loc = [*lin_dict.values()][-1][1]
+    # (ends at the top of the lineage dict, in the current time step)
+    end_loc = [*lin_dict.values()][0][1]
+    x_diff, y_diff = [end_loc[i] - beg_loc[i] for i in range(2)]
+    # get the counterclockwise angle, expressed in degrees
+    # from the vector (X,Y) = (1,0),
+    # with 0 to 180 in quadrants 1 & 2, 0 to -180 in quadrants 3 & 4
+    ang = np.rad2deg(np.arctan2(y_diff, x_diff))
+    # convert to all positive values, 0 - 360
+    if ang < 0:
+        ang += 360
+    #convert to all positive clockwise angles, expressed as 0 at compass north
+    # (i.e. angles clockwise from vector (X,Y) = (0,1)
+    ang = (-ang + 90) % 360
+    return ang
+
+
+# calculate the geographic distance (in cell widths)
+# of gene flow along a locus' lineage
+def _calc_lineage_distance(lin_dict):
+    # get x and y distances between beginning and ending points
+    beg_loc = [*lin_dict.values()][0][1]
+    end_loc = [*lin_dict.values()][-1][1]
+    x_diff, y_diff = [end_loc[i] - beg_loc[i] for i in range(2)]
+    #Pythagoras
+    dist = np.sqrt(x_diff**2 + y_diff**2)
+    return dist
+
+
+# calculate the total time to the simulation's MRCA of a locus' lineage
+def _calc_lineage_time(lin_dict):
+    beg_time = [*lin_dict.values()][0][0]
+    end_time = [*lin_dict.values()][-1][0]
+    time = end_time - beg_time
+    return time
+
+
+# calculate the speed of gene flow in a lineage (in cell widths/time steps)
+def _calc_lineage_speed(lin_dict):
+    dist = _calc_lineage_distance(lin_dict)
+    time = _calc_lineage_time(lin_dict)
+    speed = dist/time
+    return speed
+

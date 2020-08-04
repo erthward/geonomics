@@ -315,10 +315,11 @@ class _DataCollector:
                             'fasta'
                             'vcf'
         '''
+        genotypes = spp._get_genotypes(individs=sample, as_dict=True)
         if data_format == 'fasta':
-            formatted_data = _format_fasta(sample)
+            formatted_data = _format_fasta(sample, genotypes)
         elif data_format == 'vcf':
-            formatted_data = _format_vcf(sample, spp.gen_arch,
+            formatted_data = _format_vcf(sample, genotypes, spp.gen_arch,
                     include_fixed_sites = self.include_fixed_sites)
         return(formatted_data)
 
@@ -353,7 +354,7 @@ def _make_point_buffers(points, radius):
     return(cu)
 
 
-def _format_fasta(sample):
+def _format_fasta(sample, genotypes):
     '''
     FASTA FORMAT:
 
@@ -365,7 +366,7 @@ def _format_fasta(sample):
     row1 = '>%s:HAP;%s;%s;%s;%s;%s;%s\n'
     file_text = ''
 
-    for individ in sample.values():
+    for individ, genotype in zip(sample.values(), genotypes.values()):
         for hap in range(2):
             individ_row1 = re.sub('HAP', str(hap), row1)
             replace = tuple(map(lambda att: re.sub(',', '|', re.sub('[\[\] ]',
@@ -373,14 +374,14 @@ def _format_fasta(sample):
                                             'sex', 'z', 'e']))
             individ_row1 = individ_row1 % replace
             individ_row2 = ''.join([str(
-                            base) for base in individ.g[:,hap]]) + '\n'
+                            base) for base in genotype[:,hap]]) + '\n'
 
             file_text = file_text + individ_row1 + individ_row2
 
     return(file_text)
 
 
-def _format_vcf(sample, gen_arch, include_fixed_sites=False):
+def _format_vcf(sample, genotypes, gen_arch, include_fixed_sites=False):
 
     #create a template header
         #NOTE: has 1 string slot for a date
@@ -415,10 +416,10 @@ def _format_vcf(sample, gen_arch, include_fixed_sites=False):
     cols = col_header_row % (ind_cols)
 
     #get a list of the chromosome numbers
-    chroms = np.cumsum(gen_arch.l_c)
+    #chroms = np.cumsum(gen_arch.l_c)
 
     #and get all individuals' genomic data in a 'samplome' object (a 3-d array)
-    samplome = np.array([sample[i].g for i in inds])
+    samplome = np.array([genotypes[i] for i in inds])
 
     #get all segregating sites
     max_val = 2 * len(sample)
@@ -434,19 +435,19 @@ def _format_vcf(sample, gen_arch, include_fixed_sites=False):
         loci = range(gen_arch.L)
 
     #and get the sites' chrom nums
-    chroms = [list((locus - chroms) < 0).index(True) for locus in loci]
+    #chroms = [list((locus - chroms) < 0).index(True) for locus in loci]
 
     #build all the VCF data rows
     rows = ''
     for n, locus in enumerate(loci):
-        genotypes = samplome[:,locus,:]
-        genotypes = '\t'.join(['%i|%i' % (genotypes[i,0],
-                genotypes[i,1]) for i in range(np.shape(genotypes)[0])])
+        gts = samplome[:,locus,:]
+        gts = '\t'.join(['%i|%i' % (gts[i,0],
+                gts[i,1]) for i in range(np.shape(gts)[0])])
         #get an indicator for whether the site is segregating or fixed
         seg = locus in segs
         seg_dict = {True: 'SEG', False: 'FIX'}
 
-        rows = rows + data_row % (chroms[n], locus, seg_dict[seg], genotypes)
+        rows = rows + data_row % (0, locus, seg_dict[seg], gts)
 
     #get the date
     now = datetime.datetime.now()
@@ -459,4 +460,3 @@ def _format_vcf(sample, gen_arch, include_fixed_sites=False):
 
     #return it
     return(out_vcf)
-

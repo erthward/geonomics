@@ -15,6 +15,8 @@ setuptools.setup(
     long_description=readme(),
     long_description_content_type='text/x-rst',
     url='https://github.com/drewhart/geonomics',
+    # include the download URL, from the latest release on Github
+    download_url='https://github.com/drewhart/geonomics/archive/0.0.24.tar.gz',
     include_package_data=True,
     # packages=setuptools.find_packages(),
     packages=['geonomics',
@@ -46,7 +48,7 @@ setuptools.setup(
                       'scipy>=1.3.1', 'scikit-learn', 'statsmodels>=0.9.0',
                       'shapely', 'bitarray', 'pyvcf', 'rasterio',
                       'msprime>=0.7.4', 'tskit>=0.2.3'],
-    extras_requie={'simulation on neutral landscape models': ['nlmpy'],
+    extras_require={'simulation on neutral landscape models': ['nlmpy'],
                    '3d plots for Yosemite demo': ['pykrige']},
     python_requires='>=3.6',
     # package_data={

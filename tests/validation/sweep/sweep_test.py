@@ -15,8 +15,8 @@ import statsmodels.api as sm
 lowess = sm.nonparametric.lowess
 
 # set some plotting params
-img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
-           'img/final/')
+img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper_images/'
+           'final/')
 ax_fontdict = {'fontsize': 12,
                'name': 'Bitstream Vera Sans'}
 ttl_fontdict = {'fontsize': 14,
@@ -26,7 +26,7 @@ color_dict = dict(zip(np.linspace(0,1,3), plt.cm.coolwarm(np.linspace(0,1,3))))
 def calc_pi(mod, nonneut_loc, window_width=6):
     print("\nCalculating nucleotide diversity (WILL TAKE A WHILE)...\n")
     # make speciome
-    speciome = np.stack([i.g for i in mod.comm[0].values()])
+    speciome = mod.comm[0]._get_genotypes()
     # create data structure to store pi value for each genomic window
     pi_vals = []
     # for each locus
@@ -71,7 +71,7 @@ def calc_mean_fit(mod):
 
 def calc_nonneut_loc_freq(mod):
     nonneut_loc_freq = np.mean(np.vstack(
-                [i.g[nonneut_loc, :] for i in mod.comm[0].values()]))
+                [i.g[nonneut_loc_idx, :] for i in mod.comm[0].values()]))
     return nonneut_loc_freq
 
 
@@ -104,6 +104,9 @@ mod = gnx.make_model('./tests/validation/sweep/sweep_params.py')
 
 #get the non-neutral locus
 nonneut_loc = mod.comm[0].gen_arch.traits[0].loci[0]
+# NOTE: changing this to 0 because only the single non-neutral locus
+# will be in each individ's genome array, so idx will be 0
+nonneut_loc_idx = 0
 
 # burn the model in
 mod.walk(20000, 'burn', True)
@@ -118,7 +121,8 @@ ax4 = fig.add_subplot(224)
 # calculate LD at outset
 print('\ncalculating linkage...\n')
 ld.append(gnx.sim.stats._calc_ld(mod.comm[0]))
-r2s, dists = gen_data_linkage_dist_plot(ld[0], mod.comm[0].gen_arch.r)
+r2s, dists = gen_data_linkage_dist_plot(ld[0],
+                                        mod.comm[0].gen_arch.recombinations._rates)
 ax3.plot(dists, r2s, '.r')
 ax3.set_xlabel("recombination distance (sum of interlocus recomb. rates)",
               fontdict=ax_fontdict)
@@ -143,7 +147,7 @@ while not sweeping_allele_established:
     print('\n=================\nINTRODUCING MUTATION\n')
     individ = np.random.choice([*mod.comm[0]])
     chromatid = np.random.binomial(1, 0.5, 1)
-    mod.comm[0][individ].g[nonneut_loc, chromatid] = 1
+    mod.comm[0][individ].g[nonneut_loc_idx, chromatid] = 1
 
     pi_at_intro.append(calc_pi(mod, nonneut_loc))
 
@@ -176,7 +180,7 @@ for _ in range(10):
 
 # walk until mutant fixed
 nonneut_loc_freq = np.mean(np.vstack(
-                        [i.g[nonneut_loc, :] for i in mod.comm[0].values()]))
+                        [i.g[nonneut_loc_idx, :] for i in mod.comm[0].values()]))
 fixed = nonneut_loc_freq == 1
 while not fixed:
     mod.walk(10, verbose=True)
@@ -185,14 +189,15 @@ while not fixed:
     mean_fit.append(calc_mean_fit(mod))
     # check if fixed
     nonneut_loc_freq = np.mean(np.vstack(
-                        [i.g[nonneut_loc, :] for i in mod.comm[0].values()]))
+                        [i.g[nonneut_loc_idx, :] for i in mod.comm[0].values()]))
     fixed = nonneut_loc_freq == 1
 
 # calculate and store ending nucleotide diversity
 pi.append(calc_pi(mod, nonneut_loc))
 print('\ncalculating linkage...\n')
 ld.append(gnx.sim.stats._calc_ld(mod.comm[0]))
-r2s, dists = gen_data_linkage_dist_plot(ld[1], mod.comm[0].gen_arch.r)
+r2s, dists = gen_data_linkage_dist_plot(ld[1],
+                                        mod.comm[0].gen_arch.recombinations._rates)
 ax4.plot(dists, r2s, '.r')
 ax4.set_xlabel("recombination distance (sum of interlocus recomb. rates)",
                fontdict=ax_fontdict)

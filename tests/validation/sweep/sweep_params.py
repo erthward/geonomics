@@ -215,6 +215,8 @@ params = {
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    #num of crossing-over events (i.e. recombs) to simulate
+                    'n_recomb_sims':            10_000,
                     'allow_ad_hoc_recomb':      True,
                     #whether to save mutation logs
                     'mut_log':                  False,

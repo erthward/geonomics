@@ -395,7 +395,8 @@ class Species(OD):
 
                 offspring_x, offspring_y = _do_dispersal(
                     self, parent_midpoint_x, parent_midpoint_y,
-                    self.dispersal_distr_mu, self.dispersal_distr_sigma)
+                    self.dispersal_distance_distr_param1,
+                    self.dispersal_distance_distr_param2)
 
                 #set the age to 0
                 age = 0

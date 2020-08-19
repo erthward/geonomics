@@ -1269,12 +1269,12 @@ to change these parameters.
 
 
 
-**distance_distr_mu**
+**movement_distance_distr_param1**
 
 .. code-block:: python
 
-                     #mean of distr of movement distance
-                     'distance_distr_mu':      0.5,
+                     #1st param of distr of movement distance
+                     'movement_distance_distr_param1':      0.5,
 
 {:py:`int`, :py:`float`}
 
@@ -1282,47 +1282,70 @@ default: 0.5
 
 reset? Y
 
-This is the :math:`\mu` parameter of the Wald distribution used to draw
-movement distances, expressed in units of raster cell widths
-(or the wider of the two dimensions of a cell, in the case of a
-non-square-resolution raster). 
-This parameter and **distance_distr_sigma**
-(the Wald distribution's :math:`sigma`) should be
-set to reflect a distribution of movement distances that is appropriate
-for your scenario.
-
-
-
-**distance_distr_sigma**
-
-.. code-block:: python
-
-                     #variance of distr of movement distance
-                     'distance_distr_sigma':   0.5,
-
-{:py:`int`, :py:`float`}
-
-default: 0.5 
-
-reset? Y
-
-This is the :math:`\sigma` parameter of the Wald distribution used to draw
+This is the first parameter of the distribution used to draw
 movement distances, expressed in units of raster-cell widths
 (or the wider of the two dimensions of a cell, in the case of a
 non-square-resolution raster). 
-This parameter and **distance_distr_mu**
-(the Wald distribution's :math:`mu`) should be
+This paramter and **movement_distance_distr_param2** should be
 set to reflect a distribution of movement distances that is appropriate
 for your scenario.
+The distribution to which this parameter applies depends on the value
+of the **movement_distance_distr** parameter.
 
 
 
-**dispersal_distr_mu**
+
+**movement_distance_distr_param2**
 
 .. code-block:: python
 
-                     #mean of distr of dispersal distance
-                     'dispersal_distr_mu':     0.5,
+                     #2nd param of distr of movement distance
+                     'movement_distance_distr_param2':   5e-8,
+
+{:py:`int`, :py:`float`}
+
+default: 5e-8 
+
+reset? Y
+
+This is the second parameter of the distribution used to draw
+movement distances, expressed in units of raster-cell widths
+(or the wider of the two dimensions of a cell, in the case of a
+non-square-resolution raster). 
+This paramter and **movement_distance_distr_param1** should be
+set to reflect a distribution of movement distances that is appropriate
+for your scenario.
+The distribution to which this parameter applies depends on the value
+of the **movement_distance_distr** parameter.
+
+
+
+
+**movement_distance_distr**
+
+.. code-block:: python
+
+                     #movement distance distr to use ('levy' or 'wald')
+                     'movement_distance_distr':    'levy',
+
+:py:`str`
+
+default: 'levy'
+
+reset? Y
+
+This determines whether movement is modeled using a Lévy distribution
+('levy') or a Wald distribution ('wald').
+
+
+
+
+**dispersal_distance_distr_param1**
+
+.. code-block:: python
+
+                     #1st param of distr of dispersal distance
+                     'dispersal_distance_distr_param1':     0.5,
 
 {:py:`int`, :py:`float`}
 
@@ -1330,23 +1353,24 @@ default: 0.5
 
 reset? Y
 
-This is the :math:`\mu` parameter of the Wald distribution used to draw
+This is the first parameter of the distribution used to draw
 dispersal distances, expressed in units of raster-cell widths
 (or the wider of the two dimensions of a cell, in the case of a
 non-square-resolution raster). 
-This paramter and **distance_distr_sigma**
-(the Wald distribution's :math:`sigma`) should be
+This paramter and **dispersal_distance_distr_param2** should be
 set to reflect a distribution of dispersal distances that is appropriate
 for your scenario.
+The distribution to which this parameter applies depends on the value
+of the **dispersal_distance_distr** parameter.
 
 
 
-**dispersal_distr_sigma**
+**dispersal_distance_distr_param2**
 
 .. code-block:: python
 
-                     #variance of distr of dispersal distance
-                     'dispersal_distr_sigma':  0.5,
+                     #2nd param of distr of dispersal distance
+                     'dispersal_distance_distr_param2':  0.5,
                  
 {:py:`int`, :py:`float`}
 
@@ -1354,14 +1378,37 @@ default: 0.5
 
 reset? Y
 
-This is the :math:`\sigma` parameter of the Wald distribution used to draw
+This is the second parameter of the distribution used to draw
 dispersal distances, expressed in units of raster-cell widths
 (or the wider of the two dimensions of a cell, in the case of a
 non-square-resolution raster). 
-This paramter and **distance_distr_mu**
-(the Wald distribution's :math:`mu`) should be
+This paramter and **dispersal_distance_distr_param1** should be
 set to reflect a distribution of dispersal distances that is appropriate
 for your scenario.
+The distribution to which this parameter applies depends on the value
+of the **dispersal_distance_distr** parameter.
+
+
+
+
+**dispersal_distance_distr**
+
+.. code-block:: python
+
+                     #dispersal distance distr to use ('levy' or 'wald')
+                     'dispersal_distance_distr':    'levy',
+
+:py:`str`
+
+default: 'levy'
+
+reset? Y
+
+This determines whether dispersal is modeled using a Lévy distribution
+('levy') or a Wald distribution ('wald').
+
+
+
 
 --------------------------
 

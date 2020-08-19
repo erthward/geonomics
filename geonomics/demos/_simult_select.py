@@ -259,13 +259,15 @@ def _make_params():
                         #concentration of distr of movement direction
                         'direction_distr_kappa':    0,
                         #mean of distr of movement distance
-                        'distance_distr_mu':        0.5,
+                        'movement_distance_distr_param1':        0.5,
                         #variance of distr of movement distance
-                        'distance_distr_sigma':     0.5,
+                        'movement_distance_distr_param2':     0.5,
+                        'movement_distance_distr':          'wald',
                         #mean of distr of dispersal distance
-                        'dispersal_distr_mu':       0.5,
+                        'dispersal_distance_distr_param1':       0.5,
                         #variance of distr of dispersal distance
-                        'dispersal_distr_sigma':    0.5,
+                        'dispersal_distance_distr_param2':    0.5,
+                        'dispersal_distance_distr':     'wald',
                         },    # <END> 'movement'
 
 

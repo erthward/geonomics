@@ -112,6 +112,9 @@ def drape_raster(mod, rast, DEM, cbar_label, gif_filename,
         # plot the DEM as a surface, coloring its patches by the draped raster
         surf = ax3d.plot_surface(X, Y, DEM, facecolors=mappable.cmap(rast),
                                  cmap=mappable.cmap)
+        # add a 2d contour plot projected onto the horizontal below it
+        cont = ax.contourf(X, Y, rast, zdir='elevation', offset=np.min(DEM),
+                           cmap=mappable.cmap)
         # create a colorbar
         cb = plt.colorbar(mappable)
         cb.set_label(label=cbar_label, size=13)
@@ -153,7 +156,7 @@ def drape_raster(mod, rast, DEM, cbar_label, gif_filename,
 
 
 # create and save images that Imagemagick will stitch into a GIF
-def save_model_gif(mod, save_figs, make_gifs):
+def save_model_gif(mod, save_figs, make_gifs, n_individs=5000):
     # set up second figure, for a GIF animation
     mid_col_width = 0.8
     scnd_col_width = 1
@@ -190,10 +193,12 @@ def save_model_gif(mod, save_figs, make_gifs):
     cbar.ax.set_yticklabels(cbar_ticks[0], size=6)
     cbar.set_label(mod.land[0].units, rotation=270, labelpad=5, y=0.5,
                    size=7)
-    coords = mod.comm[0]._get_plot_coords()
+    # get a random subset of n_individs individuals, to use in the plot
+    individs = mod.comm[0]._get_random_individuals(n_individs)
+    coords = mod.comm[0]._get_plot_coords(individs=individs)
     xs = coords[:, 0]
     ys = coords[:, 1]
-    zs = mod.comm[0]._get_z()[:, 0]
+    zs = mod.comm[0]._get_z(individs=individs)[:, 0]
     ax2_1.scatter(xs, ys, c=zs, s=1, cmap='coolwarm')
     land2 = ax2_2.pcolormesh(mod.land._x_cell_bds,
                              mod.land._y_cell_bds,
@@ -496,7 +501,8 @@ def _make_params():
                         # exposed habitat, then that suggests we should
                         # use a K_factor of 67.8 * 208 * 0.1 = 1111.344
                         # NOTE: dividing by 10 for tractability
-                        'K_factor':         1111.344 / 10,
+                        #'K_factor':         1111.344 / 10,
+                        'K_factor':         5,
                         }, # <END> 'init'
 
                 #######################################
@@ -577,6 +583,7 @@ def _make_params():
                         # then I assigned a sigma that allows for occasional
                         # longer-distance movement events,
                         # but not for long-distance offspring dispersal events
+
                         #whether or not the species is mobile
                         'move':                     True,
                         #mode of distr of movement direction
@@ -584,13 +591,15 @@ def _make_params():
                         #concentration of distr of movement direction
                         'direction_distr_kappa':    0,
                         #mean of distr of movement distance
-                        'distance_distr_mu':        0.01704,
+                        'movement_distance_distr_param1':        0.01704,
                         #variance of distr of movement distance
-                        'distance_distr_sigma':     0.01704 / 100,
+                        'movement_distance_distr_param2':     2.5e-7,
                         #mean of distr of dispersal distance
-                        'dispersal_distr_mu':       0.01704,
+                        'movement_distance_distr':      'levy',
+                        'dispersal_distance_distr_param1':       0,
                         #variance of distr of dispersal distance
-                        'dispersal_distr_sigma':    0.01704 * 100,
+                        'dispersal_distance_distr_param2':    2.5e-10,
+                        'dispersal_distance_distr':         'levy',
                         'move_surf'     : {
                             #move-surf Layer name
                             'layer':                'hab',

@@ -19,6 +19,7 @@ from numpy import cos as _cos
 from numpy.random import vonmises as _r_vonmises
 from numpy.random import wald as _wald
 from scipy.stats import vonmises as _s_vonmises
+from scipy.stats import levy as _s_levy
 
 _s_vonmises.a = -np.inf
 _s_vonmises.b = np.inf
@@ -57,8 +58,14 @@ def _do_movement(spp):
     # choose distance
     # NOTE: Instead of lognormal, could use something with long right tail
     # for Levy-flight type movement, same as below
-    distance = _wald(spp.distance_distr_mu, spp.distance_distr_sigma,
-                    size=len(old_x))
+    if spp.movement_distance_distr == 'levy':
+        distance = _s_levy.rvs(loc=spp.movement_distance_distr_param1,
+                              scale=spp.movement_distance_distr_param2,
+                              size=len(old_x))
+    elif spp.movement_distance_distr == 'wald':
+        distance = _wald(mean=spp.movement_distance_distr_param1,
+                         scale=spp.movement_distance_distr_param2,
+                         size=len(old_x))
 
     # decompose distance into x and y components
     dist_x = _cos(direction) * distance
@@ -85,7 +92,8 @@ def _do_movement(spp):
 
 
 def _do_dispersal(spp, parent_midpoint_x, parent_midpoint_y,
-                  dispersal_distr_mu, dispersal_distr_sigma,
+                  dispersal_distance_distr_param1,
+                  dispersal_distance_distr_param2,
                   mu_dir=0, kappa_dir=0):
     within_landscape = False
     while not within_landscape:
@@ -97,7 +105,12 @@ def _do_dispersal(spp, parent_midpoint_x, parent_midpoint_y,
         # else, choose direction using a random walk with a uniform vonmises
         elif not spp._disp_surf:
             direction = _r_vonmises(mu_dir, kappa_dir)
-        distance = _wald(dispersal_distr_mu, dispersal_distr_sigma)
+        if spp.dispersal_distance_distr == 'levy':
+            distance = _s_levy.rvs(loc=spp.dispersal_distance_distr_param1,
+                                   scale=spp.dispersal_distance_distr_param2)
+        elif spp.dispersal_distance_distr == 'wald':
+            distance = _wald(mean=dispersal_distance_distr_param1,
+                             scale=dispersal_distance_distr_param2)
         # decompose distance into x and y components
         dist_x = _cos(direction) * distance
         dist_y = _sin(direction) * distance

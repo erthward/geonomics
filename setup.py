@@ -16,7 +16,7 @@ setuptools.setup(
     long_description_content_type='text/x-rst',
     url='https://github.com/drewhart/geonomics',
     # include the download URL, from the latest release on Github
-    download_url='https://github.com/drewhart/geonomics/archive/0.0.25.tar.gz',
+    download_url='https://github.com/drewhart/geonomics/archive/0.0.27.tar.gz',
     include_package_data=True,
     # packages=setuptools.find_packages(),
     packages=['geonomics',

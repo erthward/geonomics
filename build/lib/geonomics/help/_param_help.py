@@ -17,6 +17,7 @@ import numpy as np
 import matplotlib as mpl
 _check_display()
 import matplotlib.pyplot as plt
+from scipy.stats import levy as _s_levy
 from copy import deepcopy
 
 # ------------------------------------
@@ -32,7 +33,8 @@ from copy import deepcopy
 
 def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
                   direction_distr_mu=None, direction_distr_kappa=None,
-                  distance_distr_mu=None, distance_distr_sigma=None,
+                  distance_distr_param1=None, distance_distr_param2=None,
+                  distance_distr='levy',
                   move_surf=None, subset_spp=None, color='black',
                   alpha=None, land_cmap='plasma',  size=10, ticks=False,
                   color_by_individ=True, increasing_linewidth=True,
@@ -75,14 +77,18 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
 
     direction_distr_mu,
     direction_distr_kappa,
-    distance_distr_mu,
-    distance_distr_kappa : float, optional default: None
+    distance_distr_param1,
+    distance_distr_param2 : float, optional default: None
         These are the parameters defining the distributions from which the
         direction and distance values for individual movements are drawn. If
         passed, their values will be used to determine the movement behavior
         that is plotted (even if a ParametersDict was passed to *params*,
         because these values will override any values therein). For more
         details, see the 'Parameters' section of the online documentation. 
+
+    distance_distr: str, optional default: 'levy'
+        This indicates the distribution to use for drawing movement
+        distancs. Defaults to 'levy', but can also be set to 'wald'.
 
     move_surf : :class:`geonomics.utils.spatial._ConductanceSurface`, optional,
     default: None
@@ -135,8 +141,8 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
     #assert that either a params dict was provided or parameters were
     #stipulated
     assert (params is not None
-        or (distance_distr_mu is not None
-            and distance_distr_sigma is not None
+        or (distance_distr_param1 is not None
+            and distance_distr_param2 is not None
             and direction_distr_mu is not None
             and direction_distr_kappa is not None)), ("Either a parameters "
         "dictionary must be provided, or parameters must be individually "
@@ -153,10 +159,10 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
             toy_move_params['direction_distr_mu'] = direction_distr_mu
         if direction_distr_kappa != None:
             toy_move_params['direction_distr_kappa'] = direction_distr_kappa
-        if distance_distr_mu  != None:
-            toy_move_params['distance_distr_mu'] = distance_distr_mu
+        if distance_distr_param1  != None:
+            toy_move_params['movement_distance_distr_param1'] = distance_distr_param1
         if distance_distr_sigma != None:
-            toy_move_params['distance_distr_sigma'] = distance_distr_sigma
+            toy_move_params['movement_distance_distr_param2'] = distance_distr_param2
         if move_surf != None:
             toy_move_params['move_surf'] = move_surf
         toy_params.comm.species[spp.name].movement = toy_move_params
@@ -167,8 +173,8 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
         toy_move_params = {}
         toy_move_params['direction_distr_mu'] = direction_distr_mu
         toy_move_params['direction_distr_kappa'] = direction_distr_kappa
-        toy_move_params['distance_distr_mu'] = distance_distr_mu
-        toy_move_params['distance_distr_sigma'] = distance_distr_sigma
+        toy_move_params['movement_distance_distr_param1'] = distance_distr_param1
+        toy_move_params['movement_distance_distr_param2'] = distance_distr_param2
         if move_surf != None:
             toy_move_params['move_surf'] = move_surf
         elif spp.move_surf == None:
@@ -181,7 +187,7 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
     toy_spp = deepcopy(spp)
     #replace its movement-parameter values
     for param in ['direction_distr_mu', 'direction_distr_kappa',
-        'distance_distr_mu', 'distance_distr_sigma']:
+        'movement_distance_distr_param1', 'movement_distance_distr_param2']:
         setattr(toy_spp, param,
             toy_params['comm']['species'][spp.name]['movement'][param])
 
@@ -247,3 +253,181 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
                 scalex = False, scaley = False, linewidth = linewidths[t],
                 color = color, alpha = alpha)
 
+
+# functions to visualize the different distributions that can be
+# parameterized from the parameters file
+def plot_distr_movement_distance(spp=None, distance_distr_param1=None,
+                                 distance_distr_param2=None,
+                                 distance_dist='levy'):
+    if spp is not None:
+        distance_distr_param1 = spp.movement_distance_distr_param1
+        distance_distr_param2 = spp.movement_distance_distr_param2
+    else:
+        assert (distance_distr_param1 is not None and
+                distance_distr_param2 is not None), ('If a Species object '
+                                                     'is not provided then '
+                                                     'the parameter values '
+                                                     'must be provided.')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    if distance_distr == 'levy':
+        fig.suptitle(('movement distance: '
+                  '~Levy($\loc$=%.4E, $\scale$=%.4E)') % (distance_distr_param1,
+                                                        distance_distr_param2))
+        vals = _s_levy.rvs(loc=distance_distr_param1,
+                              scale=distance_distr_param2, size=10000)
+    elif distance_distr == 'wald':
+        fig.suptitle(('movement distance: '
+                  '~Wald($\mu$=%.4E, $\scale$=%.4E)') % (distance_distr_param1,
+                                                         distance_distr_param2))
+        vals = np.random.wald(mean=distance_distr_param1,
+                              scale=distance_distr_param2, size=10000)
+    ax.hist(vals, bins = 25)
+    ax.set_xlim((min(vals), max(vals)))
+    plt.show()
+
+
+def plot_distr_movement_direction(spp=None, direction_distr_mu=None,
+                            direction_distr_kappa=None):
+    if spp is not None:
+        direction_distr_mu = spp.direction_distr_mu
+        direction_distr_sigma = spp.direction_distr_kappa
+    else:
+        assert (direction_distr_mu is not None and
+                direction_distr_kappa is not None), ('If a Species object '
+                                                     'is not provided then '
+                                                     'the parameter values '
+                                                     'must be provided.')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    fig.suptitle(('movement direction: '
+                 '~von Mises($\mu$ = %.4E, '
+                  '$\kappa$ = %.4E)') % (direction_distr_mu,
+                                         direction_distr_kappa))
+    vals = np.random.vonmises(direction_distr_mu, direction_distr_kappa, 10000)
+    ax.hist(vals, bins = 25)
+    ax.set_xlim((min(vals), max(vals)))
+    plt.show()
+
+
+def plot_distr_dispersal_distance(spp=None, dispersal_distr_param1=None,
+                                  dispersal_distr_param2=None,
+                                  dispersal_distance_distr='levy'):
+    if spp is not None:
+        dispersal_distr_param1 = spp.dispersal_distance_distr_param1
+        dispersal_distr_param2 = spp.dispersal_distance_distr_param2
+    else:
+        assert (dispersal_distr_param1 is not None and
+                dispersal_distr_param2 is not None), ('If a Species object '
+                                                     'is not provided then '
+                                                     'the parameter values '
+                                                     'must be provided.')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    if dispersal_distance_distr == 'levy':
+        fig.suptitle(('dispersal distance: '
+                      '~Levy($\loc$=%.4E, $\scale$=%.4E)') % (dispersal_distr_param1,
+                                                           dispersal_distr_param2))
+        vals = _s_levy.rvs(dispersal_distr_param1, dispersal_distr_param2, 10000)
+    elif dispersal_distance_distr == 'wald':
+        fig.suptitle(('dispersal distance: '
+                      '~Wald($\mean$=%.4E, $\scale$=%.4E)') % (dispersal_distr_param1,
+                                                           dispersal_distr_param2))
+        vals = np.random.wald(dispersal_distr_param1, dispersal_distr_param2, 10000)
+    ax.hist(vals, bins = 25)
+    ax.set_xlim((min(vals), max(vals)))
+    plt.show()
+
+
+def plot_n_births(spp=None, n_births_distr_lambda=None):
+    if spp is not None:
+        n_births_distr_lambda = spp.n_births_distr_lambda
+    else:
+        assert n_births_distr_lambda is not None ('If a Species object '
+                                                  'is not provided then '
+                                                  'the parameter values '
+                                                  'must be provided.')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    fig.suptitle(('number of births per mating event: '
+                  '~Poisson($\lamba$=%.4E)') % n_births_distr_lambda)
+    vals = np.random.poisson(n_births_distr_lambda, 10000)
+    ax.hist(vals, bins = 25)
+    ax.set_xlim((min(vals), max(vals)))
+    plt.show()
+
+
+def plot_distr_delet_effect_sizes(spp=None, delet_alpha_distr_shape=None,
+                                  delet_alpha_distr_scale=None):
+    if spp is not None:
+        delet_alpha_distr_shape = spp.gen_arch.delet_alpha_distr_shape
+        delet_alpha_distr_scale = spp.gen_arch.delet_alpha_distr_scale
+    else:
+        assert (delet_alpha_distr_shape is not None
+                and delet_alpha_distr_scale is not None), ('If a Species '
+                                                           'object is not '
+                                                           'provided then '
+                                                           'the parameter '
+                                                           'values must be '
+                                                           'provided.')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    fig.suptitle(('effect sizes of deleterious mutations: '
+                  '~Gamma($shape$=%.4E, '
+                  '$scale$=%.4E)') % (delet_alpha_distr_shape,
+                                      delet_alpha_distr_scale))
+    vals = np.random.gamma(delet_alpha_distr_shape,
+                           delet_alpha_distr_scale, 10000)
+    ax.hist(vals, bins = 25)
+    ax.set_xlim((min(vals), max(vals)))
+    plt.show()
+
+
+def plot_distr_trait_effect_sizes(spp=None, r_distr_alpha=None,
+                            r_distr_beta=None):
+    if spp is not None:
+        r_distr_alpha = spp.gen_arch.recombinations._r_distr_alpha
+        r_distr_beta = spp.gen_arch.recombinations._r_distr_beta
+    else:
+        assert (r_distr_alpha is not None
+                and r_distr_beta is not None), ('If a Species '
+                                                'object is not '
+                                                'provided then '
+                                                'the parameter '
+                                                'values must be '
+                                                'provided.')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    fig.suptitle(('recombination rates: '
+                  '~Beta($\alpha$=%.4E, $\beta$=%.4E)') % (r_distr_alpha,
+                                                           r_distr_beta))
+    vals = np.random.beta(r_distr_alpha, r_distr_beta, 10000)
+    ax.hist(vals, bins = 25)
+    ax.set_xlim((min(vals), max(vals)))
+    plt.show()
+
+
+def plot_distr_recomb_rates(spp=None, trt_num=None, alpha_distr_mu=None,
+                            alpha_distr_sigma=None):
+    if spp is not None:
+        assert trt_num is not None, ('Trait number must be provided if a '
+                                     'Species object is provided.')
+        alpha_distr_mu = spp.gen_arch.traits[trt_num]._alpha_distr_mu
+        alpha_distr_sigma = spp.gen_arch.traits[trt_num]._alpha_distr_sigma
+    else:
+        assert (alpha_distr_mu is not None
+                and alpha_distr_sigma is not None), ('If a Species '
+                                                     'object is not '
+                                                     'provided then '
+                                                     'the parameter '
+                                                     'values must be '
+                                                     'provided.')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    fig.suptitle(('effect sizes of loci, trait %i: '
+                  '~Normal($\mu$=%.4E, $\sigma$=%.4E)') % (alpha_distr_mu,
+                                                           alpha_distr_sigma))
+    vals = np.random.normal(alpha_distr_mu, alpha_distr_sigma, 10000)
+    ax.hist(vals, bins = 25)
+    ax.set_xlim((min(vals), max(vals)))
+    plt.show()

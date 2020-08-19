@@ -333,19 +333,23 @@ SPP_PARAMS = '''
 
                 'movement': {
                     #whether or not the species is mobile
-                    'move':                     True,
+                    'move':                                 True,
                     #mode of distr of movement direction
-                    'direction_distr_mu':       0,
+                    'direction_distr_mu':                   0,
                     #concentration of distr of movement direction
-                    'direction_distr_kappa':    0,
-                    #mean of distr of movement distance
-                    'distance_distr_mu':        0.5,
-                    #variance of distr of movement distance
-                    'distance_distr_sigma':     0.5,
-                    #mean of distr of dispersal distance
-                    'dispersal_distr_mu':       0.5,
-                    #variance of distr of dispersal distance
-                    'dispersal_distr_sigma':    0.5,%s%s
+                    'direction_distr_kappa':                0,
+                    #1st param of distr of movement distance
+                    'movement_distance_distr_param1':       0.5,
+                    #2nd param of distr of movement distance
+                    'movement_distance_distr_param2':       5e-8,
+                    #movement distance distr to use ('levy' or 'wald')
+                    'movement_distance_distr':              'levy',
+                    #1st param of distr of dispersal distance
+                    'dispersal_distance_distr_param1':      0,
+                    #2nd param of distr of dispersal distance
+                    'dispersal_distance_distr_param2':      5e-14,
+                    #dispersal distance distr to use ('levy' or 'wald')
+                    'dispersal_distance_distr':             'levy',%s%s
                     },    # <END> 'movement'
 
 %s

@@ -17,7 +17,7 @@ setuptools.setup(
     url='https://github.com/drewhart/geonomics',
     # include the download URL, from the latest release on Github
     download_url='https://github.com/drewhart/geonomics/archive/0.0.28.tar.gz',
-    include_package_data=True,
+    #include_package_data=True,
     # packages=setuptools.find_packages(),
     packages=['geonomics',
               'geonomics.sim',

@@ -2064,7 +2064,7 @@ class Model:
 
 
     #wrapper around Species._plot_pop_growth
-    def plot_pop_growth(self, spp):
+    def plot_pop_growth(self, spp, expected=True, actual=True):
         """
         Plot the chosen Species' population over time
 
@@ -2079,6 +2079,12 @@ class Model:
             A reference to the Species whose population growth will be plotted.
             Can be either the Species' index number (i.e. its integer key
             in the Community dict), or its name (as a character string).
+        expected: bool, default: True
+            Whether or not to plot the line showing the expected (under
+            the logistic growth model) trajectory of populaion growth, in red.
+        actual: bool, default: True
+            Whether or not to plot the line showing the actual
+            trajectory of population growth, in blue.
 
         Returns
         -------
@@ -2088,7 +2094,7 @@ class Model:
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        spp._plot_pop_growth()
+        spp._plot_pop_growth(expected=expected, actual=actual)
 
 
     #wrapper around Species._plot_example_recombinant_genome

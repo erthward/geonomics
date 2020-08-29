@@ -1696,12 +1696,14 @@ class Species(OD):
         #show it
         plt.show()
 
-    def _plot_pop_growth(self):
+    def _plot_pop_growth(self, expected, actual):
         T = range(len(self.Nt))
         x0 = self.Nt[0] / self.K.sum()
-        plt.plot(T, [_calc_logistic_soln(x0, self.R,
+        if expected:
+            plt.plot(T, [_calc_logistic_soln(x0, self.R,
                                 t) * self.K.sum() for t in T], color='red')
-        plt.plot(T, self.Nt, color='blue')
+        if actual:
+            plt.plot(T, self.Nt, color='blue')
         plt.xlabel('t')
         plt.ylabel('N(t)')
 

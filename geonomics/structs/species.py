@@ -883,6 +883,7 @@ class Species(OD):
     # key and its birth-time and birth-location as a length-2 list of values
     def _get_lineage_dicts(self, loci, nodes=None, drop_before_sim=True,
                            time_before_present=True,
+                           use_individs_curr_pos=True,
                            max_time_ago=None,
                            min_time_ago=None):
         if nodes is None:
@@ -895,6 +896,25 @@ class Species(OD):
                                        time_before_present=time_before_present,
                                        max_time_ago=max_time_ago,
                                        min_time_ago=min_time_ago)
+        # if requested, put the current individuals' current 
+        # positions in the lineage dicts, rather than using the birth
+        # positions (which are in there by default because those
+        # are the positions that are stored within the tskit tables)
+        if use_individs_curr_pos:
+            for locus in lin_dicts.keys():
+                for curr_node_id in lin_dicts[locus].keys():
+                    if len(lin_dicts[locus][curr_node_id]) > 0:
+                        tc_individs_id = self._tc.nodes[curr_node_id].individual
+                        individ = [ind for ind in self.values() if
+                                   ind._individuals_tab_id == tc_individs_id]
+                        assert len(individ) == 1, ("Found multiple individuals "
+                                                   "with the same individuals id "
+                                                   "in the tskit tables.")
+                        individ = individ[0]
+                        curr_pos = np.array([individ.x, individ.y])
+                        birth_t = lin_dicts[locus][curr_node_id][curr_node_id][0]
+                        lin_dicts[locus][curr_node_id][curr_node_id] = (birth_t,
+                                                                        curr_pos)
         return lin_dicts
 
 
@@ -928,11 +948,14 @@ class Species(OD):
         return result
 
 
-    # calculate stats for the lineages of a given set of nodes and loci;
-    # returns dict of struct: {k=stat, v={k=loc, v=[val_node1 ... val_node_N]}}
     def _calc_lineage_stats(self, individs=None, nodes=None, loci=None,
                             stats=['dir', 'dist', 'time', 'speed'],
+                            use_individs_curr_pos=True,
                             max_time_ago=None, min_time_ago=None):
+        '''
+        Calculate stats for the lineages of a given set of nodes and loci;
+        returns dict of struct: {k=stat, v={k=loc, v=[val_node1 ... val_node_N]}}
+        '''
         # get all nodes for the provided individuals, or for all individuals,
         # if nodes IDs not provided
         if nodes is None:
@@ -944,6 +967,7 @@ class Species(OD):
         if loci is None:
             loci = [*range(self.gen_arch.L)]
         lin_dicts = self._get_lineage_dicts(loci, nodes=nodes,
+                use_individs_curr_pos=use_individs_curr_pos,
                                             max_time_ago=max_time_ago,
                                             min_time_ago=min_time_ago)
         stats = {stat: {} for stat in stats}
@@ -1079,8 +1103,10 @@ class Species(OD):
         return ages
 
     # convenience method for getting whole species' phenotype
-    def _get_z(self, individs=None):
+    def _get_z(self, trait_num=None, individs=None):
         zs = self._get_scalar_attr('z', individs=individs)
+        if trait_num is not None:
+            zs = zs[:,trait_num]
         return zs
 
     #convenience method for getting whole species' fitnesses
@@ -1696,14 +1722,16 @@ class Species(OD):
         #show it
         plt.show()
 
-    def _plot_pop_growth(self, expected, actual):
+    def _plot_pop_growth(self, expected=True, actual=True, expected_color='red',
+                        actual_color='blue'):
         T = range(len(self.Nt))
         x0 = self.Nt[0] / self.K.sum()
         if expected:
             plt.plot(T, [_calc_logistic_soln(x0, self.R,
-                                t) * self.K.sum() for t in T], color='red')
+                                t) * self.K.sum() for t in T],
+                     color=expected_color)
         if actual:
-            plt.plot(T, self.Nt, color='blue')
+            plt.plot(T, self.Nt, color=actual_color)
         plt.xlabel('t')
         plt.ylabel('N(t)')
 

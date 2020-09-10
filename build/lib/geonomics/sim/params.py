@@ -59,16 +59,16 @@ PARAMS = '''# %s
 
 
 params = {
-###############################################################################
+#-----------------------------------------------------------------------------#
 
-###################
-#### LANDSCAPE ####
-###################
+#-----------------#
+#--- LANDSCAPE ---#
+#-----------------#
     'landscape': {
 
-    ##############
-    #### main ####
-    ##############
+    #------------#
+    #--- main ---#
+    #------------#
         'main': {
             #x,y (a.k.a. j,i) dimensions of the Landscape
             'dim':                      (20,20),
@@ -80,9 +80,9 @@ params = {
             'prj':                      None,
             }, # <END> 'main'
 
-    ################
-    #### layers ####
-    ################
+    #--------------#
+    #--- layers ---#
+    #--------------#
         'layers': {
 %s
 
@@ -96,11 +96,11 @@ params = {
         }, # <END> 'landscape'
 
 
-###############################################################################
+#-----------------------------------------------------------------------------#
 
-###################
-#### COMMUNITY ####
-###################
+#-----------------#
+#--- COMMUNITY ---#
+#-----------------#
     'comm': {
 
         'species': {
@@ -116,11 +116,11 @@ params = {
         }, # <END> 'comm'
 
 
-###############################################################################
+#-----------------------------------------------------------------------------#
 
-###############
-#### MODEL ####
-###############
+#-------------#
+#--- MODEL ---#
+#-------------#
     'model': {
         #total Model runtime (in timesteps)
         'T':            100,
@@ -150,9 +150,9 @@ LYR_PARAMS = '''
             #layer name (LAYER NAMES MUST BE UNIQUE!)
             %s: {
 
-        #######################################
-        #### layer num. %i: init parameters ####
-        #######################################
+        #--------------------------------------#
+        #--- layer num. %i: init parameters ---#
+        #--------------------------------------#
 
                 #initiating parameters for this layer
                 'init': {
@@ -230,9 +230,9 @@ NLMPY_LYR_PARAMS = '''
     #%i = lyr_num,
     #%s = change events,
 LYR_CHANGE_PARAMS = '''
-            #########################################
-            #### layer num. %i: change parameters ####
-            #########################################
+            #----------------------------------------#
+            #--- layer num. %i: change parameters ---#
+            #----------------------------------------#
 
                 #landscape-change events for this Layer
                 'change': {
@@ -274,9 +274,9 @@ SPP_PARAMS = '''
             #species name (SPECIES NAMES MUST BE UNIQUE!)
             %s: {
 
-            #####################################
-            #### spp num. %i: init parameters ####
-            #####################################
+            #------------------------------------#
+            #--- spp num. %i: init parameters ---#
+            #------------------------------------#
 
                 'init': {
                     #starting number of individs
@@ -287,9 +287,9 @@ SPP_PARAMS = '''
                     'K_factor':         1,
                     }, # <END> 'init'
 
-            #######################################
-            #### spp num. %i: mating parameters ####
-            #######################################
+            #--------------------------------------#
+            #--- spp num. %i: mating parameters ---#
+            #--------------------------------------#
 
                 'mating'    : {
                     #age(s) at sexual maturity (if tuple, female first)
@@ -312,9 +312,9 @@ SPP_PARAMS = '''
                     'mating_radius':            10,
                     }, # <END> 'mating'
 
-            ##########################################
-            #### spp num. %i: mortality parameters ####
-            ##########################################
+            #-----------------------------------------#
+            #--- spp num. %i: mortality parameters ---#
+            #-----------------------------------------#
 
                 'mortality'     : {
                     #maximum age
@@ -327,9 +327,9 @@ SPP_PARAMS = '''
                     'density_grid_window_width':    None,
                     }, # <END> 'mortality'
 
-            #########################################
-            #### spp num. %i: movement parameters ####
-            #########################################
+            #----------------------------------------#
+            #--- spp num. %i: movement parameters ---#
+            #----------------------------------------#
 
                 'movement': {
                     #whether or not the species is mobile
@@ -391,9 +391,9 @@ DISP_SURF_PARAMS = '''
     #
     #%s = traits_params,
 GENOME_PARAMS = '''
-            #####################################################
-            #### spp num. %i: genomic architecture parameters ####
-            #####################################################
+            #----------------------------------------------------#
+            #--- spp num. %i: genomic architecture parameters ---#
+            #----------------------------------------------------#
 
                 'gen_arch': {
                     #file defining custom genomic arch
@@ -405,7 +405,7 @@ GENOME_PARAMS = '''
                     #whether to start neutral locus freqs at 0
                     'start_neut_zero':          True,
                     #genome-wide per-base neutral mut rate (0 to disable)
-                    'mu_neut':                  1e-5,
+                    'mu_neut':                  0,
                     #genome-wide per-base deleterious mut rate (0 to disable)
                     'mu_delet':                 0,
                     #shape of distr of deleterious effect sizes
@@ -456,9 +456,9 @@ TRTS_PARAMS = '''
     #%s = trait_num,
     #%i = trait_num,
 TRT_PARAMS = '''
-                        ###########################
-                        ####trait %i parameters ####
-                        ###########################
+                        #--------------------------#
+                        #---trait %i parameters ---#
+                        #--------------------------#
                         #trait name (TRAIT NAMES MUST BE UNIQUE!)
                         %s: {
                             #trait-selection Layer name
@@ -487,9 +487,9 @@ TRT_PARAMS = '''
     #%i = spp_num,
     #%s = dem_and-or_param_change_params_str,
 SPP_CHANGE_PARAMS = '''
-            #######################################
-            #### spp num. %i: change parameters ####
-            #######################################
+            #--------------------------------------#
+            #--- spp num. %i: change parameters ---#
+            #--------------------------------------#
 
                 'change': {
 %s
@@ -500,9 +500,9 @@ SPP_CHANGE_PARAMS = '''
 #STRING SLOTS:
     #%s = multi_dem_change_event_params,
 SPP_DEM_CHANGE_EVENTS_PARAMS = '''
-                    #################################
-                    # demographic change parameters #
-                    #################################
+                    #-------------------------------------#
+                    #--- demographic change parameters ---#
+                    #-------------------------------------#
                     'dem': {
 %s
 
@@ -548,9 +548,9 @@ SPP_DEM_CHANGE_EVENT_PARAMS = '''
 
 #block for a series of life-history parameter-change events
 SPP_PARAM_CHANGE_PARAMS = '''
-                    ##################################
-                    # life-history change parameters #
-                    ##################################
+                    #--------------------------------------#
+                    #--- life-history change parameters ---#
+                    #--------------------------------------#
                     'life_hist': {
                         #life-history parameter to change
                         '<life_hist_param>': {
@@ -571,9 +571,9 @@ SPP_PARAM_CHANGE_PARAMS = '''
 
 #block for model iterations params
 ITS_PARAMS = '''
-        ###############################
-        #### iterations parameters ####
-        ###############################
+        #-----------------------------#
+        #--- iterations parameters ---#
+        #-----------------------------#
         'its': {
             #num iterations
             'n_its':            1,
@@ -588,9 +588,9 @@ ITS_PARAMS = '''
 
 #block for model data-collection params
 DATA_PARAMS = '''
-        ####################################
-        #### data-collection parameters ####
-        ####################################
+        #----------------------------------#
+        #--- data-collection parameters ---#
+        #----------------------------------#
         'data': {
             'sampling': {
                 #sampling scheme {'all', 'random', 'point', 'transect'}
@@ -625,9 +625,9 @@ DATA_PARAMS = '''
 
 #block for model stats-calculation params
 STATS_PARAMS = '''
-        #####################################
-        #### stats-collection parameters ####
-        #####################################
+        #-----------------------------------#
+        #--- stats-collection parameters ---#
+        #-----------------------------------#
         'stats': {
             #number of individs at time t
             'Nt': {

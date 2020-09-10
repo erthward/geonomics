@@ -501,8 +501,7 @@ def _make_params():
                         # exposed habitat, then that suggests we should
                         # use a K_factor of 67.8 * 208 * 0.1 = 1111.344
                         # NOTE: dividing by 10 for tractability
-                        #'K_factor':         1111.344 / 10,
-                        'K_factor':         5,
+                        'K_factor':         1111.344 / 10,
                         }, # <END> 'init'
 
                 #######################################

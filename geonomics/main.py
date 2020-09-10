@@ -379,9 +379,9 @@ def read_parameters_file(filepath):
     with open(filepath, 'r') as f:
         txt = f.read()
     #find all the layer names and spp names
-    lyr_names = re.findall('\S+(?=: \{\n\n\s+#*\n\s+#### layer num\.)', txt)
+    lyr_names = re.findall('\S+(?=: \{\n\n\s+#-*#\n\s+#--- layer num\.)', txt)
     lyr_names = [re.sub("'", '"', n) for n in lyr_names]
-    spp_names = re.findall('\S+(?=: \{\n\n\s+#*\n\s+#### spp num\.)', txt)
+    spp_names = re.findall('\S+(?=: \{\n\n\s+#-*#\n\s+#--- spp num\.)', txt)
     spp_names = [re.sub("'", '"', n) for n in spp_names]
     #get Counter objects of each
     lyr_name_cts = C(lyr_names)
@@ -408,7 +408,7 @@ def read_parameters_file(filepath):
             trt_names = [re.sub("'", '"', n) for n in trt_names]
             trt_name_cts = C(trt_names)
             sect_spp_name = re.findall(
-                        '\S+(?=: \{\n\n\s+#*\n\s+#### spp num\.)', txt)[0]
+                        '\S+(?=: \{\n\n\s+#-*#\n\s+#--- spp num\.)', txt)[0]
             assert set([*trt_name_cts.values()]) == {1}, ("At least one of the"
                 " Trait names provided in the parameters for Species "
                 "%s appears to be used more than once. "

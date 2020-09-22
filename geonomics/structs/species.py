@@ -230,6 +230,9 @@ class Species(OD):
         #for use in getting all individs' coordinates
         self._coord_attrgetter = attrgetter('x', 'y')
 
+        # create the burn-in spatial counter
+        self._burnin_spat_tester = burnin.SpatialTester(self)
+
 
     #override the __deepcopy__ method, so that the species can
     #be copy.deepcopy'd (because otherwise this doesn't work for
@@ -328,6 +331,15 @@ class Species(OD):
     def _set_age_stage(self):
         # increment age of all individuals
         [ind._set_age_stage() for ind in self.values()];
+
+    # method for running the spatial burn-in test
+    def _do_spatial_burnin_test(self, num_timesteps_back):
+        # first update the counts and diffs arrays
+        # (which count the number of individuals within each landscape cell,
+        # and the diff in that number between last check and this one)
+        self._burnin_spat_tester.update(self)
+        result = self._burnin_spat_tester.run_test(num_timesteps_back)
+        return result
 
     #method to move all individuals simultaneously, and sample
     #their new locations' environment
@@ -1742,7 +1754,10 @@ class Species(OD):
         else:
             self._changer._plot_dem_changes(self)
 
+
     def _plot_example_recombinant_genome(self):
+        print('TODO: FIX ME!')
+        return
         assert self.gen_arch is not None, ("This species does not have "
                                             "genomes, so it cannot be used "
                                             "to plot an example recombinant "

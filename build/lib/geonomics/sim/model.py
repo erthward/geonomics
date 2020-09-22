@@ -2064,7 +2064,8 @@ class Model:
 
 
     #wrapper around Species._plot_pop_growth
-    def plot_pop_growth(self, spp, expected=True, actual=True):
+    def plot_pop_growth(self, spp, expected=True, actual=True,
+                        expected_color='red', actual_color='blue'):
         """
         Plot the chosen Species' population over time
 
@@ -2094,7 +2095,9 @@ class Model:
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        spp._plot_pop_growth(expected=expected, actual=actual)
+        spp._plot_pop_growth(expected=expected, actual=actual,
+                             expected_color=expected_color,
+                             actual_color=actual_color)
 
 
     #wrapper around Species._plot_example_recombinant_genome

@@ -853,13 +853,43 @@ def read_pickled_genomic_architecture(filename):
 # FUNCTIONS FOR WORKING WITH THE SPATIAL PEDGREE SAVED IN tskit STRUCTURES
 ##########################################################################
 
-# for a sample of nodes and a sample of loci, get the
-# loci-sequentially ordered dict of lineage dicts
-# (containing each node in a child node's lineage as the
-# key and its birth-time and birth-location as a length-2 list of values
 def _get_lineage_dicts(spp, nodes, loci, t_curr, drop_before_sim=True,
                        time_before_present=True, max_time_ago=None,
                        min_time_ago=None):
+    '''
+    For a sample of nodes and a sample of loci, get the
+    loci-sequentially ordered dict of lineage dicts
+    (containing each node in a child node's lineage as the
+    key and its birth-time and birth-location as a length-2 list of values
+
+    Thus, the returned value is of the structure:
+        {locus_id_1: {node_id_1: {curr_node_id: (birth_time,
+                                             array([birth_loc_par_1,
+                                                    birth_loc_par_2])),
+                              prev_node_id: (birth_time,
+                                             array([birth_loc_par_1,
+                                                    birth_loc_par_2])),
+                              .
+                              .
+                              .
+                              oldest_node_id: (birth_time,
+                                             array([birth_loc_par_1,
+                                                    birth_loc_par_2]))},
+                    .
+                    .
+                    .
+                    node_id_last: {curr_node_id: ...
+                                    ...
+                                    }},
+        .
+        .
+        .
+        locus_id_last: {node_id_1: {curr_node_id: ...
+                                    ...
+                                    }}
+        }
+    '''
+
     # make sure the TableCollection is sorted, then get the TreeSequence
     try:
         ts = spp._tc.tree_sequence()
@@ -885,11 +915,15 @@ def _get_lineage_dicts(spp, nodes, loci, t_curr, drop_before_sim=True,
     return lineage_dicts
 
 
-# for a sample of nodes, and for a given tree,
-# get dicts of each node's lineage nodes with their birth locs and birth times
 def _get_lineage_dicts_one_tree(tc, tree, nodes, t_curr, drop_before_sim=True,
                                 time_before_present=True, max_time_ago=None,
                                 min_time_ago=None):
+    '''
+    For a sample of nodes, and for a given tree,
+    get dicts of each node's lineage nodes with their birth locs and birth
+    times
+    '''
+
     #create an output master dict
     lineage_dicts = {}
     # get each sample node's lineage dict
@@ -944,8 +978,10 @@ def _get_lineage_times_and_locs(tc, lineage, t_curr, drop_before_sim=True,
     return(zip(times, locs))
 
 
-# recursive algorithm for getting all parents of a node
 def _get_lineage(tree, nodes):
+    '''
+    Recursive algorithm for getting all parents of a node
+    '''
     parent = tree.parent(nodes[-1])
     if parent == tskit.NULL:
         return(nodes)
@@ -983,49 +1019,66 @@ def _calc_lineage_stat(lin_dict, stat):
 
 # calculate the angular direction of gene flow along a locus' lineage
 def _calc_lineage_direction(lin_dict):
-    # get x and y distances between beginning and ending points
-    # (begins at the bottom of the lineage dict, furthest back in time)
-    beg_loc = [*lin_dict.values()][-1][1]
-    # (ends at the top of the lineage dict, in the current time step)
-    end_loc = [*lin_dict.values()][0][1]
-    x_diff, y_diff = [end_loc[i] - beg_loc[i] for i in range(2)]
-    # get the counterclockwise angle, expressed in degrees
-    # from the vector (X,Y) = (1,0),
-    # with 0 to 180 in quadrants 1 & 2, 0 to -180 in quadrants 3 & 4
-    ang = np.rad2deg(np.arctan2(y_diff, x_diff))
-    # convert to all positive values, 0 - 360
-    if ang < 0:
-        ang += 360
-    #convert to all positive clockwise angles, expressed as 0 at compass north
-    # (i.e. angles clockwise from vector (X,Y) = (0,1)
-    ang = (-ang + 90) % 360
-    return ang
+    # if the lineage has 1 or less node, don't calculate anything
+    if len(lin_dict.values()) < 2:
+        return
+    else:
+        # get x and y distances between beginning and ending points
+        # (begins at the bottom of the lineage dict, furthest back in time)
+        beg_loc = [*lin_dict.values()][-1][1]
+        # (ends at the top of the lineage dict, in the current time step)
+        end_loc = [*lin_dict.values()][0][1]
+        # get the difference in the x and y axes between the lineage's
+        # beginning location and its ending (i.e. current) location
+        # NOTE: using range(2) will grab only the first location values,
+        # which is perfect, because models with traits also save phenotypic
+        # and fitness values in the individuals table's 'location' column
+        x_diff, y_diff = [end_loc[i] - beg_loc[i] for i in range(2)]
+        # get the counterclockwise angle, expressed in degrees
+        # from the vector (X,Y) = (1,0),
+        # with 0 to 180 in quadrants 1 & 2, 0 to -180 in quadrants 3 & 4
+        ang = np.rad2deg(np.arctan2(y_diff, x_diff))
+        # convert to all positive values, 0 - 360
+        if ang < 0:
+            ang += 360
+        #convert to all positive clockwise angles, expressed as 0 at compass north
+        # (i.e. angles clockwise from vector (X,Y) = (0,1)
+        ang = (-ang + 90) % 360
+        return ang
 
 
 # calculate the geographic distance (in cell widths)
 # of gene flow along a locus' lineage
 def _calc_lineage_distance(lin_dict):
-    # get x and y distances between beginning and ending points
-    beg_loc = [*lin_dict.values()][0][1]
-    end_loc = [*lin_dict.values()][-1][1]
-    x_diff, y_diff = [end_loc[i] - beg_loc[i] for i in range(2)]
-    #Pythagoras
-    dist = np.sqrt(x_diff**2 + y_diff**2)
-    return dist
+    if len(lin_dict.values()) < 2:
+        return
+    else:
+        # get x and y distances between beginning and ending points
+        beg_loc = [*lin_dict.values()][0][1]
+        end_loc = [*lin_dict.values()][-1][1]
+        x_diff, y_diff = [end_loc[i] - beg_loc[i] for i in range(2)]
+        #Pythagoras
+        dist = np.sqrt(x_diff**2 + y_diff**2)
+        return dist
 
 
 # calculate the total time to the simulation's MRCA of a locus' lineage
 def _calc_lineage_time(lin_dict):
-    beg_time = [*lin_dict.values()][0][0]
-    end_time = [*lin_dict.values()][-1][0]
-    time = end_time - beg_time
-    return time
+    if len(lin_dict.values()) < 2:
+        return
+    else:
+        beg_time = [*lin_dict.values()][0][0]
+        end_time = [*lin_dict.values()][-1][0]
+        time = end_time - beg_time
+        return time
 
 
 # calculate the speed of gene flow in a lineage (in cell widths/time steps)
 def _calc_lineage_speed(lin_dict):
-    dist = _calc_lineage_distance(lin_dict)
-    time = _calc_lineage_time(lin_dict)
-    speed = dist/time
-    return speed
-
+    if len(lin_dict.values()) < 2:
+        return
+    else:
+        dist = _calc_lineage_distance(lin_dict)
+        time = _calc_lineage_time(lin_dict)
+        speed = dist/time
+        return speed

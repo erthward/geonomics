@@ -28,14 +28,14 @@ import numpy as np
 params = {
 ###############################################################################
 
-###################
-#### LANDSCAPE ####
-###################
+#-----------------#
+#--- LANDSCAPE ---#
+#-----------------#
     'landscape': {
 
-    ##############
-    #### main ####
-    ##############
+    #------------#
+    #--- main ---#
+    #------------#
         'main': {
             #y,x (a.k.a. i,j) dimensions of the Landscape
             'dim':                      (20,20),
@@ -47,17 +47,17 @@ params = {
             'prj':                      None,
             }, # <END> 'main'
 
-    ################
-    #### layers ####
-    ################
+    #--------------#
+    #--- layers ---#
+    #--------------#
         'layers': {
 
             #layer name (LAYER NAMES MUST BE UNIQUE!)
             'layer_0': {
 
-        #######################################
-        #### layer num. 0: init parameters ####
-        #######################################
+        #-------------------------------------#
+        #--- layer num. 0: init parameters ---#
+        #-------------------------------------#
 
                 #initiating parameters for this layer
                 'init': {
@@ -93,9 +93,9 @@ params = {
 
 ###############################################################################
 
-###################
-#### COMMUNITY ####
-###################
+#-----------------#
+#--- COMMUNITY ---#
+#-----------------#
     'comm': {
 
         'species': {
@@ -103,9 +103,9 @@ params = {
             #species name (SPECIES NAMES MUST BE UNIQUE!)
             'spp_0': {
 
-            #####################################
-            #### spp num. 0: init parameters ####
-            #####################################
+            #-----------------------------------#
+            #--- spp num. 0: init parameters ---#
+            #-----------------------------------#
 
                 'init': {
                     #starting number of individs
@@ -116,9 +116,9 @@ params = {
                     'K_factor':         1,
                     }, # <END> 'init'
 
-            #######################################
-            #### spp num. 0: mating parameters ####
-            #######################################
+            #-------------------------------------#
+            #--- spp num. 0: mating parameters ---#
+            #-------------------------------------#
 
                 'mating'    : {
                     #age(s) at sexual maturity (if tuple, female first)
@@ -141,9 +141,9 @@ params = {
                     'mating_radius':            3,
                     }, # <END> 'mating'
 
-            ##########################################
-            #### spp num. 0: mortality parameters ####
-            ##########################################
+            #----------------------------------------#
+            #--- spp num. 0: mortality parameters ---#
+            #----------------------------------------#
 
                 'mortality'     : {
                     #maximum age
@@ -156,9 +156,9 @@ params = {
                     'density_grid_window_width':    None,
                     }, # <END> 'mortality'
 
-            #########################################
-            #### spp num. 0: movement parameters ####
-            #########################################
+            #---------------------------------------#
+            #--- spp num. 0: movement parameters ---#
+            #---------------------------------------#
 
                 'movement': {
                     #whether or not the species is mobile
@@ -167,20 +167,22 @@ params = {
                     'direction_distr_mu':       0,
                     #concentration of distr of movement direction
                     'direction_distr_kappa':    0,
-                    #mean of distr of movement distance
-                    'distance_distr_mu':        1,
-                    #variance of distr of movement distance
-                    'distance_distr_sigma':     1,
-                    #mean of distr of dispersal distance
-                    'dispersal_distr_mu':       1,
-                    #variance of distr of dispersal distance
-                    'dispersal_distr_sigma':    1,
+                    #param1 of distr of movement distance
+                    'movement_distance_distr_param1':        1,
+                    #param2 of distr of movement distance
+                    'movement_distance_distr_param2':     1,
+                    'movement_distance_distr':          'wald',
+                    #param1 of distr of dispersal distance
+                    'dispersal_distance_distr_param1':       1,
+                    #param2 of distr of dispersal distance
+                    'dispersal_distance_distr_param2':    1,
+                    'dispersal_distance_distr':         'wald',
                     },    # <END> 'movement'
 
 
-            #####################################################
-            #### spp num. 0: genomic architecture parameters ####
-            #####################################################
+            #---------------------------------------------------#
+            #--- spp num. 0: genomic architecture parameters ---#
+            #---------------------------------------------------#
 
                 'gen_arch': {
                     #file defining custom genomic arch
@@ -213,6 +215,8 @@ params = {
                     'n_recomb_paths_mem':       int(2e5),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(6e5),
+                    'n_recomb_sims':            10000,
+                    'start_neut_zero':          True,
                     'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
                     'mut_log':                  False,
@@ -235,9 +239,9 @@ params = {
 
 ###############################################################################
 
-###############
-#### MODEL ####
-###############
+#-------------#
+#--- MODEL ---#
+#-------------#
     'model': {
         #total Model runtime (in timesteps)
         'T':            3,
@@ -245,10 +249,11 @@ params = {
         'burn_T':       50,
         #seed number
         'num':          None,
+        'tskit_simp_interval':      100,
 
-        ###############################
-        #### iterations parameters ####
-        ###############################
+        #-----------------------------#
+        #--- iterations parameters ---#
+        #-----------------------------#
         'its': {
             #num iterations
             'n_its':            1,

@@ -19,7 +19,7 @@ ttl_fontdict = {'fontsize': 12,
                 'name': 'Bitstream Vera Sans'}
 
 # read in the parameters file
-params = gnx.read_parameters_file(('./geonomics/tests/runtime/'
+params = gnx.read_parameters_file(('./tests/runtime/'
                                    'runtime_params.py'))
 
 # define number of timesteps to run for each model

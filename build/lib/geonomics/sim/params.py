@@ -150,9 +150,9 @@ LYR_PARAMS = '''
             #layer name (LAYER NAMES MUST BE UNIQUE!)
             %s: {
 
-        #--------------------------------------#
+        #-------------------------------------#
         #--- layer num. %i: init parameters ---#
-        #--------------------------------------#
+        #-------------------------------------#
 
                 #initiating parameters for this layer
                 'init': {
@@ -230,9 +230,9 @@ NLMPY_LYR_PARAMS = '''
     #%i = lyr_num,
     #%s = change events,
 LYR_CHANGE_PARAMS = '''
-            #----------------------------------------#
+            #---------------------------------------#
             #--- layer num. %i: change parameters ---#
-            #----------------------------------------#
+            #---------------------------------------#
 
                 #landscape-change events for this Layer
                 'change': {
@@ -274,9 +274,9 @@ SPP_PARAMS = '''
             #species name (SPECIES NAMES MUST BE UNIQUE!)
             %s: {
 
-            #------------------------------------#
+            #-----------------------------------#
             #--- spp num. %i: init parameters ---#
-            #------------------------------------#
+            #-----------------------------------#
 
                 'init': {
                     #starting number of individs
@@ -287,9 +287,9 @@ SPP_PARAMS = '''
                     'K_factor':         1,
                     }, # <END> 'init'
 
-            #--------------------------------------#
+            #-------------------------------------#
             #--- spp num. %i: mating parameters ---#
-            #--------------------------------------#
+            #-------------------------------------#
 
                 'mating'    : {
                     #age(s) at sexual maturity (if tuple, female first)
@@ -312,9 +312,9 @@ SPP_PARAMS = '''
                     'mating_radius':            10,
                     }, # <END> 'mating'
 
-            #-----------------------------------------#
+            #----------------------------------------#
             #--- spp num. %i: mortality parameters ---#
-            #-----------------------------------------#
+            #----------------------------------------#
 
                 'mortality'     : {
                     #maximum age
@@ -327,9 +327,9 @@ SPP_PARAMS = '''
                     'density_grid_window_width':    None,
                     }, # <END> 'mortality'
 
-            #----------------------------------------#
+            #---------------------------------------#
             #--- spp num. %i: movement parameters ---#
-            #----------------------------------------#
+            #---------------------------------------#
 
                 'movement': {
                     #whether or not the species is mobile
@@ -391,9 +391,9 @@ DISP_SURF_PARAMS = '''
     #
     #%s = traits_params,
 GENOME_PARAMS = '''
-            #----------------------------------------------------#
+            #---------------------------------------------------#
             #--- spp num. %i: genomic architecture parameters ---#
-            #----------------------------------------------------#
+            #---------------------------------------------------#
 
                 'gen_arch': {
                     #file defining custom genomic arch
@@ -456,9 +456,9 @@ TRTS_PARAMS = '''
     #%s = trait_num,
     #%i = trait_num,
 TRT_PARAMS = '''
-                        #--------------------------#
+                        #-------------------------#
                         #---trait %i parameters ---#
-                        #--------------------------#
+                        #-------------------------#
                         #trait name (TRAIT NAMES MUST BE UNIQUE!)
                         %s: {
                             #trait-selection Layer name
@@ -487,9 +487,9 @@ TRT_PARAMS = '''
     #%i = spp_num,
     #%s = dem_and-or_param_change_params_str,
 SPP_CHANGE_PARAMS = '''
-            #--------------------------------------#
+            #-------------------------------------#
             #--- spp num. %i: change parameters ---#
-            #--------------------------------------#
+            #-------------------------------------#
 
                 'change': {
 %s

@@ -195,6 +195,32 @@
 <div class="section" id="module-geonomics.sim.burnin">
 <span id="geonomics-sim-burnin-module"></span><h2>geonomics.sim.burnin module<a class="headerlink" href="#module-geonomics.sim.burnin" title="Permalink to this headline">¶</a></h2>
 <p>Functions for testing burn-in stationarity.</p>
+<dl class="class">
+<dt id="geonomics.sim.burnin.SpatialTester">
+<em class="property">class </em><code class="sig-prename descclassname">geonomics.sim.burnin.</code><code class="sig-name descname">SpatialTester</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="geonomics.sim.burnin.SpatialTester.plot_diffs">
+<code class="sig-name descname">plot_diffs</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">bins=50</em>, <em class="sig-param">alpha=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.plot_diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.burnin.SpatialTester.run_test">
+<code class="sig-name descname">run_test</code><span class="sig-paren">(</span><em class="sig-param">num_timesteps_back</em>, <em class="sig-param">alpha=0.05</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.run_test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.burnin.SpatialTester.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="geonomics.sim.burnin.SpatialTester.update_counts_cell">
+<code class="sig-name descname">update_counts_cell</code><span class="sig-paren">(</span><em class="sig-param">i</em>, <em class="sig-param">j</em>, <em class="sig-param">v</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.update_counts_cell" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="module-geonomics.sim.data">
 <span id="geonomics-sim-data-module"></span><h2>geonomics.sim.data module<a class="headerlink" href="#module-geonomics.sim.data" title="Permalink to this headline">¶</a></h2>
@@ -646,7 +672,7 @@ and matplotlib.pyplot.text.</p></li>
 
 <dl class="method">
 <dt id="geonomics.sim.model.Model.plot_genotype">
-<code class="sig-name descname">plot_genotype</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">locus</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">by_dominance=False</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">edge_color='black'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_genotype" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plot_genotype</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">locus</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">with_dominance=False</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">edge_color='black'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_genotype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a Species’ Individuals, colored by their genotypes for a locus</p>
 <p>Create a scatter plot of the Individuals in a Species,
 on top of any Landscape Layer, and color the points by
@@ -665,7 +691,7 @@ either the Layer’s index number (i.e. its integer key in the
 Landscape dict), or its name (as a character string). Defaults
 to None, which will cause all Layers to be plotted as an overlay
 of transparent rasters, each with a different colormap.</p></li>
-<li><p><strong>by_dominance</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If False, the Individuals will be colored by their actual genotypes
+<li><p><strong>with_dominance</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If False, the Individuals will be colored by their actual genotypes
 (i.e. a 0|0 homozygote will be depicted as 0, a 1|1 homozygote as
 1, and a 0|1 heterozygote as 0.5). If True, then the dominance
 value for the chosen locus will be used to the determine the
@@ -910,7 +936,7 @@ and matplotlib.pyplot.text.</p></li>
 
 <dl class="method">
 <dt id="geonomics.sim.model.Model.plot_pop_growth">
-<code class="sig-name descname">plot_pop_growth</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_pop_growth" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plot_pop_growth</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">expected=True</em>, <em class="sig-param">actual=True</em>, <em class="sig-param">expected_color='red'</em>, <em class="sig-param">actual_color='blue'</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_pop_growth" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the chosen Species’ population over time</p>
 <p>Plot a line plot of the Species’ population over model time (in blue),
 as well as the expected population-size trend (based on summing the
@@ -918,9 +944,15 @@ Species’ carrying-capacity raster and using that total expected
 population size to solve the the logistic growth equation; in red).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose population growth will be plotted.
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em>) – A reference to the Species whose population growth will be plotted.
 Can be either the Species’ index number (i.e. its integer key
-in the Community dict), or its name (as a character string).</p>
+in the Community dict), or its name (as a character string).</p></li>
+<li><p><strong>expected</strong> (<em>bool</em><em>, </em><em>default: True</em>) – Whether or not to plot the line showing the expected (under
+the logistic growth model) trajectory of populaion growth, in red.</p></li>
+<li><p><strong>actual</strong> (<em>bool</em><em>, </em><em>default: True</em>) – Whether or not to plot the line showing the actual
+trajectory of population growth, in blue.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>Returns no output</p>
@@ -980,13 +1012,13 @@ before <cite>gnx.make_parameters_file</cite> is called).</p>
 <span class="go">Creating the burn-in function queue...</span>
 <span class="go">Creating the main function queue...</span>
 <span class="go">Running burn-in, iteration 0...</span>
-<span class="go">burn:   0:0</span>
+<span class="go">burn:   it=0:   t=0</span>
 <span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
 <span class="go">.......................................................................................</span>
-<span class="go">burn:   0:1</span>
+<span class="go">burn:   it=0:   t=1</span>
 <span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
 <span class="go">.......................................................................................</span>
-<span class="go">burn:   0:2</span>
+<span class="go">burn:   it=0:   t=2</span>
 <span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
 <span class="go">.......................................................................................</span>
 <span class="go">.</span>
@@ -1079,13 +1111,13 @@ before <cite>gnx.make_parameters_file</cite> is called).</p>
 <span class="go">Creating the burn-in function queue...</span>
 <span class="go">Creating the main function queue...</span>
 <span class="go">Running burn-in, iteration 0...</span>
-<span class="go">burn:   0:0</span>
+<span class="go">burn:   it=0:   t=0</span>
 <span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
 <span class="go">.......................................................................................</span>
-<span class="go">burn:   0:1</span>
+<span class="go">burn:   it=0:   t=1</span>
 <span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
 <span class="go">.......................................................................................</span>
-<span class="go">burn:   0:2</span>
+<span class="go">burn:   it=0:   t=2</span>
 <span class="go">        species: spp_0                         N=250    (births=35      deaths=214)</span>
 <span class="go">.......................................................................................</span>
 <span class="go">.</span>
@@ -1096,13 +1128,13 @@ before <cite>gnx.make_parameters_file</cite> is called).</p>
 <span class="go">Burn-in complete.</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1">#now run in main mode for 50 timesteps</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mod</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">T</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;main&#39;</span><span class="p">)</span>
-<span class="go"> main:   1:0</span>
+<span class="go"> main:   it=1:  t=0</span>
 <span class="go">         species: spp_0                         N=131    (births=35      deaths=214)</span>
 <span class="go"> .......................................................................................</span>
-<span class="go"> main:   1:1</span>
+<span class="go"> main:   it=1:  t=1</span>
 <span class="go">         species: spp_0                         N=129    (births=35      deaths=214)</span>
 <span class="go"> .......................................................................................</span>
-<span class="go"> main:   1:2</span>
+<span class="go"> main:   it=1:  t=2</span>
 <span class="go">         species: spp_0                         N=133    (births=35      deaths=214)</span>
 <span class="go"> .......................................................................................</span>
 <span class="go"> .</span>

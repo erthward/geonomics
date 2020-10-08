@@ -106,6 +106,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#conductancesurface"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#densitygridstack"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_DensityGridStack</span></span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#kdtree"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_KDTree</span></span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tskit-tables-tablecollection"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">tables</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">TableCollection</span></span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#recombinationpaths"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_RecombinationPaths</span></span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#landscapechanger-and-specieschanger"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_LandscapeChanger</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_SpeciesChanger</span></span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#datacollector-and-statscollector"><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_DataCollector</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_StatsCollector</span></span></code></a></li>
@@ -241,10 +242,18 @@ real-world GIS rasters.</p>
 <p><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> objects
 (see <a class="reference internal" href="#individual-species-and-community-objects"><span class="std std-ref">Individual, Species, and Community objects</span></a>, below)
 can optionally be assigned genomes.
-If they are, each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s genome is modeled as a
-2-by-L Numpy array (where 2 is the ploidy, currently fixed at
-diploidy, and L is genome length) containing 0s and 1s (because
-Geonomics strictly models biallelic SNPs, i.e SNPs with ‘0’- and ‘1’-alleles).</p>
+If they are, each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s genome is conceptually modeled as a
+2-by-L array (where 2 is the ploidy, currently fixed at
+diploidy, and L is the genome length) containing 0s and 1s (because
+Geonomics strictly models biallelic SNPs, i.e SNPs with ‘0’- and ‘1’-alleles).
+(In actuality, Geonomics stores genomes by combining
+Numpy arrays for non-neutral genotypes with a <a class="reference external" href="https://tskit.readthedocs.io/en/latest/index.html">tskit</a> <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TableCollection</span></span></code>
+for neutral genotypes and for the current population’s spatial pedigree.
+Although this makes for more complicated data structures,
+it optimizes information retention while minimizing memory usage,
+keeping Geonomics fast yet nonetheless enabling powerful
+spatiotemporal population genomics research.
+See <a class="reference internal" href="#tskit-tables-tablecollection"><span class="std std-ref">tskit.tables.TableCollection</span></a>, below, for details.)</p>
 <p>The parameter L, as well as numerous other genomic parameters (including
 locus-wise starting frequencies of the 1 alleles; locus-wise dominance effects;
 locus-wise recombination rates; and genome-wide mutation rates for neutral,
@@ -253,9 +262,9 @@ globally deleterious, and adaptive loci), are controlled by the
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> belongs. (For the full and detailed list of attributes in a
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitecture</span></span></code> object, see its class documentation, below.)
 The genomes of the initial <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s
-in a simulation, as well as those of
-<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s in subsequent generations, are either drawn
-or recombined, and are mutated, according to the values stipulated
+in a simulation are drawn, and those of
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s in subsequent generations are recombined (and optionally
+mutated) according to the values stipulated
 by the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitecture</span></span></code> of
 their <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>. The user can create a species with a
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitecture</span></span></code> and with corresponding
@@ -276,9 +285,10 @@ underlying that <code class="code py python docutils literal notranslate"><span 
 <div class="math notranslate nohighlight">
 \[z_{i,t} = null\_genotype + \sum_{l = 0}^{n} \alpha_{t,l} g_{i,l}\]</div>
 <p>where <span class="math notranslate nohighlight">\(z_{i,t}\)</span> is the phenotype of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> i for trait t,
-<span class="math notranslate nohighlight">\(g_{i, l}\)</span> is the genotype of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> at that locus, and
-<span class="math notranslate nohighlight">\(\alpha_{t,l}\)</span> is the effect size of that locus for that trait.</p>
-<p>The ‘null phenotype’ refers determines what would be the phenotypic value that
+<span class="math notranslate nohighlight">\(g_{i, l}\)</span> is the effective genotype of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> <span class="math notranslate nohighlight">\(i\)</span>
+at locus <span class="math notranslate nohighlight">\(l\)</span>, and
+<span class="math notranslate nohighlight">\(\alpha_{t,l}\)</span> is the effect size of locus <span class="math notranslate nohighlight">\(l\)</span> for trait <span class="math notranslate nohighlight">\(t\)</span>.</p>
+<p>The ‘null phenotype’ represents the phenotypic value for
 an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> who is homozygyous for
 the 0 allele at all loci for a trait.
 For monogenic traits the null phenotype is 0 and the effect size is fixed at
@@ -488,8 +498,9 @@ may be necessary, depending on the user’s interests). The following plot
 show the estimated density rasters for a 1000x1000-cell <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> with
 a population of 50,000 individuals, using various window widths:</p>
 <img alt="_images/DensityGridStack_ww_100.jpg" class="align-center" src="_images/DensityGridStack_ww_100.jpg" />
-<p>And this plot shows how <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_DensityGridStack</span></span></code> creation (plot titled ‘make’)
-and runtime (‘calc’)scale with window-width for that <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>:</p>
+<p>And this plot shows how <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_DensityGridStack</span></span></code> creation
+(plot titled ‘making’) and runtime (plot titled ‘calc’)
+scale with window-width for that <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>:</p>
 <img alt="_images/densitygridstack_compute_times.png" class="align-center" src="_images/densitygridstack_compute_times.png" />
 </div>
 <div class="section" id="kdtree">
@@ -498,6 +509,36 @@ and runtime (‘calc’)scale with window-width for that <code class="code py py
 It provides an optimized algorithm (the kd-tree) for finding
 neighboring points within a given search radius.
 This class is used for all neighbor-searching operations (e.g. mate-search).</p>
+</div>
+<div class="section" id="tskit-tables-tablecollection">
+<h4><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">tables</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">TableCollection</span></span></code><a class="headerlink" href="#tskit-tables-tablecollection" title="Permalink to this headline">¶</a></h4>
+<p>To enable easy recording of the pedigree of a simulated <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>,
+Geonomics depends on the Python package <a class="reference external" href="https://tskit.readthedocs.io/en/latest/index.html">tskit</a> (software
+that originated as improvements made to the data structures
+and algorithms used by the popular forward-time simulator <a class="reference external" href="https://msprime.readthedocs.io/en/stable/">msprime</a>).
+Geonomics uses the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code> tables API to store the full history of
+individuals, genotypes, mating events, and recombinations for
+a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> in a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TableCollection</span></span></code> object.
+This data structure is initiated with a random pedigree
+that is backwards-time simulated using <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">msprime</span></span></code>
+and used as a stand-in (viz. meaningless) pedigree
+for a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’ starting population.
+It is then updated with each timestep’s forward-time simulation information,
+and it is periodically simplified as recommended by the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code> authors
+using <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code>’s simplification algorithm.
+(The simplification interval can be parameterized by the user.)
+Because each individual is stored along with its x,y birth location,
+a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TableCollection</span></span></code> thus
+contains the full spatial pedigree of a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’ current population.
+Geonomics additionally provides some wrapper functions,
+implemented as <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> methods,
+for converting the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TableCollection</span></span></code> to a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TreeSequence</span></span></code>,
+and for calculating statistics and creating visualizations from these
+two data structures. (For further details regarding <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code>,
+see the Python package
+<a class="reference external" href="https://tskit.readthedocs.io/en/latest/index.html">documentation</a>
+and the associated peer-reviewed
+<a class="reference external" href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006581">paper</a>.)</p>
 </div>
 <div class="section" id="recombinationpaths">
 <h4><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_RecombinationPaths</span></span></code><a class="headerlink" href="#recombinationpaths" title="Permalink to this headline">¶</a></h4>

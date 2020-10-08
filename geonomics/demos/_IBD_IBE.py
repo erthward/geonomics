@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.mplot3d import Axes3D
-from copy import deepcopy
+from copy import copy, deepcopy
 import time
 import statsmodels.api as sm
 
@@ -64,7 +64,7 @@ def map_genetic_PCA(mod):
     # bot = plt.cm.get_cmap('Blues', 256)(np.linspace(0.4, 0.45, 2))[0]
     # top = plt.cm.get_cmap('Reds', 256)(np.linspace(0.4, 0.45, 2))[0]
     cmap = plt.cm.coolwarm
-    cmap.set_bad(color='#8C8C8C')
+    copy(cmap).set_bad(color='#8C8C8C')
     # plot landscape
     # plt.imshow(masked_env, cmap=cmap, alpha=0.8)
     mod.plot(0, 0, color=PC_colors/255.0, mask_rast=masked_env,
@@ -177,7 +177,7 @@ def calc_dists(species, dist_type='gen', env_lyrs=None, return_flat=True,
                                                     "to n(n-1)/2!")
     else:
         # make it a symmetric dist matrix, if returning the matrix
-        dist_mat[dist_mat == np.nan] = 0
+        dist_mat[np.isnan(dist_mat)] = 0
         dists = dist_mat + dist_mat.T
         assert dists.size == n_ind**2, "Size not equal to n*n!"
     # dist_vals = [item[1:] for item in dist_vals]
@@ -459,9 +459,9 @@ def _make_params():
                         'movement_distance_distr_param2':     0.5,
                         'movement_distance_distr':            'wald',
                         #first param of distr of dispersal distance
-                        'dispersal_distr_param1':       0.5,
+                        'dispersal_distance_distr_param1':       0.5,
                         #second param of distr of dispersal distance
-                        'dispersal_distr_param2':    0.5,
+                        'dispersal_distance_distr_param2':    0.5,
                         'dispersal_distance_distr':  'wald',
                         'move_surf'     : {
                             #move-surf Layer name
@@ -607,7 +607,8 @@ def _make_params():
 
 
 def _run(params, save_figs=False, time_it=False,
-         make_3d_plots=False, use_barrier=True):
+         make_3d_plots=False, use_barrier=True,
+         run_mantel=False):
     """
     use_barrier:
         sets flag to indicate whether or not to use the barrier
@@ -830,12 +831,17 @@ def _run(params, save_figs=False, time_it=False,
     #########################
 
     spp_subset = deepcopy(mod.comm[0])
-    rand_inds = spp_subset._get_random_individuals(100)
+    rand_inds = spp_subset._get_random_individuals(250)
     all_inds = [*spp_subset]
     for ind in all_inds:
         if ind not in rand_inds:
             spp_subset.pop(ind)
     gen_dists = calc_dists(spp_subset, biallelic=False, allele_freq_diff=False)
+    # output the genetic distance matrix to CSV, if Mantel test required
+    if run_mantel:
+        gen_dist_mat = calc_dists(spp_subset, biallelic=False,
+                                  allele_freq_diff=False,return_flat=False)
+        np.savetxt("gen.csv", gen_dist_mat, delimiter=',')
     scaled_gen_dists = gen_dists/gen_dists.max()
     assert (np.all(scaled_gen_dists >= 0)
             and np.all(scaled_gen_dists <= 1)), ('Scaled genetic dist is outside '
@@ -844,6 +850,21 @@ def _run(params, save_figs=False, time_it=False,
     env_dists = calc_dists(spp_subset, 'env', [0])
     pheno_dists = calc_dists(spp_subset, 'phn', [0])
 
+    # output the geo and env distance matrices to CSV, if Mantel test required,
+    # then run the Mantel test
+    if run_mantel:
+        geo_dist_mat = calc_dists(spp_subset, 'geo', return_flat=False)
+        env_dist_mat = calc_dists(spp_subset, 'env', [0], return_flat=False)
+        np.savetxt("geo.csv", geo_dist_mat, delimiter=',')
+        np.savetxt("env.csv", env_dist_mat, delimiter=',')
+        # get the path to the mantel script, then run it
+        gnx_path = '/' + os.path.join(*os.path.split(__file__)[0].split('/')[:-1])
+        mantel_script_dir = os.path.join(gnx_path, 'data/IBD_IBE_demo')
+        mantel_script = os.path.join(mantel_script_dir,
+                                     os.listdir(mantel_script_dir)[0])
+        print('\n\n')
+        os.system('Rscript %s' % mantel_script)
+        print('\n\n')
 
     # run multiple linear regression of gen on geo and env dists
     mlr_est = sm.Logit(endog=np.array(scaled_gen_dists.T),
@@ -855,6 +876,7 @@ def _run(params, save_figs=False, time_it=False,
     z_preds = mlr_est.predict(np.vstack((x_preds, y_preds)).T)
     p_val_lt = mlr_est.pvalues[0] < 0.001
     assert p_val_lt, 'p-value not less than 0.001!'
+    print(mlr_est.summary2())
 
     # create 3d-plot data
     y_vals = np.arange(0, 1.01, 0.01)
@@ -875,29 +897,29 @@ def _run(params, save_figs=False, time_it=False,
     ##########################
     # create plot of z-e diffs
     ##########################
+    if not time_it:
+        L_color = '#096075'
+        R_color = '#bf2659'
+        ze_fit_ax_L.set_xlabel('time (steps)')
+        ze_fit_ax_L.set_ylabel(('mean $|z-e|$)'), color=L_color)
+        ze_fit_ax_L.tick_params(axis='y', labelcolor=L_color, labelrotation=45)
+        ze_fit_ax_L.plot(range(len(mean_z_e_diffs)), mean_z_e_diffs, color=L_color)
+        fix_yax_n_ticks_digits(ze_fit_ax_L, mean_z_e_diffs, 5, 2)
+        ze_fit_ax_R.set_ylabel('mean fitness', color=R_color)
+        ze_fit_ax_R.tick_params(axis='y', labelcolor=R_color, labelrotation=-45)
+        ze_fit_ax_R.plot(range(len(mean_fits)), mean_fits, color=R_color)
+        fix_yax_n_ticks_digits(ze_fit_ax_R, mean_fits, 5, 3)
+        #ax.set_xlabel('time')
+        #ax.set_ylabel(('mean difference between individuals\' phenotypes and '
+        #               'environmental values'))
+        #z_e_fig.show()
+        #if save_figs:
+        #    fig.savefig('IBD_IBE_z-e_plot.png', format='png', dpi=1000)
 
-    L_color = '#096075'
-    R_color = '#bf2659'
-    ze_fit_ax_L.set_xlabel('time (steps)')
-    ze_fit_ax_L.set_ylabel(('mean $|z-e|$)'), color=L_color)
-    ze_fit_ax_L.tick_params(axis='y', labelcolor=L_color, labelrotation=45)
-    ze_fit_ax_L.plot(range(len(mean_z_e_diffs)), mean_z_e_diffs, color=L_color)
-    fix_yax_n_ticks_digits(ze_fit_ax_L, mean_z_e_diffs, 5, 2)
-    ze_fit_ax_R.set_ylabel('mean fitness', color=R_color)
-    ze_fit_ax_R.tick_params(axis='y', labelcolor=R_color, labelrotation=-45)
-    ze_fit_ax_R.plot(range(len(mean_fits)), mean_fits, color=R_color)
-    fix_yax_n_ticks_digits(ze_fit_ax_R, mean_fits, 5, 3)
-    #ax.set_xlabel('time')
-    #ax.set_ylabel(('mean difference between individuals\' phenotypes and '
-    #               'environmental values'))
-    #z_e_fig.show()
-    #if save_figs:
-    #    fig.savefig('IBD_IBE_z-e_plot.png', format='png', dpi=1000)
-
-    fig.tight_layout()
-    fig.show()
-    if save_figs:
-            fig.savefig('IBD_IBE.png', format='png', dpi=1000)
+        fig.tight_layout()
+        fig.show()
+        if save_figs:
+                fig.savefig('IBD_IBE.png', format='png', dpi=1000)
 
 
     #########################

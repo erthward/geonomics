@@ -339,17 +339,17 @@ SPP_PARAMS = '''
                     #concentration of distr of movement direction
                     'direction_distr_kappa':                0,
                     #1st param of distr of movement distance
-                    'movement_distance_distr_param1':       0.5,
+                    'movement_distance_distr_param1':       0.1,
                     #2nd param of distr of movement distance
-                    'movement_distance_distr_param2':       5e-8,
-                    #movement distance distr to use ('levy' or 'wald')
-                    'movement_distance_distr':              'levy',
+                    'movement_distance_distr_param2':       0.5,
+                    #movement distance distr to use ('lognormal','levy','wald')
+                    'movement_distance_distr':              'lognormal',
                     #1st param of distr of dispersal distance
-                    'dispersal_distance_distr_param1':      0,
+                    'dispersal_distance_distr_param1':      -1,
                     #2nd param of distr of dispersal distance
-                    'dispersal_distance_distr_param2':      5e-14,
-                    #dispersal distance distr to use ('levy' or 'wald')
-                    'dispersal_distance_distr':             'levy',%s%s
+                    'dispersal_distance_distr_param2':      0.05,
+                    #dispersal distance distr to use ('lognormal','levy','wald')
+                    'dispersal_distance_distr':             'lognormal',%s%s
                     },    # <END> 'movement'
 
 %s

@@ -22,7 +22,7 @@ There are two levels of documentation available:
   which are returned when requesting Python's help on a class or function.
 
 - Detailed documentation is available at the
-  `Geonomics homepage<https://FIX_ME>`_.
+`Geonomics homepage<https://geonomics.readthedocs.io/en/latest/>`_.
 
 All documentation examples assume that `geonomics` has been imported as `gnx`::
 

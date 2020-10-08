@@ -11,8 +11,7 @@ from matplotlib import gridspec
 import os
 
 # set some image params
-img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
-           'img/final/')
+img_dir = '/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
 ax_fontdict = {'fontsize': 10,
                'name': 'Bitstream Vera Sans'}
 ttl_fontdict = {'fontsize': 12,
@@ -34,10 +33,10 @@ base_vals = {'L': 1000,
              'n_births_distr_lambda': 2
              }
 # define the ranges of values for the parameters I want to vary
-test_vals = {'L': [10, 100, 1000],
-             'K_fact': [5, 10, 20],
-             'dim': [(10, 10), (20, 20), (50, 50), (100, 100)],
-             'n_births_distr_lambda': [0, 1, 2],
+test_vals = {'L': [10, 100, 1000, 10000],
+             'K_fact': [5, 10, 20, 40],
+             'dim': [(10, 10), (20, 20), (50, 50), (100, 100), (200,200)],
+             'n_births_distr_lambda': [0, 1, 2, 4],
              }
 # define x-axis labels for plots
 plot_x_labs = {'L': 'genome\nlength (L)',
@@ -158,9 +157,10 @@ for n, param in enumerate([*test_vals]):
 
     if param == 'dim':
         axs[n].plot([i[0] for i in test_vals[param]],
-                    runtimes_this_param, '-or')
+                    runtimes_this_param, '-o', color='#7340ff')
     else:
-        axs[n].plot(test_vals[param], runtimes_this_param, '-or')
+        axs[n].plot(test_vals[param], runtimes_this_param, '-o',
+                    color='#7340ff')
     axs[n].set_xlabel(plot_x_labs[param], fontdict=ax_fontdict)
 
     # save all the runtimes for this param in the runtimes dict

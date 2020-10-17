@@ -909,12 +909,6 @@ that are used to ensure only male-female mating events.</p>
 <p>This defines the ratio of males to females (i.e. it will be converted to
 a probability that an offspring is a male, which is used as the probability
 of a Bernoulli draw of that offspring’s sex).</p>
-<p><strong>distweighted_birth</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether P(birth) should be weighted by parental dist</span>
-<span class="s1">&#39;distweighted_birth&#39;</span><span class="p">:</span>  <span class="kc">False</span><span class="p">,</span>
-</pre></div>
-</div>
-<p>#NOTE: I WILL PROBABLY GET RID OF THIS PARAMETER…</p>
 <p><strong>R</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#intrinsic growth rate</span>
 <span class="s1">&#39;R&#39;</span><span class="p">:</span>                    <span class="mf">0.5</span><span class="p">,</span>
@@ -978,6 +972,50 @@ be fixed. If set to true, each successful mating event will produce
 <p>reset? Y</p>
 <p>This defines the radius within which an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Indvidual</span></span></code> can find a mate.
 This radius is provided to queries run on the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_KDTree</span></span></code> object.</p>
+<p><strong>choose_nearest_mate</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether individs should choose nearest neighs as mates</span>
+<span class="s1">&#39;choose_nearest_mate&#39;</span><span class="p">:</span>     <span class="kc">False</span><span class="p">,</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">py</dt>
+<dd class="field-odd"><p><cite>bool</cite></p>
+</dd>
+</dl>
+<p>default: False</p>
+<p>reset? P</p>
+<p>This determines whether or each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>  will always
+choose its nearest neighbor as a mate.
+Defaults to False, allowing each focal <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> to
+randomly choose from among all other <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individauls</span></span></code> occurring
+within its mating radius.
+(In that case, if <strong>inverse_dist_mating</strong> is False then all other nearby
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code> will have equal probability of being chosen;
+if <strong>inverse_dist_**mating</strong> is True, then other <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code> will
+have probabilities linearly related to their inverse distance from the
+focal <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>.)</p>
+<p><strong>inverse_dist_mating</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether mate-choice should be inverse distance-weighted</span>
+<span class="s1">&#39;inverse_dist_mating&#39;</span><span class="p">:</span>     <span class="kc">False</span><span class="p">,</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">py</dt>
+<dd class="field-odd"><p><cite>bool</cite></p>
+</dd>
+</dl>
+<p>default: False</p>
+<p>reset? P</p>
+<p>This determines whether or each focal <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>
+will use the inverse of the distance between itself and all
+other <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individauls</span></span></code> occurring within its mating radius
+to weight the mutually exclusive probabilites of choosing
+each of those other <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code> as a mate.
+If False, then each other <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> within the
+focal <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s mating radius has a uniform probability
+of being chosen as a mate.
+(Note that this parameter will only
+be used if <strong>choose_nearest_mate</strong> is False.)</p>
 </div>
 <hr class="docutils" />
 <div class="section" id="mortality">

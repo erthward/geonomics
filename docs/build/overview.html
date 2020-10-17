@@ -613,9 +613,13 @@ relative its parents’ midpoint). But the option to use a
 <hr class="docutils" />
 <div class="section" id="reproduction">
 <h3>Reproduction<a class="headerlink" href="#reproduction" title="Permalink to this headline">¶</a></h3>
-<p>Each timestep, for each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>, all pairs of individuals within
+<p>Each timestep, for each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>, potential mating pairs
+are chosen from among all pairs of individuals within
 a certain distance of each other (i.e. the mating radius,
-which is set in the parameters file) are identified.
+which is set in the parameters file).
+This choice can be made by strict nearest-neighbor mating,
+or pairs can be randomly drawn from within the mating radius
+using either uniform or inverse-distance weighted probabilities.
 These pairs are subsetted if necessary (i.e. if the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>
 requires that <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s be above a certain reproductive age,
 or that they be of opposite sexes, in order to mate; these values

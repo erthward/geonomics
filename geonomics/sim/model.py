@@ -77,7 +77,7 @@ class Model:
 
         #print verbose output
         if self._verbose:
-            print('\nMAKING MODEL...\n')
+            print('\nMAKING MODEL...\n', flush=True)
 
         #set the seed, if required
         self.seed = None
@@ -386,7 +386,7 @@ class Model:
             #verbose output
             if self._verbose:
                 print(('Copying the original Landscape '
-                       'for iteration %i...\n\n') % self.it)
+                       'for iteration %i...\n\n') % self.it, flush=True)
             #deepcopy the original land
             self.land = deepcopy(self.orig_land)
             #and reset the land._changer.changes, if needed (so that they
@@ -396,13 +396,13 @@ class Model:
                 #verbose output
                 if self._verbose:
                     print(('Resetting the _LandscapeChanger.changes '
-                                                        'object...\n\n'))
+                                                'object...\n\n'), flush=True)
                 self.land._changer._set_changes(self.land)
         else:
             #verbose output
             if self._verbose:
                 print(('Creating new Landscape for '
-                                    'iteration %i...\n\n') % self.it)
+                                'iteration %i...\n\n') % self.it, flush=True)
             self.land = self._make_landscape()
 
     #method to wrap around Species._set_K
@@ -421,7 +421,7 @@ class Model:
             #verbose output
             if self._verbose:
                 print(('Copying the original community for '
-                                    'iteration %i...\n\n') % self.it)
+                                'iteration %i...\n\n') % self.it, flush=True)
             self.comm = deepcopy(self.orig_comm)
             #and reset the spp._changer.changes objects for each spp,
             #if needed (so that they point to the current species,
@@ -431,13 +431,15 @@ class Model:
                     #verbose output
                     if self._verbose:
                         print(('Resetting the spp._changer.changes '
-                            'object for species " %s"...\n\n') % spp.name)
+                            'object for species " %s"...\n\n') % spp.name,
+                              flush=True)
                     spp._changer._set_changes(spp, self.land)
         else:
             #verbose ouput
             if self._verbose:
                 print(('Creating new community for '
-                                    'iteration %i...\n\n') % self.it)
+                                    'iteration %i...\n\n') % self.it,
+                      flush=True)
             self.comm = self._make_community(self._verbose)
 
     #method to make a data._DataCollector object for this model
@@ -511,11 +513,11 @@ class Model:
         if repeat_burn or self.it <= 0:
             #verbose output
             if self._verbose:
-                print('Creating the burn-in function queue...\n\n')
+                print('Creating the burn-in function queue...\n\n', flush=True)
             self.burn_fn_queue = self._make_fn_queue(burn=True)
         #verbose output
         if self._verbose:
-            print('Creating the main function queue...\n\n')
+            print('Creating the main function queue...\n\n', flush=True)
         self.main_fn_queue = self._make_fn_queue(burn=False)
 
 
@@ -599,7 +601,7 @@ class Model:
                         spp.n_deaths[:].pop()) for spp in self.comm.values()])
         verbose_msg = verbose_msg + spps_submsgs
         print(verbose_msg)
-        print('\t' + '.' * (self.__term_width__ - self.__tab_len__))
+        print('\t' + '.' * (self.__term_width__ - self.__tab_len__), flush=True)
 
 
     #method to run the burn-in or main function
@@ -624,7 +626,8 @@ class Model:
                             #verbose output
                             if self._verbose:
                                 print(('\nAssigning genomes for '
-                                    'species "%s"...\n\n') % spp.name)
+                                       'species "%s"...\n\n') % spp.name,
+                                      flush=True)
                             spp._set_genomes_and_tables(self.burn_T, self.T)
                     #and then set the reassign_genomes attribute to False, so
                     #that they won't get reassigned again during this iteration
@@ -633,7 +636,7 @@ class Model:
                 self.comm.burned = True
                 #verbose output
                 if self._verbose:
-                    print('Burn-in complete.\n\n')
+                    print('Burn-in complete.\n\n', flush=True)
         #or do a main step
         elif mode == 'main':
             for fn in self.main_fn_queue:
@@ -664,7 +667,8 @@ class Model:
                             print("\n\tNUMBER EDGES AFTER SIMPLIFICATION: ",
                                   self.comm[0]._tc.edges.num_rows)
                             print("\tNUMBER INDIVIDS AFTER SIMPLIFICATION: ",
-                                  self.comm[0]._tc.individuals.num_rows)
+                                  self.comm[0]._tc.individuals.num_rows,
+                                  flush=True)
 
         #then check if any species are extinct and
         #return the correpsonding boolean
@@ -674,7 +678,8 @@ class Model:
             print(('XXXX     Species %s went extinct. '
                 'Iteration %i aborting.\n\n') % (' & '.join(
                 ['"' + spp.name + '"' for spp in self.comm.values(
-                                                ) if spp.extinct]), self.it))
+                                                ) if spp.extinct]), self.it),
+                 flush=True)
 
         return(extinct)
 
@@ -686,7 +691,7 @@ class Model:
         #verbose output
         if self._verbose:
             print('~' * self.__term_width__ + '\n\n')
-            print('Setting up iteration %i...\n\n' % self.it)
+            print('Setting up iteration %i...\n\n' % self.it, flush=True)
 
         #reset the model (including the burn-in,
         #if self.repeat_burn or if this is the first iteration) 
@@ -708,7 +713,8 @@ class Model:
             or self.it == 0):
             #verbose output
             if self._verbose:
-                print('Running burn-in, iteration %i...\n\n' % self.it)
+                print('Running burn-in, iteration %i...\n\n' % self.it,
+                      flush=True)
             #until all species have spp.burned == True
             while not np.all([spp.burned for spp in self.comm.values()]):
                 #run a burn-in timestep
@@ -722,12 +728,13 @@ class Model:
             if not self.rand_comm and not self.repeat_burn:
                 #verbose output
                 if self._verbose:
-                    print('Saving burned-in community...\n\n')
+                    print('Saving burned-in community...\n\n', flush=True)
                 self.orig_comm = deepcopy(self.comm)
 
         #verbose output
         if self._verbose:
-            print('Running main model, iteration %i...\n\n' % self.it)
+            print('Running main model, iteration %i...\n\n' % self.it,
+                  flush=True)
 
         #check if any species is starting out extinct (which would happen if it
         #went extinct in the burn-in), and if so, then skip main mode
@@ -735,7 +742,7 @@ class Model:
             if self._verbose:
                 print(("WARNING: At least one Species went extinct during "
                     "the burn-in. Cannot run main phase for "
-                    "iteration %i.\n\n") % self.it)
+                    "iteration %i.\n\n") % self.it, flush=True)
             return
 
         #loop over the timesteps, running the run_main function repeatedly
@@ -819,7 +826,7 @@ class Model:
         # verbose output
         if self._verbose:
             print('\n\n' + '#' * self.__term_width__ + '\n\n')
-            print('Running model "%s"...\n\n' % self.name)
+            print('Running model "%s"...\n\n' % self.name, flush=True)
 
         # loop over all the iterations
         while len(self.its) > 0:
@@ -839,12 +846,12 @@ class Model:
                 print('Error message:\n\t%s\n\n' % e)
                 traceback.print_exc(file=sys.stdout)
                 print()
-                print('<>' * int(self.__term_width__/2) + '\n\n')
+                print('<>' * int(self.__term_width__/2) + '\n\n', flush=True)
 
         # verbose output
         if self._verbose:
             print('\n\nModel "%s" is complete.\n' % self.name)
-            print('#' * self.__term_width__)
+            print('#' * self.__term_width__, flush=True)
 
         # set the _verbose flag back to False
         self._verbose = False
@@ -1016,7 +1023,7 @@ class Model:
                 # verbose output
                 if self._verbose:
                     print(('No mod.burn_fn_queue was found. '
-                          'Running mod.reset()...\n\n'))
+                          'Running mod.reset()...\n\n'), flush=True)
                 self._reset()
             extinct = self._do_timestep(mode=mode)
             # continue the animated plot, if animate == True
@@ -1586,11 +1593,11 @@ class Model:
         # return messages if species does not have genomes or traits
         if spp.gen_arch is None:
             print(("Model.plot_phenotype is not valid for Species "
-                "without genomes.\n"))
+                "without genomes.\n"), flush=True)
             return
         elif spp.gen_arch.traits is None:
             print(("Model.plot_phenotype is not valid for Species "
-                "without traits.\n"))
+                "without traits.\n"), flush=True)
             return
         # get the trt_num
         trt_num = self._get_trt_num(spp, trt)
@@ -1755,11 +1762,11 @@ class Model:
         #return messages if species does not have genomes or traits
         if spp.gen_arch is None:
             print(("Model.plot_fitness is not valid for Species "
-                "without genomes.\n"))
+                "without genomes.\n"), flush=True)
             return
         elif spp.gen_arch.traits is None:
             print(("Model.plot_fitness is not valid for Species "
-                "without traits.\n"))
+                "without traits.\n"), flush=True)
             return
         #get the trt_num, which CAN be None for plot_fitness
         trt_num = self._get_trt_num(spp, trt)

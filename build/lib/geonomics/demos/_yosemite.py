@@ -501,7 +501,7 @@ def _make_params():
                         # exposed habitat, then that suggests we should
                         # use a K_factor of 67.8 * 208 * 0.1 = 1111.344
                         # NOTE: dividing by 10 for tractability
-                        'K_factor':         1111.344 / 10,
+                        'K_factor':         1111.344 / 1000,
                         }, # <END> 'init'
 
                 #######################################
@@ -590,15 +590,18 @@ def _make_params():
                         #concentration of distr of movement direction
                         'direction_distr_kappa':    0,
                         #mean of distr of movement distance
-                        'movement_distance_distr_param1':        0.01704,
+                        #'movement_distance_distr_param1':        0.01704,
+                        'movement_distance_distr_param1':        7.5e-4,
                         #variance of distr of movement distance
-                        'movement_distance_distr_param2':     2.5e-7,
+                        #'movement_distance_distr_param2':     2.5e-7,
+                        'movement_distance_distr_param2':     3.1,
                         #mean of distr of dispersal distance
-                        'movement_distance_distr':      'levy',
-                        'dispersal_distance_distr_param1':       0,
+                        #'movement_distance_distr':      'levy',
+                        'movement_distance_distr':      'lognormal',
+                        'dispersal_distance_distr_param1':       7.5e-4,
                         #variance of distr of dispersal distance
-                        'dispersal_distance_distr_param2':    2.5e-10,
-                        'dispersal_distance_distr':         'levy',
+                        'dispersal_distance_distr_param2':    1,
+                        'dispersal_distance_distr':         'lognormal',
                         'move_surf'     : {
                             #move-surf Layer name
                             'layer':                'hab',

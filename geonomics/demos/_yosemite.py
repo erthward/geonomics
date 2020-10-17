@@ -46,7 +46,7 @@ def krig_phenotype(mod, window_width=8, rel_bandwidth=0.5, max_n_pts=10000):
         inds = np.array([*mod.comm[0].keys()])
     xs = mod.comm[0]._get_x(inds)
     ys = mod.comm[0]._get_y(inds)
-    zs = mod.comm[0]._get_z(inds)[:,0]
+    zs = mod.comm[0]._get_z(individs=inds)[:,0]
     OK = OrdinaryKriging(xs, ys, zs, variogram_model='spherical')
     gridx = np.arange(0.5, mod.land.dim[0] + 0.5, 1)
     gridy = np.arange(0.5, mod.land.dim[1] + 0.5, 1)
@@ -485,7 +485,7 @@ def _make_params():
 
                     'init': {
                         #starting number of individs
-                        'N':                5000,
+                        'N':                50000,
                         #carrying-capacity Layer name
                         'K_layer':          'hab',
                         #multiplicative factor for carrying-capacity layer
@@ -501,7 +501,7 @@ def _make_params():
                         # exposed habitat, then that suggests we should
                         # use a K_factor of 67.8 * 208 * 0.1 = 1111.344
                         # NOTE: dividing by 10 for tractability
-                        'K_factor':         1111.344 / 1000,
+                        'K_factor':         1111.344 / 10,
                         }, # <END> 'init'
 
                 #######################################
@@ -521,8 +521,6 @@ def _make_params():
                         # (e.g. Tinkle et al. 1993), so just leaving sex_ratio at 1
                         #ratio of males to females
                         'sex_ratio':                1/1,
-                        #whether P(birth) should be weighted by parental dist
-                        'dist_weighted_birth':      False,
                         # NOTE: found no information about this, but 0.5 seems
                         # a reasonable default value
                         #intrinsic growth rate
@@ -543,7 +541,9 @@ def _make_params():
                         #radius of mate-search area
                         #NOTE: just have individuals mate close by (i.e. within
                         #12.457m, the average interannual movement distance
-                        'mating_radius':            0.1
+                        'mating_radius':            0.1,
+                        'choose_nearest_mate':      False,
+                        'inverse_dist_mating':      False,
                         }, # <END> 'mating'
 
                 ##########################################

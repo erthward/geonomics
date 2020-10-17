@@ -455,9 +455,13 @@ relative its parents' midpoint). But the option to use a
 Reproduction
 ============
 
-Each timestep, for each :py:`Species`, all pairs of individuals within 
+Each timestep, for each :py:`Species`, potential mating pairs
+are chosen from among all pairs of individuals within 
 a certain distance of each other (i.e. the mating radius, 
-which is set in the parameters file) are identified.
+which is set in the parameters file).
+This choice can be made by strict nearest-neighbor mating,
+or pairs can be randomly drawn from within the mating radius
+using either uniform or inverse-distance weighted probabilities.
 These pairs are subsetted if necessary (i.e. if the :py:`Species` 
 requires that :py:`Individual`\s be above a certain reproductive age, 
 or that they be of opposite sexes, in order to mate; these values 

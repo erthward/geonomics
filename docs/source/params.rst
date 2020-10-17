@@ -968,18 +968,6 @@ of a Bernoulli draw of that offspring's sex).
 
 
 
-**distweighted_birth**
-
-.. code-block:: python
-
-                      #whether P(birth) should be weighted by parental dist
-                      'distweighted_birth':  False,
-
-
-#NOTE: I WILL PROBABLY GET RID OF THIS PARAMETER...
-
-
-
 **R**
 
 .. code-block:: python
@@ -1081,6 +1069,59 @@ reset? Y
 
 This defines the radius within which an :py:`Indvidual` can find a mate.
 This radius is provided to queries run on the :py:`_KDTree` object.
+
+
+
+**choose_nearest_mate**
+
+.. code-block:: python
+
+                     #whether individs should choose nearest neighs as mates
+                     'choose_nearest_mate':     False,
+
+:py: `bool`
+
+default: False
+
+reset? P
+
+This determines whether or each :py:`Individual`  will always
+choose its nearest neighbor as a mate.
+Defaults to False, allowing each focal :py:`Individual` to 
+randomly choose from among all other :py:`Individauls` occurring
+within its mating radius.
+(In that case, if **inverse_dist_mating** is False then all other nearby
+:py:`Individuals` will have equal probability of being chosen;
+if **inverse_dist_**mating** is True, then other :py:`Individuals` will
+have probabilities linearly related to their inverse distance from the
+focal :py:`Individual`.)
+
+
+
+**inverse_dist_mating**
+
+.. code-block:: python
+
+                     #whether mate-choice should be inverse distance-weighted
+                     'inverse_dist_mating':     False,
+
+:py: `bool`
+
+default: False
+
+reset? P
+
+This determines whether or each focal :py:`Individual` 
+will use the inverse of the distance between itself and all
+other :py:`Individauls` occurring within its mating radius 
+to weight the mutually exclusive probabilites of choosing
+each of those other :py:`Individuals` as a mate.
+If False, then each other :py:`Individual` within the
+focal :py:`Individual`'s mating radius has a uniform probability
+of being chosen as a mate.
+(Note that this parameter will only
+be used if **choose_nearest_mate** is False.)
+
 
 ----------------
 

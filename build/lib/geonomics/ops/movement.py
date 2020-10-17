@@ -17,7 +17,7 @@ import numpy as np
 from numpy import sin as _sin
 from numpy import cos as _cos
 from numpy.random import vonmises as _r_vonmises
-from numpy.random import wald as _wald
+from numpy.random import wald as _wald, lognormal as _lognormal
 from scipy.stats import vonmises as _s_vonmises
 from scipy.stats import levy as _s_levy
 
@@ -66,6 +66,10 @@ def _do_movement(spp):
         distance = _wald(mean=spp.movement_distance_distr_param1,
                          scale=spp.movement_distance_distr_param2,
                          size=len(old_x))
+    elif spp.movement_distance_distr == 'lognormal':
+        distance = _lognormal(mean=spp.movement_distance_distr_param1,
+                              sigma=spp.movement_distance_distr_param2,
+                              size=len(old_x))
 
     # decompose distance into x and y components
     dist_x = _cos(direction) * distance
@@ -111,6 +115,10 @@ def _do_dispersal(spp, parent_midpoint_x, parent_midpoint_y,
         elif spp.dispersal_distance_distr == 'wald':
             distance = _wald(mean=dispersal_distance_distr_param1,
                              scale=dispersal_distance_distr_param2)
+        elif spp.dispersal_distance_distr == 'lognormal':
+            distance = _lognormal(mean=spp.dispersal_distance_distr_param1,
+                                  sigma=spp.dispersal_distance_distr_param2)
+
         # decompose distance into x and y components
         dist_x = _cos(direction) * distance
         dist_y = _sin(direction) * distance

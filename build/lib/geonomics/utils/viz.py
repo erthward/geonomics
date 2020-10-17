@@ -10,6 +10,7 @@ import numpy as np
 # import random
 import matplotlib as mpl
 import os
+import copy
 import matplotlib as mpl
 if os.environ.get('DISPLAY','') == '':
     print('\n\nNOTE: No display found. Using non-interactive Agg backend\n')
@@ -133,7 +134,7 @@ def _plot_rasters(land, lyr_num=None, cbar=True, cmap=None, plt_lims=None,
     if mask_rast is not None:
         rasters = [np.ma.masked_where(np.isnan(mask_rast),
                                       rast) for rast in rasters]
-        cmaps = [getattr(plt.cm, cm) for cm in cmaps]
+        cmaps = [copy.copy(getattr(plt.cm, cm)) for cm in cmaps]
         [cm.set_bad('#8C8C8C') for cm in cmaps]
 
     # create alphas list

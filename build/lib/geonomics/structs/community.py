@@ -76,7 +76,9 @@ class Community(dict):
                                 spp in self.values()])
             t_tests = np.all([burnin._test_t_threshold(spp, burn_T) for
                                 spp in self.values()])
-            burnin_status = adf_tests and t_tests
+            spat_tests = np.all([spp._do_spatial_burnin_test(burn_T) for
+                                 spp in self.values()])
+            burnin_status = adf_tests and t_tests and spat_tests
         #set the community burn-in tracker
         self.burned = burnin_status
         #and set the spps' burn-in trackers

@@ -19,27 +19,34 @@ ttl_fontdict = {'fontsize': 12,
 
 # read in the parameters file
 params = gnx.read_parameters_file(('./tests/runtime/'
-                                   'runtime_params.py'))
+                                   #'runtime_params.py'))
+                                   'runtime_params_selection.py'))
 
 # define number of timesteps to run for each model
 T = 250
 
+# define the plotting color
+plot_color = "#28d11f"
+
 # define the base values of the parameters (i.e. the values at which they'll
 # be held in all simulations where they are not the parameter whose influence
 # on runtime is being tested)
-base_vals = {'L': 1000,
+base_vals = {#'L': 1000,
              'K_fact': 5,
              'dim': (20, 20),
-             'n_births_distr_lambda': 2
+             'n_births_distr_lambda': 2,
+             'n_loci': 5,
              }
 # define the ranges of values for the parameters I want to vary
-test_vals = {'L': [10, 100, 1000, 10000],
+test_vals = {#'L': [10, 100, 1000, 10000],
+             'n_loci': [1, 10, 100, 1000],
              'K_fact': [5, 10, 20, 40],
              'dim': [(10, 10), (20, 20), (50, 50), (100, 100), (200,200)],
              'n_births_distr_lambda': [0, 1, 2, 4],
              }
 # define x-axis labels for plots
-plot_x_labs = {'L': 'genome\nlength (L)',
+plot_x_labs = {#'L': 'genome\nlength (L)',
+               'n_loci': 'number of non-neutral loci',
                'K_fact': 'carrying-capacity\nconstant (K)',
                'dim': 'landscape\nsize (dim)',
                'n_births_distr_lambda': ('mean n. births per\n '
@@ -88,8 +95,11 @@ for n, param in enumerate([*test_vals]):
                                 'main'].update({'dim': dim}),
                  'K_fact': lambda K_fact: new_params['comm']['species'][
                                 'spp_0']['init'].update({'K_factor': K_fact}),
-                 'L': lambda L: new_params['comm']['species']['spp_0'][
-                                'gen_arch'].update({'L': L}),
+                 #'L': lambda L: new_params['comm']['species']['spp_0'][
+                 #               'gen_arch'].update({'L': L}),
+                 'n_loci': lambda n_loci_val: new_params['comm'][
+                                'species']['spp_0']['gen_arch']['traits'][
+                                'trt_0'].update({'n_loci': n_loci_val}),
                  'n_births_distr_lambda': lambda lambda_val: new_params[
                                 'comm']['species']['spp_0'][
                                 'mating'].update(
@@ -123,8 +133,11 @@ for n, param in enumerate([*test_vals]):
         print('\t\t' + str(new_params.comm.species.spp_0.init.K_factor))
         print('\tdim')
         print('\t\t' + str(new_params.landscape.main.dim))
-        print('\tL')
-        print('\t\t' + str(new_params.comm.species.spp_0.gen_arch.L))
+        #print('\tL')
+        #print('\t\t' + str(new_params.comm.species.spp_0.gen_arch.L))
+        print('\tn_loci')
+        print('\t\t' +
+              str(new_params.comm.species.spp_0.gen_arch.traits.trt_0.n_loci))
         print('\tn_births_distr_lambda')
         print('\t\t' + str(
             new_params.comm.species.spp_0.mating.n_births_distr_lambda))
@@ -137,6 +150,8 @@ for n, param in enumerate([*test_vals]):
         # burn it in
         mod.walk(1000000, 'burn', verbose=True)
         print('\tSTARTING MODEL...')
+        print('\nEXAMPLE NONNEUT GENOME SHAPE' +
+            str(mod.comm[0][mod.comm[0]._get_random_individuals(1)[0]].g.shape))
         start = time.time()
         # run the model
         mod.walk(T, 'main', verbose=True)
@@ -157,10 +172,10 @@ for n, param in enumerate([*test_vals]):
 
     if param == 'dim':
         axs[n].plot([i[0] for i in test_vals[param]],
-                    runtimes_this_param, '-o', color='#7340ff')
+                    runtimes_this_param, '-o', color=plot_color)
     else:
         axs[n].plot(test_vals[param], runtimes_this_param, '-o',
-                    color='#7340ff')
+                    color=plot_color)
     axs[n].set_xlabel(plot_x_labs[param], fontdict=ax_fontdict)
 
     # save all the runtimes for this param in the runtimes dict
@@ -170,10 +185,10 @@ for n, param in enumerate([*test_vals]):
 
 
 
-assert True == False, ("BECAUSE THE PLOT DOESN'T FORMAT CORRECTLY WHEN THE "
-                       "SCRIPT IS RUN ALL THE WAY ON ITS OWN, IT BREAKS HERE "
-                       "SO THAT YOU CAN RUN THE REMAINING LINES MANUALLY TO "
-                       "FORMAT AND SAVE THE PLOT.")
+#assert True == False, ("BECAUSE THE PLOT DOESN'T FORMAT CORRECTLY WHEN THE "
+                       #"SCRIPT IS RUN ALL THE WAY ON ITS OWN, IT BREAKS HERE "
+                       #"SO THAT YOU CAN RUN THE REMAINING LINES MANUALLY TO "
+                       #"FORMAT AND SAVE THE PLOT.")
 # some final plot tweaking
 ax1.set_ylabel('mean runtime\n(sec/timestep)',
                fontdict=ax_fontdict)
@@ -189,14 +204,14 @@ ax1.tick_params(size=3)
 ax2.tick_params(size=3)
 ax3.tick_params(size=3)
 ax4.tick_params(size=3)
-ax1.set_xticklabels(ax1.get_xticklabels(), fontdict={'size': 8})
-ax2.set_xticklabels(ax2.get_xticklabels(), fontdict={'size': 8})
-ax3.set_xticklabels(ax3.get_xticklabels(), fontdict={'size': 8})
-ax4.set_xticklabels(ax4.get_xticklabels(), fontdict={'size': 8})
-ax1.set_yticklabels(ax1.get_yticklabels(), fontdict={'size': 8})
-ax2.set_yticklabels(ax2.get_yticklabels(), fontdict={'size': 8})
-ax3.set_yticklabels(ax3.get_yticklabels(), fontdict={'size': 8})
-ax4.set_yticklabels(ax4.get_yticklabels(), fontdict={'size': 8})
+#ax1.set_xticklabels(ax1.get_xticklabels(), fontdict={'size': 8})
+#ax2.set_xticklabels(ax2.get_xticklabels(), fontdict={'size': 8})
+#ax3.set_xticklabels(ax3.get_xticklabels(), fontdict={'size': 8})
+#ax4.set_xticklabels(ax4.get_xticklabels(), fontdict={'size': 8})
+#ax1.set_yticklabels(ax1.get_yticklabels(), fontdict={'size': 8})
+#ax2.set_yticklabels(ax2.get_yticklabels(), fontdict={'size': 8})
+#ax3.set_yticklabels(ax3.get_yticklabels(), fontdict={'size': 8})
+#ax4.set_yticklabels(ax4.get_yticklabels(), fontdict={'size': 8})
 plt.subplots_adjust(bottom=0.3,
                     top=0.88,
                     left=0.12,

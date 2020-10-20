@@ -351,7 +351,8 @@ class Species(OD):
     #function for finding all the mating pairs in a species
     def _find_mating_pairs(self):
         mating_pairs = _find_mates(self, sex=self.sex,
-                                   dist_weighted_birth=self.dist_weighted_birth)
+                                   choose_nearest=self.choose_nearest_mate,
+                                   inverse_dist_mating=self.inverse_dist_mating)
         return mating_pairs
 
     #function for executing mating for a species
@@ -1193,7 +1194,8 @@ class Species(OD):
     #use the kd_tree attribute to find nearest neighbors either
     #within the species, if within == True, or between the species
     #and the points provided, if within == False and points is not None
-    def _find_neighbors(self, dist, within=True, coords=None, k = 2):
+    def _find_neighbors(self, dist, within=True, coords=None, k=2,
+                        choose_nearest=False, inverse_dist_mating=False):
         #NOTE: In lieu of a more sophisticated way of
         #determining whether the kd_tree needs to be updated 
         #(i.e. if the species have undergone movement, mating,
@@ -1213,7 +1215,9 @@ class Species(OD):
             coords = self.coords
         #query the tree
         dists, pairs = self._kd_tree._query(coords = coords,
-                                                        dist = dist, k = k)
+                                            dist = dist, k = k,
+                                            choose_nearest=choose_nearest,
+                                        inverse_dist_mating=inverse_dist_mating)
         return(dists, pairs)
 
     # method for plotting the species (or a subset of its individuals, by ID)
@@ -1844,13 +1848,13 @@ def _make_species(land, name, idx, spp_params, burn=False, verbose=False):
 
     # print verbose output
     if verbose:
-        print('\t\tMAKING SPECIES %s...\n' % name)
+        print('\t\tMAKING SPECIES %s...\n' % name, flush=True)
 
     #if this species should have genomes, create the genomic architecture
     if 'gen_arch' in spp_params.keys():
         # print verbose output
         if verbose:
-            print('\t\t\tmaking genomic architecture...\n')
+            print('\t\t\tmaking genomic architecture...\n', flush=True)
         g_params = spp_params.gen_arch
         #make genomic_architecture
         gen_arch = _make_genomic_architecture(spp_params = spp_params,
@@ -1860,7 +1864,7 @@ def _make_species(land, name, idx, spp_params, burn=False, verbose=False):
 
     # print verbose output
     if verbose:
-        print('\t\t\tmaking individuals...\n')
+        print('\t\t\tmaking individuals...\n', flush=True)
     #make individs
     N = init_params.pop('N')
     #create an ordered dictionary to hold the individuals, and fill it up
@@ -1898,7 +1902,7 @@ def _make_species(land, name, idx, spp_params, burn=False, verbose=False):
         if 'move_surf' in spp_params.movement.keys():
             if verbose:
                 print(('\t\t\tmaking movement surface...\n'
-                       '\t\t\t\t[can take a bit]\n'))
+                       '\t\t\t\t[can take a bit]\n'), flush=True)
             ms_params = deepcopy(spp_params.movement.move_surf)
             #grab the lyr number for the lyr that the 
             #movement surface is to be based on
@@ -1919,7 +1923,7 @@ def _make_species(land, name, idx, spp_params, burn=False, verbose=False):
         # print verbose output
         if verbose:
             print(('\t\t\tmaking dispersal surface...\n'
-                   '\t\t\t\t[can take a bit]\n'))
+                   '\t\t\t\t[can take a bit]\n'), flush=True)
         ds_params = deepcopy(spp_params.movement.disp_surf)
         #grab the lyr number for the lyr that the 
         #dispersal surface is to be based on
@@ -1950,7 +1954,7 @@ def _make_species(land, name, idx, spp_params, burn=False, verbose=False):
         if verbose:
             print(('\t\t\tsetting up species changes...\n'
                    '\t\t\t\t[can take a while,\n\t\t\t\t if movement or '
-                   'dispersal\n\t\t\t\t surfaces will change]\n'))
+                   'dispersal\n\t\t\t\t surfaces will change]\n'), flush=True)
         #grab the change params (or None, if
         if 'change' in spp_params.keys():
             ch_params = spp_params.change

@@ -21,8 +21,8 @@ from itertools import repeat, starmap
 # -----------------------------------#
 ######################################
 
-def _find_mates(spp, sex=False, repro_age=None,
-                                dist_weighted_birth=False):
+def _find_mates(spp, sex=False, repro_age=None, choose_nearest=False,
+                inverse_dist_mating=False):
     b = spp.b
     mating_radius = spp.mating_radius
     if 'sex' in spp.__dict__.keys():
@@ -39,7 +39,9 @@ def _find_mates(spp, sex=False, repro_age=None,
     ######################################################
     # First, query the scipy.spatial.cKDTree (i.e. spp._kd_tree) for
     #nearest-neigh pairs
-    dists, pairs = spp._find_neighbors(dist = mating_radius)
+    dists, pairs = spp._find_neighbors(dist=mating_radius,
+                                       choose_nearest=choose_nearest,
+                                       inverse_dist_mating=inverse_dist_mating)
     ####################################################
     # Then, operationalize sexes, if being used, and find all 
     #available pairs within max distance
@@ -50,16 +52,21 @@ def _find_mates(spp, sex=False, repro_age=None,
         #nearest individual < mating_radius
         # i.e.  [AT LEAST 1 INDIVID < mating_radius (OTHERWISE 
         #scipy.spatial.cKDTree associates them with a nonexistent 
-        #neighbour and infinite distance)] & [female]
+        #neighbour and infinite distance if choose_nearest is True,
+        #otherwise they're associated with themselves at distance==0)]
+        #& [female]
         available_females = np.array(
-            dists[:, 1] != np.inf) & np.array(sexes[pairs[:,0]] == 0)
+            dists[:, 1] != np.inf) & np.array(
+            dists[:, 1] != 0) & np.array(
+            sexes[pairs[:,0]] == 0)
         # check that nearest individuals to paired females are males,
         #otherwise remove
         available_pairs = pairs[available_females][sexes[pairs[:,
                                             1][available_females]] == 1]
     else:
         # take all pairs within mating_radius
-        available_individs = dists[:, 1] != np.inf
+        available_individs = np.array(dists[:, 1] != np.inf) & np.array(
+                                                            dists[:, 1] != 0)
         # delete inverse-equal pairs from list (i.e. if 3-paired-to-5 and 
         #5-paired-to-3 are both listed, drop one)
         available_pairs = np.array(list(map(tuple,
@@ -105,23 +112,12 @@ def _find_mates(spp, sex=False, repro_age=None,
             available_pairs = available_pairs[yes]
     #########################################
     # Then, if at least one valid pair was found, decide whether or not 
-    #it will reproduce, as a binomial random var weighted by pair distance(s)
-    # if valid pairs exist:
+    # pairs will reproduce, drawn as a binomial random var
     if len(available_pairs) > 0:
-        # if birth probability is not to be weighted by the distance between 
-        #individuals in a pair
-        if not dist_weighted_birth:
-            # binomial decision whether or not to mate with nearest male, as
-            #function of ratio: n.n.-distance/mating_radius
-            mating_decisions = np.bool8(r.binomial(n=1, p=b,
-                                            size=available_pairs.shape[0]))
-        # if birth probability is to be weighted by the distance btwn individs
-        #in a pair
-        elif dist_weighted_birth:
-            # binomial decision whether or not to mate with nearest male, 
-            #as function of ratio: n.n.-distance/mating_radius
-            mating_decisions = np.array([r.binomial(n=1, p=b) for p in
-                1 - (dists[available_pairs[:, 0]][:, 1] / mating_radius)]) == 1
+        # binomial decision whether or not to mate with nearest male, as
+        #function of ratio: n.n.-distance/mating_radius
+        mating_decisions = np.bool8(r.binomial(n=1, p=b,
+                                               size=available_pairs.shape[0]))
         mating_pairs = available_pairs[mating_decisions]
         if mating_pairs.any():
             # finally, link individuals' ordinal indices back to the initially

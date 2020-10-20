@@ -298,8 +298,6 @@ SPP_PARAMS = '''
                     'sex':                      False,
                     #ratio of males to females
                     'sex_ratio':                1/1,
-                    #whether P(birth) should be weighted by parental dist
-                    'dist_weighted_birth':       False,
                     #intrinsic growth rate
                     'R':                        0.5,
                     #intrinsic birth rate (MUST BE 0<=b<=1)
@@ -310,6 +308,10 @@ SPP_PARAMS = '''
                     'n_births_fixed':           True,
                     #radius of mate-search area
                     'mating_radius':            10,
+                    #whether individs should choose nearest neighs as mates
+                    'choose_nearest_mate':        False,
+                    #whether mate-choice should be inverse distance-weighted
+                    'inverse_dist_mating':      False,
                     }, # <END> 'mating'
 
             #----------------------------------------#
@@ -339,7 +341,7 @@ SPP_PARAMS = '''
                     #concentration of distr of movement direction
                     'direction_distr_kappa':                0,
                     #1st param of distr of movement distance
-                    'movement_distance_distr_param1':       0.1,
+                    'movement_distance_distr_param1':       0.01,
                     #2nd param of distr of movement distance
                     'movement_distance_distr_param2':       0.5,
                     #movement distance distr to use ('lognormal','levy','wald')

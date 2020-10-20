@@ -46,7 +46,7 @@ test_vals = {#'L': [10, 100, 1000, 10000],
              }
 # define x-axis labels for plots
 plot_x_labs = {#'L': 'genome\nlength (L)',
-               'n_loci': 'number of non-neutral loci',
+               'n_loci': 'number of non-neutral\nloci (n_loci)',
                'K_fact': 'carrying-capacity\nconstant (K)',
                'dim': 'landscape\nsize (dim)',
                'n_births_distr_lambda': ('mean n. births per\n '

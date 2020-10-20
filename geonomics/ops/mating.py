@@ -23,12 +23,7 @@ from itertools import repeat, starmap
 
 def _find_mates(spp, sex=False, repro_age=None, choose_nearest=False,
                 inverse_dist_mating=False):
-    b = spp.b
     mating_radius = spp.mating_radius
-    if 'sex' in spp.__dict__.keys():
-        sex = spp.sex
-    if 'repro_age' in spp.__dict__.keys():
-        repro_age = spp.repro_age
     # NOTE: In an IDEAL world, this would work as follows:
     # for all individuals, find set of nearest neighbors (excluding selves)
     # for females:
@@ -39,9 +34,9 @@ def _find_mates(spp, sex=False, repro_age=None, choose_nearest=False,
     ######################################################
     # First, query the scipy.spatial.cKDTree (i.e. spp._kd_tree) for
     #nearest-neigh pairs
-    dists, pairs = spp._find_neighbors(dist=mating_radius,
-                                       choose_nearest=choose_nearest,
-                                       inverse_dist_mating=inverse_dist_mating)
+    pairs = spp._get_mating_pairs(dist=mating_radius,
+                                  choose_nearest=choose_nearest,
+                                  inverse_dist_mating=inverse_dist_mating)
     ####################################################
     # Then, operationalize sexes, if being used, and find all 
     #available pairs within max distance
@@ -55,26 +50,19 @@ def _find_mates(spp, sex=False, repro_age=None, choose_nearest=False,
         #neighbour and infinite distance if choose_nearest is True,
         #otherwise they're associated with themselves at distance==0)]
         #& [female]
-        available_females = np.array(
-            dists[:, 1] != np.inf) & np.array(
-            dists[:, 1] != 0) & np.array(
-            sexes[pairs[:,0]] == 0)
+        available_females =np.array(sexes[pairs[:,0]] == 0)
         # check that nearest individuals to paired females are males,
         #otherwise remove
-        available_pairs = pairs[available_females][sexes[pairs[:,
+        mating_pairs = pairs[available_females][sexes[pairs[:,
                                             1][available_females]] == 1]
     else:
-        # take all pairs within mating_radius
-        available_individs = np.array(dists[:, 1] != np.inf) & np.array(
-                                                            dists[:, 1] != 0)
         # delete inverse-equal pairs from list (i.e. if 3-paired-to-5 and 
         #5-paired-to-3 are both listed, drop one)
-        available_pairs = np.array(list(map(tuple,
-            set(map(frozenset, pairs[available_individs])))))
+        mating_pairs = np.array(list(map(tuple, set(map(frozenset, pairs)))))
     ##############################################
     # Check if any available pairs have been found thus far, proceed if so,
     #otherwise return empty array of pairs
-    if len(available_pairs) == 0:
+    if len(mating_pairs) == 0:
         mates = np.array([])
         return mates
     else:
@@ -97,35 +85,28 @@ def _find_mates(spp, sex=False, repro_age=None, choose_nearest=False,
                 "iterable of numerics (i.e. a list, tuple, or numpy.ndarray "
                 "of floats or integers); you have provided a:\n\t"
                 "%s") % repro_age.__class__.__name__
-            yes_f = np.array(ages[available_pairs[:, 0]] >= repro_age[0])
-            yes_m = np.array(ages[available_pairs[:, 1]] >= repro_age[1])
-            available_pairs = available_pairs[yes_f & yes_m]
+            yes_f = np.array(ages[mating_pairs[:, 0]] >= repro_age[0])
+            yes_m = np.array(ages[mating_pairs[:, 1]] >= repro_age[1])
+            mating_pairs = mating_pairs[yes_f & yes_m]
         else:  # if not sexual species, repro_age expected to be a numeric
             assert repro_age.__class__.__name__ in ('int',
                 'float'), ("For a non-sexual and age-structured species, "
                 "the age at sexual maurity, 'repro_age', must be expressed as "
                 "a single, non-iterable numeric (i.e.  float or integer); you "
                 "have provided a:\n\t%s") % repro_age.__class__.__name__
-            yes_0 = np.array(ages[available_pairs[:, 0]] >= repro_age)
-            yes_1 = np.array(ages[available_pairs[:, 1]] >= repro_age)
-            yes = np.sum(ages[available_pairs] >= repro_age, axis = 1) == 2
-            available_pairs = available_pairs[yes]
+            yes_0 = np.array(ages[mating_pairs[:, 0]] >= repro_age)
+            yes_1 = np.array(ages[mating_pairs[:, 1]] >= repro_age)
+            yes = np.sum(ages[mating_pairs] >= repro_age, axis = 1) == 2
+            mating_pairs = mating_pairs[yes]
     #########################################
-    # Then, if at least one valid pair was found, decide whether or not 
-    # pairs will reproduce, drawn as a binomial random var
-    if len(available_pairs) > 0:
-        # binomial decision whether or not to mate with nearest male, as
-        #function of ratio: n.n.-distance/mating_radius
-        mating_decisions = np.bool8(r.binomial(n=1, p=b,
-                                               size=available_pairs.shape[0]))
-        mating_pairs = available_pairs[mating_decisions]
-        if mating_pairs.any():
-            # finally, link individuals' ordinal indices back to the initially
-            #created structure, to get individuals' proper keys
-            f = ig(*mating_pairs.flatten())
-            mates = np.array(f([*spp])).reshape(mating_pairs.shape)
-        else:
-            mates = np.array([])
+    # Then, if at least one valid pair was found, match pairs' indices
+    # (in the data structure returned from get_mating_pairs)
+    # back to their individual ids
+    if len(mating_pairs) > 0:
+        # finally, link individuals' ordinal indices back to the initially
+        #created structure, to get individuals' proper keys
+        f = ig(*mating_pairs.flatten())
+        mates = np.array(f([*spp])).reshape(mating_pairs.shape)
     else:
         mates = np.array([])
     # Return an array or arrays, each inner array containing a mating-pair

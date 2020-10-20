@@ -541,7 +541,7 @@ def _make_params():
                         #radius of mate-search area
                         #NOTE: just have individuals mate close by (i.e. within
                         #12.457m, the average interannual movement distance
-                        'mating_radius':            0.1,
+                        'mating_radius':            0.5,
                         'choose_nearest_mate':      False,
                         'inverse_dist_mating':      False,
                         }, # <END> 'mating'
@@ -590,13 +590,10 @@ def _make_params():
                         #concentration of distr of movement direction
                         'direction_distr_kappa':    0,
                         #mean of distr of movement distance
-                        #'movement_distance_distr_param1':        0.01704,
-                        'movement_distance_distr_param1':        7.5e-4,
+                        'movement_distance_distr_param1':        7e-5,
                         #variance of distr of movement distance
-                        #'movement_distance_distr_param2':     2.5e-7,
-                        'movement_distance_distr_param2':     3.1,
+                        'movement_distance_distr_param2':     0.3,
                         #mean of distr of dispersal distance
-                        #'movement_distance_distr':      'levy',
                         'movement_distance_distr':      'lognormal',
                         'dispersal_distance_distr_param1':       7.5e-4,
                         #variance of distr of dispersal distance
@@ -624,7 +621,7 @@ def _make_params():
                         #file defining custom genomic arch
                         'gen_arch_file':            None,
                         #num of loci
-                        'L':                        100,
+                        'L':                        1000,
                         #starting allele freq (None to draw freqs randomly)
                         #at 0.5
                         'start_p_fixed':            0.5,
@@ -667,9 +664,9 @@ def _make_params():
                                 #trait-selection Layer name
                                 'layer':                'tmp',
                                 #polygenic selection coefficient
-                                'phi':                  0.1,
+                                'phi':                  0.5,
                                 #number of loci underlying trait
-                                'n_loci':               10,
+                                'n_loci':               100,
                                 #mutation rate at loci underlying trait
                                 'mu':                   0,
                                 #mean of distr of effect sizes

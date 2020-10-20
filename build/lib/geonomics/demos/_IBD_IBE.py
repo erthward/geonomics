@@ -413,8 +413,6 @@ def _make_params():
                         'sex':                      False,
                         #ratio of males to females
                         'sex_ratio':                1/1,
-                        #whether P(birth) should be weighted by parental dist
-                        'dist_weighted_birth':       False,
                         #intrinsic growth rate
                         'R':                        0.5,
                         #intrinsic birth rate (MUST BE 0<=b<=1)
@@ -424,7 +422,9 @@ def _make_params():
                         #whether n births should be fixed at n_births_dist_lambda
                         'n_births_fixed':           True,
                         #radius of mate-search area
-                        'mating_radius':            5,
+                        'mating_radius':            2,
+                        'inverse_dist_mating':      False,
+                        'choose_nearest_mate':      False,
                         }, # <END> 'mating'
 
                 ##########################################

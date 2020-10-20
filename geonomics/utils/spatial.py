@@ -197,47 +197,61 @@ class _KDTree:
     def __init__(self, coords, leafsize=100):
         self.tree = cKDTree(data=coords, leafsize=leafsize)
 
-    def _query(self, coords, dist, k=2, choose_nearest=False,
-               inverse_dist_mating=False):
+    def _get_mating_pairs(self, coords, dist, choose_nearest=False,
+                          inverse_dist_mating=False):
         # just get nearest neighbor pairs, if choose_nearest is requested
         if choose_nearest:
-            dists, pairs = self.tree.query(x=coords, k=k,
+            dists, pairs = self.tree.query(x=coords, k=2,
                                            distance_upper_bound=dist)
+            # NOTE: get rid of 'pairs' with no nearest neighbors
+            # within the mating radius (they wind up having a dist of np.inf,
+            # paired with an index number equal to the last valid index in the
+            # KDTree + 1)
+            valid_pairs = ~np.isinf(dists[:,1]) 
+            dists = dists[valid_pairs, :]
+            pairs = pairs[valid_pairs, :]
         # otherwise, get all individuals within mating radius, and get their
         # distances, then make probabilistic draw of each pair using
         # inverse-distance weighting if requested
         else:
-            # get all individuals within each individual's mating radius
-            mating_options = self.tree.query_ball_point(x=coords, r=dist)
-            # get the sparse pairwise distance matrix
-            dist_mat = self.tree.sparse_distance_matrix(self.tree, dist) 
             # implement inverse distance-weighted mating, if requested
             if inverse_dist_mating:
+                mate_options_cts = {i: l for i, l in enumerate(
+                    self.tree.query_ball_point(x=coords, r=dist,
+                                               return_length=True)) if l > 1}
                 pairs = []
-                dists = []
-                for focal_ind in range(len(mating_options)):
+                for focal_ind, ct in mate_options_cts.items():
                     # get the pairwise dists between the focal individ and every
                     # individual who could be a mating option
-                    pair_dists = dist_mat[focal_ind,
-                                          mating_options[i]].toarray().flatten()
+                    dists_mateopts =self.tree.query(self.tree.data[focal_ind,:],
+                                                    k=ct+1,
+                                                    distance_upper_bound=dist)
+                    valids = (~np.isinf(dists_mateopts[0]) *
+                              (dists_mateopts[0] != 0))
+                    dists, mateopts = [arr[valids] for arr in dists_mateopts]
                     # calculate probs using linear (not square!)
                     # inverse-dist weighting 
-                    probs = (dist - pair_dists)/np.sum((dist-pair_dists))
+                    probs = (dist - dists)/np.sum((dist-dists))
                     # choose the focal individual's mate
-                    chosen_mate = np.random.choice(eligibles[i], p=probs)
+                    chosen_mate = np.random.choice(mateopts, p=probs)
                     # add the chosen pair and their distance to the lists
-                    pairs.append([i, chosen_mate])
-                    dists.append(dist_mat[i, chosen_mate])
+                    pairs.append([focal_ind, chosen_mate])
             # otherwise, randomly choose an individual within the mating radius
             else:
-                pairs = [[i,
-                          np.random.choice(opts)] for i,opts in enumerate(
-                                                                mating_options)]
-                dists = [dist_mat[i,j] for i,j in pairs]
+                mating_options = {i: list(set(l).difference({i})) for i,
+                                  l in enumerate(self.tree.query_ball_point(
+                                  x=coords, r=dist)) if len(l) > 1}
+                # get all individuals within each individual's mating radius
+                # NOTE: dropping all individuals who have no valid neighbors
+                #       (i.e. whose mating-options lists only include themselves,
+                #       and thus are only of length 1)
+                # NOTE: the set-diff operation gets rid of the focal_ind as its own
+                #       potential mate
+                pairs = [[focal_ind, np.random.choice(opts)] for focal_ind,
+                         opts in mating_options.items()]
             pairs = np.array(pairs)
-            dists = np.array(([0]*len(dists), dists)).T
 
-        return(dists, pairs)
+        return pairs
 
 
 # #####################################

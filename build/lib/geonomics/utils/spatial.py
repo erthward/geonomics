@@ -197,9 +197,46 @@ class _KDTree:
     def __init__(self, coords, leafsize=100):
         self.tree = cKDTree(data=coords, leafsize=leafsize)
 
-    def _query(self, coords, dist, k=2):
-        dists, pairs = self.tree.query(x=coords, k=k,
-                                       distance_upper_bound=dist)
+    def _query(self, coords, dist, k=2, choose_nearest=False,
+               inverse_dist_mating=False):
+        # just get nearest neighbor pairs, if choose_nearest is requested
+        if choose_nearest:
+            dists, pairs = self.tree.query(x=coords, k=k,
+                                           distance_upper_bound=dist)
+        # otherwise, get all individuals within mating radius, and get their
+        # distances, then make probabilistic draw of each pair using
+        # inverse-distance weighting if requested
+        else:
+            # get all individuals within each individual's mating radius
+            mating_options = self.tree.query_ball_point(x=coords, r=dist)
+            # get the sparse pairwise distance matrix
+            dist_mat = self.tree.sparse_distance_matrix(self.tree, dist) 
+            # implement inverse distance-weighted mating, if requested
+            if inverse_dist_mating:
+                pairs = []
+                dists = []
+                for focal_ind in range(len(mating_options)):
+                    # get the pairwise dists between the focal individ and every
+                    # individual who could be a mating option
+                    pair_dists = dist_mat[focal_ind,
+                                          mating_options[i]].toarray().flatten()
+                    # calculate probs using linear (not square!)
+                    # inverse-dist weighting 
+                    probs = (dist - pair_dists)/np.sum((dist-pair_dists))
+                    # choose the focal individual's mate
+                    chosen_mate = np.random.choice(eligibles[i], p=probs)
+                    # add the chosen pair and their distance to the lists
+                    pairs.append([i, chosen_mate])
+                    dists.append(dist_mat[i, chosen_mate])
+            # otherwise, randomly choose an individual within the mating radius
+            else:
+                pairs = [[i,
+                          np.random.choice(opts)] for i,opts in enumerate(
+                                                                mating_options)]
+                dists = [dist_mat[i,j] for i,j in pairs]
+            pairs = np.array(pairs)
+            dists = np.array(([0]*len(dists), dists)).T
+
         return(dists, pairs)
 
 

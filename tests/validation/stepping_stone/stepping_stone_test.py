@@ -310,7 +310,7 @@ for subdir in os.listdir(data_dir):
             #plt.suptitle(("Validations test #2: stepping-stone model"
             #    "\n%i timesteps") % mod.params.model.T)
             ax = fig.add_subplot(121)
-            mod.plot(0,0)
+            mod.plot(0, 0, size=3)
             #ax.set_title('Islands and their subpopulations',
             #             fontdict=ttl_fontdict)
             plt.xlabel('landscape x', fontdict=ax_fontdict)
@@ -396,8 +396,8 @@ for subdir in os.listdir(data_dir):
                       loc = 'center right',
                       fontsize = 'medium')
 plt.show()
-plt.savefig(os.path.join(
-            img_dir, 'STEPPING_STONE_pop_plot_and_Fst_vs_mig_rate.pdf'))
+#plt.savefig(os.path.join(
+#            img_dir, 'STEPPING_STONE_pop_plot_and_Fst_vs_mig_rate.pdf'))
 
 
 # plot pop sizes over time
@@ -439,7 +439,7 @@ cb1 = mpl.colorbar.ColorbarBase(ax2, cmap=cmap, norm=norm,
                                 ticks=[*range(1,6)])
 cb1.set_label('inter-island distance')
 plt.show()
-plt.savefig(os.path.join(img_dir,
-                         ('STEPPING_STONE_Fst_over_time.pdf')))
+#plt.savefig(os.path.join(img_dir,
+#                         ('STEPPING_STONE_Fst_over_time.pdf')))
 
 print('\nValidation test successful.\n')

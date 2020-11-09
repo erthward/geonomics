@@ -736,6 +736,9 @@ def _make_genomic_architecture(spp_params, land):
     # custom gen-arch file
     if gen_arch_file is None:
         if g_params.start_p_fixed is not None:
+            assert not isinstance(g_params.start_p_fixed, bool), ("The "
+                "parameter start_p_fixed should be a numeric in [0, 1], "
+                "not a bool.")
             assert 0 <= g_params.start_p_fixed <= 1, ("If a starting allele "
                                                       "frequency value is "
                                                       "provided then it must "

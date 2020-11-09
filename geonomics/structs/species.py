@@ -1060,7 +1060,7 @@ class Species(OD):
         ts = self._tc.tree_sequence()
 
         # get the list of the individuals' nodes
-        samples = np.int32(np.hstack([[*self[ind]._nodes_tab_ids.values(
+        samples = np.int64(np.hstack([[*self[ind]._nodes_tab_ids.values(
                                                     )] for ind in individs]))
         assert len(samples) == self.gen_arch.x * len(individs), ('Number of '
                                                                  'nodes does '
@@ -1194,7 +1194,7 @@ class Species(OD):
     #use the kd_tree attribute to find mating pairs either
     #within the species, if within == True, or between the species
     #and the points provided, if within == False and points is not None
-    def _get_mating_pairs(self, dist, within=True, coords=None,
+    def _get_mating_pairs(self, within=True, coords=None,
                           choose_nearest=False, inverse_dist_mating=False):
         #NOTE: In lieu of a more sophisticated way of
         #determining whether the kd_tree needs to be updated 
@@ -1208,23 +1208,49 @@ class Species(OD):
         #am just telling the tree to be rebuilt each time 
         #the spp._get_mating_pairs() method is called!
         self._set_kd_tree()
-        #if neighbors are to be found within the species,
-        #set coords to self.coords (otherwise, the coords to
-        #find nearest neighbors with should have been provided)
-        if within:
-            coords = self.coords
 
-        #query the tree to get mating pairs
-        pairs = self._kd_tree._get_mating_pairs(coords=coords,
-                                                dist=dist,
-                                                choose_nearest=choose_nearest,
-                                        inverse_dist_mating=inverse_dist_mating)
+        # if mating_radius is None, then just use Wright-Fisher
+        # style panmixia (draw with replacement a sample of size = Nt*b, where Nt is the 
+        # current pop size and b is the birth rate (i.e. mating probability);
+        # that sample represents all mating individuals, and each of those
+        # individuals randomly chooses its mate
+        if self.mating_radius is None:
+            # draw a number of mating individuals as a binomial rv
+            # with num trials equal to pop size and probability equal to
+            # the species' birth rate
+            if self.b < 1:
+                n_mates = np.random.binomial(n=len(self), p=self.b, size=1)
+            else:
+                n_mates = len(self)
+            tree_inds = self._kd_tree.tree.indices
+            # draw 2*n_mates mating individuals, with replacement (as in WF
+            # model), then fold into an n_mates x 2 mate-pairs array
+            pairs = np.random.choice(tree_inds, replace=True,
+                                     size=n_mates*2).reshape((n_mates, 2))
+            # get rid of selfing pairs
+            pairs = np.array([list(pair) for pair in list(
+                                    map(set, pairs)) if len(pair) == 2])
+            pairs = np.array(pairs)
 
-        # use the species' birth rate to decide (as bernoulli draws)
-        # whether each pair can mate
-        can_mate = np.bool8(np.random.binomial(n=1, p=self.b,
-                                               size=pairs.shape[0]))
-        pairs = pairs[can_mate, :]
+        # otherwise, choose mates using mating radius
+        else:
+            #if neighbors are to be found within the species,
+            #set coords to self.coords (otherwise, the coords to
+            #find nearest neighbors with should have been provided)
+            if within:
+                coords = self.coords
+
+            #query the tree to get mating pairs
+            pairs = self._kd_tree._get_mating_pairs(coords=coords,
+                                                    dist=self.mating_radius,
+                                                    choose_nearest=choose_nearest,
+                                            inverse_dist_mating=inverse_dist_mating)
+
+            # use the species' birth rate to decide (as bernoulli draws)
+            # whether each pair can mate
+            can_mate = np.bool8(np.random.binomial(n=1, p=self.b,
+                                                   size=pairs.shape[0]))
+            pairs = pairs[can_mate, :]
         return pairs
 
 

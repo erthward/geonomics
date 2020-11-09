@@ -23,7 +23,6 @@ from itertools import repeat, starmap
 
 def _find_mates(spp, sex=False, repro_age=None, choose_nearest=False,
                 inverse_dist_mating=False):
-    mating_radius = spp.mating_radius
     # NOTE: In an IDEAL world, this would work as follows:
     # for all individuals, find set of nearest neighbors (excluding selves)
     # for females:
@@ -34,8 +33,7 @@ def _find_mates(spp, sex=False, repro_age=None, choose_nearest=False,
     ######################################################
     # First, query the scipy.spatial.cKDTree (i.e. spp._kd_tree) for
     #nearest-neigh pairs
-    pairs = spp._get_mating_pairs(dist=mating_radius,
-                                  choose_nearest=choose_nearest,
+    pairs = spp._get_mating_pairs(choose_nearest=choose_nearest,
                                   inverse_dist_mating=inverse_dist_mating)
     ####################################################
     # Then, operationalize sexes, if being used, and find all 
@@ -58,7 +56,13 @@ def _find_mates(spp, sex=False, repro_age=None, choose_nearest=False,
     else:
         # delete inverse-equal pairs from list (i.e. if 3-paired-to-5 and 
         #5-paired-to-3 are both listed, drop one)
-        mating_pairs = np.array(list(map(tuple, set(map(frozenset, pairs)))))
+        # NOTE: only if mating_radius is not None, because if it is None then
+        #       WF-style panmixia should be enforced, in which case we should
+        #       allow for draws with replacement to generate duplicate pairs
+        if spp.mating_radius is not None:
+            mating_pairs = np.array(list(map(tuple, set(map(frozenset, pairs)))))
+        else:
+            mating_pairs = pairs
     ##############################################
     # Check if any available pairs have been found thus far, proceed if so,
     #otherwise return empty array of pairs

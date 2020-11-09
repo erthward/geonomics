@@ -306,7 +306,7 @@ SPP_PARAMS = '''
                     'n_births_distr_lambda':    1,
                     #whether n births should be fixed at n_births_dist_lambda
                     'n_births_fixed':           True,
-                    #radius of mate-search area
+                    #radius of mate-search area (None, for panmixia)
                     'mating_radius':            10,
                     #whether individs should choose nearest neighs as mates
                     'choose_nearest_mate':        False,
@@ -405,7 +405,7 @@ GENOME_PARAMS = '''
                     #starting allele frequency (None to draw freqs randomly)
                     'start_p_fixed':            0.5,
                     #whether to start neutral locus freqs at 0
-                    'start_neut_zero':          True,
+                    'start_neut_zero':          False,
                     #genome-wide per-base neutral mut rate (0 to disable)
                     'mu_neut':                  0,
                     #genome-wide per-base deleterious mut rate (0 to disable)

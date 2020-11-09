@@ -26,16 +26,16 @@ import numpy as np
 
 
 params = {
-###############################################################################
+#-----------------------------------------------------------------------------#
 
-###################
-#### LANDSCAPE ####
-###################
+#-----------------#
+#--- LANDSCAPE ---#
+#-----------------#
     'landscape': {
 
-    ##############
-    #### main ####
-    ##############
+    #------------#
+    #--- main ---#
+    #------------#
         'main': {
             #y,x (a.k.a. i,j) dimensions of the Landscape
             'dim':                      (10,10),
@@ -47,17 +47,17 @@ params = {
             'prj':                      None,
             }, # <END> 'main'
 
-    ################
-    #### layers ####
-    ################
+    #--------------#
+    #--- layers ---#
+    #--------------#
         'layers': {
 
             #layer name (LAYER NAMES MUST BE UNIQUE!)
             'layer_0': {
 
-        #######################################
-        #### layer num. 0: init parameters ####
-        #######################################
+        #-------------------------------------#
+        #--- layer num. 0: init parameters ---#
+        #-------------------------------------#
 
                 #initiating parameters for this layer
                 'init': {
@@ -91,11 +91,11 @@ params = {
         }, # <END> 'landscape'
 
 
-###############################################################################
+#-----------------------------------------------------------------------------#
 
-###################
-#### COMMUNITY ####
-###################
+#-----------------#
+#--- COMMUNITY ---#
+#-----------------#
     'comm': {
 
         'species': {
@@ -103,9 +103,9 @@ params = {
             #species name (SPECIES NAMES MUST BE UNIQUE!)
             'spp_0': {
 
-            #####################################
-            #### spp num. 0: init parameters ####
-            #####################################
+            #-----------------------------------#
+            #--- spp num. 0: init parameters ---#
+            #-----------------------------------#
 
                 'init': {
                     #starting number of individs
@@ -116,9 +116,9 @@ params = {
                     'K_factor':         1,
                     }, # <END> 'init'
 
-            #######################################
-            #### spp num. 0: mating parameters ####
-            #######################################
+            #-------------------------------------#
+            #--- spp num. 0: mating parameters ---#
+            #-------------------------------------#
 
                 'mating'    : {
                     #age(s) at sexual maturity (if tuple, female first)
@@ -130,7 +130,7 @@ params = {
                     #whether P(birth) should be weighted by parental dist
                     'dist_weighted_birth':       False,
                     #intrinsic growth rate
-                    'R':                        10,
+                    'R':                        1,
                     #intrinsic birth rate (MUST BE 0<=b<=1)
                     'b':                        1,
                     #expectation of distr of n offspring per mating pair
@@ -138,12 +138,14 @@ params = {
                     #whether n births should be fixed at n_births_dist_lambda
                     'n_births_fixed':           True,
                     #radius of mate-search area
-                    'mating_radius':            15,
+                    'mating_radius':            None,
+                    'choose_nearest_mate':      False,
+                    'inverse_dist_mating':      False,
                     }, # <END> 'mating'
 
-            ##########################################
-            #### spp num. 0: mortality parameters ####
-            ##########################################
+            #----------------------------------------#
+            #--- spp num. 0: mortality parameters ---#
+            #----------------------------------------#
 
                 'mortality'     : {
                     #maximum age
@@ -156,9 +158,9 @@ params = {
                     'density_grid_window_width':    None,
                     }, # <END> 'mortality'
 
-            #########################################
-            #### spp num. 0: movement parameters ####
-            #########################################
+            #---------------------------------------#
+            #--- spp num. 0: movement parameters ---#
+            #---------------------------------------#
 
                 'movement': {
                     #whether or not the species is mobile
@@ -168,29 +170,32 @@ params = {
                     #concentration of distr of movement direction
                     'direction_distr_kappa':    0,
                     #mean of distr of movement distance
-                    'distance_distr_mu':        7,
+                    'movement_distance_distr_param1':     7,
                     #variance of distr of movement distance
-                    'distance_distr_sigma':     200,
+                    'movement_distance_distr_param2':     200,
+                    'movement_distance_distr':            'wald',
                     #mean of distr of dispersal distance
-                    'dispersal_distr_mu':       7,
+                    'dispersal_distance_distr_param1':    7,
                     #variance of distr of dispersal distance
-                    'dispersal_distr_sigma':    200,
+                    'dispersal_distance_distr_param2':    200,
+                    'dispersal_distance_distr':           'wald',
                     },    # <END> 'movement'
 
 
-            #####################################################
-            #### spp num. 0: genomic architecture parameters ####
-            #####################################################
+            #---------------------------------------------------#
+            #--- spp num. 0: genomic architecture parameters ---#
+            #---------------------------------------------------#
 
                 'gen_arch': {
                     #file defining custom genomic arch
                     'gen_arch_file':            None,
                     #num of loci
                     'L':                        25,
-                    #num of chromosomes
-                    'l_c':                      [50],
-                    #whether starting allele frequencies should be fixed at 0.5
-                    'start_p_fixed':            True,
+                    #lengths of chromosomes
+                    'l_c':                      [25],
+                    #starting allele frequency (None to draw freqs randomly)
+                    'start_p_fixed':            0.5,
+                    'start_neut_zero':          False,
                     #genome-wide per-base neutral mut rate (0 to disable)
                     'mu_neut':                  0,
                     #genome-wide per-base deleterious mut rate (0 to disable)
@@ -213,6 +218,7 @@ params = {
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    'n_recomb_sims':            10_000,
                     'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
                     'mut_log':                  False,
@@ -233,11 +239,11 @@ params = {
         }, # <END> 'comm'
 
 
-###############################################################################
+#-----------------------------------------------------------------------------#
 
-###############
-#### MODEL ####
-###############
+#-------------#
+#--- MODEL ---#
+#-------------#
     'model': {
         #total Model runtime (in timesteps)
         'T':            100,
@@ -248,9 +254,9 @@ params = {
         #time step interval for simplification of tskit tables
         'tskit_simp_interval':      100,
 
-        ###############################
-        #### iterations parameters ####
-        ###############################
+        #-----------------------------#
+        #--- iterations parameters ---#
+        #-----------------------------#
         'its': {
             #num iterations
             'n_its':            1,
@@ -263,9 +269,9 @@ params = {
             }, # <END> 'iterations'
 
 
-        ####################################
-        #### data-collection parameters ####
-        ####################################
+        #----------------------------------#
+        #--- data-collection parameters ---#
+        #----------------------------------#
         'data': {
             'sampling': {
                 #sampling scheme {'all', 'random', 'point', 'transect'}

@@ -513,7 +513,7 @@ def _make_params():
                         #total number of recomb paths to simulate
                         'n_recomb_paths_tot':       int(1e5),
                         'n_recomb_sims':            10000,
-                        'start_neut_zero':          True,
+                        'start_neut_zero':          False,
                         'allow_ad_hoc_recomb':      False,
                         #whether to save mutation logs
                         'mut_log':                  False,

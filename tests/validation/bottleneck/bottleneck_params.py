@@ -28,16 +28,16 @@ env_array = np.ones((50,50))
 
 
 params = {
-###############################################################################
+#-----------------------------------------------------------------------------#
 
-###################
-#### LANDSCAPE ####
-###################
+#-----------------#
+#--- LANDSCAPE ---#
+#-----------------#
     'landscape': {
 
-    ##############
-    #### main ####
-    ##############
+    #------------#
+    #--- main ---#
+    #------------#
         'main': {
             #y,x (a.k.a. i,j) dimensions of the Landscape
             'dim':                      (50,50),
@@ -49,17 +49,17 @@ params = {
             'prj':                      None,
             }, # <END> 'main'
 
-    ################
-    #### layers ####
-    ################
+    #--------------#
+    #--- layers ---#
+    #--------------#
         'layers': {
 
             #layer name (LAYER NAMES MUST BE UNIQUE!)
             'layer_0': {
 
-        #######################################
-        #### layer num. 0: init parameters ####
-        #######################################
+        #-------------------------------------#
+        #--- layer num. 0: init parameters ---#
+        #-------------------------------------#
 
                 #initiating parameters for this layer
                 'init': {
@@ -93,11 +93,11 @@ params = {
         }, # <END> 'landscape'
 
 
-###############################################################################
+#-----------------------------------------------------------------------------#
 
-###################
-#### COMMUNITY ####
-###################
+#-----------------#
+#--- COMMUNITY ---#
+#-----------------#
     'comm': {
 
         'species': {
@@ -105,9 +105,9 @@ params = {
             #species name (SPECIES NAMES MUST BE UNIQUE!)
             'spp_0': {
 
-            #####################################
-            #### spp num. 0: init parameters ####
-            #####################################
+            #-----------------------------------#
+            #--- spp num. 0: init parameters ---#
+            #-----------------------------------#
 
                 'init': {
                     #starting number of individs
@@ -115,12 +115,12 @@ params = {
                     #carrying-capacity Layer name
                     'K_layer':          'layer_0',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         1,
+                    'K_factor':         35,
                     }, # <END> 'init'
 
-            #######################################
-            #### spp num. 0: mating parameters ####
-            #######################################
+            #-------------------------------------#
+            #--- spp num. 0: mating parameters ---#
+            #-------------------------------------#
 
                 'mating'    : {
                     #age(s) at sexual maturity (if tuple, female first)
@@ -140,12 +140,14 @@ params = {
                     #whether n births should be fixed at n_births_dist_lambda
                     'n_births_fixed':           True,
                     #radius of mate-search area
-                    'mating_radius':            75,
+                    'mating_radius':            None,
+                    'choose_nearest_mate':      False,
+                    'inverse_dist_mating':      False,
                     }, # <END> 'mating'
 
-            ##########################################
-            #### spp num. 0: mortality parameters ####
-            ##########################################
+            #----------------------------------------#
+            #--- spp num. 0: mortality parameters ---#
+            #----------------------------------------#
 
                 'mortality'     : {
                     #maximum age
@@ -158,9 +160,9 @@ params = {
                     'density_grid_window_width':    None,
                     }, # <END> 'mortality'
 
-            #########################################
-            #### spp num. 0: movement parameters ####
-            #########################################
+            #---------------------------------------#
+            #--- spp num. 0: movement parameters ---#
+            #---------------------------------------#
 
                 'movement': {
                     #whether or not the species is mobile
@@ -170,19 +172,21 @@ params = {
                     #concentration of distr of movement direction
                     'direction_distr_kappa':    0,
                     #mean of distr of movement distance
-                    'distance_distr_mu':        10,
+                    'movement_distance_distr_param1':        0.01,
                     #variance of distr of movement distance
-                    'distance_distr_sigma':     50,
+                    'movement_distance_distr_param2':     0.5,
+                    'movement_distance_distr':          'lognormal',
                     #mean of distr of dispersal distance
-                    'dispersal_distr_mu':       10,
+                    'dispersal_distance_distr_param1':       -1,
                     #variance of distr of dispersal distance
-                    'dispersal_distr_sigma':    50,
+                    'dispersal_distance_distr_param2':    0.05,
+                    'dispersal_distance_distr':         'lognormal',
                     },    # <END> 'movement'
 
 
-            #####################################################
-            #### spp num. 0: genomic architecture parameters ####
-            #####################################################
+            #---------------------------------------------------#
+            #--- spp num. 0: genomic architecture parameters ---#
+            #---------------------------------------------------#
 
                 'gen_arch': {
                     #file defining custom genomic arch
@@ -192,7 +196,8 @@ params = {
                     #num of chromosomes
                     'l_c':                      [500],
                     #whether starting allele frequencies should be fixed at 0.5
-                    'start_p_fixed':            True,
+                    'start_p_fixed':            0.5,
+                    'start_neut_zero':          False,
                     #genome-wide per-base neutral mut rate (0 to disable)
                     'mu_neut':                  0,
                     #genome-wide per-base deleterious mut rate (0 to disable)
@@ -215,6 +220,7 @@ params = {
                     'n_recomb_paths_mem':       int(1e5),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    'n_recomb_sims':            10_000,
                     'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
                     'mut_log':                  False,
@@ -222,15 +228,15 @@ params = {
                     }, # <END> 'gen_arch'
 
 
-            #######################################
-            #### spp num. 0: change parameters ####
-            #######################################
+            #-------------------------------------#
+            #--- spp num. 0: change parameters ---#
+            #-------------------------------------#
 
                 'change': {
 
-                    #################################
+                    #-------------------------------#
                     # demographic change parameters #
-                    #################################
+                    #-------------------------------#
                     'dem': {
 
                         0: {
@@ -282,11 +288,11 @@ params = {
         }, # <END> 'comm'
 
 
-###############################################################################
+#-----------------------------------------------------------------------------#
 
-###############
-#### MODEL ####
-###############
+#-------------#
+#--- MODEL ---#
+#-------------#
     'model': {
         #total Model runtime (in timesteps)
         'T':            300,
@@ -298,9 +304,9 @@ params = {
         'tskit_simp_interval':      100,
 
 
-        ###############################
-        #### iterations parameters ####
-        ###############################
+        #-----------------------------#
+        #--- iterations parameters ---#
+        #-----------------------------#
         'its': {
             #num iterations
             'n_its':            1,
@@ -313,9 +319,9 @@ params = {
             }, # <END> 'iterations'
 
 
-        ####################################
-        #### data-collection parameters ####
-        ####################################
+        #----------------------------------#
+        #--- data-collection parameters ---#
+        #----------------------------------#
         'data': {
             'sampling': {
                 #sampling scheme {'all', 'random', 'point', 'transect'}

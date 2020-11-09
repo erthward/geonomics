@@ -6,12 +6,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-orig_params = gnx.read_parameters_file(('./geonomics/tests/validation/wf'
-                                        '/wf_params.py'))
+orig_params = gnx.read_parameters_file(('/home/drew/Desktop/stuff/berk'
+                                        '/research/projects/sim/geonomics/'
+                                        'tests/validation/wf/wf_params.py'))
 
 # set some image params
-img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
-           'img/final/')
+img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/'
+           'methods_paper_images/final/')
 ax_fontdict = {'fontsize': 12,
                'name': 'Bitstream Vera Sans'}
 ttl_fontdict = {'fontsize': 16,
@@ -19,16 +20,15 @@ ttl_fontdict = {'fontsize': 16,
 
 
 K_factors = [10, 20, 30]
+persist_list = []
 mean_t_persist_list = []
 mean_pop_size_list = []
+pop_Nts = []
 
 
 def get_allele_freqs(spp):
-    freqs = {}
-    for loc in range(spp.gen_arch.L):
-        freq = sum(np.hstack([ind.g[loc, :] for ind in spp.values(
-            )]))/(2*len(spp))
-        freqs[loc] = freq
+    freqs = {i: freq for i,
+             freq in enumerate(spp._get_genotypes().mean(axis=2).mean(axis=0))}
     return freqs
 
 
@@ -46,7 +46,6 @@ fig = plt.figure()
 #              'with %i independent loci') % (
 #                  orig_params.comm.species.spp_0.gen_arch.L))
 max_x = 0
-mean_pop_sizes = []
 # NOTE: run through K_factors from greatest downward, to make it
 # easier to set all x-axes to the same maximum x-limit
 for n, K_fact in enumerate(K_factors[::-1]):
@@ -83,13 +82,14 @@ for n, K_fact in enumerate(K_factors[::-1]):
             [f[-1] in (0, 1) for f in freqs.values()]))
 
     # calculate average persistence time and average pop size, and record
-    mean_pop_size = calc_harmonic_mean(mod.comm[0].Nt)
-    mean_pop_sizes.append(mean_pop_size)
+    mean_pop_size = calc_harmonic_mean(mod.comm[0].Nt[-mod.t:])
     t_persist_list = [f.index(0) if 0 in f else f.index(
                                                 1) for f in freqs.values()]
-    mean_t_persist = np.mean(t_persist_list)
     mean_pop_size_list.append(mean_pop_size)
+    mean_t_persist = np.mean(t_persist_list)
+    persist_list.append(t_persist_list)
     mean_t_persist_list.append(mean_t_persist)
+    pop_Nts.append(mod.comm[0].Nt[-mod.t:])
 
     ax = fig.add_subplot(313-n)
     ax.set_title(("K-factor = %i; mean population size = %0.1f") % (
@@ -111,10 +111,9 @@ plt.savefig(os.path.join(img_dir, 'WF_allele_trajectories.pdf'))
 
 # reverse the lists I had appended to, since I went through the K_factors in
 # reverse order
-mean_pop_sizes = mean_pop_sizes[::-1]
 mean_t_persist_list = mean_t_persist_list[::-1]
 mean_pop_size_list = mean_pop_size_list[::-1]
-
+pop_Nts = pop_Nts[::-1]
 
 # change plot dimensions
 plt.rcParams['figure.figsize'] = [6, 6]
@@ -133,7 +132,7 @@ fig2 = plt.figure()
 plt.xlabel('mean population size', fontdict=ax_fontdict)
 plt.ylabel('mean persistence time (timesteps)', fontdict=ax_fontdict)
 # plot the data
-plt.plot(mean_pop_size_list, mean_t_persist_list, 'ob')
+plt.plot(mean_pop_size_list, mean_t_persist_list, 'ob', alpha=0.5)
 # plot expected mean persistence according to W-F model
 # (according to theory, expected persistence time for loci starting at 0.5/0.5
 # allele freqs is 2.776N, i.e. -4N(log(p)p + log(q)q) solved for p = q = 0.5;
@@ -141,6 +140,7 @@ plt.plot(mean_pop_size_list, mean_t_persist_list, 'ob')
 # is based on a single simulated instantiation, and also because my
 # populations are approximating W-F populations but not perfectly, so most
 # likely N_t > N_e)
-plt.plot(mean_pop_size_list, [2.776*n for n in mean_pop_size_list], 'or')
+plt.plot(mean_pop_size_list, [2.776*n for n in mean_pop_size_list], 'or',
+         alpha=0.5)
 plt.savefig(os.path.join(img_dir, 'WF_mean_persist_vs_pop_size.pdf'))
 

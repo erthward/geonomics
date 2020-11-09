@@ -1058,10 +1058,10 @@ be fixed. If set to true, each successful mating event will produce
 
 .. code-block:: python
 
-                      #radius of mate-search area
+                      #radius of mate-search area (None, for panmixia)
                       'mating_radius':        1
 
-{:py:`float`, :py:`int`}
+{:py:`float`, :py:`int`, :py:`None`}
 
 default: 1
 
@@ -1069,6 +1069,11 @@ reset? Y
 
 This defines the radius within which an :py:`Indvidual` can find a mate.
 This radius is provided to queries run on the :py:`_KDTree` object.
+(If set to :py:`None` then true panmixia will be used, i.e. each
+:py:`Individual`, with probability equal to its :py:`Species`' birth
+rate, will choose any other individual in the population as its mate,
+after which the chosen pair will then go through age- and sex-eligibility
+checks as needed given the parameterization.)
 
 
 
@@ -1095,6 +1100,9 @@ within its mating radius.
 if **inverse_dist_**mating** is True, then other :py:`Individuals` will
 have probabilities linearly related to their inverse distance from the
 focal :py:`Individual`.)
+(Note that this parameter will only
+be used if **mating_radius** is not :py:`None`.)
+
 
 
 
@@ -1120,7 +1128,8 @@ If False, then each other :py:`Individual` within the
 focal :py:`Individual`'s mating radius has a uniform probability
 of being chosen as a mate.
 (Note that this parameter will only
-be used if **choose_nearest_mate** is False.)
+be used if **choose_nearest_mate** is False and **mating_radius**
+is not :py:`None`.)
 
 
 ----------------
@@ -1664,17 +1673,41 @@ parameter will have little meaning.
 
 .. code-block:: python
                         
-                    #whether starting allele frequencies should be fixed at 0.5
+                    #starting allele frequency (None to draw freqs randomly)
                     'start_p_fixed':                      True,
 
-:py:`bool`
+{:py:`float`, :py:`None`}
 
-default: True
+default: 0.5
 
 reset? P
 
-This indicates whether the starting 1-allele frequencies at all loci
-should be set fixed at 0.5. Defaults to True.
+If a :py:`float` is provided, that value will be used as the starting allele
+frequency at which all loci (except neutral loci,
+if **start_neut_zero** is True) will be fixed. 
+(In this case, the float must be between 0 and 1, inclusive.)
+If None, the starting allele
+frequency of each locus will be drawn as a uniform random variable
+between 0 and 1, inclusive.
+Defaults to 0.5.
+
+
+
+**start_neut_zero**
+
+.. code-block:: python
+
+                   #whether to start neutral locus freqs at 0
+                   'start_neut_zero':           False,
+
+:py:`bool`
+
+default: False
+
+reset? P
+
+If True, all neutral loci will start with the '1' allele at a frequency of 0
+(i.e. all individuals will be homozygous '0'|'0' at those loci).
 
 
 

@@ -18,7 +18,9 @@ import matplotlib.pyplot as plt
 # set some plotting params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
            'img/final/')
-
+titlesize=20
+axlabelsize=18
+ticklabelsize=15
 
 # set the data directory, and delete it if it already exists (so that we don't
 # create mutliple, conflicting sets of data files)
@@ -76,11 +78,12 @@ spp = mod.comm[0]
 plt.xticks(fontsize=13)
 plt.yticks(fontsize=13)
 fig = plt.figure()
-fig.suptitle('Drift during bottleneck event', size=20)
+#fig.suptitle('Drift during bottleneck event', size=20)
 ax1 = fig.add_subplot(311)
-ax1.set_title('allele-frequency trajectories', size=17)
-ax1.set_xlabel('time', size=15)
-ax1.set_ylabel("frequency of '1' allele", size=15)
+ax1.set_title('allele-frequency trajectories', size=titlesize)
+ax1.set_xlabel('time', size=axlabelsize)
+ax1.set_ylabel("frequency of '1' allele", size=axlabelsize)
+ax1.tick_params(labelsize=ticklabelsize)
 plt.xlim((0, mod.T))
 plt.ylim((0, 1))
 for loc, traj in [*allele_freqs.items()][:10]:
@@ -96,9 +99,10 @@ ts = mod.params.comm.species['spp_0'].change.dem[0].timesteps
 plt.plot([ts[0]] * 2, [0, max(spp.Nt)], '--r')
 plt.plot([ts[1]] * 2, [0, max(spp.Nt)], '--r')
 ax2 = fig.add_subplot(312)
-ax2.set_title('population size', size=17)
-ax2.set_xlabel('time', size=15)
-ax2.set_ylabel('population size', size=15)
+ax2.set_title('population size', size=titlesize)
+ax2.set_xlabel('time', size=axlabelsize)
+ax2.set_ylabel('population size', size=axlabelsize)
+ax2.tick_params(labelsize=ticklabelsize)
 plt.xlim((0, mod.T))
 plt.ylim((0, 1.1*max(spp.Nt)))
 plt.plot(range(mod.T), spp.Nt[-mod.T:], '-k')
@@ -136,9 +140,10 @@ for i in range(window_buff,
     change_rates[timesteps[i]] = change_rate
 
 ax3 = fig.add_subplot(313)
-ax3.set_title('allele-frequency change rates', size=17)
-ax3.set_xlabel('time', size=15)
-ax3.set_ylabel('rate of allele-frequency change', size=15)
+ax3.set_title('allele-frequency change rates', size=titlesize)
+ax3.set_xlabel('time', size=axlabelsize)
+ax3.set_ylabel('rate of allele-frequency change', size=axlabelsize)
+ax3.tick_params(labelsize=ticklabelsize)
 plt.plot([*change_rates.keys()], [*change_rates.values()], '-k')
 plt.plot([ts[0]] * 2, [0, 1.1 * max([*change_rates.values()])], '--r')
 plt.plot([ts[1]] * 2, [0, 1.1 * max([*change_rates.values()])], '--r')

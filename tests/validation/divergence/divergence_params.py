@@ -144,7 +144,7 @@ params = {
                     #carrying-capacity Layer name
                     'K_layer':          'layer_1',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         0.5,
+                    'K_factor':         1,
                     }, # <END> 'init'
 
             #-------------------------------------#
@@ -163,13 +163,15 @@ params = {
                     #intrinsic growth rate
                     'R':                        0.5,
                     #intrinsic birth rate (MUST BE 0<=b<=1)
-                    'b':                        0.2,
+                    'b':                        0.5,
                     #expectation of distr of n offspring per mating pair
                     'n_births_distr_lambda':    1,
                     #whether n births should be fixed at n_births_dist_lambda
                     'n_births_fixed':           True,
                     #radius of mate-search area
-                    'mating_radius':            3,
+                    'mating_radius':            1,
+                    'choose_nearest_mate':      True,
+                    'inverse_dist_mating':      False,
                     }, # <END> 'mating'
 
             #----------------------------------------#
@@ -199,13 +201,15 @@ params = {
                     #concentration of distr of movement direction
                     'direction_distr_kappa':    0,
                     #mean of distr of movement distance
-                    'distance_distr_mu':        0.5,
+                    'movement_distance_distr_param1':        0.5,
                     #variance of distr of movement distance
-                    'distance_distr_sigma':     0.5,
+                    'movement_distance_distr_param2':     0.5,
+                    'movement_distance_distr':           'levy',
                     #mean of distr of dispersal distance
-                    'dispersal_distr_mu':       0.5,
+                    'dispersal_distance_distr_param1':       0.5,
                     #variance of distr of dispersal distance
-                    'dispersal_distr_sigma':    0.5,
+                    'dispersal_distance_distr_param2':    0.5,
+                    'dispersal_distance_distr':         'levy',
                     },    # <END> 'movement'
 
 
@@ -221,7 +225,8 @@ params = {
                     #num of chromosomes
                     'l_c':                      [100],
                     #whether starting allele frequencies should be fixed at 0.5
-                    'start_p_fixed':            True,
+                    'start_p_fixed':            0.5,
+                    'start_neut_zero':          False,
                     #genome-wide per-base neutral mut rate (0 to disable)
                     'mu_neut':                  0,
                     #genome-wide per-base deleterious mut rate (0 to disable)
@@ -244,6 +249,7 @@ params = {
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    'n_recomb_sims':            10_000,
                     'allow_ad_hoc_recomb':      False,
                     #whether to save mutation logs
                     'mut_log':                  False,

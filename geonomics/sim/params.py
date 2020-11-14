@@ -402,7 +402,7 @@ GENOME_PARAMS = '''
                     'gen_arch_file':            %s,
                     #num of loci
                     'L':                        100,
-                    #starting allele frequency (None to draw freqs randomly)
+                    #fixed starting allele freq; None/False -> rand; True -> 0.5
                     'start_p_fixed':            0.5,
                     #whether to start neutral locus freqs at 0
                     'start_neut_zero':          False,

@@ -8,6 +8,8 @@
 - debug and add tests back in
 
 # CODE CHANGES (ranked in priority from 1 (least) to 5):
+        
+        5 change 'start_p_fixed' to 'start_p_fixed_at'?
 
         5 add a param 'recomb_path_refresh_interval' that defaults to 0
           but that if set to larger interval will redraw new paths at that interval

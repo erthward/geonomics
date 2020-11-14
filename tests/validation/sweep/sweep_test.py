@@ -15,11 +15,15 @@ import statsmodels.api as sm
 lowess = sm.nonparametric.lowess
 
 # set some plotting params
+axlabelsize = 18
+titlesize = 20
+ticklabelsize=15
+
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper_images/'
            'final/')
-ax_fontdict = {'fontsize': 12,
+ax_fontdict = {'fontsize': axlabelsize,
                'name': 'Bitstream Vera Sans'}
-ttl_fontdict = {'fontsize': 14,
+ttl_fontdict = {'fontsize': titlesize,
                 'name': 'Bitstream Vera Sans'}
 color_dict = dict(zip(np.linspace(0,1,3), plt.cm.coolwarm(np.linspace(0,1,3))))
 
@@ -127,6 +131,7 @@ ax3.plot(dists, r2s, '.r')
 ax3.set_xlabel("recombination distance (sum of interlocus recomb. rates)",
               fontdict=ax_fontdict)
 ax3.set_ylabel("linkage ($R^{2}$)", fontdict=ax_fontdict)
+ax3.tick_params(labelsize=ticklabelsize)
 
 # run for 1 main step, so that all individuals have fitness values
 mod.walk(1, 'main', True)
@@ -201,7 +206,7 @@ r2s, dists = gen_data_linkage_dist_plot(ld[1],
 ax4.plot(dists, r2s, '.r')
 ax4.set_xlabel("recombination distance (sum of interlocus recomb. rates)",
                fontdict=ax_fontdict)
-
+ax4.tick_params(labelsize=ticklabelsize)
 
 # plot stats
 ax1.set_title('before sweep', fontdict=ttl_fontdict)
@@ -210,6 +215,7 @@ ax1.plot(range(mod.comm[0].gen_arch.L), ys, '-k')
 ax1.plot([nonneut_loc, nonneut_loc], [0, 1], '--r')
 ax1.set_xlabel('genomic_position', fontdict=ax_fontdict)
 ax1.set_ylabel('nucleotide diversity', fontdict=ax_fontdict)
+ax1.tick_params(labelsize=ticklabelsize)
 
 ax2.set_title('after sweep', fontdict=ttl_fontdict)
 ys = lowess(pi[1], [*range(mod.comm[0].gen_arch.L)], frac=0.01)[:, 1]
@@ -222,6 +228,7 @@ pi_min_lim = 0.95 * min([val for sublist in pi for val in sublist])
 pi_max_lim = 1.05 * max([val for sublist in pi for val in sublist])
 ax1.set_ylim((pi_min_lim, pi_max_lim))
 ax2.set_ylim((pi_min_lim, pi_max_lim))
+ax2.tick_params(labelsize=ticklabelsize)
 
 # add vertical space between the first and second rows of plots
 fig.subplots_adjust(hspace=.5)
@@ -239,6 +246,7 @@ ax.set_ylabel('mean fitness', fontdict=ax_fontdict)
 ax.set_ylim(((1 - mod.comm[0].gen_arch.traits[0].phi)-0.05, 1.01))
 ax.set_xlim((0, mod.t))
 ax.set_yticks(np.linspace(0.8, 1.0, 5))
+ax.tick_params(labelsize=ticklabelsize)
 
 plt.show()
 plt.savefig(os.path.join(img_dir, 'SWEEP_mean_fit.pdf'))

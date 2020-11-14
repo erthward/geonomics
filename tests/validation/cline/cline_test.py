@@ -18,9 +18,12 @@ import vcf
 # set some plotting params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
                       'img/final/')
-ax_fontdict = {'fontsize': 12,
+titlesize=20
+axlabelsize=18
+ticklabelsize=15
+ax_fontdict = {'fontsize': axlabelsize,
                'name': 'Bitstream Vera Sans'}
-ttl_fontdict = {'fontsize': 15,
+ttl_fontdict = {'fontsize': titlesize,
                 'name': 'Bitstream Vera Sans'}
 
 #set the data directory, and delete it if it already exists (so that we don't
@@ -51,7 +54,7 @@ T = 1500
 mod = gnx.make_model('./tests/validation/cline/cline_params.py')
 #landscape and community will not be randomized between iterations, so I can
 #just extract the non-neutral loci now
-nonneutral_loci = mod.comm[0].gen_arch.traits[0].loci
+nonneut_loci = mod.comm[0].gen_arch.traits[0].loci
 # create a data structure to store the z-e diffs at each time step
 z_e_diffs = []
 # burn the model
@@ -103,7 +106,8 @@ for it_dir in its_dirs:
         pass
     assert 99 not in genotypes
     #get the non-neutral locus
-    nonneut_loc = mod.comm[0].gen_arch.traits[0].loci[0]
+    assert len(nonneut_loci) == 1, "Appears to be >1 nonneutral locus."
+    nonneut_loc = nonneut_loci[0]
     # get environmental values from across the cline,
     # for making cline predictions
     x_to_predict = mod.land[0].rast[0,:].reshape((50,1))
@@ -177,7 +181,7 @@ for loc, y_prediction in tanh_predictions.items():
         linewidth = linewidths[loc == nonneut_loc],
         color= colors[loc == nonneut_loc])
 plt.show()
-plt.savefig(os.path.join(img_dir, 'CLINE_fitted_clines.pdf'))
+#plt.savefig(os.path.join(img_dir, 'CLINE_fitted_clines.pdf'))
 
 fig2 = plt.figure()
 ax3 = fig2.add_subplot(111)
@@ -185,7 +189,7 @@ ax3 = fig2.add_subplot(111)
 #               'fitness (inner circle)'), fontdict=ttl_fontdict)
 mod.plot_fitness(0,0,0, fitness_cbar=False)
 plt.show()
-plt.savefig(os.path.join(img_dir, 'CLINE_pop_plot.pdf'))
+#plt.savefig(os.path.join(img_dir, 'CLINE_pop_plot.pdf'))
 
 
 fig3 = plt.figure()

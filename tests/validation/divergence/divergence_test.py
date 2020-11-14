@@ -15,9 +15,12 @@ import statsmodels.api as sm
 # set some plotting params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
            'img/final/')
-ax_fontdict = {'fontsize': 12,
+titlesize=20
+axlabelsize=18
+ticklabelsize=15
+ax_fontdict = {'fontsize': axlabelsize,
                'name': 'Bitstream Vera Sans'}
-ttl_fontdict = {'fontsize': 15,
+ttl_fontdict = {'fontsize': titlesize,
                 'name': 'Bitstream Vera Sans'}
 
 
@@ -78,8 +81,7 @@ for phi in phis:
 
     # update it for the starting allele frequencies
     for allele in (0, 1):
-        allele_counts = [np.sum(
-            i.g[nonneut_loc, :]) for i in mod.comm[0].values(
+        allele_counts = [np.sum(i.g == allele) for i in mod.comm[0].values(
                              ) if i.e[0] == allele]
         allele_freq = sum(allele_counts) / (2 * len(allele_counts))
         allele_freqs_this_phi[allele].append(allele_freq)
@@ -91,8 +93,7 @@ for phi in phis:
         mod.walk(1, verbose=True)
         # get allele frequencies for each half of the environment
         for allele in (0, 1):
-            allele_counts = [np.sum(
-                i.g[nonneut_loc, :]) for i in mod.comm[0].values(
+            allele_counts = [np.sum(i.g == allele) for i in mod.comm[0].values(
                                  ) if i.e[0] == allele]
             allele_freq = sum(allele_counts) / (2 * len(allele_counts))
             allele_freqs_this_phi[allele].append(allele_freq)
@@ -214,8 +215,8 @@ plt.ylim((0, 1))
 markers = ['o', 'P', '*']
 lines = ['-', '--', ':']
 cmap = plt.cm.RdBu_r
-colors = {0: cmap(20),
-          1: cmap(255 - 20)}
+colors = {0: cmap(40),
+          1: cmap(255 - 40)}
 line_colors = {**colors}
 for n, phi in enumerate(phis):
     for allele in (0, 1):
@@ -234,7 +235,7 @@ for n, phi in enumerate(phis):
                  expected_allele_freqs[phi][allele], lines[n],
                  color=line_colors[allele], linewidth=1)
 plt.show()
-plt.savefig(os.path.join(img_dir, 'DIVERGENCE_allele_freqs.pdf'))
+#plt.savefig(os.path.join(img_dir, 'DIVERGENCE_allele_freqs.pdf'))
 
 plt.rcParams['figure.figsize'] = [6, 6]
 fig2 = plt.figure()
@@ -242,7 +243,7 @@ fig2 = plt.figure()
 #              'and fitness (inner circle)'))
 mod.plot_fitness(0, 0, 0, fitness_cbar=False)
 plt.show()
-plt.savefig(os.path.join(img_dir, 'DIVERGENCE_pop_plot.pdf'))
+#plt.savefig(os.path.join(img_dir, 'DIVERGENCE_pop_plot.pdf'))
 
 # plot z-e diffs
 fig3 = plt.figure()

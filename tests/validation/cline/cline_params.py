@@ -148,7 +148,7 @@ params = {
                     #carrying-capacity Layer name
                     'K_layer':          'layer_1',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         0.5,
+                    'K_factor':         1.5,
                     }, # <END> 'init'
 
             #-------------------------------------#
@@ -173,7 +173,9 @@ params = {
                     #whether n births should be fixed at n_births_dist_lambda
                     'n_births_fixed':           True,
                     #radius of mate-search area
-                    'mating_radius':            3,
+                    'mating_radius':            1,
+                    'choose_nearest_mate':      False,
+                    'inverse_dist_mating':      False,
                     }, # <END> 'mating'
 
             #----------------------------------------#
@@ -203,13 +205,15 @@ params = {
                     #concentration of distr of movement direction
                     'direction_distr_kappa':    0,
                     #mean of distr of movement distance
-                    'distance_distr_mu':        0.5,
+                    'movement_distance_distr_param1':        0.25,
                     #variance of distr of movement distance
-                    'distance_distr_sigma':     0.5,
+                    'movement_distance_distr_param2':     0.5,
+                    'movement_distance_distr':        'levy',
                     #mean of distr of dispersal distance
-                    'dispersal_distr_mu':       0.5,
+                    'dispersal_distance_distr_param1':       0.5,
                     #variance of distr of dispersal distance
-                    'dispersal_distr_sigma':    0.5,
+                    'dispersal_distance_distr_param2':    0.5,
+                    'dispersal_distance_distr':    'levy',
                     },    # <END> 'movement'
 
 
@@ -226,6 +230,7 @@ params = {
                     'l_c':                      [100],
                     #whether starting allele frequencies should be fixed at 0.5
                     'start_p_fixed':            True,
+                    'start_neut_zero':          False,
                     #genome-wide per-base neutral mut rate (0 to disable)
                     'mu_neut':                  0,
                     #genome-wide per-base deleterious mut rate (0 to disable)
@@ -248,6 +253,7 @@ params = {
                     'n_recomb_paths_mem':       int(1e4),
                     #total number of recomb paths to simulate
                     'n_recomb_paths_tot':       int(1e5),
+                    'n_recomb_sims':            10_000,
                     'allow_ad_hoc_recomb':      True,
                     #whether to save mutation logs
                     'mut_log':                  False,
@@ -262,7 +268,7 @@ params = {
                             #trait-selection Layer name
                             'layer':                'layer_0',
                             #polygenic selection coefficient
-                            'phi':                  0.01,
+                            'phi':                  0.1,
                             #number of loci underlying trait
                             'n_loci':               1,
                             #mutation rate at loci underlying trait
@@ -338,9 +344,9 @@ params = {
         'data': {
             'sampling': {
                 #sampling scheme {'all', 'random', 'point', 'transect'}
-                'scheme':               'random',
+                'scheme':               'all',
                 #sample size at each point, for point & transect sampling
-                'n':                    801,
+                'n':                    None,
                 #coords of collection points, for point sampling
                 'points':               None,
                 #coords of transect endpoints, for transect sampling
@@ -354,7 +360,7 @@ params = {
                 #whether to save current Layers when data is collected
                 'include_landscape':    False,
                 #whether to include fixed loci in VCF files
-                'include_fixed_sites':  False,
+                'include_fixed_sites':  True,
                 },
             'format': {
                 #format for genetic data {'vcf', 'fasta'}

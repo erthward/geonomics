@@ -18,10 +18,9 @@ from sympy import symbols
 # set some plotting params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
                       'img/final/')
-ax_fontdict = {'fontsize': 12,
-               'name': 'Bitstream Vera Sans'}
-ttl_fontdict = {'fontsize': 15,
-                'name': 'Bitstream Vera Sans'}
+ax_fontdict = {'fontsize': 18}
+ttl_fontdict = {'fontsize': 20}
+ticklabelsize=15
 
 #make sympy symbolics for Fst eqxns
 Fst_var_var, Fst_var_mean_p = symbols('Fst_var_var Fst_var_mean_p')
@@ -119,6 +118,7 @@ for i in range(n):
 #data structure to store islands' population sizes each timestep
 pop_sizes = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}
 #walk Model timestep by timestep
+print("WILL RUN FOR %i STEPS" % mod.params.model.T)
 for t in range(mod.params.model.T):
     #create a dictionary to keep count of how many individuals make
     #each of the possible migration events
@@ -313,8 +313,8 @@ for subdir in os.listdir(data_dir):
             mod.plot(0, 0, size=3)
             #ax.set_title('Islands and their subpopulations',
             #             fontdict=ttl_fontdict)
-            plt.xlabel('landscape x', fontdict=ax_fontdict)
-            plt.ylabel('Landscape y', fontdict=ax_fontdict)
+            plt.xlabel('landscape x', fontdict={'fontsize':13})
+            plt.ylabel('landscape y', fontdict={'fontsize':13})
             ax = fig.add_subplot(122)
             #ax.set_title('IBD between island subpopulations')
             ax.set_xlim(0, 6)
@@ -333,51 +333,78 @@ for subdir in os.listdir(data_dir):
             plt.plot(x, Fst_HsHt_y, 'o', color = colors[0])
             plt.plot(x, Fst_var_y, 'o', color = colors[1])
             #plt.plot(x, exp_Fst_y, 'o', color = colors[2])
-            ax.set_xlabel('Pairwise interisland distance (scaled)',
+            ax.set_xlabel(('pairwise interisland distance '
+                          '(scaled to island widths)'),
                           fontdict=ax_fontdict)
-            ax.set_ylabel('Pairwise genetic distance ($F_{ST}$)',
+            ax.set_ylabel('pairwise genetic distance ($F_{ST}$)',
                           fontdict=ax_fontdict)
             x = np.array(x).reshape((len(x), 1))
-            Fst_HsHt_y = np.array(Fst_HsHt_y).reshape((len(Fst_HsHt_y), 1))
-            Fst_var_y = np.array(Fst_var_y).reshape((len(Fst_var_y), 1))
-            tot_mig_rate_y = np.array(tot_mig_rate_y).reshape(
-                (len(tot_mig_rate_y), 1))
-            exp_Fst_y = np.array(exp_Fst_y).reshape((len(exp_Fst_y), 1))
+            Fst_HsHt_y = np.float64(np.array(Fst_HsHt_y).reshape(
+                                                        (len(Fst_HsHt_y), 1)))
+            Fst_var_y = np.float64(np.array(Fst_var_y).reshape((len(Fst_var_y),
+                                                                1)))
+            tot_mig_rate_y = np.float64(np.array(tot_mig_rate_y).reshape(
+                                                    (len(tot_mig_rate_y), 1)))
+            exp_Fst_y = np.float64(np.array(exp_Fst_y).reshape((len(exp_Fst_y),
+                                                                1)))
             line_preds_x = np.linspace(1,5,1000).reshape((1000,1))
             #run and plot linear regressions for each, with alpha = 0.01
             names = ['Fst=Ht-Hs/Ht', 'Fst=var(p)/mean(p)']  #, 'Fst=1/(4Nm + 1)']
-            #for n, data in enumerate([Fst_HsHt_y, Fst_var_y, exp_Fst_y]):
-            for n, data in enumerate([Fst_HsHt_y, Fst_var_y]):
-                est = sm.OLS(data, np.hstack((x, x**2))).fit()
-                line_preds = est.predict(np.hstack((line_preds_x,
-                    line_preds_x**2)))
-                plt.plot(line_preds_x, line_preds, '-', color = colors[n])
+            # set ylims for Fst-island_dist plot
+            plt.ylim(0,1.05*np.max(np.concatenate((Fst_HsHt_y, Fst_var_y))))
+            #for n_data, data in enumerate([Fst_HsHt_y, Fst_var_y, exp_Fst_y]):
+            r2_list = []
+            p_list = []
+            for n_data, data in enumerate([Fst_HsHt_y, Fst_var_y]):
+                #est = sm.OLS(data, np.hstack((x, x**2))).fit()
+                est = sm.OLS(data, np.array(x)).fit()
+                #line_preds = est.predict(np.hstack((line_preds_x,
+                    #line_preds_x**2)))
+                line_preds = est.predict(line_preds_x)
+                plt.plot(line_preds_x, line_preds, '-', color = colors[n_data])
                 r2 = est.rsquared
                 # TODO: DEH: 02-24-19: The next line suddenly started
                 # breaking from one run to the next:
                 # AttributeError: 'Float' object has no attribute 'sqrt'
-                #p = est.pvalues[0]
-                plt.text(line_preds_x[100+(n*75)], line_preds[100]+0.07,
-                         'r=%0.3f' % r2, color = colors[n])
-                #plt.text(line_preds_x[100+(n*75)], line_preds[100]+0.05,
-                #         'p=%0.3f' % p, color = colors[n])
-                plt.ylim(0,1.05)
+                p = est.pvalues[0]
+                r2_list.append(r2)
+                p_list.append(p)
+                plt.text(5.25, 0.15 + (n_data*0.05),
+                         'R2=%0.3f\np≤%0.3f' % (r2, p),
+                         color = colors[n_data],
+                         size=13)
+                #plt.text(line_preds_x[100+(n_data*75)],
+                         #line_preds[100]+0.15,
+                         #'r=%0.3f\np≤%0.3f' % (r2, p),
+                         #color = colors[n_data])
+                #plt.text(line_preds_x[100+(n_data*75)],
+                #         (1+n_data) * (line_preds[100]+0.05),
+                #         '' % p, color = colors[n_data])
                 # validate the results on basis of linear regression
                 # coefficient and p-value
                 #assert p < 0.01, (("Regression test for %s at 0.01 "
                 #                   "significance level.") % names[n])
                 assert est.params[0] > 0, (("Coefficient for %s was not "
-                    "positive.") % names[n])
+                    "positive.") % names[n_data])
             #plot the inter-island migration rates on the same x axis
             ax2 = ax.twinx()
             plt.plot(x, tot_mig_rate_y, 'o', color = '#999999')
             ax2.set_ylabel(('mean inter-island migration rate (individuals '
                             'per generation)'), fontdict=ax_fontdict)
-            est = sm.OLS(np.log(tot_mig_rate_y), np.log(x)).fit()
+            log_tot_mig_rate_y = np.log(tot_mig_rate_y)
+            log_tot_mig_rate_y = [rate if not np.isinf(
+                rate) else 3 * min(
+                log_tot_mig_rate_y) for rate in log_tot_mig_rate_y]
+            est = sm.OLS(log_tot_mig_rate_y, np.log(x)).fit()
             line_preds = est.predict(np.log(line_preds_x))
             plt.plot(line_preds_x, np.e**line_preds, '-', color = '#999999')
             r2 = est.rsquared
             p = est.pvalues[0]
+            plt.text(0.5, 0.175,
+                     'R2=%0.3f\np≤%0.3f' % (r2, p),
+                     color = '#999999',
+                     size=13)
+
             plt.text(line_preds_x[325], line_preds[100]+0.07, 'r=%0.3f' % r2,
                 color = '#999999')
             plt.text(line_preds_x[325], line_preds[100]+0.05, 'p=%0.3f' % p,
@@ -387,14 +414,22 @@ for subdir in os.listdir(data_dir):
             custom_lines = [Line2D([0], [0], color=c,
                                    lw=2) for c in ['#56B4E9', '#0072B2',
                                                    '#999999']]
+
             # build the legend
             ax2.legend(custom_lines,
-                      ['$F_{ST}=\\frac{H_{T} - H_{S}}{H_{T}}$',
-                       '$F_{ST}=\\frac{var(p)}{mean(p)}$',
+                      [('\n$F_{ST}=\\frac{H_{T} - H_{S}}{H_{T}}$'
+                        '\n($R^2=%0.3f; p≤%0.3f$)') % (r2_list[0],
+                                                    p_list[0]),
+                       ('\n$F_{ST}=\\frac{var(p)}{mean(p)}$'
+                       '\n($R2=%0.3f; p≤%0.3f$)') % (r2_list[1],
+                                                   p_list[1]),
                        #'$E[F_{ST}]=\\frac{1}{1+4Nm}$',
-                       'mean inter-island mig. rate'],
+                       ('\nmigration rate\n'
+                        '($R2=%0.3f; p≤%0.3f$)') % (r2, p)],
                       loc = 'center right',
-                      fontsize = 'medium')
+                      fontsize = 12)
+
+            ax2.tick_params(labelsize=ticklabelsize)
 plt.show()
 #plt.savefig(os.path.join(
 #            img_dir, 'STEPPING_STONE_pop_plot_and_Fst_vs_mig_rate.pdf'))
@@ -418,26 +453,28 @@ ax2 = fig2.add_axes([0.82, 0.1, 0.05, 0.8])
 #ax2.set_title('Fst, colored by inter-island distance')
 ax1.set_xlabel('t', fontdict=ax_fontdict)
 ax1.set_ylabel('Fst', fontdict=ax_fontdict)
+ax1.tick_params(labelsize=ticklabelsize)
 #colors = ['#8baee5', '#4580e0', '#0056e2']
 #cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
 cmap = mpl.cm.YlGn
 norm = mpl.colors.Normalize(vmin=0, vmax=5)
 colors = cmap(np.linspace(0, 1, 5))
-x = sorted(all_Fst_HsHt.keys())
+xs = sorted(all_Fst_HsHt.keys())
 max_Fsts = []
 for pop_pair in pop_pairs:
-    y = [all_Fst_HsHt[t][pop_pair] for t in x]
+    y = [all_Fst_HsHt[t][pop_pair] for t in xs]
     max_Fsts.append(max(y))
-    ax1.plot(x, y, color=colors[np.abs(pop_pair[0] - pop_pair[1])-1],
+    ax1.plot(xs, y, color=colors[np.abs(pop_pair[0] - pop_pair[1])-1],
             linewidth=3)
-    ax1.plot(x, y, color="black", linewidth=0.5)
+    ax1.plot(xs, y, color="black", linewidth=0.5)
 ax1.set_ylim((0, 1.1 * max(max_Fsts)))
-ax2.set_xlim((0, 1.1*max(x)))
+ax2.set_xlim((0, 1.1*max(xs)))
 cb1 = mpl.colorbar.ColorbarBase(ax2, cmap=cmap, norm=norm,
                                 spacing='proportional',
                                 boundaries=[i+0.5 for i in range(6)],
                                 ticks=[*range(1,6)])
-cb1.set_label('inter-island distance')
+cb1.set_label('inter-island distance', size=17)
+cb1.ax.tick_params(size=0, labelsize=ticklabelsize)
 plt.show()
 #plt.savefig(os.path.join(img_dir,
 #                         ('STEPPING_STONE_Fst_over_time.pdf')))

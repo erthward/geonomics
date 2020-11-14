@@ -199,13 +199,13 @@ class Recombinations:
     def _set_seg_info(self):
         seg_info = {}
         for k, recomb in self._breakpoints.items():
-            # NOTE: adding 0.5 to all recombination breakpoints, to indicate
-            # that reocmbination 'actually' happens halfway between
+            # NOTE: subtracting 0.5 from all recombination breakpoints,
+            # to indicate that recombination 'actually' happens halfway between
             # a pair of loci, (i.e. it actually subsets Individuals'
             # genomes in that way) without having the hold all the 0.5's
             # in the Recombinations._events data struct (to save on memory)
-            left = np.array([0] + [*recomb + 0.5])
-            right = np.array([*recomb + 0.5] + [self._L])
+            left = np.array([0] + [*recomb - 0.5])
+            right = np.array([*recomb - 0.5] + [self._L])
             seg_info[k] = (left, right)
         self._seg_info = seg_info
 
@@ -735,19 +735,29 @@ def _make_genomic_architecture(spp_params, land):
     # draw locus-wise 1-allele frequencies, unless provided in
     # custom gen-arch file
     if gen_arch_file is None:
+        # set according to a non-None value
         if g_params.start_p_fixed is not None:
-            assert not isinstance(g_params.start_p_fixed, bool), ("The "
-                "parameter start_p_fixed should be a numeric in [0, 1], "
-                "not a bool.")
-            assert 0 <= g_params.start_p_fixed <= 1, ("If a starting allele "
-                                                      "frequency value is "
-                                                      "provided then it must "
-                                                      "be between 0 and 1.")
-            gen_arch.p = np.array([g_params.start_p_fixed]*g_params.L)
-            if g_params.start_neut_zero:
-                gen_arch.p[gen_arch.neut_loci] = 0
+            if isinstance(g_params.start_p_fixed, bool):
+                # if True, make all 0.5 (default starting allele freq)
+                if g_params.start_p_fixed:
+                    gen_arch.p = np.array([0.5]*g_params.L)
+                # if False, draw randomly
+                else:
+                    gen_arch.p = _draw_allele_freqs(g_params.L)
+            # if not a bool then should be a float, so assert, then set to that val
+            else:
+                assert 0 <= g_params.start_p_fixed <= 1, ("If a starting allele "
+                                                          "frequency value is "
+                                                          "provided then it must "
+                                                          "be between 0 and 1.")
+                gen_arch.p = np.array([g_params.start_p_fixed]*g_params.L)
+        # if the value is None, then draw randomly
         else:
             gen_arch.p = _draw_allele_freqs(g_params.L)
+        # set the neutral loci to 0, if need be
+        if g_params.start_neut_zero:
+            gen_arch.p[gen_arch.neut_loci] = 0
+    # use starting allele freq values from the gen_arch_file instead, if given
     else:
         gen_arch.p = gen_arch_file['p'].values
 

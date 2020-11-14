@@ -162,7 +162,6 @@ def _do_mating_sngl_offspr(spp, pair, recomb_keys):
         new_genome = np.vstack(new_genome).T
     else:
         new_genome = None
-
     return new_genome, seg_info
 
 

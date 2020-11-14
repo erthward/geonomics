@@ -1673,22 +1673,27 @@ parameter will have little meaning.
 
 .. code-block:: python
                         
-                    #starting allele frequency (None to draw freqs randomly)
-                    'start_p_fixed':                      True,
+                    #fixed starting allele freq; None/False -> rand; True -> 0.5
+                    'start_p_fixed':                      0.5,
 
-{:py:`float`, :py:`None`}
+{:py:`float`, :py:`bool`, :py:`None`}
 
 default: 0.5
 
 reset? P
 
-If a :py:`float` is provided, that value will be used as the starting allele
+If a :py:`float` on the interval [0,1] is provided,
+that value will be used as the starting allele
 frequency at which all loci (except neutral loci,
 if **start_neut_zero** is True) will be fixed. 
-(In this case, the float must be between 0 and 1, inclusive.)
-If None, the starting allele
+If :py:`None`, the starting allele
 frequency of each locus will be drawn as a uniform random variable
 between 0 and 1, inclusive.
+If a :py:`bool` is provided, :py:`True` will fix all
+loci at the default starting allele frequency of 0.5,
+whereas :py:`False` will not fix starting
+allele frequencies, effectively having the same effect
+as :py:`None`.
 Defaults to 0.5.
 
 

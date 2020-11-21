@@ -963,15 +963,20 @@ successful mating event (depending on how <strong>n_births_fixed</strong> is set
 be fixed. If set to true, each successful mating event will produce
 <strong>n_births_distr_lambda</strong> new offspring.</p>
 <p><strong>mating_radius</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#radius of mate-search area</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#radius of mate-search area (None, for panmixia)</span>
 <span class="s1">&#39;mating_radius&#39;</span><span class="p">:</span>        <span class="mi">1</span>
 </pre></div>
 </div>
-<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">float</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>}</p>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">float</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code>, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
 <p>default: 1</p>
 <p>reset? Y</p>
 <p>This defines the radius within which an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Indvidual</span></span></code> can find a mate.
-This radius is provided to queries run on the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_KDTree</span></span></code> object.</p>
+This radius is provided to queries run on the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_KDTree</span></span></code> object.
+(If set to <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code> then true panmixia will be used, i.e. each
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>, with probability equal to its <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’ birth
+rate, will choose any other individual in the population as its mate,
+after which the chosen pair will then go through age- and sex-eligibility
+checks as needed given the parameterization.)</p>
 <p><strong>choose_nearest_mate</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether individs should choose nearest neighs as mates</span>
 <span class="s1">&#39;choose_nearest_mate&#39;</span><span class="p">:</span>     <span class="kc">False</span><span class="p">,</span>
@@ -993,7 +998,9 @@ within its mating radius.
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code> will have equal probability of being chosen;
 if <strong>inverse_dist_**mating</strong> is True, then other <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code> will
 have probabilities linearly related to their inverse distance from the
-focal <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>.)</p>
+focal <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>.)
+(Note that this parameter will only
+be used if <strong>mating_radius</strong> is not <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>.)</p>
 <p><strong>inverse_dist_mating</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether mate-choice should be inverse distance-weighted</span>
 <span class="s1">&#39;inverse_dist_mating&#39;</span><span class="p">:</span>     <span class="kc">False</span><span class="p">,</span>
@@ -1015,7 +1022,8 @@ If False, then each other <code class="code py python docutils literal notransla
 focal <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s mating radius has a uniform probability
 of being chosen as a mate.
 (Note that this parameter will only
-be used if <strong>choose_nearest_mate</strong> is False.)</p>
+be used if <strong>choose_nearest_mate</strong> is False and <strong>mating_radius</strong>
+is not <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>.)</p>
 </div>
 <hr class="docutils" />
 <div class="section" id="mortality">
@@ -1387,15 +1395,36 @@ the genome where the recombination rate is 0.5;
 thus, for a model where recombination rates are often at or near 0.5, this
 parameter will have little meaning.</p>
 <p><strong>start_p_fixed</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether starting allele frequencies should be fixed at 0.5</span>
-<span class="s1">&#39;start_p_fixed&#39;</span><span class="p">:</span>                      <span class="kc">True</span><span class="p">,</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#fixed starting allele freq; None/False -&gt; rand; True -&gt; 0.5</span>
+<span class="s1">&#39;start_p_fixed&#39;</span><span class="p">:</span>                      <span class="mf">0.5</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">float</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code>, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
+<p>default: 0.5</p>
+<p>reset? P</p>
+<p>If a <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">float</span></span></code> on the interval [0,1] is provided,
+that value will be used as the starting allele
+frequency at which all loci (except neutral loci,
+if <strong>start_neut_zero</strong> is True) will be fixed.
+If <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>, the starting allele
+frequency of each locus will be drawn as a uniform random variable
+between 0 and 1, inclusive.
+If a <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code> is provided, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">True</span></span></code> will fix all
+loci at the default starting allele frequency of 0.5,
+whereas <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">False</span></span></code> will not fix starting
+allele frequencies, effectively having the same effect
+as <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>.
+Defaults to 0.5.</p>
+<p><strong>start_neut_zero</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to start neutral locus freqs at 0</span>
+<span class="s1">&#39;start_neut_zero&#39;</span><span class="p">:</span>           <span class="kc">False</span><span class="p">,</span>
 </pre></div>
 </div>
 <p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
-<p>default: True</p>
+<p>default: False</p>
 <p>reset? P</p>
-<p>This indicates whether the starting 1-allele frequencies at all loci
-should be set fixed at 0.5. Defaults to True.</p>
+<p>If True, all neutral loci will start with the ‘1’ allele at a frequency of 0
+(i.e. all individuals will be homozygous ‘0’|’0’ at those loci).</p>
 <p><strong>mu_neut</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#genome-wide per-base neutral mut rate (0 to disable)</span>
 <span class="s1">&#39;mu_neut&#39;</span><span class="p">:</span>                  <span class="mi">0</span><span class="p">,</span>

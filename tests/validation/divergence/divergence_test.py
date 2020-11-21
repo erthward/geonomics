@@ -10,6 +10,7 @@ import os
 import numpy as np
 import shutil
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import statsmodels.api as sm
 
 # set some plotting params
@@ -84,6 +85,9 @@ for phi in phis:
         allele_counts = [np.sum(i.g == allele) for i in mod.comm[0].values(
                              ) if i.e[0] == allele]
         allele_freq = sum(allele_counts) / (2 * len(allele_counts))
+        # flip the freq, if tracking the 0 allele
+        if allele == 0:
+            allele_freq = 1 - allele_freq
         allele_freqs_this_phi[allele].append(allele_freq)
     # walk the model, calculating the 1-allele freq at the non-neutral locus
     # after each timestep, for each half of the landscape
@@ -96,6 +100,9 @@ for phi in phis:
             allele_counts = [np.sum(i.g == allele) for i in mod.comm[0].values(
                                  ) if i.e[0] == allele]
             allele_freq = sum(allele_counts) / (2 * len(allele_counts))
+            # flip the freq, if tracking the 0 allele
+            if allele == 0:
+                allele_freq = 1 - allele_freq
             allele_freqs_this_phi[allele].append(allele_freq)
         # get ending environmental values for each individual
         new_env_vals = {i.idx: i.e[0] for i in mod.comm[0].values()}
@@ -210,31 +217,64 @@ ax = fig.add_subplot(111)
 #              '\nobserved (markers) versus predicted (lines);'
 #              '%i timesteps, ~1400 individuals') % T)
 plt.xlabel('time', fontdict=ax_fontdict)
-plt.ylabel('frequency of 1 allele', fontdict=ax_fontdict)
+plt.ylabel('frequency of \'1\' allele', fontdict=ax_fontdict)
 plt.ylim((0, 1))
-markers = ['o', 'P', '*']
-lines = ['-', '--', ':']
+ax.tick_params(labelsize=ticklabelsize)
+#markers = ['o', 'P', '*']
+#lines = ['-', '--', ':']
 cmap = plt.cm.RdBu_r
-colors = {0: cmap(40),
-          1: cmap(255 - 40)}
-line_colors = {**colors}
+#colors = {0: cmap(40),
+#          1: cmap(255 - 40)}
+#line_colors = {**colors}
+colors = {0: {0.01: '#c0d6fc',
+              0.05: '#5c8ee6',
+              0.1:  '#072d70'},
+          1: {0.01: '#ffa8a8',
+              0.05: '#eb5757',
+              0.1:  '#940606'}
+         }
+plotted_line_list = []
+
 for n, phi in enumerate(phis):
     for allele in (0, 1):
         # plot observed allele frequencies
-        plt.plot(range(len(allele_freqs[phi][allele])),
-                 allele_freqs[phi][allele], markers[n],
-                 color=colors[allele], markeredgecolor='black',
-                 markersize=4, markeredgewidth=0.5)
-ax.legend(labels=['phi = %0.3f; allele %i beneficial' % (
-          phi, n % 2) for phi in phis for n in (0, 1)],
-          loc='best', fontsize='medium')
-# plot expected allele frequencies
-for n, phi in enumerate(phis):
-    for allele in (0, 1):
-        plt.plot(range(len(expected_allele_freqs[phi][allele])),
-                 expected_allele_freqs[phi][allele], lines[n],
-                 color=line_colors[allele], linewidth=1)
-plt.show()
+        ax.plot(range(len(allele_freqs[phi][allele])),
+                allele_freqs[phi][allele], '-',
+                color=colors[allele][phi],
+                linewidth=2) 
+        line, = plt.plot(range(len(expected_allele_freqs[phi][allele])),
+                         expected_allele_freqs[phi][allele], ':',
+                         color=colors[allele][phi], linewidth=2)
+        plotted_line_list.append(line)
+
+#labels=['allele %i: phi = %0.2f' %  (n, phi % 2) for phi in phis for n in (0, 1)]
+#labels = [labels[int(i/2)] if i%2 == 0 else '' for i in range(len(labels)*2)]
+#ax.legend(labels=labels, loc=(1.02, 0.3), fontsize=15)
+
+phi_colors = ['#3d3d3d', '#808080', '#c4c4c4']
+custom_lines = [Line2D([0], [0], color=colors[allele][0.05],
+                        lw=2) for allele in (0, 1)]
+custom_labels = ['$%i$' % allele for allele in (0, 1)]
+leg1 = ax.legend(custom_lines, custom_labels, loc=(1.02, 0.8), fontsize=15,
+          title='Allele')
+leg1.get_title().set_fontsize('17')
+custom_lines = [Line2D([0], [0], color=col,
+                       lw=2) for col in phi_colors]
+custom_labels = ['$\phi=%0.2f$' % phi for phi in phis]
+leg2 = ax.legend(custom_lines, custom_labels, loc=(1.02, 0.4), fontsize=15,
+          title='Strength of\nSelection')
+leg2.get_title().set_fontsize('17')
+custom_lines = [Line2D([0], [0], color='black',
+                       linestyle=style) for style in ('-', ':')]
+custom_labels = ['observed', 'expected']
+leg3 = ax.legend(custom_lines, custom_labels, loc=(1.02, 0.15), fontsize=15,
+          title='Data')
+leg3.get_title().set_fontsize('17')
+ax.add_artist(leg1)
+ax.add_artist(leg2)
+
+
+
 #plt.savefig(os.path.join(img_dir, 'DIVERGENCE_allele_freqs.pdf'))
 
 plt.rcParams['figure.figsize'] = [6, 6]
@@ -248,15 +288,18 @@ plt.show()
 # plot z-e diffs
 fig3 = plt.figure()
 z_e_ax = fig3.add_subplot(111)
-phi_colors = ['#ccf0ea', '#30b3ae', '#096075']
-for n, phi in enumerate(phis[::-1]):
+
+for n, phi in enumerate(phis):
     diffs = z_e_diffs[phi]
     plt.plot(range(len(diffs)), [*diffs.values()], color=phi_colors[n])
-z_e_ax.set_xlabel('time')
-z_e_ax.set_ylabel(('mean difference between individuals\' phenotypes and '
-                   'environmental values'))
+
+z_e_ax.set_xlabel('time', fontdict=ax_fontdict)
+z_e_ax.set_ylabel('mean phenotype-environment difference', fontdict=ax_fontdict)
 z_e_ax.legend(labels=['phi = %0.3f' % phi for phi in phis[::-1]],
-              loc='best', fontsize='medium')
+              loc='best', fontsize=15)
+z_e_ax.tick_params(labelsize=ticklabelsize)
+plt.subplots_adjust(left=0.05, bottom=0.085, right=0.985, top=0.985,
+                       wspace=0, hspace=0)
 plt.show()
 
 

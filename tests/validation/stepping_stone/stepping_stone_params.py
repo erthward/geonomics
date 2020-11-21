@@ -133,11 +133,11 @@ params = {
 
                 'init': {
                     #starting number of individs
-                    'N':                5000,
+                    'N':                10000,
                     #carrying-capacity Layer name
                     'K_layer':          'layer_0',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         5,
+                    'K_factor':         15,
                     }, # <END> 'init'
 
             #-------------------------------------#
@@ -154,9 +154,9 @@ params = {
                     #whether P(birth) should be weighted by parental dist
                     'dist_weighted_birth':       False,
                     #intrinsic growth rate
-                    'R':                        1.8,
+                    'R':                        1.1,
                     #intrinsic birth rate (MUST BE 0<=b<=1)
-                    'b':                        1.0,
+                    'b':                        1,
                     #expectation of distr of n offspring per mating pair
                     'n_births_distr_lambda':    1,
                     #whether n births should be fixed at n_births_dist_lambda

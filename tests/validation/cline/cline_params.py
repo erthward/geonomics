@@ -148,7 +148,7 @@ params = {
                     #carrying-capacity Layer name
                     'K_layer':          'layer_1',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         1.5,
+                    'K_factor':         1,
                     }, # <END> 'init'
 
             #-------------------------------------#
@@ -208,12 +208,12 @@ params = {
                     'movement_distance_distr_param1':        0.25,
                     #variance of distr of movement distance
                     'movement_distance_distr_param2':     0.5,
-                    'movement_distance_distr':        'levy',
+                    'movement_distance_distr':        'wald',
                     #mean of distr of dispersal distance
                     'dispersal_distance_distr_param1':       0.5,
                     #variance of distr of dispersal distance
                     'dispersal_distance_distr_param2':    0.5,
-                    'dispersal_distance_distr':    'levy',
+                    'dispersal_distance_distr':    'wald',
                     },    # <END> 'movement'
 
 
@@ -268,7 +268,7 @@ params = {
                             #trait-selection Layer name
                             'layer':                'layer_0',
                             #polygenic selection coefficient
-                            'phi':                  0.1,
+                            'phi':                  0.01,
                             #number of loci underlying trait
                             'n_loci':               1,
                             #mutation rate at loci underlying trait

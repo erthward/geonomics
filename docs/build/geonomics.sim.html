@@ -672,7 +672,7 @@ and matplotlib.pyplot.text.</p></li>
 
 <dl class="method">
 <dt id="geonomics.sim.model.Model.plot_genotype">
-<code class="sig-name descname">plot_genotype</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">locus</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">with_dominance=False</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">edge_color='black'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_genotype" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plot_genotype</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">locus</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">by_dominance=False</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">edge_color='black'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_genotype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a Species’ Individuals, colored by their genotypes for a locus</p>
 <p>Create a scatter plot of the Individuals in a Species,
 on top of any Landscape Layer, and color the points by
@@ -691,7 +691,7 @@ either the Layer’s index number (i.e. its integer key in the
 Landscape dict), or its name (as a character string). Defaults
 to None, which will cause all Layers to be plotted as an overlay
 of transparent rasters, each with a different colormap.</p></li>
-<li><p><strong>with_dominance</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If False, the Individuals will be colored by their actual genotypes
+<li><p><strong>by_dominance</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If False, the Individuals will be colored by their actual genotypes
 (i.e. a 0|0 homozygote will be depicted as 0, a 1|1 homozygote as
 1, and a 0|1 heterozygote as 0.5). If True, then the dominance
 value for the chosen locus will be used to the determine the

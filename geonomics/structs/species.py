@@ -1011,26 +1011,6 @@ class Species(OD):
                 e = np.array(ig(e))
         return e
 
-    def _get_genotype(self, locus, biallelic=False, individs=None,
-                                                        by_dominance=True):
-
-        if individs is None:
-            individs = [*self]
-
-        if biallelic:
-            return {i: self[i].g[locus, :] for i in [*self] if i in individs}
-
-        else:
-            if by_dominance == True:
-                d = self.gen_arch.dom[locus]
-            else:
-                d = 0
-            genotypes = np.array(
-              [ind.g[locus] for i, ind in self.items() if i in individs])
-            genotypes = np.mean(genotypes, axis = 1)
-            genotypes = np.clip(genotypes * (1 + d), a_min = None, a_max = 1)
-            return dict(zip(individs, genotypes))
-
 
     def _get_genotypes(self, loci=None, individs=None, biallelic=True,
                        as_dict=False):
@@ -1338,19 +1318,26 @@ class Species(OD):
 
 
     # method for plotting individuals colored by their genotype at a locus
-    def _plot_genotype(self, locus, lyr_num=None, individs=None,
+    def _plot_genotype(self, locus, lyr_num=None, land=None, individs=None,
                        text=False, size=25, text_size = 9, edge_color='black',
                        text_color='black', cbar=True, alpha=1,
                        by_dominance=False, zoom_width=None, x=None, y=None,
                        ticks=None, mask_rast=None):
 
+        genotypes = self._get_genotypes(loci=[locus], individs=individs,
+                                        biallelic=False, as_dict=True)
         if by_dominance == True:
-            genotypes = self._get_genotype(locus, by_dominance=True)
-        else:
-            genotypes = self._get_genotype(locus)
-
-        if individs is not None:
-            genotypes = {i:v for i,v in genotypes.items() if i in individs}
+            if locus in self.gen_arch.nonneut_loci:
+                dom = self.gen_arch.dom[locus]
+                # NOTE: would be simpler to just use np.ceil here...
+                #       don't see why I didn't...?
+                genotypes = {i:np.clip(gt * (1 + dom),
+                                       a_min=None,
+                                       a_max=1) for i, gt in genotypes.items()}
+            else:
+                print(('\n\tWARNING: The by_dominance argument is True, '
+                       'but a neutral locus was chosen, '
+                       'so the argument was not used.\n'))
 
         # just assign black, gray, and white (since there's no reason
         # necessarily that these should be mapped to a certain layer, the way
@@ -1360,14 +1347,17 @@ class Species(OD):
         for n, genotype in enumerate([0.0, 0.5, 1.0]):
             genotype_individs = [i for i, g in genotypes.items(
                                         ) if np.atleast_1d(g)[0] == genotype]
+            # will hide the land if this is not the first plot made
+            hide_land = n > 0
             # plot if there are any individuals of this genotype
             if len(genotype_individs) >= 1:
-                self._plot(lyr_num = lyr_num, individs = genotype_individs,
-                    text = text, color = colors[n], edge_color = edge_color,
-                    text_color = text_color, cbar = cbar,
-                    size = size, text_size = text_size, alpha = alpha,
-                    zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1,
-                    ticks=ticks, mask_rast=mask_rast)
+                self._plot(lyr_num=lyr_num, land=land, hide_land=hide_land,
+                           individs=genotype_individs,
+                           text=text, color=colors[n], edge_color=edge_color,
+                           text_color=text_color, cbar=cbar,
+                           size=size, text_size=text_size, alpha=alpha,
+                           zoom_width=zoom_width, x=x, y=y, vmin=0, vmax=1,
+                           ticks=ticks, mask_rast=mask_rast)
 
 
     # method for plotting individuals colored by their phenotypes

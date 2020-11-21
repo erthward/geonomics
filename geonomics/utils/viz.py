@@ -208,7 +208,7 @@ def _plot_rasters(land, lyr_num=None, cbar=True, cmap=None, plt_lims=None,
             cbar.ax.set_title("layer: %s" % lyr_names[n])
             title = cbar.ax.title
             font = mpl.font_manager.FontProperties(family='sans-serif',
-                                                   style='normal', size=10)
+                                                   style='normal', size=11)
             title.set_font_properties(font)
 
 

@@ -204,12 +204,12 @@ params = {
                     'movement_distance_distr_param1':        0.5,
                     #variance of distr of movement distance
                     'movement_distance_distr_param2':     0.5,
-                    'movement_distance_distr':           'levy',
+                    'movement_distance_distr':           'wald',
                     #mean of distr of dispersal distance
                     'dispersal_distance_distr_param1':       0.5,
                     #variance of distr of dispersal distance
                     'dispersal_distance_distr_param2':    0.5,
-                    'dispersal_distance_distr':         'levy',
+                    'dispersal_distance_distr':         'wald',
                     },    # <END> 'movement'
 
 

@@ -13,11 +13,11 @@ orig_params = gnx.read_parameters_file(('/home/drew/Desktop/stuff/berk'
 # set some image params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/'
            'methods_paper_images/final/')
-ax_fontdict = {'fontsize': 12,
+ax_fontdict = {'fontsize': 18,
                'name': 'Bitstream Vera Sans'}
-ttl_fontdict = {'fontsize': 16,
+ttl_fontdict = {'fontsize': 20,
                 'name': 'Bitstream Vera Sans'}
-
+ticklabelsize=15
 
 K_factors = [10, 20, 30]
 persist_list = []
@@ -105,9 +105,10 @@ for n, K_fact in enumerate(K_factors[::-1]):
     plt.ylim(0, 1)
     for loc, freq_list in freqs.items():
         ax.plot(range(len(freq_list)), freq_list, '-', alpha=0.6)
+    ax.tick_params(labelsize=ticklabelsize)
 plt.subplots_adjust(hspace=0.35)
 plt.show()
-plt.savefig(os.path.join(img_dir, 'WF_allele_trajectories.pdf'))
+#plt.savefig(os.path.join(img_dir, 'WF_allele_trajectories.pdf'))
 
 # reverse the lists I had appended to, since I went through the K_factors in
 # reverse order
@@ -142,5 +143,7 @@ plt.plot(mean_pop_size_list, mean_t_persist_list, 'ob', alpha=0.5)
 # likely N_t > N_e)
 plt.plot(mean_pop_size_list, [2.776*n for n in mean_pop_size_list], 'or',
          alpha=0.5)
-plt.savefig(os.path.join(img_dir, 'WF_mean_persist_vs_pop_size.pdf'))
+ax = fig2.axes[0]
+ax.tick_params(labelsize=ticklabelsize)
+#plt.savefig(os.path.join(img_dir, 'WF_mean_persist_vs_pop_size.pdf'))
 

@@ -1462,8 +1462,9 @@ class Model:
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #feed args into spp._plot_genotype
-        spp._plot_genotype(locus=locus, lyr_num=lyr_num, individs=individs,
-                           text=text, size=size, text_size=text_size,
+        spp._plot_genotype(locus=locus, lyr_num=lyr_num, land=self.land,
+                           individs=individs, text=text, size=size,
+                           text_size=text_size,
                            edge_color=edge_color, text_color=text_color,
                            cbar=cbar, alpha=alpha,
                            by_dominance=by_dominance,

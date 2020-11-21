@@ -240,7 +240,7 @@ The :py:`Model` object offers one other method, however, :py:`Model.walk`,
 which allows the user to run a model, in either 'burn' or 'main' mode, 
 for an arbitrary number of timesteps within a single iteration (see its 
 docstring for details). This is particularly useful for running 
-Geonomics within an interactive Python session. Thus, :py:`Model.walk` is 
+Geonomics within an interactive Python session. Thus, :py:`Model.run` is 
 primarily designed for passively running numerous iterations of a :py:`Model`, 
 to generate data for analysis, whereas :py:`Model.walk` is primarily designed
 for the purposes of learning, teaching, or debugging the package, or 

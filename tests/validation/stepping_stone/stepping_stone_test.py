@@ -333,11 +333,11 @@ for subdir in os.listdir(data_dir):
             plt.plot(x, Fst_HsHt_y, 'o', color = colors[0])
             plt.plot(x, Fst_var_y, 'o', color = colors[1])
             #plt.plot(x, exp_Fst_y, 'o', color = colors[2])
-            ax.set_xlabel(('pairwise interisland distance '
-                          '(scaled to island widths)'),
+            ax.set_xlabel('inter-island distance (steps)',
                           fontdict=ax_fontdict)
-            ax.set_ylabel('pairwise genetic distance ($F_{ST}$)',
+            ax.set_ylabel('genetic distance ($F_{ST}$)',
                           fontdict=ax_fontdict)
+            ax.tick_params(labelsize=ticklabelsize)
             x = np.array(x).reshape((len(x), 1))
             Fst_HsHt_y = np.float64(np.array(Fst_HsHt_y).reshape(
                                                         (len(Fst_HsHt_y), 1)))
@@ -347,19 +347,22 @@ for subdir in os.listdir(data_dir):
                                                     (len(tot_mig_rate_y), 1)))
             exp_Fst_y = np.float64(np.array(exp_Fst_y).reshape((len(exp_Fst_y),
                                                                 1)))
-            line_preds_x = np.linspace(1,5,1000).reshape((1000,1))
+            line_preds_x = np.hstack((np.ones((1000,1)),
+                                      np.linspace(1,5,1000).reshape((1000,1))))
             #run and plot linear regressions for each, with alpha = 0.01
             names = ['Fst=Ht-Hs/Ht', 'Fst=var(p)/mean(p)']  #, 'Fst=1/(4Nm + 1)']
             # set ylims for Fst-island_dist plot
-            plt.ylim(0,1.05*np.max(np.concatenate((Fst_HsHt_y, Fst_var_y))))
+            max_ylim = 1.05*np.max(np.concatenate((Fst_HsHt_y, Fst_var_y)))
+            plt.ylim((0, max_ylim))
             #for n_data, data in enumerate([Fst_HsHt_y, Fst_var_y, exp_Fst_y]):
             r2_list = []
             p_list = []
             for n_data, data in enumerate([Fst_HsHt_y, Fst_var_y]):
                 #est = sm.OLS(data, np.hstack((x, x**2))).fit()
-                est = sm.OLS(data, np.array(x)).fit()
+                est = sm.OLS(data, np.hstack((np.ones((x.size, 1)),
+                                              np.array(x)))).fit()
                 #line_preds = est.predict(np.hstack((line_preds_x,
-                    #line_preds_x**2)))
+                                                    #line_preds_x**2)))
                 line_preds = est.predict(line_preds_x)
                 plt.plot(line_preds_x, line_preds, '-', color = colors[n_data])
                 r2 = est.rsquared
@@ -369,8 +372,8 @@ for subdir in os.listdir(data_dir):
                 p = est.pvalues[0]
                 r2_list.append(r2)
                 p_list.append(p)
-                plt.text(5.25, 0.15 + (n_data*0.05),
-                         'R2=%0.3f\np≤%0.3f' % (r2, p),
+                plt.text(4, 0.05*max_ylim*(n_data+2)-0.025*max_ylim,
+                         'R2=%0.3f; p≤%0.3f' % (r2, p),
                          color = colors[n_data],
                          size=13)
                 #plt.text(line_preds_x[100+(n_data*75)],
@@ -389,33 +392,44 @@ for subdir in os.listdir(data_dir):
             #plot the inter-island migration rates on the same x axis
             ax2 = ax.twinx()
             plt.plot(x, tot_mig_rate_y, 'o', color = '#999999')
-            ax2.set_ylabel(('mean inter-island migration rate (individuals '
-                            'per generation)'), fontdict=ax_fontdict)
-            log_tot_mig_rate_y = np.log(tot_mig_rate_y)
+            ax2.set_ylabel('migration rate (individ. per gen.)',
+                           fontdict=ax_fontdict)
+            log_tot_mig_rate_y = np.log(tot_mig_rate_y).ravel()
             log_tot_mig_rate_y = [rate if not np.isinf(
-                rate) else 3 * min(
-                log_tot_mig_rate_y) for rate in log_tot_mig_rate_y]
+                rate) else 3 * np.min( log_tot_mig_rate_y[~np.isinf(
+                log_tot_mig_rate_y)]) for rate in log_tot_mig_rate_y]
             est = sm.OLS(log_tot_mig_rate_y, np.log(x)).fit()
             line_preds = est.predict(np.log(line_preds_x))
             plt.plot(line_preds_x, np.e**line_preds, '-', color = '#999999')
             r2 = est.rsquared
             p = est.pvalues[0]
-            plt.text(0.5, 0.175,
-                     'R2=%0.3f\np≤%0.3f' % (r2, p),
+            #plt.text(line_preds_x[325], line_preds[100]+0.07, 'r=%0.3f' % r2,
+            #    color = '#999999')
+            #plt.text(line_preds_x[325], line_preds[100]+0.05, 'p=%0.3f' % p,
+            #    color = '#999999')
+            max_ylim = 1.1*max(tot_mig_rate_y)
+            plt.ylim((0, max_ylim))
+            plt.text(4, 0.025*max_ylim,
+                     'R2=%0.3f; p≤%0.3f' % (r2, p),
                      color = '#999999',
                      size=13)
-
-            plt.text(line_preds_x[325], line_preds[100]+0.07, 'r=%0.3f' % r2,
-                color = '#999999')
-            plt.text(line_preds_x[325], line_preds[100]+0.05, 'p=%0.3f' % p,
-                color = '#999999')
-            plt.ylim((0, 1.1*max(tot_mig_rate_y)))
             # create custom lines for my legend
             custom_lines = [Line2D([0], [0], color=c,
                                    lw=2) for c in ['#56B4E9', '#0072B2',
                                                    '#999999']]
 
             # build the legend
+            ax2.legend(custom_lines,
+                       ['$F_{ST}=\\frac{H_{T} - H_{S}}{H_{T}}$',
+                        '$F_{ST}=\\frac{var(p)}{mean(p)}$',
+                        '$migration rate$'],
+                       fancybox=True,
+                       loc = 'upper center',
+                       bbox_to_anchor=(0.5, 1.1),
+                       ncol=3,
+                       shadow=True,
+                       fontsize = 13)
+            '''
             ax2.legend(custom_lines,
                       [('\n$F_{ST}=\\frac{H_{T} - H_{S}}{H_{T}}$'
                         '\n($R^2=%0.3f; p≤%0.3f$)') % (r2_list[0],
@@ -424,10 +438,11 @@ for subdir in os.listdir(data_dir):
                        '\n($R2=%0.3f; p≤%0.3f$)') % (r2_list[1],
                                                    p_list[1]),
                        #'$E[F_{ST}]=\\frac{1}{1+4Nm}$',
-                       ('\nmigration rate\n'
+                       ('\n$migration rate$\n'
                         '($R2=%0.3f; p≤%0.3f$)') % (r2, p)],
                       loc = 'center right',
                       fontsize = 12)
+            '''
 
             ax2.tick_params(labelsize=ticklabelsize)
 plt.show()
@@ -473,7 +488,7 @@ cb1 = mpl.colorbar.ColorbarBase(ax2, cmap=cmap, norm=norm,
                                 spacing='proportional',
                                 boundaries=[i+0.5 for i in range(6)],
                                 ticks=[*range(1,6)])
-cb1.set_label('inter-island distance', size=17)
+cb1.set_label('inter-island distance (steps)', size=17)
 cb1.ax.tick_params(size=0, labelsize=ticklabelsize)
 plt.show()
 #plt.savefig(os.path.join(img_dir,

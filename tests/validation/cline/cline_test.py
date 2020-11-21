@@ -157,7 +157,7 @@ plt.rcParams['figure.figsize'] = [6,6]
 fig1 = plt.figure()
 #plt.suptitle(('Adaptation to a cline\n(monogenic trait with phi = s = 0.01,'
 #              '2500 timesteps'))
-plt.xlabel('Distance along cline')
+plt.xlabel('Distance along cline', fontdict=ax_fontdict)
 ax = fig1.add_subplot(111)
 #ax.set_title('Fitted tanh clines for all loci\n(non-neutral locus in red)',
 #             fontdict=ttl_fontdict)
@@ -166,16 +166,17 @@ plt.ylim((0,50))
 #ax.set_aspect('equal')
 ax.get_xaxis().set_ticks([])
 ax.get_yaxis().set_ticks([])
-plt.ylabel(('Genotypes predicted by logit GLM\n'
-    '(0.0 = 0|0; 0.5 = 0|1; 1.0 = 1|1'), fontdict=ax_fontdict)
-plt.imshow(mod.land[0].rast, cmap = 'RdBu_r', interpolation = 'nearest')
+plt.imshow(mod.land[0].rast, cmap = 'coolwarm', interpolation = 'nearest')
 ax2 = ax.twinx()
+ax2.tick_params(labelsize=ticklabelsize)
+plt.ylabel(('Genotypes predicted by GLM\n'
+    '(0.0 = 0|0;   0.5 = 0|1;   1.0 = 1|1'), fontdict=ax_fontdict)
 #ax2.set_aspect('equal')
 plt.ylim((0,1))
 for loc, y_prediction in tanh_predictions.items():
     colors = {True: 'yellow', False: 'black'}
     linetypes = {True: '-', False: ':'}
-    linewidths = {True: 2, False: 1}
+    linewidths = {True: 3, False: 1}
     plt.plot(x_to_plot_for_predicted, y_prediction,
         linetypes[loc == nonneut_loc],
         linewidth = linewidths[loc == nonneut_loc],
@@ -195,9 +196,9 @@ plt.show()
 fig3 = plt.figure()
 ax = fig3.add_subplot(111)
 plt.plot(range(len(z_e_diffs)), z_e_diffs, color='#096075')
-ax.set_xlabel('time')
-ax.set_ylabel(('mean difference between individuals\' phenotypes and '
-               'environmental values'))
+ax.set_xlabel('time', fontdict=ax_fontdict)
+ax.set_ylabel('mean phenotype-environment difference', fontdict=ax_fontdict)
+ax.tick_params(labelsize=ticklabelsize)
 plt.show()
 
 

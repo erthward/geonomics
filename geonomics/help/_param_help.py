@@ -161,7 +161,7 @@ def plot_movement(spp, land, num_timesteps, lyr_num=None, params=None,
             toy_move_params['direction_distr_kappa'] = direction_distr_kappa
         if distance_distr_param1  != None:
             toy_move_params['movement_distance_distr_param1'] = distance_distr_param1
-        if distance_distr_sigma != None:
+        if distance_distr_param2 != None:
             toy_move_params['movement_distance_distr_param2'] = distance_distr_param2
         if move_surf != None:
             toy_move_params['move_surf'] = move_surf

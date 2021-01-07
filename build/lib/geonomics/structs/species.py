@@ -1011,26 +1011,6 @@ class Species(OD):
                 e = np.array(ig(e))
         return e
 
-    def _get_genotype(self, locus, biallelic=False, individs=None,
-                                                        by_dominance=True):
-
-        if individs is None:
-            individs = [*self]
-
-        if biallelic:
-            return {i: self[i].g[locus, :] for i in [*self] if i in individs}
-
-        else:
-            if by_dominance == True:
-                d = self.gen_arch.dom[locus]
-            else:
-                d = 0
-            genotypes = np.array(
-              [ind.g[locus] for i, ind in self.items() if i in individs])
-            genotypes = np.mean(genotypes, axis = 1)
-            genotypes = np.clip(genotypes * (1 + d), a_min = None, a_max = 1)
-            return dict(zip(individs, genotypes))
-
 
     def _get_genotypes(self, loci=None, individs=None, biallelic=True,
                        as_dict=False):
@@ -1060,7 +1040,7 @@ class Species(OD):
         ts = self._tc.tree_sequence()
 
         # get the list of the individuals' nodes
-        samples = np.int32(np.hstack([[*self[ind]._nodes_tab_ids.values(
+        samples = np.int64(np.hstack([[*self[ind]._nodes_tab_ids.values(
                                                     )] for ind in individs]))
         assert len(samples) == self.gen_arch.x * len(individs), ('Number of '
                                                                  'nodes does '
@@ -1194,7 +1174,7 @@ class Species(OD):
     #use the kd_tree attribute to find mating pairs either
     #within the species, if within == True, or between the species
     #and the points provided, if within == False and points is not None
-    def _get_mating_pairs(self, dist, within=True, coords=None,
+    def _get_mating_pairs(self, within=True, coords=None,
                           choose_nearest=False, inverse_dist_mating=False):
         #NOTE: In lieu of a more sophisticated way of
         #determining whether the kd_tree needs to be updated 
@@ -1208,23 +1188,49 @@ class Species(OD):
         #am just telling the tree to be rebuilt each time 
         #the spp._get_mating_pairs() method is called!
         self._set_kd_tree()
-        #if neighbors are to be found within the species,
-        #set coords to self.coords (otherwise, the coords to
-        #find nearest neighbors with should have been provided)
-        if within:
-            coords = self.coords
 
-        #query the tree to get mating pairs
-        pairs = self._kd_tree._get_mating_pairs(coords=coords,
-                                                dist=dist,
-                                                choose_nearest=choose_nearest,
-                                        inverse_dist_mating=inverse_dist_mating)
+        # if mating_radius is None, then just use Wright-Fisher
+        # style panmixia (draw with replacement a sample of size = Nt*b, where Nt is the 
+        # current pop size and b is the birth rate (i.e. mating probability);
+        # that sample represents all mating individuals, and each of those
+        # individuals randomly chooses its mate
+        if self.mating_radius is None:
+            # draw a number of mating individuals as a binomial rv
+            # with num trials equal to pop size and probability equal to
+            # the species' birth rate
+            if self.b < 1:
+                n_mates = np.random.binomial(n=len(self), p=self.b, size=1)
+            else:
+                n_mates = len(self)
+            tree_inds = self._kd_tree.tree.indices
+            # draw 2*n_mates mating individuals, with replacement (as in WF
+            # model), then fold into an n_mates x 2 mate-pairs array
+            pairs = np.random.choice(tree_inds, replace=True,
+                                     size=n_mates*2).reshape((n_mates, 2))
+            # get rid of selfing pairs
+            pairs = np.array([list(pair) for pair in list(
+                                    map(set, pairs)) if len(pair) == 2])
+            pairs = np.array(pairs)
 
-        # use the species' birth rate to decide (as bernoulli draws)
-        # whether each pair can mate
-        can_mate = np.bool8(np.random.binomial(n=1, p=self.b,
-                                               size=pairs.shape[0]))
-        pairs = pairs[can_mate, :]
+        # otherwise, choose mates using mating radius
+        else:
+            #if neighbors are to be found within the species,
+            #set coords to self.coords (otherwise, the coords to
+            #find nearest neighbors with should have been provided)
+            if within:
+                coords = self.coords
+
+            #query the tree to get mating pairs
+            pairs = self._kd_tree._get_mating_pairs(coords=coords,
+                                                    dist=self.mating_radius,
+                                                    choose_nearest=choose_nearest,
+                                            inverse_dist_mating=inverse_dist_mating)
+
+            # use the species' birth rate to decide (as bernoulli draws)
+            # whether each pair can mate
+            can_mate = np.bool8(np.random.binomial(n=1, p=self.b,
+                                                   size=pairs.shape[0]))
+            pairs = pairs[can_mate, :]
         return pairs
 
 
@@ -1312,19 +1318,26 @@ class Species(OD):
 
 
     # method for plotting individuals colored by their genotype at a locus
-    def _plot_genotype(self, locus, lyr_num=None, individs=None,
+    def _plot_genotype(self, locus, lyr_num=None, land=None, individs=None,
                        text=False, size=25, text_size = 9, edge_color='black',
                        text_color='black', cbar=True, alpha=1,
                        by_dominance=False, zoom_width=None, x=None, y=None,
                        ticks=None, mask_rast=None):
 
+        genotypes = self._get_genotypes(loci=[locus], individs=individs,
+                                        biallelic=False, as_dict=True)
         if by_dominance == True:
-            genotypes = self._get_genotype(locus, by_dominance=True)
-        else:
-            genotypes = self._get_genotype(locus)
-
-        if individs is not None:
-            genotypes = {i:v for i,v in genotypes.items() if i in individs}
+            if locus in self.gen_arch.nonneut_loci:
+                dom = self.gen_arch.dom[locus]
+                # NOTE: would be simpler to just use np.ceil here...
+                #       don't see why I didn't...?
+                genotypes = {i:np.clip(gt * (1 + dom),
+                                       a_min=None,
+                                       a_max=1) for i, gt in genotypes.items()}
+            else:
+                print(('\n\tWARNING: The by_dominance argument is True, '
+                       'but a neutral locus was chosen, '
+                       'so the argument was not used.\n'))
 
         # just assign black, gray, and white (since there's no reason
         # necessarily that these should be mapped to a certain layer, the way
@@ -1334,14 +1347,17 @@ class Species(OD):
         for n, genotype in enumerate([0.0, 0.5, 1.0]):
             genotype_individs = [i for i, g in genotypes.items(
                                         ) if np.atleast_1d(g)[0] == genotype]
+            # will hide the land if this is not the first plot made
+            hide_land = n > 0
             # plot if there are any individuals of this genotype
             if len(genotype_individs) >= 1:
-                self._plot(lyr_num = lyr_num, individs = genotype_individs,
-                    text = text, color = colors[n], edge_color = edge_color,
-                    text_color = text_color, cbar = cbar,
-                    size = size, text_size = text_size, alpha = alpha,
-                    zoom_width = zoom_width, x = x, y = y, vmin = 0, vmax = 1,
-                    ticks=ticks, mask_rast=mask_rast)
+                self._plot(lyr_num=lyr_num, land=land, hide_land=hide_land,
+                           individs=genotype_individs,
+                           text=text, color=colors[n], edge_color=edge_color,
+                           text_color=text_color, cbar=cbar,
+                           size=size, text_size=text_size, alpha=alpha,
+                           zoom_width=zoom_width, x=x, y=y, vmin=0, vmax=1,
+                           ticks=ticks, mask_rast=mask_rast)
 
 
     # method for plotting individuals colored by their phenotypes

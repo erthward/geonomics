@@ -23,6 +23,43 @@ import numpy as np
 #NOTE: this class won't be doing too much right away, but lays the foundation 
 #for enabling interactions between species (i.e. species) further down the road
 class Community(dict):
+    """
+    Representation of a community (i.e. a collection of Species objects)
+
+    Structured as a serial integer-keyed dict of Species objects.
+
+    Because the Community class inherits from `dict`, Species can be indexed
+    out using the index-number keys (e.g. `mod.comm[<idx>]`).
+
+    The Community is stored as the 'mod.comm' attribute of its corresponding
+    Model object.
+
+    NOTE: There is currently no special functionality implemented for
+          multi-species models (e.g. species interactions), such that
+          this serves as nothing more than a way to synchronously simulate
+          two species within the same model.
+          However, this class is intended as a scaffold
+          for use in possible future expansion of Geonomics to incorporate
+          multi-species functionality.
+
+    Attributes
+    ----------
+
+    burned:
+        A bool flag indicating whether or not all Species within the Community
+        have been burned in.
+
+    n_spps:
+        The number of Species in the Community
+    
+    t:
+        The index of the last completed time step run for this Community.
+        This attribute holds the value -1 until all Species in the Community
+        have been burned in, at which point it begins incrementing,
+        Pythonically, from 0 (such that a Community with t == 999
+        has been run for 1000 time steps).
+
+    """
     def __init__(self, land, spps):
         self.update(spps)
         self.n_spps = len(spps)

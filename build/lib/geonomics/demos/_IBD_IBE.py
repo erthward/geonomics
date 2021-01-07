@@ -513,7 +513,7 @@ def _make_params():
                         #total number of recomb paths to simulate
                         'n_recomb_paths_tot':       int(1e5),
                         'n_recomb_sims':            10000,
-                        'start_neut_zero':          True,
+                        'start_neut_zero':          False,
                         'allow_ad_hoc_recomb':      False,
                         #whether to save mutation logs
                         'mut_log':                  False,
@@ -642,8 +642,8 @@ def _run(params, save_figs=False, time_it=False,
     gen_af_L = 5
     gen_af_R = 8
 
-    ze_fit_top = 2
-    ze_fit_bot = 6
+    ze_fit_top = 0
+    ze_fit_bot = 8
     ze_fit_L = 3
     ze_fit_R = 5
 
@@ -692,11 +692,11 @@ def _run(params, save_figs=False, time_it=False,
     n1_3d_ax = fig.add_subplot(gs[n1_3d_top:n1_3d_bot,
                                   n1_3d_L:n1_3d_R], projection='3d')
     n1_3d_ax.view_init(elev=3, azim=83)
-    n1_3d_ax.set_xlabel('$\longleftarrow$ Geo. Dist.', size=9, labelpad=-13)
+    n1_3d_ax.set_xlabel('$\longleftarrow$ geo. dist.', size=9, labelpad=-13)
     #n1_3d_ax.set_ylabel(' ' * 35 + '$\longleftarrow$ Env. Dist.', size=9,
     #                    labelpad=20)
     n1_3d_ax.zaxis.set_rotate_label(False)
-    n1_3d_ax.set_zlabel('Gen. Dist. $\longrightarrow$', size=9, labelpad=-13,
+    n1_3d_ax.set_zlabel('gen. dist. $\longrightarrow$', size=9, labelpad=-13,
                         rotation=90)
     n1_3d_ax.set_xticklabels([])
     n1_3d_ax.set_yticklabels([])
@@ -723,9 +723,9 @@ def _run(params, save_figs=False, time_it=False,
     n3_3d_ax.view_init(elev=3, azim=7)
     #n3_3d_ax.set_xlabel('$\longleftarrow$ Geo. Dist.' + ' ' * 25, size=9,
     #                    labelpad=10)
-    n3_3d_ax.set_ylabel('Env. Dist. $\longrightarrow$', size=9, labelpad=-13)
+    n3_3d_ax.set_ylabel('env. dist. $\longrightarrow$', size=9, labelpad=-13)
     n3_3d_ax.zaxis.set_rotate_label(False)
-    n3_3d_ax.set_zlabel('Gen. Dist. $\longrightarrow$', size=9, labelpad=-13,
+    n3_3d_ax.set_zlabel('gen. dist. $\longrightarrow$', size=9, labelpad=-13,
                         rotation=90)
     n3_3d_ax.set_xticklabels([])
     n3_3d_ax.set_yticklabels([])

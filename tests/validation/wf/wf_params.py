@@ -190,9 +190,9 @@ params = {
                     #file defining custom genomic arch
                     'gen_arch_file':            None,
                     #num of loci
-                    'L':                        25,
+                    'L':                        250,
                     #lengths of chromosomes
-                    'l_c':                      [25],
+                    'l_c':                      [250],
                     #starting allele frequency (None to draw freqs randomly)
                     'start_p_fixed':            0.5,
                     'start_neut_zero':          False,

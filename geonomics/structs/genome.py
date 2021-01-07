@@ -42,6 +42,11 @@ class MutationRateError(Exception):
 
 
 class Recombinations:
+    """
+    Container for the parameters and data necessary to simulate recombination.
+    
+    Not intended for public use.
+    """
     def __init__(self, L, positions, n, r_distr_alpha, r_distr_beta,
                  recomb_rates):
         # define the bitarray unit corresponding to each homologue
@@ -226,6 +231,91 @@ class Recombinations:
 
 
 class Trait:
+    """
+    Representation of a single trait and its parameterization.
+
+    Trait objects are collected in a serial integer-keyed dict,
+    one per trait that is parameterized for the corresponding Species,
+    which inheres to the Species' GenomicArchitecture object as the attribute
+    `GenomicArchitecture.traits`, from which individual Traits can be indexed
+    using their index-number keys (e.g. `GenomicArchitecture.traits[<idx>]`).
+
+    Attributes
+    ----------
+
+        NOTE: For more detail, see the documentation for the parameters
+              that correspond to many of the following attributes.
+
+        alpha:
+            A 1d numpy array containing the effect sizes of all loci subtending
+            this trait. The value at index i represents the effect size of the
+            locus at index i in the 'loci' attribute of this Trait.
+
+        alpha_distr_mu:
+            Mean of the normal (Gaussian) distribution
+            of effect sizes for this trait's loci.
+
+        alpha_distr_sigma:
+            Standard deviation of the normal (Gaussian) distribution
+            of effect sizes for this trait's loci.
+    
+        gamma:
+            Curvature of the fitness function.
+
+        idx:
+            Index number of the trait (i.e. its key within the traits dict)
+
+        loc_idx:
+            A 1d numpy array containing the index positions within an
+            Individual's non-neutral genotypes object
+            (attribute 'g' of an Individual) that
+            correspond to the loci subtending this trait.
+            (This is designed such that an Individual's genotype
+            for the locus number stored at Trait.loci[i]
+            can be accessed by calling Individual.g[Trait.loc_idx[i], :].)
+            This method of tracking allows Individuals' full genotypes to be
+            stored in the tskit tables while they carry their non-neutral
+            genotypes with them (a computational optimization).
+        
+        loci:
+            A numerically sorted 1d numpy array containing
+            the locus numbers of all loci subtending this trait.
+
+        lyr_num:
+            Index number of the Landscape layer to which this trait corresponds
+            (i.e. of the environmental variable that serves as the selective
+            force on this trait)
+
+        max_alpha_mag:
+            Maximum absolute value that can be drawn for a locus’
+            effect size (i.e. alpha). Effect sizes are clipped
+            to the closed interval [-max_alpha_mag, max_alpha_mag]
+            when the model is parameterized.
+
+        mu:
+            Mutation rate for this trait (expressed in mutations per locus per
+            timestep)
+
+        name:  
+            The string name of the trait
+
+        n_loci:
+            Number of loci subtending this trait
+
+        phi:
+            Polygenic selection coefficient (i.e the selection coefficient
+            acting on the phenotypes, rather than the genotypes, of this Trait)
+
+        univ_adv:
+            Whether or not this trait will be treated as universally
+            advantageous. When False (the default behavior), individuals will
+            be fitter when their phenotypic values for this trait more closely
+            align with the local environmental value of the landscape layer
+            corresponding to this trait (i.e. selection will be spatially
+            varying). When False, phenotypes closer to 1 will be more
+            advantageous globally on the Landscape.
+
+    """
     def __init__(self, idx, name, phi, n_loci, mu, layer, alpha_distr_mu,
                  alpha_distr_sigma, max_alpha_mag, gamma, univ_adv):
         self.idx = idx
@@ -291,6 +381,105 @@ class Trait:
 
 
 class GenomicArchitecture:
+    """
+    Representation of the genomic architecture of a Species.
+
+    Inheres to its Species as the Species.gen_arch attribute.
+
+    Attributes
+    ----------
+
+        NOTE: For more detail, see the documentation for the parameters
+              that correspond to many of the following attributes.
+
+        delet_alpha_distr_scale:
+            The scale parameter of the Gamma distribution from which
+            the effect sizes (i.e. alphas) of deleterious loci are drawn
+
+        delet_alpha_distr_shape:
+            The shape parameter of the Gamma distribution from which
+            the effect sizes (i.e. alphas) of deleterious loci are drawn
+
+        delet_loci:
+            A 1d numpy array that tracks all deleterious loci
+
+        delet_loc_idx:
+            A 1d numpy array containing the index positions within an
+            Individual's non-neutral genotypes object
+            (attribute 'g' of an Individual) that
+            correspond to the deleterious loci.
+            (This is designed such that an Individual's genotype for
+            the deleterious locus number stored at
+            GenomicArchitecture.delet_loci[i] can be accessed by calling
+            Individual.g[GenomicArchitecture.delet_loc_idx[i], :].)
+            This method of tracking allows Individuals' full genotypes to be
+            stored in the tskit tables while they carry their non-neutral
+            genotypes with them (a computational optimization).
+
+        delet_loci_s:
+            A 1d numpy array containing the selection strengths
+            of each of the deleterious loci. (Selection strengths are
+            listed in an order corresponding to the order of
+            GenomicArchitecture.delet_loci, such that the selection strength of
+            the deleterious locus referenced at
+            GenomicArchitecture.delet_loci[i] is stored at
+            GenomicArchitetcture.delet_loci_s[i].)
+            
+        dom:
+            Dominance values for all loci (stored as an L-length,
+            1d numpy array in which 0 indicates a codominant locus
+            and 1 indicates a locus for which the '1' allele is dominant)
+
+        L:
+            Length of the simulated genome
+
+        mu_delet:
+            Genome-wide deleterious mutation rate (expressed in mutations
+            per locus per timestep). Deleterious mutations do not influence
+            trait phenotypes, but instead are univerally
+            deleterious (to an extent determined by their effect sizes).
+
+        mu_neut:
+            Genome-wide neutral mutation rate (expressed in mutations
+            per locus per timestep).
+        
+        neut_loci:
+            A 1d numpy array that tracks all loci that do not influence the
+            phenotypes of any traits.
+
+        nonneut_loci:
+            A 1d numpy array that tracks all loci that either influence the
+            phenotype of at least one trait or are deleterious.
+
+        p:
+            Starting allele frequencies for all loci (stored as an L-length,
+            1d numpy array)
+
+        pleiotropy:
+            A bool indicating whether or not to allow pleiotropy (i.e. whether
+            or not to allow the same locus to subtend multiple traits)
+
+        recombinations:
+            The Recombinations object, which contains the parameters and data
+            necessary for simulation of recombination. Not intended for public
+            use at this time.
+
+        sex: 
+            A bool indicating whether or not Individuals of this Species
+            will be assigned a sex (0 for female, 1 for male)
+
+        traits:
+            A dict containing all of a Species' Trait objects, keyed by serial
+            integers.
+         
+        x:
+            Ploidy
+            NOTE: only diploidy is currently implemented, but this attribute
+                  serves as a placeholder for use in possible
+                  future generalization to arbitrary ploidy.)
+
+    """
+
     def __init__(self, dom, g_params, land, recomb_rates=None,
                  recomb_positions=None):
         # ploidy (NOTE: for now will be 2 by default; later could consider

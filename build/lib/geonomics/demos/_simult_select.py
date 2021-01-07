@@ -307,7 +307,7 @@ def _make_params():
                         #total number of recomb paths to simulate
                         'n_recomb_paths_tot':       int(1e5),
                         'n_recomb_sims':            10000,
-                        'start_neut_zero':          True,
+                        'start_neut_zero':          False,
                         'allow_ad_hoc_recomb':      False,
                         #whether to save mutation logs
                         'mut_log':                  False,
@@ -520,7 +520,7 @@ def _run(params, save_figs=False, time_it=False):
     cax = divider.append_axes("right", size="5%", pad=0.05)
     cbar = plt.colorbar(im, cax=cax)
     cbar.set_label('environmental and phenotypic value', rotation=270,
-                   labelpad=25, y=0.5, size=24)
+                   labelpad=25, y=0.5, size=18)
     ax2 = plt.subplot(gs[1])
     im = plt.pcolormesh(np.linspace(0, mod.land.dim[0], mod.land.dim[0]+1),
                         np.linspace(0, mod.land.dim[1], mod.land.dim[1]+1),
@@ -530,9 +530,12 @@ def _run(params, save_figs=False, time_it=False):
     cax = divider.append_axes("right", size="5%", pad=0.05)
     cbar = plt.colorbar(im, cax=cax)
     cbar.set_label('environmental and phenotypic value', rotation=270,
-                   labelpad=25, y=0.5, size=24)
-    ax1.set_title('trait 0', size=30)
-    ax2.set_title('trait 1', size=30)
+                   labelpad=25, y=0.5, size=18)
+    ax1.set_title('trait 0', size=20)
+    ax2.set_title('trait 1', size=20)
+    #axes_list = fig.axes
+    #axes[1].tick_params(labelsize=15)
+    #axes[3].tick_params(labelsize=15)
     plt.show()
 
     # print out time
@@ -551,10 +554,11 @@ def _run(params, save_figs=False, time_it=False):
     plt.plot(range(len(z_e_diffs[0])), z_e_diffs[0], trt_colors[0])
     plt.plot(range(len(z_e_diffs[1])), z_e_diffs[1], trt_colors[1])
     ax.legend(labels=['trait = %i' % trt for trt in range(2)],
-              loc='best', fontsize='medium')
-    ax.set_xlabel('time')
-    ax.set_ylabel(('mean difference between individuals\' phenotypes and '
-                   'environmental values'))
+              loc='best', fontsize='15')
+    ax.set_xlabel('time', size=18)
+    ax.set_ylabel(('mean difference between individuals\'\nphenotypes and '
+                   'environmental values'), size=18)
+    ax.tick_params(labelsize=15)
     plt.show()
     if save_figs:
         plt.savefig('sim_sel_z-e_plot.png', format='png', dpi=1000)

@@ -41,7 +41,7 @@ def make_island_landscape(n, w, d):
         land[ulc:ulc+w, ulc:ulc+w] = 1
     #create a second raster, where each island's hab values are its island
     #number (to be used later to estimate migration rate, to then compare
-    #results to expected results of stepping-stone model
+    #results to expected results of island model
     island_labels = deepcopy(land)
     for ulc in island_ul_corners:
         island_labels[ulc:ulc+w, ulc:ulc+w] = (ulc/(w+d)+1)/n
@@ -84,13 +84,13 @@ d = 6
 #define the data directory, and remove it if it already exists (so that we
 #don't create multiple output data files in the same
 #directory and break the assertions below)
-data_dir = './GNX_mod-stepping_stone_params/'
+data_dir = './GNX_mod-island_params/'
 if os.path.isdir(data_dir):
     shutil.rmtree(data_dir)
 #create a Model from the params file
 print('\n\nMaking model...\n\n')
-mod = gnx.make_model(('./tests/validation/stepping_stone/'
-                      'stepping_stone_params.py'))
+mod = gnx.make_model(('./tests/validation/island/'
+                      'island_params.py'))
 #replace Layer 0's raster with an island raster (6 islands, each 6
 #cells wide and 6 cells diagonally spaced), and Layer 1's raster
 #with a raster containing island labels
@@ -307,7 +307,7 @@ for subdir in os.listdir(data_dir):
         if step == max(timesteps):
             plt.rcParams['figure.figsize'] = [8, 4]
             fig = plt.figure()
-            #plt.suptitle(("Validations test #2: stepping-stone model"
+            #plt.suptitle(("Validations test #2: island model"
             #    "\n%i timesteps") % mod.params.model.T)
             ax = fig.add_subplot(121)
             mod.plot(0, 0, size=3)
@@ -396,9 +396,12 @@ for subdir in os.listdir(data_dir):
                            fontdict=ax_fontdict)
             log_tot_mig_rate_y = np.log(tot_mig_rate_y).ravel()
             log_tot_mig_rate_y = [rate if not np.isinf(
-                rate) else 3 * np.min( log_tot_mig_rate_y[~np.isinf(
+                rate) else 3 * np.min(log_tot_mig_rate_y[~np.isinf(
                 log_tot_mig_rate_y)]) for rate in log_tot_mig_rate_y]
             est = sm.OLS(log_tot_mig_rate_y, np.log(x)).fit()
+            #est = sm.OLS(log_tot_mig_rate_y, np.hstack((np.ones((x.size, 1)),
+            #                                  np.array(x)))).fit()
+            line_preds_x = np.linspace(1,5,1000).reshape((1000,1))
             line_preds = est.predict(np.log(line_preds_x))
             plt.plot(line_preds_x, np.e**line_preds, '-', color = '#999999')
             r2 = est.rsquared
@@ -447,7 +450,7 @@ for subdir in os.listdir(data_dir):
             ax2.tick_params(labelsize=ticklabelsize)
 plt.show()
 #plt.savefig(os.path.join(
-#            img_dir, 'STEPPING_STONE_pop_plot_and_Fst_vs_mig_rate.pdf'))
+#            img_dir, 'ISLAND_pop_plot_and_Fst_vs_mig_rate.pdf'))
 
 
 # plot pop sizes over time
@@ -492,6 +495,6 @@ cb1.set_label('inter-island distance (steps)', size=17)
 cb1.ax.tick_params(size=0, labelsize=ticklabelsize)
 plt.show()
 #plt.savefig(os.path.join(img_dir,
-#                         ('STEPPING_STONE_Fst_over_time.pdf')))
+#                         ('ISLAND_Fst_over_time.pdf')))
 
 print('\nValidation test successful.\n')

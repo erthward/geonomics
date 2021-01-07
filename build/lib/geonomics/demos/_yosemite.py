@@ -649,7 +649,7 @@ def _make_params():
                         #total number of recomb paths to simulate
                         'n_recomb_paths_tot':       int(1e5),
                         'n_recomb_sims':            10000,
-                        'start_neut_zero':          True,
+                        'start_neut_zero':          False,
                         'allow_ad_hoc_recomb':      False,
                         #whether to save mutation logs
                         'mut_log':                  False,
@@ -778,7 +778,7 @@ def _make_params():
 
 
 def _run(params, save_figs=False, time_it=False, make_gifs=False,
-         make_3d_plots=False):
+         make_3d_plots=False, n_individs_plot=10_000):
     params.model['name'] = 'yosemite_demo'
     # set the amount of time before and after climate change
     t_before_cc = 500
@@ -809,18 +809,25 @@ def _run(params, save_figs=False, time_it=False, make_gifs=False,
     for _ in range(t_before_cc):
         mod.walk(1)
         if save_figs and make_gifs:
-            save_model_gif(mod, save_figs, make_gifs)
+            save_model_gif(mod, save_figs, make_gifs,
+                           n_individs=n_individs_plot)
 
     # calculate neigh-mean raster before climate-change
     if with_pykrige:
         neigh_mean_b4 = krig_phenotype(mod, save_figs, make_gifs)
+        try:
+            np.savetxt('b4_cc_krig.txt', neigh_mean_b4)
+        except Exception as e:
+            print(('COULD NOT SAVE KRIGED PHENOTYPE BEFORE CLIMATE CHANGE:'
+                  ' %s') % e)
 
     # walk for 100 more timesteps, then plot again,
     # at end of climate-change period
     for _ in range(t_after_cc):
         mod.walk(1)
         if save_figs and make_gifs:
-            save_model_gif(mod, save_figs, make_gifs)
+            save_model_gif(mod, save_figs, make_gifs,
+                           n_individs=n_individs_plot)
 
     # end timer
     if time_it:
@@ -830,6 +837,12 @@ def _run(params, save_figs=False, time_it=False, make_gifs=False,
     # calculate neigh-mean raster after climate-change
     if with_pykrige:
         neigh_mean_af = krig_phenotype(mod)
+        try:
+            np.savetxt('af_cc_krig.txt', neigh_mean_af)
+        except Exception as e:
+            print(('COULD NOT SAVE KRIGED PHENOTYPE AFTER CLIMATE CHANGE:'
+                  ' %s') % e)
+
 
         # calculate the difference between the two neigh-mean rasters
         neigh_mean_diff = neigh_mean_af - neigh_mean_b4
@@ -838,16 +851,16 @@ def _run(params, save_figs=False, time_it=False, make_gifs=False,
     mod.walk(50)
     Nt_fig = plt.figure()
     Nt_ax = Nt_fig.add_subplot(111)
-    burn_len = mod.burn_t
-    line_height = int(10000*np.ceil(max(mod.comm[0].Nt)/10000))
-    Nt_ax.plot(range(len(mod.comm[0].Nt)), mod.comm[0].Nt)
-    Nt_ax.plot([burn_len, burn_len], [0, line_height], c='red')
-    Nt_ax.plot([burn_len+500, burn_len+500], [0, line_height], c='red')
-    Nt_ax.plot([burn_len+600, burn_len+600], [0, line_height], c='red')
+    #burn_len = mod.burn_t
+    line_height = int(10000*np.ceil(max(mod.comm[0].Nt[-mod.t:])/10000))
+    Nt_ax.plot(range(len(mod.comm[0].Nt[-mod.t:])), mod.comm[0].Nt[-mod.t:])
+    #Nt_ax.plot([burn_len, burn_len], [0, line_height], c='red')
+    Nt_ax.plot([500, 500], [0, line_height], c='red')
+    Nt_ax.plot([600, 600], [0, line_height], c='red')
     chng_lyr_path = os.path.join(DATA_PATH, 'yosemite_lyrs/ppt/')
     chng_yrs = [int(x[:3]) for x in os.listdir(chng_lyr_path)]
     for yr in chng_yrs:
-        Nt_ax.plot([burn_len+yr, burn_len+yr], [0, line_height], ':r',
+        Nt_ax.plot([yr, yr], [0, line_height], ':r',
                    linewidth=0.5)
     Nt_ax.set_label('time (time steps/years)')
     Nt_ax.set_ylabel('total population size (individuals)')

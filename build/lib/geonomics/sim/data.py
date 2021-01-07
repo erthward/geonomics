@@ -305,7 +305,8 @@ class _DataCollector:
         elif self.scheme in ['point', 'transect']:
             inds = self._get_point_sample(spp)
             sample.update(inds)
-        #convert sample to a dict of individuals
+        #sort sample, then convert to a dict of individuals
+        sample = sorted([*sample])
         sample = {i:spp[i] for i in sample}
         return(sample)
 
@@ -315,7 +316,7 @@ class _DataCollector:
                             'fasta'
                             'vcf'
         '''
-        genotypes = spp._get_genotypes(individs=sample, as_dict=True)
+        genotypes = spp._get_genotypes(individs=[*sample], as_dict=True)
         if data_format == 'fasta':
             formatted_data = _format_fasta(sample, genotypes)
         elif data_format == 'vcf':

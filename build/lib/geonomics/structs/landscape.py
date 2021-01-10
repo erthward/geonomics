@@ -32,6 +32,61 @@ from shapely import geometry as g
 ######################################
 
 class Layer:
+    """
+    Representation of a single environmental layer (i.e. variable).
+
+    Multiple Layers are collected as serial integer-keyed values within
+    a Landscape dict.
+
+    Attributes
+    ----------
+
+        NOTE: For more detail, see the documentation for the parameters
+              that correspond to many of the following attributes.
+
+        coord_prec:
+            The precision (i.e. number of significant digits) to which
+            coordinate values should be round when the Layer is plotted.
+       
+        dim:
+            The x,y (i.e. lon,lat; or i,j in array terms) dimensions of the
+            Layer. (Must be the same as the Landscape to which the Layer
+            belongs.)
+
+        idx:
+            Index number of the Layer (i.e. its key within the Landscape dict)
+
+        name:
+            The string name of the Layer
+
+        prj:
+            The projection of the Layer (formatted as a PROJ4 string).
+            (Must be the same as the Landscape to which the Layer belongs.)
+
+        rast:
+            The 2d numpy array, of shape `Landscape.dim`, containing the
+            environmental values for this Layer.
+
+        res:
+            The x,y (i.e. lon,lat; or i,j in array terms) spatial resolution
+            (i.e. cell sizes) of the layer.  (Must be the same as the
+            Landscape to which the Layer belongs.)
+
+
+        type:
+            A string indicating the type of the Layer ('random', 'defined',
+            'file', or 'nlmpy')
+
+        ulc: 
+            The x,y (i.e. lon,lat; or i,j in array terms) coordinates of the
+            upper left corner of the layer. (Must be the same as the Landscape
+            to which the Layer belongs.)
+
+        units:
+            A string representation of the units of the Layer's variable
+            (to be used for plotting).
+    
+    """
 
     #######################
     ### SPECIAL METHODS ###
@@ -142,6 +197,46 @@ class Layer:
 
 
 class Landscape(dict):
+    """
+    Representation of a multi-layer (i.e. multivariate) landscape.
+
+    Organized as a dict of multiple, serial integer-keyed Layer objects,
+    
+    Because the Landscape class inherits from `dict`, Layers can
+    be indexed out using their index-number keys (e.g. `mod.land[<idx>]`).
+
+    The Landscape is stored as the 'mod.land' attribute of its corresponding
+    Model object.
+
+    Attributes
+    ----------
+
+        NOTE: For more detail, see the documentation for the parameters
+              that correspond to many of the following attributes.
+
+        dim:
+            The x,y (i.e. lon,lat; or i,j in array terms) dimensions of the
+            Layer. (Must be the same as the Landscape to which the Layer
+            belongs.)
+
+        n_lyrs:
+            The number of Layers in the Landscape
+
+        prj:
+            The projection of the Layer (formatted as a PROJ4 string).
+            (Must be the same as the Landscape to which the Layer belongs.)
+
+        res:
+            The x,y (i.e. lon,lat; or i,j in array terms) spatial resolution
+            (i.e. cell sizes) of the layer.  (Must be the same as the
+            Landscape to which the Layer belongs.)
+
+        ulc: 
+            The x,y (i.e. lon,lat; or i,j in array terms) coordinates of the
+            upper left corner of the layer. (Must be the same as the Landscape
+            to which the Layer belongs.)
+            
+    """
 
     #######################
     ### SPECIAL METHODS ###

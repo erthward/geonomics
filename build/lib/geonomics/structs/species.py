@@ -69,7 +69,237 @@ class _ParamsVals:
 
 #the Species class
 class Species(OD):
+    """
+    Representation of the total simulated population of a species.
 
+    Organized as a collections.OrderedDict of serial integer-keyed Individuals.
+    Those serial indices continually increment through model time as new
+    Individuals (i.e. offspring) as produced, such that no two Individuals
+    within the full history of a simulation will ever have the same index
+    number.
+
+    Because the Species class inherits from `collections.OrderedDict`,
+    Individuals can be indexed out using their index-number keys
+    (e.g. Species[<idx>]).
+
+    All Species within a simulation are stored as serial integer-keyed values
+    within the Community dict (which in turn is stored at the Model's
+    'mod.comm' attribute).
+
+    Attributes
+    ----------
+
+        NOTE: For more detail, see the documentation for the parameters that
+              correspond to many of the following attributes.
+
+        b:
+            The Species' intrinsic birth rate, expressed as the probability (in
+            a Bernoulli random draw) that an otherwise eligible potential
+            mating pair will successfully reproduce
+
+        burned:
+            A bool flag indicating whether or not the Species has been
+            burned in.
+
+        coords:
+            A 2d numpy array, length(Species) x 2, composed of columns
+            containing the current x and y locations of all Individuals.
+            Row order is equivalent to the order of individuals in the Species'
+            OrderedDict.
+
+        cells:
+            A 2d numpy array, length(Species) x 2, composed of columns
+            containing the current j and i cell numbers of all Individuals.
+            Row order is equivalent to the order of individuals in the Species'
+            OrderedDict. (Note the order of the columns! These are not in the
+            i,j order that would be necessary in order use them to subject a
+            Layer.rast object!)
+
+        choose_nearest_mate:
+            A bool flag indicating whether or not Individuals should 
+            always choose their nearest neighbors as their potential mates
+
+        d_max:
+            The maximum probability of death that can be assigned to any
+            Individual
+
+        d_min:
+            The minimum probability of death that can be assigned to any
+            Individual
+
+        density_grid_window_width:
+            The width of the sliding window that is used by the Species'
+            _DensityGridStack object when estimating the Species'
+            population-density array.
+
+        direction_distr_[mu/kappa]:
+            The $\mu$ and $\kappa$ parameters of the von Mises distribution
+            from which the direction components of Individuals' movement
+            vectors will be drawn. (These parameters are only utilized if the
+            Species is parameterized without a _MovementSurface.)
+
+        dispersal_distance_distr:
+            A string indicating which distribution to use as
+            the Species' dispersal-distance distribution ('lognormal',
+            'wald', or 'levy')
+
+        dispersal_distance_distr_param[1/2]:
+            The values of the first and second parameters of the Species'
+            dispersal-distance distribution (named abstractly like this
+            because they could parameterize a Lognormal, Wald,
+            or Levy distribution, depending on the value of
+            Species.dispersal_distance_distr)
+
+        extinct:
+            A bool flag indicating whether or not the Species has gone extinct.
+
+        idx:
+            Index number of the Species (i.e. its key within the Community dict)
+
+        inverse_dist_mating:
+            A bool flag indicating whether or not the probabilities that an
+            Individual chooses any of its neighbors (i.e. other Individuals
+            within `Species.mating_radius` distance of them) as their
+            potential mates should vary inversely with the distances between
+            the Individual and each of those neighbors. If False, any neighbor
+            could be chosen with equal probability. 
+
+        gen_arch:
+            The Species' genomic architecture (as a GenomicArchitecture object)
+
+        K:
+            The Species' current carrying-capacity raster. This is a numpy array
+            of shape `Landscape.dim`, with each value 
+            indicating the carrying capacity of that cell in the Landscape.
+            It is generated as the product of the Species' K_factor
+            and the raster array of the Layer provided as the basis
+            of the Species' carrying capacity
+            (i.e. `spp.K_factor * mod.land[spp.K_layer].rast`).
+            This array will change during a simulation if the corresponding
+            Layer is parameterized to undergo environmental change.
+
+        K_factor:
+            The factor by which to multiply the Species' chosen
+            carrying capacity Layer (mod.land[spp.K_layer]) in order to
+            generate the Species' carrying-capacity raster (spp.K).
+
+        K_layer:
+            The index number of the Layer whose raster will be multiplied by
+            spp.K_factor in order to generate the Species' carrying-capacity
+            raster (spp.K).
+
+        mating_radius:
+            The mating radius, expressed in Landscape cell widths, from within
+            which an Individual can choose a potential mate. This will only be
+            used if `Species.choose_nearest_mate` is False.
+
+        max_age:
+            The maximum age, in time steps, that any Individual of the Species
+            may reach (after which point they will be culled from the
+            population by imposed mortality)
+
+        max_ind_idx:
+            The maximum Individual index number that has currently been used
+
+        move:
+            A bool flag indicating whether or not Individuals of the Species
+            can move after their initial dispersal as offspring.
+
+        movement_distance_distr:
+            A string indicating which distribution to use as
+            the Species' movement-distance distribution ('lognormal',
+            'wald', or 'levy')
+
+        movement_distance_distr_param[1/2]:
+            The values of the first and second parameters of the Species'
+            movement-distance distribution (named abstractly like this
+            because they could parameterize a Lognormal, Wald,
+            or Levy distribution, depending on the value of
+            Species.movement_distance_distr)
+
+        mutate:
+            A bool flag indicating whether or not the Species' simulation
+            involves mutation.
+
+        mut_log:
+            A bool flag indicating whether or not a mutation log should be
+            written for the Species.
+
+        N:
+            The Species' current population-density raster.
+            This is a numpy array of shape `Landscape.dim`, with each value 
+            indicating the population density of that cell in the Landscape,
+            as estimated by the Species' _DensityGridStack instance. 
+
+        Nt:
+            A chronologically ordered list, starting from the first timestep of
+            the burn-in, containing the Species' total population size at each
+            time step.
+
+        n_births:
+            A chronologically ordered list, starting from the first timestep of
+            the burn-in, containing the Species' number of births at each
+            time step.
+
+        n_births_distr_lambda:
+            If `Species.n_births_fixed` is False, then this value serves as the 
+            $\lambda$ parameter of the Poisson distribution from which is drawn
+            the number of offspring a mating pair will produce.
+            If `Species.n_births_fixed` is True, then this is the fixed number
+            of offspring that each successful mating pair will produce.
+
+        n_births_fixed:
+            A bool flag indicating whether or not the number of births should
+            be fixed at `Species.n_births_distr_lambda`
+
+        n_deaths:
+            A chronologically ordered list, starting from the first timestep of
+            the burn-in, containing the Species' number of deaths at each
+            time step.
+
+        name:
+            The string name of the Species
+
+        R:
+            The intrinsic growth rate of the Species, to be used as 'R' in the
+            stochastic, spatialized logistic growth model that controls
+            population dynamics
+
+        repro_age:
+            The age, in time steps, of first reproduction
+
+        selection:
+            A bool flag indicating whether or not the Species' simulation
+            involves selection.
+
+        sex:
+            A bool flag indicating whether or not this Species is sexed
+            (i.e. whether or not the eligibility of potential mating pairs
+            should be basd on whether or not the Individuals in the potential
+            pair are of opposite sexes)
+
+        sex_ratio:
+            The sex ratio of the Species. This value is expressed as
+            the proportion of all offspring that are males, such that it can be
+            easily used as the probability parameter for the Bernoulli draw
+            of an offspring's sex. (Note that this value is derived from
+            the 'sex_ratio' parameter provided in the Model's parameters file, 
+            but unlike in the parameters file this value is
+            not expressed in as a ratio of males to females.)
+
+        start_N:
+            The number of Individuals to be generated for the starting
+            population of the Species (i.e. the population size at the
+            beginning of the burn-in)
+
+        t:
+            The index of the last completed time step run for this Species.
+            This attribute holds the value -1 until the Species has been burned
+            in, at which point it begins incrementing, Pythonically, from 0
+            (such that a Species with t == 999 has been run for 1000 time
+            steps).
+
+    """
     #######################
     ### SPECIAL METHODS ###
     #######################

@@ -24,6 +24,72 @@ import numpy.random as r
 ######################################
 
 class Individual:
+    """
+    Representation of an individual of a given species.
+
+    Multiple Individuals are collected as serial integer-keyed values within a
+    Species dict. Those serial indices continually increment through model time
+    as new Individuals (i.e. offspring) are produced, such that no two
+    Individuals within the full history of a simulation will ever have the same
+    index number.
+
+    Attributes
+    ----------
+
+        NOTE: For more detail, see the documentation for the parameters
+              that correspond to many of the following attributes.
+
+        age:
+            The Individual's age (expressed in timesteps since its birth
+            timestep, when the individual was instantiated at age 0)
+
+        e:
+            The Individual's current environmental values, organized as a
+            1d numpy array of length == len(Landscape), where the value stored
+            at Individual.e[i] gives the Individual's current environmental
+            value for Layer number i (i.e. Landscape[i])
+
+        fit:
+            The Individual's current fitness (calculated as a combination of
+            the Individual's phenotypes for all traits, its current
+            environmental values for all corresponding Landscape Layers, and
+            any deleterious loci for which it has '1' alleles; see
+            documentation for further details)
+
+        g:
+            The Individual's non-neutral genotypes,
+            stored as an L_n x 2 numpy array, where L_n is the current number
+            of non-neutral loci in the Individual's Species.
+            Individual's only carry copies of their non-neutral genotypes
+            (stored in this attribute). This is a computational optimization,
+            as it allows fitness-based operations to be calculated
+            quickly on the fly (using this attribute's data), while minimizing
+            the memory required to stored the full (neutral and non-netural)
+            genotypes of all current Individuals and their ancestors (i.e. the
+            'spatial pedigree' stored in the succinct set of tskit tables).
+            The successive rows in this array store the genotypes corresponding
+            to the loci indicated by the successive locus numbers in
+            Species.GenomicArchitecture.nonneut_loci.
+
+        sex:
+            The Individual's sex (0=female, 1=male; None, if the Species is
+            unsexed)
+        x:
+            The Individual's current x (i.e. longitudinal) position
+            (in continuous space, bounded within [0, Landscape.dims[0]])
+
+        y:
+            The Individual's current y (i.e. latitudinal) position
+            (in continuous space, bounded within [0, Landscape.dims[1]])
+
+        z:
+            The Individual's phenotypes for each, organized as a
+            1d numpy array of length == len(Species.traits), where the value
+            stored at Individual.z[i] gives the Individual's fitness for
+            Trait number i (i.e. Species.traits[i]).
+
+
+    """
     def __init__(self, idx, x, y, age=0, new_genome=None, sex=None):
         self.idx = idx
         #individual's x-ploid genome (NOTE: make np.int8 to minimize mem)

@@ -20,7 +20,7 @@ import numpy as np
 import numpy.random as r
 import random
 from copy import deepcopy
-import sys, os, traceback
+import sys, os, traceback, psutil
 import matplotlib as mpl
 _check_display()
 import matplotlib.pyplot as plt
@@ -68,6 +68,9 @@ class Model:
 
         #set the model name (which will come from the params filename)
         self.name = name
+
+        # get the PID of the process the model is running on
+        self._pid = os.getpid()
 
         #set the _verbose flag
         self._verbose = verbose
@@ -285,6 +288,12 @@ class Model:
                 "its key in the Species.gen_arch.traits dict). Instead, "
                 "a %s was provided.") % str(type(trt_id)))
 
+    # private method for printing the RAM used by this model's process
+    def _show_RSS(self):
+        print(('\nINFO: PROCESS %i USING %0.4fGB '
+               'RAM\n') % (self._pid,
+                           psutil.Process(self._pid).memory_info().rss/(10**9)))
+        return
 
     #private method for determining the width of
     #the terminal on the current system

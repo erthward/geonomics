@@ -30,11 +30,14 @@ from geonomics.sim import burnin
 #other imports
 import numpy as np
 from numpy import random as r
+import pandas as pd
 import random
 import matplotlib as mpl
 viz._check_display()
 import matplotlib.pyplot as plt
+from sklearn.cross_decomposition import CCA
 from scipy.stats.distributions import norm
+from math import pi as math_pi
 from collections import Counter as C
 from collections import OrderedDict as OD
 import tskit
@@ -1462,6 +1465,237 @@ class Species(OD):
                                                    size=pairs.shape[0]))
             pairs = pairs[can_mate, :]
         return pairs
+
+
+    def _make_gea_df(self, lyr_num=1):
+        """
+
+        Makes a dataframe for GEA analysis containing genotypes, coordinates,
+        and env values for all individuals.
+
+        NOTE: Currently only accepts one Landscape Layer (i.e. environmental
+              variable)
+
+        Parameters
+        ----------
+        lyr_num : int
+            The number of the Landscape Layer from which to extract
+            environmental values. Defaults to 1.
+
+        Returns
+        -------
+        out : pandas.DataFrame
+            A DataFrame in which columns are loci and rows are individuals
+        """
+        #get genotypes
+        gen = self._get_genotypes()
+
+        #loop to convert binary allele genotypes (0|1) into single digit genotypes (0, 0.5, 1)
+        geno_ind = []
+        for ind in range(len(gen)):
+            geno_loc = []
+            for loci in range(len(gen[ind])):
+                genotype = gen[ind][loci].mean() # coded as 0/0.5/1
+                geno_loc.append(genotype)
+            geno_ind.append(geno_loc)
+
+        #convert to dataframe
+        gea_df = pd.DataFrame(geno_ind)
+
+        #get environmental data
+        env = self._get_e()
+        gea_df['env'] = list(env[:,lyr_num])
+
+        #get coords
+        coord = self._get_coords()
+        gea_df['lat'] = list(coord[:,0])
+        gea_df['long'] = list(coord[:,1])
+
+        return gea_df
+
+
+    def _run_cca(self, trt_num=0, scale=3, plot=True, plot_sd=True,
+                 sd=3):
+        """
+        Runs a canonical correlation analysis (CCA) on the current genetic and
+        environmental data for the Species' current population, using the
+        indicated Trait. Plots the results and returns them in a dict.
+
+        CCA model formula: genotype ~ env + lat + long
+
+        NOTE: currently only possible to do 3 components/3 variables;
+              will add greater functionality in the future
+
+        Parameters
+        ----------
+        trt_num : int
+            The number of the Trait to run the GEA on. Defaults to 0.
+        scale : {int, float}
+            The scaling factor to use for SNP and variable loadings
+            to make them easier to visualize. Defaults to 3.
+        plot : bool
+            Whether or not to plot the model. Defaults to True.
+        plot_sd : bool
+            If True, a standard deviation ellipse is plotted, using the number
+            of standard deviations indicated by the argument 'sd'. Defaults to
+            True.
+        sd : {int, float}
+            Number of standard deviations to use for plotting the standard
+            deviation ellipse. Defaults to 3.
+
+        Returns
+        -------
+        out : dict
+            A dict of the following key-value pairs:
+                "gea_df": a DataFrame of individuals' genotypes, environmental
+                          values, and coordinates
+                "ind_CCAdf": individual loadings (columns = axes,
+                             rows = individuals)
+                "loci_CCAdf": locus loadings (columns = axes, rows = loci)
+                "var_CCAdf": variable loadings (columns = axes,
+                             rows = variable (env, lat, long))
+                "trait_loci": list of indexes for loci that underlie the trait
+                              for which the CCA was run
+        """
+        #make DF
+        gea_df =self._make_gea_df(lyr_num=self.gen_arch.traits[trt_num].lyr_num)
+
+        #get adaptive loci (used later in plotting)
+        trait_loci = self.gen_arch.traits[trt_num].loci #gets trait loci indexes
+
+        #get number of loci
+        L = self.gen_arch.L
+        #define x and y:
+        # pull out genotypes
+        Y = gea_df.iloc[:,range(L)]
+        # pull out predictor variables
+        # TODO: make it possible to choose more vars in future
+        X = gea_df[['env','lat','long']]
+
+        #define n_components
+        n_components = 3
+        #create the CCA model and fit it to the data
+        cca = CCA(n_components = n_components)
+        cca.fit(Y, X)
+
+        #transform data
+        Y_c = cca.transform(Y)
+
+        #create df for individuals
+        ind_df = pd.DataFrame(Y_c)
+        #naming CCA columns starting at 1
+        ind_df.columns = [str(r) for r in range(1, n_components + 1)]
+
+        #create df for loci
+        loci_df = pd.DataFrame(cca.x_loadings_)
+        loci_df.columns = ind_df.columns #same column names
+
+        #create df for variables
+        var_df = pd.DataFrame(cca.y_loadings_)
+        var_df.columns = ind_df.columns #same column names
+
+        #make dictionary of dataframes to return
+        cca_dict = {'gea_df':gea_df,
+                    'ind_df':ind_df,
+                    'loci_df':loci_df,
+                    'var_df':var_df,
+                    'trait_loci':trait_loci}
+
+        # NOTE: right now this plotting loop only works for a maximum of 3 axes;
+        #       in the future as more env vars are added, could add more axes
+        if plot:
+            #scale dataframes for plotting
+            loci_df = loci_df * scale #scale
+            var_df = var_df * 2/3 * scale #scale but only by 2/3 of org scale;
+                                          # just aesthetics
+
+            #set up figure
+            fig = plt.figure(figsize=(9,4))
+            for n, cc_axes_pair in enumerate([[1, 2], [1, 3], [2, 3]]):
+                #define components for axis
+                cc_axis1 = cc_axes_pair[0] #x-axis CC
+                cc_axis2 = cc_axes_pair[1] #y-axis CC
+
+                ax = fig.add_subplot(131+n)
+
+                #add center lines
+                ax.axhline(y=0, color='lightgray', linestyle='dotted')
+                ax.axvline(x=0, color='lightgray', linestyle='dotted')
+
+                #plot neutral SNPs
+                ax.scatter(loci_df[str(cc_axis1)], loci_df[str(cc_axis2)],
+                           marker = '+', color = 'gray',
+                           label = 'Neutral SNPs', alpha = 0.7)
+                #plot individuals
+                cmap_scat = ax.scatter(ind_df[str(cc_axis1)],
+                                       ind_df[str(cc_axis2)],
+                                       c = gea_df.env, cmap='viridis',
+                                       label = "Individuals", alpha = 0.5)
+                #plot adaptive SNPs
+                ax.scatter(loci_df[str(cc_axis1)][trait_loci],
+                           loci_df[str(cc_axis2)][trait_loci],
+                           marker="+", color = "red", s=100,
+                           label = 'Adaptive SNPs')
+
+                #plot variable vectors as arrows
+                for i in range(var_df.shape[0]):
+                    x = var_df[str(cc_axis1)][i]
+                    y = var_df[str(cc_axis2)][i]
+                    plt.arrow(0, 0, x, y, width = 0.02,
+                              head_width = 0.15, color = 'black')
+                    sx = 0.3
+                    sy = 0.3
+                    # this mess is just to arrange the text
+                    # next to arrows but it is a WIP
+                    if (x < 0 and y < 0):
+                       plt.text(x - sx, y - sy, X.columns[i])
+                    if (x < 0 and y > 0):
+                       plt.text(x - sx, y + sy, X.columns[i])
+                    if (x > 0 and y > 0):
+                       plt.text(x + sx, y + sy, X.columns[i])
+                    if (x > 0 and y < 0):
+                       plt.text(x + sx, y - sy, X.columns[i])
+
+                #plot SD ellipse for SNP data if plot_sd = True
+                if plot_sd:
+                    r1 = np.std(loci_df[str(cc_axis1)]) * sd
+                    r2 = np.std(loci_df[str(cc_axis2)]) * sd
+                    t = np.linspace(0, 2*math_pi, 100)
+                    ax.plot(r1*np.cos(t) , r2*np.sin(t), linestyle = 'dashed',
+                            c = 'red', label = str(sd) + " StdDev")
+
+                #EVERYTHING BELOW THIS LINE IN THE LOOP IS JUST PLOT FORMATTING 
+                
+                label = ax.set_xlabel('CCA' + str(cc_axis1), fontsize = 9)
+                ax.xaxis.set_label_coords(0.5, -0.02)
+                label = ax.set_ylabel('CCA' + str(cc_axis2), fontsize = 9)
+                ax.yaxis.set_label_coords(-0.02, 0.55)
+
+                #make into box
+                #ax.set_aspect('equal', adjustable='box')
+                #Move left y-axis and bottom x-axis to center, passing through (0,0)
+                ax.spines['left'].set_position('center')
+                ax.spines['bottom'].set_position('center')
+
+                #change colors/remove default axis
+                axcolor = 'none'
+                ax.spines['left'].set_color(axcolor)
+                ax.spines['bottom'].set_color(axcolor)
+                ax.spines['right'].set_color(axcolor)
+                ax.spines['top'].set_color(axcolor)
+                ax.tick_params(axis = 'x', colors=axcolor)
+                ax.tick_params(axis = 'y', colors=axcolor)
+
+                ax.yaxis.label.set_color('gray')
+                ax.xaxis.label.set_color('gray')
+
+                #legends
+                if n == 2:
+                    ax.legend(loc = "upper left", bbox_to_anchor=(1.3, 1.05))
+                    plt.colorbar(cmap_scat, label="env")
+            fig.show()
+
+        return cca_dict
 
 
     # method for plotting the species (or a subset of its individuals, by ID)

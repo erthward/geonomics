@@ -162,8 +162,8 @@ class Recombinations:
         # will actually be 1)
         recomb_rates[0] = 0
         return recomb_rates
-    
-    
+
+
     # simulate recombination events
     def _draw_recombination_events(self, use_subsetters, nonneutral_loci):
         """
@@ -177,7 +177,7 @@ class Recombinations:
         # events to simulate recombination I don't have to pass around the long
         # arrays, but instead can just random keys to index them out on the fly
         breakpoints = dict(zip(range(len(breakpoints)), breakpoints))
-   
+
         if use_subsetters:
             # get the recombination paths used to make the bitarray subsetters
             if len(nonneutral_loci) > 0:
@@ -199,7 +199,7 @@ class Recombinations:
             subsetters = None
         return (breakpoints, subsetters)
 
-    
+
     # calculate the left and right segment edges for each recombination event
     def _set_seg_info(self):
         seg_info = {}
@@ -258,7 +258,7 @@ class Trait:
         alpha_distr_sigma:
             Standard deviation of the normal (Gaussian) distribution
             of effect sizes for this trait's loci.
-    
+
         gamma:
             Curvature of the fitness function.
 
@@ -276,7 +276,7 @@ class Trait:
             This method of tracking allows Individuals' full genotypes to be
             stored in the tskit tables while they carry their non-neutral
             genotypes with them (a computational optimization).
-        
+
         loci:
             A numerically sorted 1d numpy array containing
             the locus numbers of all loci subtending this trait.
@@ -296,7 +296,7 @@ class Trait:
             Mutation rate for this trait (expressed in mutations per locus per
             timestep)
 
-        name:  
+        name:
             The string name of the trait
 
         n_loci:

@@ -1514,7 +1514,7 @@ class Species(OD):
         return gea_df
 
 
-    def _run_cca(self, trt_num=0, scale=3, plot=True, plot_sd=True,
+    def _run_cca(self, trt_num=0, scale=True, plot=True, plot_sd=True,
                  sd=3):
         """
         Runs a canonical correlation analysis (CCA) on the current genetic and
@@ -1530,9 +1530,9 @@ class Species(OD):
         ----------
         trt_num : int
             The number of the Trait to run the GEA on. Defaults to 0.
-        scale : {int, float}
-            The scaling factor to use for SNP and variable loadings
-            to make them easier to visualize. Defaults to 3.
+        scale : bool
+            If True, scales the locus and variable loadings to make them easier
+            to visualize. Defaults to True.
         plot : bool
             Whether or not to plot the model. Defaults to True.
         plot_sd : bool
@@ -1604,13 +1604,23 @@ class Species(OD):
         # NOTE: right now this plotting loop only works for a maximum of 3 axes;
         #       in the future as more env vars are added, could add more axes
         if plot:
-            #scale dataframes for plotting
-            loci_df = loci_df * scale #scale
-            var_df = var_df * 2/3 * scale #scale but only by 2/3 of org scale;
-                                          # just aesthetics
+            #Scale loci and var data if scale = True
+            if scale == True:
+                #set scales for loci and df
+                scale_loci = np.mean(ind_df.max(axis = 0))/np.mean(loci_df.max(axis = 0))
+                scale_var = np.mean(ind_df.max(axis = 0))/np.mean(var_df.max(axis = 0))
 
+                #scale dataframes for plotting
+                loci_df = loci_df * scale_loci
+                var_df = var_df * scale_var 
+
+            #get max and mins to set axis later on
+            maxdf = max(ind_df.values.max(), var_df.values.max(), loci_df.values.max())
+            mindf = abs(min(ind_df.values.min(), var_df.values.min(), loci_df.values.min()))
+            axmax = max(maxdf, mindf) * 1.20 #adding a 20% buffer
+            
             #set up figure
-            fig = plt.figure(figsize=(9,4))
+            fig = plt.figure(figsize=(20, 15))
             for n, cc_axes_pair in enumerate([[1, 2], [1, 3], [2, 3]]):
                 #define components for axis
                 cc_axis1 = cc_axes_pair[0] #x-axis CC
@@ -1621,6 +1631,10 @@ class Species(OD):
                 #add center lines
                 ax.axhline(y=0, color='lightgray', linestyle='dotted')
                 ax.axvline(x=0, color='lightgray', linestyle='dotted')
+                
+                # set axes range
+                plt.xlim(-axmax, axmax)
+                plt.ylim(-axmax, axmax)
 
                 #plot neutral SNPs
                 ax.scatter(loci_df[str(cc_axis1)], loci_df[str(cc_axis2)],

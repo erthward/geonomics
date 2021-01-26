@@ -1679,13 +1679,11 @@ class Species(OD):
                             c = 'red', label = str(sd) + " StdDev")
 
                 #EVERYTHING BELOW THIS LINE IN THE LOOP IS JUST PLOT FORMATTING 
-                
-                #note because the plot using center axis (intersect at 0):
                 #xlabel is the label at the bottom (vertical axis label) and ylabel is on the left side (horizontal axis label)
-                label = ax.set_ylabel('CCA' + str(cc_axis1, fontsize = 9)
-                ax.yaxis.set_label_coords(-0.02, 0.55)
                 label = ax.set_xlabel('CCA' + str(cc_axis2), fontsize = 9)
                 ax.xaxis.set_label_coords(0.5, -0.02)
+                label = ax.set_ylabel('CCA' + str(cc_axis1), fontsize = 9)
+                ax.yaxis.set_label_coords(-0.02, 0.55)
 
                 #make into box
                 ax.set_aspect('equal', adjustable='box')

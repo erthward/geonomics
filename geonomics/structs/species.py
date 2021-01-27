@@ -1531,7 +1531,7 @@ class Species(OD):
         trt_num : int
             The number of the Trait to run the GEA on. Defaults to 0.
         scale : bool
-            If True, scales the locus and variable loadings to make them easier
+            If True, scales the variable, individual, and locus loadings from -1 to 1 to make them easier
             to visualize. Defaults to True.
         plot : bool
             Whether or not to plot the model. Defaults to True.
@@ -1604,15 +1604,14 @@ class Species(OD):
         # NOTE: right now this plotting loop only works for a maximum of 3 axes;
         #       in the future as more env vars are added, could add more axes
         if plot:
-            #Scale loci and var data if scale = True
+            #Scale dataframes from -1 to 1 if scale = True
             if scale == True:
-                #set scales for loci and df
-                scale_loci = np.mean(ind_df.max(axis = 0))/np.mean(loci_df.max(axis = 0))
-                scale_var = np.mean(ind_df.max(axis = 0))/np.mean(var_df.max(axis = 0))
+                rmin = -1
+                rmax = 1
+                loci_df = rmin + (loci_df - loci_df.values.min()) * (rmax - (rmin)) / (loci_df.values.max() - loci_df.values.min())
+                var_df = rmin + (var_df - var_df.values.min()) * (rmax - (rmin)) / (var_df.values.max() - var_df.values.min())
+                ind_df = rmin + (ind_df - ind_df.values.min()) * (rmax - (rmin)) / (ind_df.values.max() - ind_df.values.min())
 
-                #scale dataframes for plotting
-                loci_df = loci_df * scale_loci
-                var_df = var_df * scale_var 
 
             #get max and mins to set axis later on
             maxdf = max(ind_df.values.max(), var_df.values.max(), loci_df.values.max())
@@ -1655,10 +1654,10 @@ class Species(OD):
                 for i in range(var_df.shape[0]):
                     x = var_df[str(cc_axis1)][i]
                     y = var_df[str(cc_axis2)][i]
-                    plt.arrow(0, 0, x, y, width = 0.02,
-                              head_width = 0.15, color = 'black')
-                    sx = 0.3
-                    sy = 0.3
+                    plt.arrow(0, 0, x, y, width = 0.01,
+                              head_width = 0.05, color = 'black')
+                    sx = 0.1
+                    sy = 0.1
                     # this mess is just to arrange the text
                     # next to arrows but it is a WIP
                     if (x < 0 and y < 0):

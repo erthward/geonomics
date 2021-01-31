@@ -1529,7 +1529,7 @@ class Species(OD):
         return gea_df
 
 
-    def _run_cca(self, trt_num=0, scale=3, plot=True, plot_sd=True,
+    def _run_cca(self, trt_num=0, scale=True, plot=True, plot_sd=True,
                  sd=3):
         """
         Runs a canonical correlation analysis (CCA) on the current genetic and
@@ -1545,9 +1545,9 @@ class Species(OD):
         ----------
         trt_num : int
             The number of the Trait to run the GEA on. Defaults to 0.
-        scale : {int, float}
-            The scaling factor to use for SNP and variable loadings
-            to make them easier to visualize. Defaults to 3.
+        scale : bool
+            If True, scales the variable, individual, and locus loadings from -1 to 1 to make them easier
+            to visualize. Defaults to True.
         plot : bool
             Whether or not to plot the model. Defaults to True.
         plot_sd : bool
@@ -1619,13 +1619,22 @@ class Species(OD):
         # NOTE: right now this plotting loop only works for a maximum of 3 axes;
         #       in the future as more env vars are added, could add more axes
         if plot:
-            #scale dataframes for plotting
-            loci_df = loci_df * scale #scale
-            var_df = var_df * 2/3 * scale #scale but only by 2/3 of org scale;
-                                          # just aesthetics
+            #Scale dataframes from -1 to 1 if scale = True
+            if scale == True:
+                rmin = -1
+                rmax = 1
+                loci_df = rmin + (loci_df - loci_df.values.min()) * (rmax - (rmin)) / (loci_df.values.max() - loci_df.values.min())
+                var_df = rmin + (var_df - var_df.values.min()) * (rmax - (rmin)) / (var_df.values.max() - var_df.values.min())
+                ind_df = rmin + (ind_df - ind_df.values.min()) * (rmax - (rmin)) / (ind_df.values.max() - ind_df.values.min())
 
+
+            #get max and mins to set axis later on
+            maxdf = max(ind_df.values.max(), var_df.values.max(), loci_df.values.max())
+            mindf = abs(min(ind_df.values.min(), var_df.values.min(), loci_df.values.min()))
+            axmax = max(maxdf, mindf) * 1.20 #adding a 20% buffer
+            
             #set up figure
-            fig = plt.figure(figsize=(9,4))
+            fig = plt.figure(figsize=(20, 15))
             for n, cc_axes_pair in enumerate([[1, 2], [1, 3], [2, 3]]):
                 #define components for axis
                 cc_axis1 = cc_axes_pair[0] #x-axis CC
@@ -1636,6 +1645,10 @@ class Species(OD):
                 #add center lines
                 ax.axhline(y=0, color='lightgray', linestyle='dotted')
                 ax.axvline(x=0, color='lightgray', linestyle='dotted')
+                
+                # set axes range
+                plt.xlim(-axmax, axmax)
+                plt.ylim(-axmax, axmax)
 
                 #plot neutral SNPs
                 ax.scatter(loci_df[str(cc_axis1)], loci_df[str(cc_axis2)],
@@ -1656,10 +1669,10 @@ class Species(OD):
                 for i in range(var_df.shape[0]):
                     x = var_df[str(cc_axis1)][i]
                     y = var_df[str(cc_axis2)][i]
-                    plt.arrow(0, 0, x, y, width = 0.02,
-                              head_width = 0.15, color = 'black')
-                    sx = 0.3
-                    sy = 0.3
+                    plt.arrow(0, 0, x, y, width = 0.01,
+                              head_width = 0.05, color = 'black')
+                    sx = 0.1
+                    sy = 0.1
                     # this mess is just to arrange the text
                     # next to arrows but it is a WIP
                     if (x < 0 and y < 0):
@@ -1680,14 +1693,15 @@ class Species(OD):
                             c = 'red', label = str(sd) + " StdDev")
 
                 #EVERYTHING BELOW THIS LINE IN THE LOOP IS JUST PLOT FORMATTING 
-                
-                label = ax.set_xlabel('CCA' + str(cc_axis1), fontsize = 9)
+                #xlabel is the label at the bottom (vertical axis label) and ylabel is on the left side (horizontal axis label)
+                label = ax.set_xlabel('CCA' + str(cc_axis2), fontsize = 9)
                 ax.xaxis.set_label_coords(0.5, -0.02)
-                label = ax.set_ylabel('CCA' + str(cc_axis2), fontsize = 9)
+                label = ax.set_ylabel('CCA' + str(cc_axis1), fontsize = 9)
                 ax.yaxis.set_label_coords(-0.02, 0.55)
 
                 #make into box
-                #ax.set_aspect('equal', adjustable='box')
+                ax.set_aspect('equal', adjustable='box')
+                
                 #Move left y-axis and bottom x-axis to center, passing through (0,0)
                 ax.spines['left'].set_position('center')
                 ax.spines['bottom'].set_position('center')

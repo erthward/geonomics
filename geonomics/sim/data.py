@@ -364,6 +364,12 @@ def _format_fasta(sample, genotypes):
     001110101010101010010101011101010110.....01011110
 
     '''
+    # ensure that sample and genotypes have identical lenghts and orders
+    assert len(sample) == len(genotypes), ("'sample', and 'genotypes' have"
+                                           "different lenghts!")
+    assert np.all([*sample] == [*genotypes]), ("'sample' and 'genotypes' do not"
+                                               " have identical orders!")
+
     row1 = '>%s:HAP;%s;%s;%s;%s;%s;%s\n'
     file_text = ''
 
@@ -383,6 +389,12 @@ def _format_fasta(sample, genotypes):
 
 
 def _format_vcf(sample, genotypes, gen_arch, include_fixed_sites=False):
+
+    # ensure that sample and genotypes have identical lenghts and orders
+    assert len(sample) == len(genotypes), ("'sample', and 'genotypes' have"
+                                           "different lenghts!")
+    assert np.all([*sample] == [*genotypes]), ("'sample' and 'genotypes' do not"
+                                               " have identical orders!")
 
     #create a template header
         #NOTE: has 1 string slot for a date
@@ -412,7 +424,7 @@ def _format_vcf(sample, genotypes, gen_arch, include_fixed_sites=False):
             #- a tab-separated list of individs' genotypes at this locus
 
     #create a col_header_row for this data
-    inds = sorted(sample.keys())
+    inds = [*sample.keys()]
     ind_cols = '\t'.join([str(i) for i in inds])
     cols = col_header_row % (ind_cols)
 

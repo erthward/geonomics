@@ -14,6 +14,7 @@ from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from sympy import symbols
+import itertools
 
 # set some plotting params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
@@ -24,6 +25,8 @@ ticklabelsize=15
 
 #make sympy symbolics for Fst eqxns
 Fst_var_var, Fst_var_mean_p = symbols('Fst_var_var Fst_var_mean_p')
+
+calc_Fst_each_tstep = True
 
 
 def make_island_landscape(n, w, d):
@@ -48,9 +51,12 @@ def make_island_landscape(n, w, d):
     return land, island_labels
 
 
-def calc_Fst_HsHt(f0, f1, het0, het1, est_Hs = False):
+def calc_Fst_HsHt(f0, f1, het0, het1, est_Hs = False, include_zeros=False):
     if f0 == f1:
-        Fst = 0
+        if include_zeros:
+            Fst = 0
+        else:
+            Fst = np.nan
     else:
         Ht = 2 * ((f0 + f1)/2) * (1- (f0+f1)/2)
         if est_Hs:
@@ -59,6 +65,54 @@ def calc_Fst_HsHt(f0, f1, het0, het1, est_Hs = False):
             Hs = np.mean([het0, het1])
         Fst = (Ht - Hs)/Ht
     return Fst
+
+
+def calc_Fsts_mod(mod, island_vals, mean_Fst=False):
+    """
+    Calculates Fst_HsHt for all loci, for all island pairs, using model
+    """
+    spp = mod.comm[0]
+    # get individs' islands
+    inds_islands = np.array([island_vals[val] for val in spp._get_e()[:,1]])
+    # get all island-pairs
+    island_pairs = [*itertools.combinations(set(inds_islands), 2)]
+    # get individs' genotypes
+    gts = spp._get_genotypes()
+    # data dict
+    Fsts = {pair:[] for pair in island_pairs}
+    # loop over loci
+    for loc in range(gts.shape[1]):
+        # for this locus, calc Fst for each island pair
+        for pair in island_pairs:
+            # get island ids
+            isle0 = pair[0]
+            isle1 = pair[1]
+            # get 1-allele freqs for each pop
+            f0 = np.mean(gts[inds_islands == isle0, loc, :])
+            f1 = np.mean(gts[inds_islands == isle1, loc, :])
+            # get heterozygosities for each pop
+            het0 = np.mean(np.sum(gts[inds_islands == isle0, loc, :], axis=1) == 1)
+            het1 = np.mean(np.sum(gts[inds_islands == isle1, loc, :], axis=1) == 1)
+            """
+            # calc Fst
+            if f0 == f1:
+                Fst = 0
+            else:
+                Ht = 2 * ((f0 + f1)/2) * (1-((f0+f1)/2))
+                Hs = np.mean([het0, het1])
+                Fst = (Ht - Hs)/Ht
+            """
+            Fst = calc_Fst_HsHt(f0, f1, het0, het1)
+
+            # append the Fst val to the appropriate list
+            Fsts[pair].append(Fst)
+    
+    # average the locuswise Fsts, if necessary
+    if mean_Fst:
+        for k, v in Fsts.items():
+            Fsts[k] = np.nanmean(v)
+
+    return Fsts
 
 
 Fst_var_eqxn = Fst_var_var / (Fst_var_mean_p * (1 - Fst_var_mean_p))
@@ -76,6 +130,7 @@ def calc_Fst_var(var_f, mean_f):
     except ZeroDivisionError:
         Fst = 0
     return Fst
+
 
 #define island number, width, and diagonal distance
 n = 6
@@ -117,8 +172,15 @@ for i in range(n):
             migs.update({(i,j):[]})
 #data structure to store islands' population sizes each timestep
 pop_sizes = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}
-#walk Model timestep by timestep
+
+# new dict for collecting Fst vals each timestep
+if calc_Fst_each_tstep:
+    mod_Fsts = {p:[] for p in [*itertools.combinations(range(6), 2)]}
+
+#walk model timestep by timestep
 print("WILL RUN FOR %i STEPS" % mod.params.model.T)
+# SAVE ALL GENOTYPES IN A DICT
+all_gts = {}
 for t in range(mod.params.model.T):
     #create a dictionary to keep count of how many individuals make
     #each of the possible migration events
@@ -138,7 +200,49 @@ for t in range(mod.params.model.T):
         pop_sizes[v].append(sum([old_val == k for old_val in old_vals]))
     old_island_labels = dict(zip([*mod.comm[0]],
         [island_vals[i] for i in old_vals]))
+
     mod.walk(mode = 'main', T = 1, verbose = True)
+
+    # calc and save Fst_HsHt's for this step
+    if calc_Fst_each_tstep and (t%10 == 0):
+        mod_Fsts_this_tstep = calc_Fsts_mod(mod, island_vals, mean_Fst=True)
+        for k,v in mod_Fsts_this_tstep.items():
+            mod_Fsts[k].append(v)
+        print("MEAN 1-DIST FST: %0.3f" % np.mean(
+                [v for k,v in mod_Fsts_this_tstep.items() if np.diff(k) == 1]))
+        print("MEAN 5-DIST FST: %0.3f" % mod_Fsts_this_tstep[(0,5)])
+
+    #GRAB ALL GENOTYPES
+    if mod.t % 10 == 0:
+        all_gts[mod.t] = mod.comm[0]._get_genotypes(as_dict=True)
+
+    """
+    # CHECK GENOTYPES AGAINST VCF, IF JUST WRITTEN
+    if mod.t % 10 == 0:
+        fname = ("/home/drew/Desktop/stuff/berk/research/projects/sim/"
+                "geonomics/GNX_mod-island_params/it--1/spp-spp_0/"
+                "mod-island_params_it--1_t-%i_spp-spp_0.vcf" % mod.t)
+        vcf_reader = vcf.Reader(open(fname, 'r'))
+        for loc in range(mod.comm[0].gen_arch.L):
+            rec = next(vcf_reader)
+            for sample in rec.samples:
+                idx = int(sample.sample)
+                vcf_gt = np.array([int(n) for n in sample.gt_alleles])
+                mod_gt = mod.comm[0]._get_genotypes(individs=[idx],
+                                                    loci=[loc])[0][0]
+                print('---------------------------------------')
+                print("CHECKING LOC %i, SAMPLE %s %s" % (loc,
+                                                         str(sample),
+                    '\n' + ' '*(53 + len(str(loc))) + str(mod_gt)))
+                if ~np.all(vcf_gt == mod_gt):
+                    print(loc)
+                    print(idx)
+                    print(vcf_gt)
+                    print(mod_gt)
+                    assert True==False
+    """
+
+
     #record the number of individuals whose island numbers
     #changed (i.e. who migrated this timestep)
     new_vals = [i[1] for i in mod.comm[0]._get_e()]
@@ -185,6 +289,15 @@ for t in range(mod.params.model.T):
     [migs[mig_event].append(
         ct) for mig_event, ct in mig_counts.items()]
         #ct/len(not_newborns)) for mig_event, ct in mig_counts.items()]
+
+# calc and save Fst_HsHt's for this step
+if calc_Fst_each_tstep:
+    mod_Fsts_this_tstep = calc_Fsts_mod(mod, island_vals, mean_Fst=True)
+    for k,v in mod_Fsts_this_tstep.items():
+        mod_Fsts[k].append(v)
+# save last timestep's genotypes
+all_gts[mod.t] = mod.comm[0]._get_genotypes(as_dict=True)
+
 #get mean migration rates
 migs = {k:np.mean(v) for k,v in migs.items()}
 #divide mean population size by 6 to get estimated per-island pop sizes
@@ -216,7 +329,7 @@ for subdir in os.listdir(data_dir):
             '(?<=t\-)%i(?=_spp)' % step, f)]
         assert len(csv_file) == 1, ('More than one CSV!')
         csv_file = csv_file[0]
-        csv= pd.read_csv(os.path.join(data_dir, subdir, 'spp-spp_0', csv_file))
+        csv = pd.read_csv(os.path.join(data_dir, subdir, 'spp-spp_0', csv_file))
         # use individuals' second environmental value to pin them to their
         # islands
         csv['island'] = [island_vals[float(r[1].e.split(',')[1].rstrip(
@@ -228,32 +341,42 @@ for subdir in os.listdir(data_dir):
         freq = {}
         het = {}
         for loc in range(100):
-            try:
-                rec = next(vcf_reader)
-                loc_dict = {}
-                het_dict = {}
-                for isl_num, isl_list in island_lists.items():
-                    het_cts = 0
-                    cts_allele_1 = []
-                    for ind in isl_list:
-                        ct_allele_1 = sum([int(base) for base in rec.genotype(
-                            str(ind)).data.GT.split('|')])
-                        cts_allele_1.append(ct_allele_1)
-                        if ct_allele_1 == 1:
-                            het_cts += 1
-                    #divide the count of the 1 allele in each island pop by
-                    #2 times the island pop's size (i.e. 2N)
-                    pop_size = len(csv[csv['island'] == isl_num])
-                    freq_allele_1 = sum(cts_allele_1)/(2*pop_size)
-                    #and divide the count of heterozygotes by the island pop's
-                    #size (i.e. N)
-                    het_freq = het_cts/pop_size
-                    loc_dict[isl_num] = freq_allele_1
-                    het_dict[isl_num] = het_freq
-                freq[rec.POS] = loc_dict
-                het[rec.POS]= het_dict
-            except Exception as e:
-                pass
+            #try:
+            rec = next(vcf_reader)
+            assert rec.POS == loc
+            loc_dict = {}
+            het_dict = {}
+            for isl_num, isl_list in island_lists.items():
+                het_cts = 0
+                cts_allele_1 = []
+                for ind in isl_list:
+                    ct_allele_1 = sum([int(base) for base in rec.genotype(
+                        str(ind)).data.GT.split('|')])
+                    cts_allele_1.append(ct_allele_1)
+                    if ct_allele_1 == 1:
+                        het_cts += 1
+                    
+                    #DOUBLE-CHECK GENOTYPE
+                    assert np.sum(all_gts[step][ind][loc,:]) == ct_allele_1, (
+                        str(all_gts[step][ind][loc,:]) +
+                        str(rec.genotype(str(ind)).data.GT))
+
+                #divide the count of the 1 allele in each island pop by
+                #2 times the island pop's size (i.e. 2N)
+                pop_size = len(csv[csv['island'] == isl_num])
+                alt_pop_size = len(isl_list)
+                assert pop_size == alt_pop_size
+                freq_allele_1 = sum(cts_allele_1)/(2*pop_size)
+                #and divide the count of heterozygotes by the island pop's
+                #size (i.e. N)
+                het_freq = het_cts/pop_size
+                loc_dict[isl_num] = freq_allele_1
+                het_dict[isl_num] = het_freq
+            freq[rec.POS] = loc_dict
+            het[rec.POS]= het_dict
+            #except Exception as e:
+                #print("COULDN'T READ VCF!\nfollowing error thrown\n\t%s" % e)
+
         #use that info to calculate Fst between all pairs of islands
         #for each allele
         #and use mean migrations rates for all pairs of islands to calculate
@@ -281,7 +404,7 @@ for subdir in os.listdir(data_dir):
                 # print('het0: %0.4f' % het0)
                 # print('het1: %0.4f' % het1)
                 mean_f = np.mean([f0, f1])
-                var_f = np.var([f0,f1])
+                var_f = np.var([f0, f1])
                 Fst_var_val = calc_Fst_var(var_f, mean_f)
                 # print('VAR: %0.4f' % Fst_var_val)
                 Fst_var_list.append(Fst_var_val)
@@ -289,8 +412,8 @@ for subdir in os.listdir(data_dir):
                                              est_Hs = False)
                 # print('HsHt: %0.4f' % Fst_HsHt_val)
                 Fst_HsHt_list.append(Fst_HsHt_val)
-            mean_Fst_var = np.mean(Fst_var_list)
-            mean_Fst_HsHt = np.mean(Fst_HsHt_list)
+            mean_Fst_var = np.nanmean(np.float64(Fst_var_list))
+            mean_Fst_HsHt = np.nanmean(Fst_HsHt_list)
             Fst_var[pop_pair] = mean_Fst_var
             Fst_HsHt[pop_pair] = mean_Fst_HsHt
             mig_rates = [migs[pop_pair], migs[pop_pair[::-1]]]
@@ -318,10 +441,12 @@ for subdir in os.listdir(data_dir):
             ax = fig.add_subplot(122)
             #ax.set_title('IBD between island subpopulations')
             ax.set_xlim(0, 6)
-            x = []
-            Fst_HsHt_y = []
-            Fst_var_y = []
-            exp_Fst_y = []
+            # NOTE: start them with all six zeros (one per island compared to
+            # itself, except for migration rate)
+            x = [0] * 6
+            Fst_HsHt_y = [0] * 6
+            Fst_var_y = [0] * 6
+            exp_Fst_y = [0] * 6
             tot_mig_rate_y = []
             for pop_pair in pop_pairs:
                 x.append(np.abs(pop_pair[0] - pop_pair[1]))
@@ -347,8 +472,9 @@ for subdir in os.listdir(data_dir):
                                                     (len(tot_mig_rate_y), 1)))
             exp_Fst_y = np.float64(np.array(exp_Fst_y).reshape((len(exp_Fst_y),
                                                                 1)))
-            line_preds_x = np.hstack((np.ones((1000,1)),
-                                      np.linspace(1,5,1000).reshape((1000,1))))
+            #line_preds_x = np.hstack((np.ones((1000,1)),
+            #                          np.linspace(0,5,1000).reshape((1000,1))))
+            line_preds_x = np.linspace(0,5,1000).reshape((1000,1))
             #run and plot linear regressions for each, with alpha = 0.01
             names = ['Fst=Ht-Hs/Ht', 'Fst=var(p)/mean(p)']  #, 'Fst=1/(4Nm + 1)']
             # set ylims for Fst-island_dist plot
@@ -359,8 +485,9 @@ for subdir in os.listdir(data_dir):
             p_list = []
             for n_data, data in enumerate([Fst_HsHt_y, Fst_var_y]):
                 #est = sm.OLS(data, np.hstack((x, x**2))).fit()
-                est = sm.OLS(data, np.hstack((np.ones((x.size, 1)),
-                                              np.array(x)))).fit()
+                #est = sm.OLS(data, np.hstack((np.ones((x.size, 1)),
+                                              #np.array(x)))).fit()
+                est = sm.OLS(data, np.array(x)).fit()
                 #line_preds = est.predict(np.hstack((line_preds_x,
                                                     #line_preds_x**2)))
                 line_preds = est.predict(line_preds_x)
@@ -391,14 +518,16 @@ for subdir in os.listdir(data_dir):
                     "positive.") % names[n_data])
             #plot the inter-island migration rates on the same x axis
             ax2 = ax.twinx()
-            plt.plot(x, tot_mig_rate_y, 'o', color = '#999999')
+            # NOTE: don't use the 0-5th items in x, because they're distance=0
+            # (i.e. islands compared to themselves, used for Fst values)
+            plt.plot(x[6:], tot_mig_rate_y, 'o', color = '#999999')
             ax2.set_ylabel('migration rate (individ. per gen.)',
                            fontdict=ax_fontdict)
             log_tot_mig_rate_y = np.log(tot_mig_rate_y).ravel()
             log_tot_mig_rate_y = [rate if not np.isinf(
                 rate) else 3 * np.min(log_tot_mig_rate_y[~np.isinf(
                 log_tot_mig_rate_y)]) for rate in log_tot_mig_rate_y]
-            est = sm.OLS(log_tot_mig_rate_y, np.log(x)).fit()
+            est = sm.OLS(log_tot_mig_rate_y, np.log(x[6:])).fit()
             #est = sm.OLS(log_tot_mig_rate_y, np.hstack((np.ones((x.size, 1)),
             #                                  np.array(x)))).fit()
             line_preds_x = np.linspace(1,5,1000).reshape((1000,1))
@@ -453,7 +582,7 @@ plt.show()
 #            img_dir, 'ISLAND_pop_plot_and_Fst_vs_mig_rate.pdf'))
 
 
-# plot pop sizes over time
+# plot Fsts over time
 plt.rcParams['figure.figsize'] = [4, 4]
 fig2 = plt.figure()
 #plt.suptitle('Population size and Fst, over model time',
@@ -470,7 +599,7 @@ ax2 = fig2.add_axes([0.82, 0.1, 0.05, 0.8])
 #ax2 = fig2.add_subplot(122)
 #ax2.set_title('Fst, colored by inter-island distance')
 ax1.set_xlabel('t', fontdict=ax_fontdict)
-ax1.set_ylabel('Fst', fontdict=ax_fontdict)
+ax1.set_ylabel('mean Fst', fontdict=ax_fontdict)
 ax1.tick_params(labelsize=ticklabelsize)
 #colors = ['#8baee5', '#4580e0', '#0056e2']
 #cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
@@ -493,8 +622,53 @@ cb1 = mpl.colorbar.ColorbarBase(ax2, cmap=cmap, norm=norm,
                                 ticks=[*range(1,6)])
 cb1.set_label('inter-island distance (steps)', size=17)
 cb1.ax.tick_params(size=0, labelsize=ticklabelsize)
-plt.show()
+fig2.show()
 #plt.savefig(os.path.join(img_dir,
 #                         ('ISLAND_Fst_over_time.pdf')))
+
+
+if calc_Fst_each_tstep:
+    # plot Fsts over time for all timesteps
+    plt.rcParams['figure.figsize'] = [4, 4]
+    fig3 = plt.figure()
+    fig3.suptitle('Fst, manually calculated', fontdict=ttl_fontdict)
+    ax1 = fig3.add_axes([0.15, 0.1, 0.65, 0.8])
+    ax2 = fig3.add_axes([0.82, 0.1, 0.05, 0.8])
+    #ax2.set_title('Population size, colored by island', fontdict=ttl_fontdict)
+    #ax2.set_xlabel('t', fontdict=ax_fontdict)
+    #ax2.set_ylabel('pop size (N)', fontdict=ax_fontdict)
+    #colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
+    #for k, v in pop_sizes.items():
+    #    ax2.plot(range(len(v)), v, '-', color = colors[k])
+    # plot Fst values for all timesteps
+    #ax2 = fig2.add_subplot(122)
+    #ax2.set_title('Fst, colored by inter-island distance')
+    ax1.set_xlabel('t', fontdict=ax_fontdict)
+    ax1.set_ylabel('mean Fst', fontdict=ax_fontdict)
+    ax1.tick_params(labelsize=ticklabelsize)
+    #colors = ['#8baee5', '#4580e0', '#0056e2']
+    #cmap = LinearSegmentedColormap.from_list('my_cmap', colors, N=50)
+    cmap = mpl.cm.YlGn
+    norm = mpl.colors.Normalize(vmin=0, vmax=5)
+    colors = cmap(np.linspace(0, 1, 5))
+    max_Fsts = []
+    for pop_pair in pop_pairs:
+        y = mod_Fsts[pop_pair]
+        max_Fsts.append(max(y))
+        ax1.plot(xs, y, color=colors[np.abs(pop_pair[0] - pop_pair[1])-1],
+                linewidth=3)
+        ax1.plot(xs, y, color="black", linewidth=0.5)
+    ax1.set_ylim((0, 1.1 * max(max_Fsts)))
+    ax2.set_xlim((0, 1.1*max(xs)))
+    cb1 = mpl.colorbar.ColorbarBase(ax2, cmap=cmap, norm=norm,
+                                    spacing='proportional',
+                                    boundaries=[i+0.5 for i in range(6)],
+                                    ticks=[*range(1,6)])
+    cb1.set_label('inter-island distance (steps)', size=17)
+    cb1.ax.tick_params(size=0, labelsize=ticklabelsize)
+    fig3.show()
+    #plt.savefig(os.path.join(img_dir,
+    #                         ('ISLAND_Fst_over_time.pdf')))
+
 
 print('\nValidation test successful.\n')

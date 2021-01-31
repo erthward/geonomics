@@ -154,7 +154,8 @@ def _calc_d(N_d, N, d_min, d_max):
     #Use N_d/N to calculate d raster (probability of death of individuals
     #in each cell) Calculate d as simply N_d/N, then control for some
     #numerical artefacts that an inappropriate
-    with np.errstate(divide='ignore'):
+    # NOTE: ignore x/0. and 0./0. warnings
+    with np.errstate(divide='ignore', invalid='ignore'):
         d = N_d/N
     #fix infinties and NaNs and negatives if they arise
     #(they occur where N ==0 or where N_d == 0)

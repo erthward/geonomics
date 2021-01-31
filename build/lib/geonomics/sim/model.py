@@ -2218,3 +2218,72 @@ class Model:
         #call the fn
         spp._plot_stat(stat)
 
+    ##########
+    #analysis#
+    ##########
+
+    #wrapper around Species._run_cca and other GEA methods
+    def run_gea(self, method='CCA', spp=0, trt=0,
+                plot=True, plot_sd=True, scale=3, sd=3):
+        """
+        Runs one of a number of available GEA models, returning the results and
+        optionally plotting them.
+
+        Parameters
+        ----------
+        method : str, optional, default: "CCA"
+            A string indicating which type of GEA model to run.
+            NOTE: Currently, only CCA (default) is available.
+
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which the GEA should be run.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        trt : {int, str}, optional, default: 0
+            A reference to the Trait for which the GEA should be run.
+            Can be either the Trait's index number (i.e. its integer key in the
+            GenomicArchitecture's traits dict), or its name (as a character
+            string).
+
+        plot : bool, optional, default: True
+            Whether or not the GEA model should be plotted.
+
+        plot_sd: bool, optional, default: True
+            Whether or not a standard-deviation ellipse should be added to the
+            GEA's plot. (Only used if plot==True and method=="CCA".)
+
+        scale : {int, float}, optional, default: 3
+            The scaling factor to use when plotting the GEA results. (Only used
+            if plot==True.)
+
+        sd : {int, float}, optional, default: 3
+            The number of standard deviations to use when plotting the
+            standard-deviation ellipse. (Only used if plot==True and
+            method=="CCA".)
+
+        Returns
+        -------
+        dict
+            Returns a dict containing the labeled (as keys) output data
+            structures (as values) of the chosen method of GEA.
+
+        """
+        # list of valid methods
+        methods = ["CCA"]
+
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
+
+        # get the trait number
+        trt_num = self._get_trt_num(spp, trt)
+
+        #feed args into the appropriate GEA function
+        if method.lower() == 'cca':
+            results = spp._run_cca(trt_num=trt_num, scale=scale,
+                                   plot=plot, plot_sd=plot_sd, sd=sd)
+        else:
+            raise ValueError("Invalid GEA method. Valid methods include: %s" % (
+                             ", ".join(methods)))
+        return results

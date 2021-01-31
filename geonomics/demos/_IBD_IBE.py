@@ -116,7 +116,6 @@ def plot_genetic_PCA(mod):
     ax1.legend(patches, ['left of barrier', 'right of barrier'])
 
 
-
 # calculate euclidean distance from two n-length vectors
 def calc_euc(x, y):
     euc = np.sqrt(sum([(n-m)**2 for n, m in zip(x, y)]))

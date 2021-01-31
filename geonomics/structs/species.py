@@ -604,11 +604,11 @@ class Species(OD):
 
         #create the offspring_ids
         next_offspring_key = self.max_ind_idx + 1
-        offspring_keys = set(range(next_offspring_key,
-                                        next_offspring_key + total_births))
+        offspring_keys = list(range(next_offspring_key,
+                                    next_offspring_key + total_births))[::-1]
         #update self.max_ind_idx
         if len(offspring_keys) > 0:
-            self.max_ind_idx = max(offspring_keys)
+            self.max_ind_idx = offspring_keys[0]
 
         #copy the keys, for use in mutation.do_mutation()
         keys_list = [*offspring_keys]
@@ -696,8 +696,8 @@ class Species(OD):
                     self[offspring_key]._individuals_tab_id = offspring_ind_id
 
                     # add rows to the nodes table, setting
-                    # the 'flags' column vals to 0
-                    # (to indicate they're not considered sample nodes),
+                    # the 'flags' column vals to 1
+                    # (to indicate they're real individs, not msprime-derived)
                     # and setting the 'individual' column vals to ids
                     # returned from tc.individuals.add_row(), then adding
                     # the returned tskit Node ids to Individual_nodes_tab_ids
@@ -1247,6 +1247,13 @@ class Species(OD):
 
     def _get_genotypes(self, loci=None, individs=None, biallelic=True,
                        as_dict=False):
+        # sort and simplify the table collection
+        # (thus dropping any unnecessary individuals' data in there and also
+        # making the tables' structure simler and more predictable)
+        self._sort_simplify_table_collection()
+        # then get the TreeSequence
+        ts = self._tc.tree_sequence()
+
         # make sure as_dict and biallelic are True or False
         assert as_dict in [True, False], ("The 'as_dict' argument "
                                           "must be either "
@@ -1267,27 +1274,32 @@ class Species(OD):
         else:
             assert np.iterable(individs), ("The 'individs' argument needs "
                                        "an iterable of individual IDs.")
-
-        # sort the TableCollection and get the TreeSequence
-        self._tc.sort()
-        ts = self._tc.tree_sequence()
+        # sort the individuals
+        # NOTE: makes output data strucutes nicer (since individuals' ids are
+        # always in numerical order), and also makes it simpler to ensure that
+        # there are no mismatching ids and genotypes in downstream data
+        # structures
+        individs = np.sort(individs)
 
         # get the list of the individuals' nodes
-        samples = np.int64(np.hstack([[*self[ind]._nodes_tab_ids.values(
+        samples_to_keep = np.int64(np.hstack([[*self[ind]._nodes_tab_ids.values(
                                                     )] for ind in individs]))
-        assert len(samples) == self.gen_arch.x * len(individs), ('Number of '
-                                                                 'nodes does '
-                                                                 'not match '
-                                                                 'number of '
-                                                                 'individs!')
+        assert len(samples_to_keep) == self.gen_arch.x * len(individs), ('Num'
+                        'ber of nodes does not match number of individs!')
 
         # get haplotypes for all samples
-        haps = [np.int8([*hap]) for n, hap in zip(
-                                            np.where(self._tc.nodes.flags)[0],
-                                            ts.haplotypes()) if n in samples]
+        # TODO: np.where(self._tc.nodes.flags)[1] gets only the nodes with
+        #       flags of 1, i.e. only 'real' individuals who were not part of
+        #       the msprime-sourced pre-simulation fake genealogy
+        # TODO: haplotypes returned in order of samples???
+        #haps = [np.int8([*hap]) for n, hap in zip(
+        #                                    np.where(self._tc.nodes.flags)[0],
+        #                                    ts.haplotypes()) if n in samples]
+        haps_dict = {s:h for s, h in zip(ts.samples(), ts.haplotypes())}
+        haps = [np.int8([*haps_dict[s]]) for s in samples_to_keep]
 
         # get the genotypes by combining each consecutive group
-        # of x haplotypes, where x is the ploidy
+        # of x haplotypes, where x is the ploidy, then vstacking them
         grouped_haps = zip(*[haps[i::self.gen_arch.x] for i in range(
                                                         self.gen_arch.x)])
         gts = [np.vstack(h).T for h in grouped_haps]
@@ -1302,7 +1314,7 @@ class Species(OD):
 
         # stack into the speciome, if dict not requested
         # (dims are N x L x X, where N=num individs, L=num loci,
-        #  and X=ploidy if biallelic=True, else X=1 if False)
+        #  and X=ploidy if biallelic=True, else X=1)
         if not as_dict:
             gts = np.stack(gts)
 
@@ -1487,7 +1499,8 @@ class Species(OD):
         out : pandas.DataFrame
             A DataFrame in which columns are loci and rows are individuals
         """
-        #get genotypes
+        #get array of [0|0.5|1] genotypes
+        """
         gen = self._get_genotypes()
 
         #loop to convert binary allele genotypes (0|1) into single digit genotypes (0, 0.5, 1)
@@ -1498,9 +1511,11 @@ class Species(OD):
                 genotype = gen[ind][loci].mean() # coded as 0/0.5/1
                 geno_loc.append(genotype)
             geno_ind.append(geno_loc)
+        """
+        gts = self._get_genotypes(biallelic=False)
 
         #convert to dataframe
-        gea_df = pd.DataFrame(geno_ind)
+        gea_df = pd.DataFrame(gts)
 
         #get environmental data
         env = self._get_e()

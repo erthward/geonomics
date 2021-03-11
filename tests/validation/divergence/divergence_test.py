@@ -295,7 +295,7 @@ for n, phi in enumerate(phis):
 
 z_e_ax.set_xlabel('time', fontdict=ax_fontdict)
 z_e_ax.set_ylabel('mean phenotype-environment difference', fontdict=ax_fontdict)
-z_e_ax.legend(labels=['phi = %0.3f' % phi for phi in phis[::-1]],
+z_e_ax.legend(labels=['$\phi$ = %0.3f' % phi for phi in phis[::-1]],
               loc='best', fontsize=15)
 z_e_ax.tick_params(labelsize=ticklabelsize)
 plt.subplots_adjust(left=0.05, bottom=0.085, right=0.985, top=0.985,

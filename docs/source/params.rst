@@ -2051,7 +2051,7 @@ representing annual mean temperature should be provided here.)
 
 .. code-block:: python
 
-                              #polygenic selection coefficient
+                              #phenotypic selection coefficient
                               'phi':                  0.05,
 
 {:py:`float`, :py:`np.ndarray` of :py:`float`\s}
@@ -2060,7 +2060,7 @@ default: 0.05
 
 reset? P
 
-This defines the polygenic selection coefficient on this :py:`Trait` (i.e
+This defines the phenotypic selection coefficient on this :py:`Trait` (i.e
 the selection coefficient acting on the phenotypes, rather than the genotypes,
 of this :py:`Trait`). The effect of this value can be thought of as the
 reduction (from 1) in an :py:`Individual`'s survival probability when that

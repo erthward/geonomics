@@ -1,39 +1,41 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>geonomics.sim package &mdash; geonomics 0.0 documentation</title>
   
 
   
-  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="geonomics.structs package" href="geonomics.structs.html" />
@@ -78,6 +80,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -124,6 +127,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -158,11 +162,13 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="modules.html">API</a> &raquo;</li>
         
@@ -173,7 +179,7 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
             <a href="_sources/geonomics.sim.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -195,28 +201,28 @@
 <div class="section" id="module-geonomics.sim.burnin">
 <span id="geonomics-sim-burnin-module"></span><h2>geonomics.sim.burnin module<a class="headerlink" href="#module-geonomics.sim.burnin" title="Permalink to this headline">¶</a></h2>
 <p>Functions for testing burn-in stationarity.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="geonomics.sim.burnin.SpatialTester">
-<em class="property">class </em><code class="sig-prename descclassname">geonomics.sim.burnin.</code><code class="sig-name descname">SpatialTester</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geonomics.sim.burnin.</span></code><code class="sig-name descname"><span class="pre">SpatialTester</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.burnin.SpatialTester.plot_diffs">
-<code class="sig-name descname">plot_diffs</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">bins=50</em>, <em class="sig-param">alpha=0.5</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.plot_diffs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_diffs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.plot_diffs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.burnin.SpatialTester.run_test">
-<code class="sig-name descname">run_test</code><span class="sig-paren">(</span><em class="sig-param">num_timesteps_back</em>, <em class="sig-param">alpha=0.05</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.run_test" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">run_test</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_timesteps_back</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.run_test" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.burnin.SpatialTester.update">
-<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.update" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">update</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.update" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.burnin.SpatialTester.update_counts_cell">
-<code class="sig-name descname">update_counts_cell</code><span class="sig-paren">(</span><em class="sig-param">i</em>, <em class="sig-param">j</em>, <em class="sig-param">v</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.update_counts_cell" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">update_counts_cell</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.burnin.SpatialTester.update_counts_cell" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -229,9 +235,9 @@
 <div class="section" id="module-geonomics.sim.model">
 <span id="geonomics-sim-model-module"></span><h2>geonomics.sim.model module<a class="headerlink" href="#module-geonomics.sim.model" title="Permalink to this headline">¶</a></h2>
 <p>Defines the core Model class, as well as its public and private methods</p>
-<dl class="class">
+<dl class="py class">
 <dt id="geonomics.sim.model.Model">
-<em class="property">class </em><code class="sig-prename descclassname">geonomics.sim.model.</code><code class="sig-name descname">Model</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">params</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geonomics.sim.model.</span></code><code class="sig-name descname"><span class="pre">Model</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Hierarchical data structure containing a Landscape and a Community as
 attributes, and serving as an interface for all of the core simulation
@@ -249,14 +255,14 @@ during simulations. Defaults to False.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.calc_stats">
-<code class="sig-name descname">calc_stats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.calc_stats" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">calc_stats</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.calc_stats" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot">
-<code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param">spp=None</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">hide_land=False</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">color='black'</em>, <em class="sig-param">edge_color='face'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">land_cmap=None</em>, <em class="sig-param">pt_cmap=None</em>, <em class="sig-param">alpha=False</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">vmin=None</em>, <em class="sig-param">vmax=None</em>, <em class="sig-param">ticks=False</em>, <em class="sig-param">mask_rast=None</em>, <em class="sig-param">animate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hide_land</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'face'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">land_cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pt_cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_rast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">animate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a basic plot of the Model in its current state.</p>
 <p>Plot the current state of the model, with any number of overlain
 Landscape Layers, and with or without points representing the
@@ -313,9 +319,14 @@ If True, alpha value will be set to 0.6. If False or None, points
 will be opaque.</p></li>
 <li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
 plot. If None, plot shows full Landscape.</p></li>
-<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+<li><p><strong>x</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
 Only used if <em>zoom_width</em> is not None.</p></li>
-<li><p><strong>vmax</strong> (<em>vmin</em><em>,</em>) – Used to normalize the luminance data that determine how colors
+<li><p><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>vmin</strong> (<em>{scalar}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Used to normalize the luminance data that determine how colors
+are colormapped onto Individuals’ point colors. Passed to the
+<em>vmin</em> and <em>vmax</em> arguments of matplotlib.pyplot.scatter.</p></li>
+<li><p><strong>vmax</strong> (<em>{scalar}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Used to normalize the luminance data that determine how colors
 are colormapped onto Individuals’ point colors. Passed to the
 <em>vmin</em> and <em>vmax</em> arguments of matplotlib.pyplot.scatter.</p></li>
 <li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
@@ -348,9 +359,9 @@ and matplotlib.pyplot.text.</p></li>
 </ul>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_allele_frequencies">
-<code class="sig-name descname">plot_allele_frequencies</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_allele_frequencies" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_allele_frequencies</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_allele_frequencies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a Species’ current allele frequencies for all alleles</p>
 <p>For the Species indicated, create a plot showing, across all loci,
 the current allele frequencies (in solid blue) versus the starting
@@ -371,15 +382,15 @@ string).</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_demographic_changes">
-<code class="sig-name descname">plot_demographic_changes</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_demographic_changes" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_demographic_changes</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_demographic_changes" title="Permalink to this definition">¶</a></dt>
 <dd><p>TEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_demographic_pyramid">
-<code class="sig-name descname">plot_demographic_pyramid</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_demographic_pyramid" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_demographic_pyramid</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_demographic_pyramid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a demographic pyramid for the chosen Species</p>
 <p>Plot a paired, horizontal bar plot of the chosen Species’
 count of Individuals of each age.</p>
@@ -399,9 +410,9 @@ string).</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_density">
-<code class="sig-name descname">plot_density</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">normalize=False</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">color='black'</em>, <em class="sig-param">edge_color='face'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">alpha=0.5</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_density" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_density</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'face'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_rast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_density" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the population-density raster for a given Species.</p>
 <p>Plot the population density of a Species, as estimated by the Species’
 _DensityGridStack.</p>
@@ -439,7 +450,9 @@ If True, alpha value will be set to 0.6. If False or None, points
 will be opaque.</p></li>
 <li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
 plot. If None, plot shows full Landscape.</p></li>
-<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+<li><p><strong>x</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
 Only used if <em>zoom_width</em> is not None.</p></li>
 <li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
 <li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
@@ -465,9 +478,9 @@ and matplotlib.pyplot.text.</p></li>
 </ul>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_dispersal_surface">
-<code class="sig-name descname">plot_dispersal_surface</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">style</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">scale_fact=4.5</em>, <em class="sig-param">color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">cmap='plasma'</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_dispersal_surface" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_dispersal_surface</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_fact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'plasma'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_rast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_dispersal_surface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create any of 4 types of plots to summarize a Species’ DispersalSurface</p>
 <p>Plot a Species’ DispersalSurface with either circularized histograms,
 a circle of directional draws, or a vector on each cell, to visualize
@@ -517,7 +530,9 @@ surfaces.Can be passed any string that references a colormap in
 matplotlib.pyplot.cm.</p></li>
 <li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
 plot. If None, plot shows full Landscape.</p></li>
-<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+<li><p><strong>x</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
 Only used if <em>zoom_width</em> is not None.</p></li>
 <li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
 All np.nan values in the array will be plotted as light gray,
@@ -543,9 +558,9 @@ and matplotlib.pyplot.text.</p></li>
 </ul>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_example_recombinant_genome">
-<code class="sig-name descname">plot_example_recombinant_genome</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_example_recombinant_genome" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_example_recombinant_genome</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_example_recombinant_genome" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot an example recombinant genome for the chosen Species</p>
 <p>Plot a vertical image depicting an example recombinant genome for the
 chosen Species. Each gamete (i.e. vertical half) is colored using a
@@ -576,9 +591,9 @@ should be plotted. Can be either the Species’ index number
 </ul>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_fitness">
-<code class="sig-name descname">plot_fitness</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">trt=None</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">phenotype_text=False</em>, <em class="sig-param">fitness_text=False</em>, <em class="sig-param">edge_color='black'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">phenotype_text_color='black'</em>, <em class="sig-param">fitness_text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">fitness_cbar=True</em>, <em class="sig-param">size=100</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">fit_cmap='gray'</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_fitness" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_fitness</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phenotype_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fitness_text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phenotype_text_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fitness_text_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fitness_cbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_rast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_fitness" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a Species’ Individuals, colored by fitness</p>
 <p>Create a scatter plot of the Individuals in a Species,
 on top of any Landscape Layer, and color the points by
@@ -621,7 +636,8 @@ matplotlib.pyplot.scatter.</p></li>
 <li><p><strong>text_color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>default 'black'</em>) – Color for the plotted text. (Will only be used if the <em>text</em>
 argument is True.) Passed to the <em>color</em> argument of
 matplotlib.pyplot.text.</p></li>
-<li><p><strong>fitness_text_color</strong> (<em>phenotype_text_color</em><em>,</em>) – </p></li>
+<li><p><strong>phenotype_text_color</strong> (<em>valid mpl.plt color value</em><em>,</em>) – </p></li>
+<li><p><strong>fitness_text_color</strong> (<em>valid mpl.plt color value</em><em>,</em>) – </p></li>
 <li><p><strong>'black'</strong> (<em>default</em>) – Color for the plotted phenotype-value or fitness-value text.
 (Will only be used if the <em>phenotype_text</em> or <em>fitness_text</em>
 arguments are True.) Passed to the <em>color</em> argument
@@ -644,7 +660,9 @@ If True, alpha value will be set to 0.6. If False or None, points
 will be opaque.</p></li>
 <li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
 plot. If None, plot shows full Landscape.</p></li>
-<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+<li><p><strong>x</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
 Only used if <em>zoom_width</em> is not None.</p></li>
 <li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
 <li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
@@ -670,9 +688,9 @@ and matplotlib.pyplot.text.</p></li>
 </ul>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_genotype">
-<code class="sig-name descname">plot_genotype</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">locus</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">by_dominance=False</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">edge_color='black'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_genotype" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_genotype</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">locus</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">by_dominance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_rast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_genotype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a Species’ Individuals, colored by their genotypes for a locus</p>
 <p>Create a scatter plot of the Individuals in a Species,
 on top of any Landscape Layer, and color the points by
@@ -729,7 +747,9 @@ If True, alpha value will be set to 0.6. If False or None, points
 will be opaque.</p></li>
 <li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
 plot. If None, plot shows full Landscape.</p></li>
-<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+<li><p><strong>x</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
 Only used if <em>zoom_width</em> is not None.</p></li>
 <li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
 <li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
@@ -755,9 +775,9 @@ and matplotlib.pyplot.text.</p></li>
 </ul>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_hist_fitness">
-<code class="sig-name descname">plot_hist_fitness</code><span class="sig-paren">(</span><em class="sig-param">spp</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_hist_fitness" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_hist_fitness</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_hist_fitness" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a Species</p>
 <p>For the Species indicated, create a histogram of Individuals’ current
 fitness values.</p>
@@ -777,9 +797,9 @@ string).</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_movement_surface">
-<code class="sig-name descname">plot_movement_surface</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">style</em>, <em class="sig-param">color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">cmap='plasma'</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">scale_fact=4.5</em>, <em class="sig-param">mask_rast=None</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_movement_surface" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_movement_surface</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'plasma'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_fact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_rast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_movement_surface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create any of 4 types of plots to summarize a Species’ MovementSurface</p>
 <p>Plot a Species’ MovemementSurface with either circularized histograms,
 a circle of directional draws, or a vector on each cell, to visualize
@@ -829,7 +849,9 @@ surfaces.Can be passed any string that references a colormap in
 matplotlib.pyplot.cm.</p></li>
 <li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
 plot. If None, plot shows full Landscape.</p></li>
-<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+<li><p><strong>x</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
 Only used if <em>zoom_width</em> is not None.</p></li>
 <li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
 All np.nan values in the array will be plotted as light gray,
@@ -855,9 +877,9 @@ and matplotlib.pyplot.text.</p></li>
 </ul>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_phenotype">
-<code class="sig-name descname">plot_phenotype</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">trt</em>, <em class="sig-param">lyr=None</em>, <em class="sig-param">individs=None</em>, <em class="sig-param">text=False</em>, <em class="sig-param">edge_color='black'</em>, <em class="sig-param">text_color='black'</em>, <em class="sig-param">cbar=True</em>, <em class="sig-param">size=25</em>, <em class="sig-param">text_size=9</em>, <em class="sig-param">alpha=1</em>, <em class="sig-param">zoom_width=None</em>, <em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">ticks=None</em>, <em class="sig-param">mask_rast=None</em>, <em class="sig-param">animate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_phenotype" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_phenotype</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_rast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">animate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_phenotype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a Species’ Individuals, colored by their phenotypes for a Trait</p>
 <p>Create a scatter plot of the Individuals in a Species,
 on top of any Landscape Layer, and color the points by
@@ -902,7 +924,9 @@ If True, alpha value will be set to 0.6. If False or None, points
 will be opaque.</p></li>
 <li><p><strong>zoom_width</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – Width, in raster cells, of the window to which to zoom to resulting
 plot. If None, plot shows full Landscape.</p></li>
-<li><p><strong>x</strong><strong>,</strong><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+<li><p><strong>x</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
+Only used if <em>zoom_width</em> is not None.</p></li>
+<li><p><strong>y</strong> (<em>{scalar</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – The x and y coordinates of the center of the resulting plot.
 Only used if <em>zoom_width</em> is not None.</p></li>
 <li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
 <li><p><strong>mask_rast</strong> (<em>array_like</em><em>, </em><em>optional default: None</em>) – An array to use to mask values in the Layer(s) being plotted.
@@ -934,9 +958,9 @@ and matplotlib.pyplot.text.</p></li>
 </ul>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_pop_growth">
-<code class="sig-name descname">plot_pop_growth</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">expected=True</em>, <em class="sig-param">actual=True</em>, <em class="sig-param">expected_color='red'</em>, <em class="sig-param">actual_color='blue'</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_pop_growth" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_pop_growth</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_pop_growth" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the chosen Species’ population over time</p>
 <p>Plot a line plot of the Species’ population over model time (in blue),
 as well as the expected population-size trend (based on summing the
@@ -963,15 +987,15 @@ trajectory of population growth, in blue.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.plot_stat">
-<code class="sig-name descname">plot_stat</code><span class="sig-paren">(</span><em class="sig-param">spp</em>, <em class="sig-param">stat</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_stat" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">plot_stat</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_stat" title="Permalink to this definition">¶</a></dt>
 <dd><p>TEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.run">
-<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.run" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">run</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a Model.</p>
 <p>Run the Model for the number of iterations that was stipulated in the
 parameters file used to create it (which is saved as the <cite>n_its</cite>
@@ -1028,9 +1052,47 @@ before <cite>gnx.make_parameters_file</cite> is called).</p>
 </div>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.run_gea">
+<code class="sig-name descname"><span class="pre">run_gea</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CCA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_sd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.run_gea" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs one of a number of available GEA models, returning the results and
+optionally plotting them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em><em>, </em><em>default: &quot;CCA&quot;</em>) – A string indicating which type of GEA model to run.
+NOTE: Currently, only CCA (default) is available.</p></li>
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which the GEA should be run.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Trait for which the GEA should be run.
+Can be either the Trait’s index number (i.e. its integer key in the
+GenomicArchitecture’s traits dict), or its name (as a character
+string).</p></li>
+<li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – Whether or not the GEA model should be plotted.</p></li>
+<li><p><strong>plot_sd</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – Whether or not a standard-deviation ellipse should be added to the
+GEA’s plot. (Only used if plot==True and method==”CCA”.)</p></li>
+<li><p><strong>scale</strong> (<em>{int</em><em>, </em><em>float}</em><em>, </em><em>optional</em><em>, </em><em>default: 3</em>) – The scaling factor to use when plotting the GEA results. (Only used
+if plot==True.)</p></li>
+<li><p><strong>sd</strong> (<em>{int</em><em>, </em><em>float}</em><em>, </em><em>optional</em><em>, </em><em>default: 3</em>) – The number of standard deviations to use when plotting the
+standard-deviation ellipse. (Only used if plot==True and
+method==”CCA”.)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns a dict containing the labeled (as keys) output data
+structures (as values) of the chosen method of GEA.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="geonomics.sim.model.Model.walk">
-<code class="sig-name descname">walk</code><span class="sig-paren">(</span><em class="sig-param">T=1</em>, <em class="sig-param">mode='main'</em>, <em class="sig-param">verbose=True</em>, <em class="sig-param">animate=False</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.walk" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">walk</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'main'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">animate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.walk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Walk through a Model (i.e. run it for a certain number of timesteps).</p>
 <p>This function will run a Model for a specific number of timesteps,
 either in ‘burn’ or ‘main’ mode. It is designed to help users to try
@@ -1150,9 +1212,9 @@ before <cite>gnx.make_parameters_file</cite> is called).</p>
 <div class="section" id="module-geonomics.sim.params">
 <span id="geonomics-sim-params-module"></span><h2>geonomics.sim.params module<a class="headerlink" href="#module-geonomics.sim.params" title="Permalink to this headline">¶</a></h2>
 <p>Classes and functions for creating and reading parameters files</p>
-<dl class="class">
+<dl class="py class">
 <dt id="geonomics.sim.params.ParametersDict">
-<em class="property">class </em><code class="sig-prename descclassname">geonomics.sim.params.</code><code class="sig-name descname">ParametersDict</code><span class="sig-paren">(</span><em class="sig-param">params</em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.params.ParametersDict" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">geonomics.sim.params.</span></code><code class="sig-name descname"><span class="pre">ParametersDict</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.params.ParametersDict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">geonomics.sim.params._DynAttrDict</span></code></p>
 </dd></dl>
 
@@ -1171,29 +1233,29 @@ before <cite>gnx.make_parameters_file</cite> is called).</p>
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="geonomics.structs.html" class="btn btn-neutral float-right" title="geonomics.structs package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="geonomics.ops.html" class="btn btn-neutral float-left" title="geonomics.ops package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+        <a href="geonomics.structs.html" class="btn btn-neutral float-right" title="geonomics.structs package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="geonomics.ops.html" class="btn btn-neutral float-left" title="geonomics.ops package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2020, Drew Hart
+        &#169; Copyright 2020, Drew Hart.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
@@ -1201,7 +1263,6 @@ before <cite>gnx.make_parameters_file</cite> is called).</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

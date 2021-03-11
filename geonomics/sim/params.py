@@ -465,7 +465,7 @@ TRT_PARAMS = '''
                         %s: {
                             #trait-selection Layer name
                             'layer':                'lyr_0',
-                            #polygenic selection coefficient
+                            #phenotypic selection coefficient
                             'phi':                  0.05,
                             #number of loci underlying trait
                             'n_loci':               1,

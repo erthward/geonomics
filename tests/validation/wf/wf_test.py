@@ -182,15 +182,19 @@ newdf = pd.DataFrame({'pop_size': pop_size,
                       'K_fact':K_fact,
                       't_persist': t_persist})
 # make the violin plot
-ax = sns.violinplot(x="pop_size", y="t_persist", data=newdf,
-                    palette='plasma', ax=ax)
-                    #palette=['#f1ebfa', '#c8b3e6', '#8c6cba'])
+sns.violinplot(x="pop_size", y="t_persist", data=newdf,
+               ax=ax, inner=None, #  palette='plasma')
+               palette=['#faffd4', '#f3ff96', '#daed4a'])
 
 # add the expected mean persistence times as red lines
 # NOTE: x values are serial integers, not the printed mean pop sizes
+actual_means = [df[i].mean() for i in [10, 20, 30]]
 for n, mean_pop_size in enumerate(mean_pop_size_list):
-    plt.plot([n-0.07, n+0.07], [2.776*mean_pop_size]*2,
-             color='red', linewidth=3, alpha=0.75)
+    plt.plot([n-0.1, n+0.1], [2.776*mean_pop_size]*2,
+             color='black', linewidth=1.5, alpha=1)
+    plt.scatter([n], [actual_means[n]],
+             color='#ff004c', s=60, alpha=1)
+
 # tweak plot formatting
 ax.tick_params(labelsize=ticklabelsize)
 ax.set_xlabel('mean population size', size=20)

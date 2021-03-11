@@ -26,7 +26,7 @@ ticklabelsize=15
 #make sympy symbolics for Fst eqxns
 Fst_var_var, Fst_var_mean_p = symbols('Fst_var_var Fst_var_mean_p')
 
-calc_Fst_each_tstep = True
+calc_Fst_each_tstep = False
 
 
 def make_island_landscape(n, w, d):

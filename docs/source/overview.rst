@@ -602,6 +602,20 @@ the absolute difference between an :py:`Individual`'s
 optimal and actual phenotypes increases; the default value of 1 causes 
 fitness to decrease linearly around the optimal phenotypic value). 
 
+Importantly, most individuals will experience selection on a given trait that
+is only a fraction of the strength dictated by a trait’s selection coefficient
+($\phi_{p;x,y}$). This is because an individual’s fitness for a given trait
+is determined by the product of the trait’s selection coefficient
+and the individual’s degree of mismatch to its local environment,
+($\mid e_{p;x,y} - z_{i;p} \mid$ in the previous equation),
+such that only individuals who are extremely mismatched
+(e.g. an individual of phenotype 1 or greater who is located
+in a 0-valued environmental cell) will experience selection equal to
+or exceeding $\phi_{p;x,y}$.
+Because of this, selection coefficients that would be considered ‘strong’
+in classical, aspatial population genetics models will tend to behave
+less strongly in Geonomics models.
+
 
 -------------------------------------------------------------------------------
 

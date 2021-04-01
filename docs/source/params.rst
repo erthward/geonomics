@@ -2072,6 +2072,19 @@ strength of selection will be the same for all locations on the
 equal dimensions to the :py:`Landscape` then the strength of
 selection will vary across space, as indicated by the values in this array
 (what Geonomics refers to as a "spatially contingent" selection regime).
+Importantly, most individuals will experience selection on a given trait that
+is only a fraction of the strength dictated by this parameter,
+because an individual’s fitness for a given trait
+is determined by the product of the trait’s selection coefficient
+and the individual’s degree of mismatch to its local environment,
+and it is often unlikely that individuals would occur in environments
+that are completely opposed to those individuals' phenotypic values
+(e.g. a 0-valued individual in a 1-valued environmental cell).
+Because of this, selection coefficients that would be considered ‘strong’
+in classical, aspatial population genetics models will tend to behave
+less strongly in Geonomics models.
+(For mathematical detail, see the :ref:`Selection` section.)
+
 
 
 

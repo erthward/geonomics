@@ -604,11 +604,11 @@ class Species(OD):
 
         #create the offspring_ids
         next_offspring_key = self.max_ind_idx + 1
-        offspring_keys = set(range(next_offspring_key,
-                                        next_offspring_key + total_births))
+        offspring_keys = list(range(next_offspring_key,
+                                    next_offspring_key + total_births))[::-1]
         #update self.max_ind_idx
         if len(offspring_keys) > 0:
-            self.max_ind_idx = max(offspring_keys)
+            self.max_ind_idx = offspring_keys[0]
 
         #copy the keys, for use in mutation.do_mutation()
         keys_list = [*offspring_keys]
@@ -696,8 +696,8 @@ class Species(OD):
                     self[offspring_key]._individuals_tab_id = offspring_ind_id
 
                     # add rows to the nodes table, setting
-                    # the 'flags' column vals to 0
-                    # (to indicate they're not considered sample nodes),
+                    # the 'flags' column vals to 1
+                    # (to indicate they're real individs, not msprime-derived)
                     # and setting the 'individual' column vals to ids
                     # returned from tc.individuals.add_row(), then adding
                     # the returned tskit Node ids to Individual_nodes_tab_ids
@@ -1247,6 +1247,13 @@ class Species(OD):
 
     def _get_genotypes(self, loci=None, individs=None, biallelic=True,
                        as_dict=False):
+        # sort and simplify the table collection
+        # (thus dropping any unnecessary individuals' data in there and also
+        # making the tables' structure simler and more predictable)
+        self._sort_simplify_table_collection()
+        # then get the TreeSequence
+        ts = self._tc.tree_sequence()
+
         # make sure as_dict and biallelic are True or False
         assert as_dict in [True, False], ("The 'as_dict' argument "
                                           "must be either "
@@ -1267,27 +1274,32 @@ class Species(OD):
         else:
             assert np.iterable(individs), ("The 'individs' argument needs "
                                        "an iterable of individual IDs.")
-
-        # sort the TableCollection and get the TreeSequence
-        self._tc.sort()
-        ts = self._tc.tree_sequence()
+        # sort the individuals
+        # NOTE: makes output data strucutes nicer (since individuals' ids are
+        # always in numerical order), and also makes it simpler to ensure that
+        # there are no mismatching ids and genotypes in downstream data
+        # structures
+        individs = np.sort(individs)
 
         # get the list of the individuals' nodes
-        samples = np.int64(np.hstack([[*self[ind]._nodes_tab_ids.values(
+        samples_to_keep = np.int64(np.hstack([[*self[ind]._nodes_tab_ids.values(
                                                     )] for ind in individs]))
-        assert len(samples) == self.gen_arch.x * len(individs), ('Number of '
-                                                                 'nodes does '
-                                                                 'not match '
-                                                                 'number of '
-                                                                 'individs!')
+        assert len(samples_to_keep) == self.gen_arch.x * len(individs), ('Num'
+                        'ber of nodes does not match number of individs!')
 
         # get haplotypes for all samples
-        haps = [np.int8([*hap]) for n, hap in zip(
-                                            np.where(self._tc.nodes.flags)[0],
-                                            ts.haplotypes()) if n in samples]
+        # TODO: np.where(self._tc.nodes.flags)[1] gets only the nodes with
+        #       flags of 1, i.e. only 'real' individuals who were not part of
+        #       the msprime-sourced pre-simulation fake genealogy
+        # TODO: haplotypes returned in order of samples???
+        #haps = [np.int8([*hap]) for n, hap in zip(
+        #                                    np.where(self._tc.nodes.flags)[0],
+        #                                    ts.haplotypes()) if n in samples]
+        haps_dict = {s:h for s, h in zip(ts.samples(), ts.haplotypes())}
+        haps = [np.int8([*haps_dict[s]]) for s in samples_to_keep]
 
         # get the genotypes by combining each consecutive group
-        # of x haplotypes, where x is the ploidy
+        # of x haplotypes, where x is the ploidy, then vstacking them
         grouped_haps = zip(*[haps[i::self.gen_arch.x] for i in range(
                                                         self.gen_arch.x)])
         gts = [np.vstack(h).T for h in grouped_haps]
@@ -1302,7 +1314,7 @@ class Species(OD):
 
         # stack into the speciome, if dict not requested
         # (dims are N x L x X, where N=num individs, L=num loci,
-        #  and X=ploidy if biallelic=True, else X=1 if False)
+        #  and X=ploidy if biallelic=True, else X=1)
         if not as_dict:
             gts = np.stack(gts)
 
@@ -1487,7 +1499,8 @@ class Species(OD):
         out : pandas.DataFrame
             A DataFrame in which columns are loci and rows are individuals
         """
-        #get genotypes
+        #get array of [0|0.5|1] genotypes
+        """
         gen = self._get_genotypes()
 
         #loop to convert binary allele genotypes (0|1) into single digit genotypes (0, 0.5, 1)
@@ -1498,9 +1511,11 @@ class Species(OD):
                 genotype = gen[ind][loci].mean() # coded as 0/0.5/1
                 geno_loc.append(genotype)
             geno_ind.append(geno_loc)
+        """
+        gts = self._get_genotypes(biallelic=False)
 
         #convert to dataframe
-        gea_df = pd.DataFrame(geno_ind)
+        gea_df = pd.DataFrame(gts)
 
         #get environmental data
         env = self._get_e()
@@ -1514,7 +1529,7 @@ class Species(OD):
         return gea_df
 
 
-    def _run_cca(self, trt_num=0, scale=3, plot=True, plot_sd=True,
+    def _run_cca(self, trt_num=0, scale=True, plot=True, plot_sd=True,
                  sd=3):
         """
         Runs a canonical correlation analysis (CCA) on the current genetic and
@@ -1530,9 +1545,9 @@ class Species(OD):
         ----------
         trt_num : int
             The number of the Trait to run the GEA on. Defaults to 0.
-        scale : {int, float}
-            The scaling factor to use for SNP and variable loadings
-            to make them easier to visualize. Defaults to 3.
+        scale : bool
+            If True, scales the variable, individual, and locus loadings from -1 to 1 to make them easier
+            to visualize. Defaults to True.
         plot : bool
             Whether or not to plot the model. Defaults to True.
         plot_sd : bool
@@ -1604,13 +1619,22 @@ class Species(OD):
         # NOTE: right now this plotting loop only works for a maximum of 3 axes;
         #       in the future as more env vars are added, could add more axes
         if plot:
-            #scale dataframes for plotting
-            loci_df = loci_df * scale #scale
-            var_df = var_df * 2/3 * scale #scale but only by 2/3 of org scale;
-                                          # just aesthetics
+            #Scale dataframes from -1 to 1 if scale = True
+            if scale == True:
+                rmin = -1
+                rmax = 1
+                loci_df = rmin + (loci_df - loci_df.values.min()) * (rmax - (rmin)) / (loci_df.values.max() - loci_df.values.min())
+                var_df = rmin + (var_df - var_df.values.min()) * (rmax - (rmin)) / (var_df.values.max() - var_df.values.min())
+                ind_df = rmin + (ind_df - ind_df.values.min()) * (rmax - (rmin)) / (ind_df.values.max() - ind_df.values.min())
 
+
+            #get max and mins to set axis later on
+            maxdf = max(ind_df.values.max(), var_df.values.max(), loci_df.values.max())
+            mindf = abs(min(ind_df.values.min(), var_df.values.min(), loci_df.values.min()))
+            axmax = max(maxdf, mindf) * 1.20 #adding a 20% buffer
+            
             #set up figure
-            fig = plt.figure(figsize=(9,4))
+            fig = plt.figure(figsize=(20, 15))
             for n, cc_axes_pair in enumerate([[1, 2], [1, 3], [2, 3]]):
                 #define components for axis
                 cc_axis1 = cc_axes_pair[0] #x-axis CC
@@ -1621,6 +1645,10 @@ class Species(OD):
                 #add center lines
                 ax.axhline(y=0, color='lightgray', linestyle='dotted')
                 ax.axvline(x=0, color='lightgray', linestyle='dotted')
+                
+                # set axes range
+                plt.xlim(-axmax, axmax)
+                plt.ylim(-axmax, axmax)
 
                 #plot neutral SNPs
                 ax.scatter(loci_df[str(cc_axis1)], loci_df[str(cc_axis2)],
@@ -1641,10 +1669,10 @@ class Species(OD):
                 for i in range(var_df.shape[0]):
                     x = var_df[str(cc_axis1)][i]
                     y = var_df[str(cc_axis2)][i]
-                    plt.arrow(0, 0, x, y, width = 0.02,
-                              head_width = 0.15, color = 'black')
-                    sx = 0.3
-                    sy = 0.3
+                    plt.arrow(0, 0, x, y, width = 0.01,
+                              head_width = 0.05, color = 'black')
+                    sx = 0.1
+                    sy = 0.1
                     # this mess is just to arrange the text
                     # next to arrows but it is a WIP
                     if (x < 0 and y < 0):
@@ -1665,14 +1693,15 @@ class Species(OD):
                             c = 'red', label = str(sd) + " StdDev")
 
                 #EVERYTHING BELOW THIS LINE IN THE LOOP IS JUST PLOT FORMATTING 
-                
-                label = ax.set_xlabel('CCA' + str(cc_axis1), fontsize = 9)
+                #xlabel is the label at the bottom (vertical axis label) and ylabel is on the left side (horizontal axis label)
+                label = ax.set_xlabel('CCA' + str(cc_axis2), fontsize = 9)
                 ax.xaxis.set_label_coords(0.5, -0.02)
-                label = ax.set_ylabel('CCA' + str(cc_axis2), fontsize = 9)
+                label = ax.set_ylabel('CCA' + str(cc_axis1), fontsize = 9)
                 ax.yaxis.set_label_coords(-0.02, 0.55)
 
                 #make into box
-                #ax.set_aspect('equal', adjustable='box')
+                ax.set_aspect('equal', adjustable='box')
+                
                 #Move left y-axis and bottom x-axis to center, passing through (0,0)
                 ax.spines['left'].set_position('center')
                 ax.spines['bottom'].set_position('center')

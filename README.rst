@@ -156,6 +156,13 @@ It is available to freely distribute and modify, with proper
 attribution, under the MIT License. Should you have any questons or
 concerns, please feel free to get in touch! (drew.hart <at> berkeley <dot> edu)
 
+Should you use Geonomics for research, education, or any other purpose, please
+cite as:
+
+       Terasaki Hart, D.E., Bishop, A.P., Wang, I.J. 2021. Geonomics:
+       forward-time, spatially explicit, and arbitrarily complex
+       landscape genomic simulations. Manuscript submitted for publication.                                                                                                                                                                                           
+
 -------------------------------------------------------
 
 Disclaimer

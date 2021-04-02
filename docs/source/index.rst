@@ -115,6 +115,11 @@ This package was written by Drew Ellison Hart, as part of his PhD work.
 It is available to freely distribute and modify, with proper
 attribution, under the MIT License.
 
+Should you use Geonomics for research, education, or other purposes,
+please cite it as:
+
+    Terasaki Hart, D.E., Bishop, A.P., Wang, I.J. 2021. Geonomics: forward-time, spatially explicit, and arbitrarily complex landscape genomic simulations. Manuscript submitted for publication.
+
 Should you have any questons or
 concerns, please feel free to get in touch at drew.hart<at>berkeley<dot>edu !
 

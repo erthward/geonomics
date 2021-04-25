@@ -158,5 +158,5 @@ cite as:
 [Georgism](https://en.wikipedia.org/wiki/Georgism), sometimes referred to as
 'geonomics'.
 
-Instead, it is a portmanteau of **geo**\graphy and ge\ **nomics**. 
+Instead, it is a portmanteau of **geo**graphy and ge**nomics**. 
 We thought it sounded neat, and found it delightfully confusing.

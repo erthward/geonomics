@@ -1,4 +1,4 @@
-# Geonomics <img align="right" width="200" height="130" src="./img/gnx_mini.png">
+# Geonomics <img align="right" width="200" height="100" src="./img/gnx_mini.png">
 
 ### Forward-time, individual-based, landscape genomic simulation in Python.
 

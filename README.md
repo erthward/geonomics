@@ -1,11 +1,4 @@
-# Geonomics <img align="right" width="145" height="90" src="https://github.com/drewhart/geonomics/img/gnx_mini.svg">
-
-[![License](https://img.shields.io/github/license/tskit-dev/tskit)](https://github.com/tskit-dev/tskit/blob/main/LICENSE)
-[![Contributors](https://img.shields.io/github/contributors/tskit-dev/tskit)](https://github.com/tskit-dev/tskit/graphs/contributors)
-[![Commit activity](https://img.shields.io/github/commit-activity/m/tskit-dev/tskit)](https://github.com/tskit-dev/tskit/commits/main)
-[![Coverage](https://codecov.io/gh/tskit-dev/tskit/branch/main/graph/badge.svg)](https://codecov.io/gh/tskit-dev/tskit)
-![OS](https://img.shields.io/badge/OS-linux%20%7C%20OSX%20%7C%20win--64-steelblue)
-
+# Geonomics <img align="right" width="145" height="90" src="./img/gnx_mini.svg">
 
 ### Forward-time, individual-based, landscape genomic simulation in Python.
 

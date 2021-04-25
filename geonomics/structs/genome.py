@@ -44,11 +44,11 @@ class MutationRateError(Exception):
 class Recombinations:
     """
     Container for the parameters and data necessary to simulate recombination.
-    
+
     Not intended for public use.
     """
     def __init__(self, L, positions, n, r_distr_alpha, r_distr_beta,
-                 recomb_rates):
+                 recomb_rates, jitter_breakpoints):
         # define the bitarray unit corresponding to each homologue
         self._bitarray_dict= {0: '10', 1: '01'}
 
@@ -74,6 +74,10 @@ class Recombinations:
         # recombination rates can be drawn
         self._r_distr_alpha = r_distr_alpha
         self._r_distr_beta = r_distr_beta
+        # flag indicating whether or not breakpoint locations should be
+        # jittered slightly off of their x.5 defaults, so that
+        # tskit.TreeSequence will correctly track and report the number of trees
+        self._jitter_breakpoints = jitter_breakpoints
         # get the recombination rates
         if recomb_rates is not None:
             assert len(recomb_rates) == len(positions), ("Lengths of provided "
@@ -103,7 +107,7 @@ class Recombinations:
     def _get_events(self, size):
         events = random.sample(self._events, size)
         return events
-     
+
     def _get_subsetter(self, event_key):
         return self._subsetters[event_key]
 
@@ -224,6 +228,13 @@ class Recombinations:
     def _get_seg_info(self, start_homologue, event_key,
                                     node_ids):
         left, right = self._seg_info[event_key]
+        # add small jitter to the numbers, so that recombination breakpoints
+        # are essentially not repeated, and this way tskit can correctly track
+        # the number of breakpoints and number of trees
+        if self._jitter_breakpoints:
+            left, right = [np.clip(seg_bps + np.random.uniform(0, 0.0001,
+                                                               len(seg_bps)),
+                                   0, self._L) for seg_bps in [left, right]]
         homologue_nodes = node_ids[[(i + start_homologue) % 2 for i in range(
                                                                    len(left))]]
         seg_info = zip(homologue_nodes, left, right)
@@ -552,7 +563,8 @@ class GenomicArchitecture:
                                              g_params.n_recomb_sims,
                                              g_params.r_distr_alpha,
                                              g_params.r_distr_beta,
-                                             recomb_rates)
+                                             recomb_rates,
+                                             g_params.jitter_breakpoints)
 
     # method to make a _mut_fns dict, containing a function
     # for each type of mutation for this species
@@ -859,8 +871,8 @@ def _make_genomic_architecture(spp_params, land):
                                    recomb_rates, recomb_positions)
 
     # set the loci and effect sizes for each trait, using the custom gen-arch
-    # file, if provided
-    if gen_arch_file is not None:
+    # file, if provided, and if the species has traits
+    if gen_arch_file is not None and gen_arch.traits is not None:
         # convert the trait names in the 'trait' column of the file into
         # lists of their trait numbers (i.e. their keys in the gen_arch
         # traits dict)

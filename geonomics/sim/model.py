@@ -2287,3 +2287,393 @@ class Model:
             raise ValueError("Invalid GEA method. Valid methods include: %s" % (
                              ", ".join(methods)))
         return results
+
+
+    ##############
+    #getting data#
+    ##############
+
+    def get_coords(self, spp, individs=None):
+        """
+        Returns the x,y coordinates of any or all Individuals in a Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose coordinates should be returned.
+            If None, all Individuals' coordinates will be returned.
+
+        Returns
+        -------
+        np.array
+            Returns an nx2 numpy array, where n is the number of Individuals
+            whose coordinates were requested, and the 2 columns correspond to
+            the x then y (i.e. lon then lat) coordinates.
+
+        Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        if individs is not None:
+            individs = np.sort(individs)
+        coords = spp._get_coords(individs=individs)
+        return coords
+
+
+    def get_x(self, spp, individs=None):
+        """
+        Returns the x coordinates of any or all Individuals in a Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose coordinates should be returned.
+            If None, all Individuals' coordinates will be returned.
+
+        Returns
+        -------
+        np.array
+            Returns an nx1 numpy array, where n is the number of Individuals
+            whose coordinates were requested.
+
+        Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        if individs is not None:
+            individs = np.sort(individs)
+        x = spp._get_x(individs=individs)
+        return x
+
+
+    def get_y(self, spp, individs=None):
+        """
+        Returns the y coordinates of any or all Individuals in a Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose coordinates should be returned.
+            If None, all Individuals' coordinates will be returned.
+
+        Returns
+        -------
+        np.array
+            Returns an nx1 numpy array, where n is the number of Individuals
+            whose coordinates were requested.
+
+        Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        if individs is not None:
+            individs = np.sort(individs)
+        y = spp._get_y(individs=individs)
+        return y
+
+
+    def get_cells(self, spp, individs=None):
+        """
+        Returns the cell coordinates of any or all Individuals in a Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose cell coordinates should be returned.
+            If None, all Individuals' cell coordinates will be returned.
+
+        Returns
+        -------
+        np.array
+            Returns an nx2 numpy array, where n is the number of Individuals
+            whose coordinates were requested, and the 2 columns correspond to
+            the i then j (i.e. lat then lon) array coordinates.
+
+            Note: Ccolumns are in the reverse order of the columns
+            of the array returned by `Model.get_coords()`, to facilitate
+            array-subsetting of the Landscape Layer raster arrays.
+
+            Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+
+
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        if individs is not None:
+            individs = np.sort(individs)
+        cells = spp._get_cells(individs=individs)
+        return cells
+
+
+    def get_random_individs(self, spp, n):
+        """
+        Returns a size-n sample of index numbers
+        for random individuals in a Species.
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        n : int
+            The number of random Individuals to sample
+
+        Returns
+        -------
+        np.array
+            Returns a length-n 1d numpy array containing the sorted index
+            numbers of the sampled Individuals.
+
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        individs = np.sort(spp._get_random_individuals(n))
+        return individs
+
+
+    def get_e(self, spp, lyr_num=None, individs=None):
+        """
+        Returns the current environmental values of any or all
+        Individuals in a Species, for one or all Landscape Layers
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose environmental values should be returned.
+            If None, all Individuals' environmental values  will be returned.
+
+        lyr_num : int, default:None
+            If provided, indicates the Layer for which values should be
+            returned. If None, values will be returned for all Layers.
+
+        Returns
+        -------
+        np.array
+            Returns an nxl numpy array, where n is the number of Individuals
+            whose coordinates were requested, and l is the number of Layers
+            requested, ordered by increasing Layer number.
+
+            Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        if individs is not None:
+            individs = np.sort(individs)
+        e = spp._get_e(individs=individs, lyr_num=lyr_num)
+        return e
+
+
+    def get_z(self, spp, trt=None, individs=None):
+        """
+        Returns the phenotypic values of any or all Individuals in a Species,
+        for one or all Traits
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose phenotypes should be returned.
+            If None, all Individuals' phenotypes will be returned.
+
+        trt : {int, str}, optional, default: 0
+            A reference to the Trait for which the GEA should be run.
+            Can be either the Trait's index number (i.e. its integer key in the
+            GenomicArchitecture's traits dict), or its name (as a character
+            string).
+
+        Returns
+        -------
+        np.array
+            Returns an nxt numpy array, where n is the number of Individuals
+            whose coordinates were requested, and t is the number of Traits
+            requested.
+
+            Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        assert (spp.gen_arch is not None and
+                spp.gen_arch.traits is not None), ("Species without Traits "
+                                                   "have no phenotypic values "
+                                                   "to be calculated.")
+        if trt is not None:
+            trait_num = self._get_trt_num(spp, trt)
+        else:
+            trait_num = None
+        if individs is not None:
+            individs = np.sort(individs)
+        z = spp._get_z(individs=individs, trait_num=trait_num)
+        return z
+
+
+    def get_fitness(self, spp, trt=None, individs=None):
+        """
+        Returns the current fitness of any or all Individuals in a Species,
+        for one or all Traits
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose fitness should be returned.
+            If None, all Individuals' fitness values will be returned.
+
+        trt : {int, str}, optional, default: 0
+            A reference to the Trait for which the GEA should be run.
+            Can be either the Trait's index number (i.e. its integer key in the
+            GenomicArchitecture's traits dict), or its name (as a character
+            string).
+
+        Returns
+        -------
+        np.array
+            Returns an nxt numpy array, where n is the number of Individuals
+            whose coordinates were requested, and t is the number of Traits
+            requested.
+
+            Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        assert (spp.gen_arch is not None and
+                spp.gen_arch.traits is not None), ("Species without Traits "
+                                                   "have no fitness values "
+                                                   "to be calculated.")
+        trait_num = self._get_trt_num(spp, trt)
+        if individs is not None:
+            individs = np.sort(individs)
+        z = spp._get_z(individs=individs, trait_num=trait_num)
+        fit = spp._get_fit(individs=individs)
+        return fit
+
+
+    def get_genotypes(self, spp, loci=None, individs=None, biallelic=False):
+        """
+        Returns the genotypes of any or all Individuals in a Species
+        and for any or all loci
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        loci : iterable collection of ints, optional, default: None
+            If provided, indicates the loci for which genotypes should be
+            returned. If None, genotypes will be returned for all loci.
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the only Individuals
+            for whom genotypes should be returned.
+            If None, all Individuals' genotypes will be returned.
+
+        biallelic : bool, optional, default: False
+            If False, results are returned as nxL numpy arrays, where n is the
+            number of Individuals requested and L is the number of loci
+            requested.
+            If True, results are returned as nxLx2 numpy arrays, where the 2
+            dimensions on the third axis represent the two haploid genotypes of
+            each diploid Individual.
+
+        Returns
+        -------
+        np.array
+            Returns a numpy array containing the requested genotypes.
+            The shape of the array depends on the number of Individuals and
+            loci and the return format requested.
+            The first and second axes represent the Individuals and loci,
+            returned in sorted numerical order. The optional third axis
+            represents ploidy, if biallelic genotypes are requested.
+            (See explanation of the argument 'biallelic', above,
+            for more detail.)
+
+            Note: All axes are sorted by index number of the object they
+            represent (Individuals, Loci), regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        assert (spp.gen_arch is not None and
+                spp.gen_arch.traits is not None), ("Species without Traits "
+                                                   "have no fitness values "
+                                                   "to be calculated.")
+        if individs is not None:
+            individs = np.sort(individs)
+        if loci is not None:
+            loci = np.sort(loci)
+
+        gts = spp._get_genotypes(loci=loci, individs=individs,
+                                 biallelic=biallelic)
+        return gts
+
+
+    def get_tree_sequence(self, spp):
+        """
+        Returns the tskit.TreeSequence object for the indicated Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        assert spp.gen_arch is not None, ("Species without Genomes "
+                                          "have no tskit data structures "
+                                          "to be returned.")
+        # prep the TableCollection, then get its TreeSequence
+        spp._sort_simplify_table_collection()
+        ts = spp._tc.tree_sequence()
+        return ts

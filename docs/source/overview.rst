@@ -344,7 +344,7 @@ This class is used for all neighbor-searching operations (e.g. mate-search).
 To enable easy recording of the pedigree of a simulated :py:`Species`,
 Geonomics depends on the Python package `tskit`_ (software
 that originated as improvements made to the data structures
-and algorithms used by the popular forward-time simulator `msprime`_).
+and algorithms used by the popular coalescent simulator `msprime`_).
 Geonomics uses the :py:`tskit` tables API to store the full history of
 individuals, genotypes, mating events, and recombinations for
 a :py:`Species` in a :py:`TableCollection` object.

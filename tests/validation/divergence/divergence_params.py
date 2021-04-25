@@ -251,6 +251,7 @@ params = {
                     'n_recomb_paths_tot':       int(1e5),
                     'n_recomb_sims':            10_000,
                     'allow_ad_hoc_recomb':      False,
+                    'jitter_breakpoints':       False,
                     #whether to save mutation logs
                     'mut_log':                  False,
 

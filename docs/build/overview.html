@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Model Overview &mdash; geonomics 0.0 documentation</title>
+  <title>Model Overview &mdash; geonomics  documentation</title>
   
 
   
@@ -58,13 +58,16 @@
           
 
           
+            
+            <img src="_static/gnx_mini.png" class="logo" alt="Logo"/>
+          
           </a>
 
           
             
             
               <div class="version">
-                0.0
+                1.0
               </div>
             
           
@@ -522,7 +525,7 @@ This class is used for all neighbor-searching operations (e.g. mate-search).</p>
 <p>To enable easy recording of the pedigree of a simulated <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>,
 Geonomics depends on the Python package <a class="reference external" href="https://tskit.readthedocs.io/en/latest/index.html">tskit</a> (software
 that originated as improvements made to the data structures
-and algorithms used by the popular forward-time simulator <a class="reference external" href="https://msprime.readthedocs.io/en/stable/">msprime</a>).
+and algorithms used by the popular coalescent simulator <a class="reference external" href="https://msprime.readthedocs.io/en/stable/">msprime</a>).
 Geonomics uses the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code> tables API to store the full history of
 individuals, genotypes, mating events, and recombinations for
 a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> in a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TableCollection</span></span></code> object.
@@ -749,6 +752,19 @@ the curvature of the fitness function (i.e. how fitness decreases as
 the absolute difference between an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s
 optimal and actual phenotypes increases; the default value of 1 causes
 fitness to decrease linearly around the optimal phenotypic value).</p>
+<p>Importantly, most individuals will experience selection on a given trait that
+is only a fraction of the strength dictated by a trait’s selection coefficient
+($phi_{p;x,y}$). This is because an individual’s fitness for a given trait
+is determined by the product of the trait’s selection coefficient
+and the individual’s degree of mismatch to its local environment,
+($mid e_{p;x,y} - z_{i;p} mid$ in the previous equation),
+such that only individuals who are extremely mismatched
+(e.g. an individual of phenotype 1 or greater who is located
+in a 0-valued environmental cell) will experience selection equal to
+or exceeding $phi_{p;x,y}$.
+Because of this, selection coefficients that would be considered ‘strong’
+in classical, aspatial population genetics models will tend to behave
+less strongly in Geonomics models.</p>
 </div>
 </div>
 <hr class="docutils" />
@@ -837,7 +853,7 @@ but will be more facilitated in future versions.</p>
 
   <div role="contentinfo">
     <p>
-        &#169; Copyright 2020, Drew Hart.
+        &#169; Copyright 2021, Drew Hart.
 
     </p>
   </div>

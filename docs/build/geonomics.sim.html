@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>geonomics.sim package &mdash; geonomics 0.0 documentation</title>
+  <title>geonomics.sim package &mdash; geonomics  documentation</title>
   
 
   
@@ -57,13 +57,16 @@
           
 
           
+            
+            <img src="_static/gnx_mini.png" class="logo" alt="Logo"/>
+          
           </a>
 
           
             
             
               <div class="version">
-                0.0
+                1.0
               </div>
             
           
@@ -259,6 +262,307 @@ during simulations. Defaults to False.</p></li>
 <dt id="geonomics.sim.model.Model.calc_stats">
 <code class="sig-name descname"><span class="pre">calc_stats</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.calc_stats" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.get_cells">
+<code class="sig-name descname"><span class="pre">get_cells</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_cells" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the cell coordinates of any or all Individuals in a Species</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+whose cell coordinates should be returned.
+If None, all Individuals’ cell coordinates will be returned.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>Returns an nx2 numpy array, where n is the number of Individuals
+whose coordinates were requested, and the 2 columns correspond to
+the i then j (i.e. lat then lon) array coordinates.</p>
+<p>Note: Ccolumns are in the reverse order of the columns
+of the array returned by <cite>Model.get_coords()</cite>, to facilitate
+array-subsetting of the Landscape Layer raster arrays.</p>
+<p>Note: Rows are sorted by index number of the Individuals,
+regardless of input index order.</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.get_coords">
+<code class="sig-name descname"><span class="pre">get_coords</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the x,y coordinates of any or all Individuals in a Species</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+whose coordinates should be returned.
+If None, all Individuals’ coordinates will be returned.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>np.array</em> – Returns an nx2 numpy array, where n is the number of Individuals
+whose coordinates were requested, and the 2 columns correspond to
+the x then y (i.e. lon then lat) coordinates.</p></li>
+<li><p><strong>Note</strong> (<em>Rows are sorted by index number of the Individuals,</em>) – regardless of input index order.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.get_e">
+<code class="sig-name descname"><span class="pre">get_e</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyr_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_e" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current environmental values of any or all
+Individuals in a Species, for one or all Landscape Layers</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+whose environmental values should be returned.
+If None, all Individuals’ environmental values  will be returned.</p></li>
+<li><p><strong>lyr_num</strong> (<em>int</em><em>, </em><em>default:None</em>) – If provided, indicates the Layer for which values should be
+returned. If None, values will be returned for all Layers.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>Returns an nxl numpy array, where n is the number of Individuals
+whose coordinates were requested, and l is the number of Layers
+requested, ordered by increasing Layer number.</p>
+<p>Note: Rows are sorted by index number of the Individuals,
+regardless of input index order.</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.get_fitness">
+<code class="sig-name descname"><span class="pre">get_fitness</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_fitness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current fitness of any or all Individuals in a Species,
+for one or all Traits</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+whose fitness should be returned.
+If None, all Individuals’ fitness values will be returned.</p></li>
+<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Trait for which the GEA should be run.
+Can be either the Trait’s index number (i.e. its integer key in the
+GenomicArchitecture’s traits dict), or its name (as a character
+string).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>Returns an nxt numpy array, where n is the number of Individuals
+whose coordinates were requested, and t is the number of Traits
+requested.</p>
+<p>Note: Rows are sorted by index number of the Individuals,
+regardless of input index order.</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.get_genotypes">
+<code class="sig-name descname"><span class="pre">get_genotypes</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">biallelic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_genotypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the genotypes of any or all Individuals in a Species
+and for any or all loci</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>loci</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the loci for which genotypes should be
+returned. If None, genotypes will be returned for all loci.</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the only Individuals
+for whom genotypes should be returned.
+If None, all Individuals’ genotypes will be returned.</p></li>
+<li><p><strong>biallelic</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If False, results are returned as nxL numpy arrays, where n is the
+number of Individuals requested and L is the number of loci
+requested.
+If True, results are returned as nxLx2 numpy arrays, where the 2
+dimensions on the third axis represent the two haploid genotypes of
+each diploid Individual.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>Returns a numpy array containing the requested genotypes.
+The shape of the array depends on the number of Individuals and
+loci and the return format requested.
+The first and second axes represent the Individuals and loci,
+returned in sorted numerical order. The optional third axis
+represents ploidy, if biallelic genotypes are requested.
+(See explanation of the argument ‘biallelic’, above,
+for more detail.)</p>
+<p>Note: All axes are sorted by index number of the object they
+represent (Individuals, Loci), regardless of input index order.</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.get_random_individs">
+<code class="sig-name descname"><span class="pre">get_random_individs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_random_individs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a size-n sample of index numbers
+for random individuals in a Species.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of random Individuals to sample</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Returns a length-n 1d numpy array containing the sorted index
+numbers of the sampled Individuals.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.get_tree_sequence">
+<code class="sig-name descname"><span class="pre">get_tree_sequence</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_tree_sequence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the tskit.TreeSequence object for the indicated Species</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.get_x">
+<code class="sig-name descname"><span class="pre">get_x</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_x" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the x coordinates of any or all Individuals in a Species</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+whose coordinates should be returned.
+If None, all Individuals’ coordinates will be returned.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>np.array</em> – Returns an nx1 numpy array, where n is the number of Individuals
+whose coordinates were requested.</p></li>
+<li><p><strong>Note</strong> (<em>Rows are sorted by index number of the Individuals,</em>) – regardless of input index order.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.get_y">
+<code class="sig-name descname"><span class="pre">get_y</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_y" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the y coordinates of any or all Individuals in a Species</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+whose coordinates should be returned.
+If None, all Individuals’ coordinates will be returned.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>np.array</em> – Returns an nx1 numpy array, where n is the number of Individuals
+whose coordinates were requested.</p></li>
+<li><p><strong>Note</strong> (<em>Rows are sorted by index number of the Individuals,</em>) – regardless of input index order.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="geonomics.sim.model.Model.get_z">
+<code class="sig-name descname"><span class="pre">get_z</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_z" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the phenotypic values of any or all Individuals in a Species,
+for one or all Traits</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
+Can be either the Species’ index number (i.e. its
+integer key in the Community dict), or its name (as a character
+string).</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+whose phenotypes should be returned.
+If None, all Individuals’ phenotypes will be returned.</p></li>
+<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Trait for which the GEA should be run.
+Can be either the Trait’s index number (i.e. its integer key in the
+GenomicArchitecture’s traits dict), or its name (as a character
+string).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>Returns an nxt numpy array, where n is the number of Individuals
+whose coordinates were requested, and t is the number of Traits
+requested.</p>
+<p>Note: Rows are sorted by index number of the Individuals,
+regardless of input index order.</p>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.array</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="geonomics.sim.model.Model.plot">
@@ -1242,7 +1546,7 @@ before <cite>gnx.make_parameters_file</cite> is called).</p>
 
   <div role="contentinfo">
     <p>
-        &#169; Copyright 2020, Drew Hart.
+        &#169; Copyright 2021, Drew Hart.
 
     </p>
   </div>

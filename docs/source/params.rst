@@ -1804,14 +1804,19 @@ truncated to the interval [0,1].)
 
 {:py:`float`, :py:`None`}
 
-default: None
+default: 0.5
 
 reset? P
 
 This defines the alpha parameter of the beta distribution from which
 interlocus recombination rates are drawn. (Values drawn will be truncated to
-the interval [0, 0.5].) Defaults to None, which will coerce all recombination
-rates to 0.5 (i.e. will make all loci independent).
+the interval [0, 0.5].)
+If **r_distr_beta** is None, recombination rates will be fixed at this value.
+(Defaults to 0.5, and **r_distr_beta** defaults to None,
+such that all loci will be independent by default.)
+If set to None, all recombination rates will be fixed at a value (1/**L**)
+that yields approximately 1 expected recombination event
+per gamete per generation. 
 
 
 
@@ -1830,8 +1835,11 @@ reset? P
 
 This defines the beta parameter of the beta distribution from which
 interlocus recombination rates are drawn. (Values drawn will be truncated to
-the interval [0, 0.5].) Defaults to None, which will coerce all recombination
-rates to 0.5 (i.e. will make all loci independent).
+the interval [0, 0.5].) Defaults to None, which will fix recombination rates
+at the value of **r_distr_alpha** (which defaults to 0.5, i.e. independence),
+or else will fix all rates at a value (1/**L**) that yields
+approximately 1 expected recombination event per gamete per generation. 
+
 
 
 
@@ -1969,6 +1977,30 @@ It is disadvantageous, however, because it runs somewhat slower than the
 default approach (recombinants drawn at model creation) for a range of
 L and N values, and also because it is only available for parameterizations
 with homogeneous recombination across the genome.
+
+
+
+**jitter_breakpoints**
+
+.. code-block:: python
+
+                      #whether to jitter recomb bps, to correctly track num_trees
+                      'jitter_breakpoints': False,
+
+:py:`bool`
+
+default: False
+
+reset? P
+
+This determines whether or not the recombination breakpoints
+stored by the tskit TableCollection should be slightly jitted off of their
+x.5 default positions. Enabling this will render each recombination effectively
+unique, and thus will allow the tskit.TreeSequence to correctly report the
+number of trees (TreeSequence.num_trees). However, it will do this
+at the expense of additional memory usage, which could potentially be limiting.
+Thus, this should be set to `True` iff the TreeSequence information will be used
+in a way that requires accurate representation of the number of trees.
 
 
 

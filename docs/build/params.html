@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Parameters Guide &mdash; geonomics 0.0 documentation</title>
+  <title>Parameters Guide &mdash; geonomics  documentation</title>
   
 
   
@@ -58,13 +58,16 @@
           
 
           
+            
+            <img src="_static/gnx_mini.png" class="logo" alt="Logo"/>
+          
           </a>
 
           
             
             
               <div class="version">
-                0.0
+                1.0
               </div>
             
           
@@ -1485,12 +1488,17 @@ truncated to the interval [0,1].)</p>
 </pre></div>
 </div>
 <p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">float</span></span></code>, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
-<p>default: None</p>
+<p>default: 0.5</p>
 <p>reset? P</p>
 <p>This defines the alpha parameter of the beta distribution from which
 interlocus recombination rates are drawn. (Values drawn will be truncated to
-the interval [0, 0.5].) Defaults to None, which will coerce all recombination
-rates to 0.5 (i.e. will make all loci independent).</p>
+the interval [0, 0.5].)
+If <strong>r_distr_beta</strong> is None, recombination rates will be fixed at this value.
+(Defaults to 0.5, and <strong>r_distr_beta</strong> defaults to None,
+such that all loci will be independent by default.)
+If set to None, all recombination rates will be fixed at a value (1/<strong>L</strong>)
+that yields approximately 1 expected recombination event
+per gamete per generation.</p>
 <p><strong>r_distr_beta</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#beta of distr of recomb rates</span>
 <span class="s1">&#39;r_distr_beta&#39;</span><span class="p">:</span>            <span class="kc">None</span><span class="p">,</span>
@@ -1501,8 +1509,10 @@ rates to 0.5 (i.e. will make all loci independent).</p>
 <p>reset? P</p>
 <p>This defines the beta parameter of the beta distribution from which
 interlocus recombination rates are drawn. (Values drawn will be truncated to
-the interval [0, 0.5].) Defaults to None, which will coerce all recombination
-rates to 0.5 (i.e. will make all loci independent).</p>
+the interval [0, 0.5].) Defaults to None, which will fix recombination rates
+at the value of <strong>r_distr_alpha</strong> (which defaults to 0.5, i.e. independence),
+or else will fix all rates at a value (1/<strong>L</strong>) that yields
+approximately 1 expected recombination event per gamete per generation.</p>
 <p><strong>dom</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether loci should be dominant (for allele &#39;1&#39;)</span>
 <span class="s1">&#39;dom&#39;</span><span class="p">:</span>                      <span class="kc">False</span><span class="p">,</span>
@@ -1595,6 +1605,22 @@ It is disadvantageous, however, because it runs somewhat slower than the
 default approach (recombinants drawn at model creation) for a range of
 L and N values, and also because it is only available for parameterizations
 with homogeneous recombination across the genome.</p>
+<p><strong>jitter_breakpoints</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to jitter recomb bps, to correctly track num_trees</span>
+<span class="s1">&#39;jitter_breakpoints&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
+<p>default: False</p>
+<p>reset? P</p>
+<p>This determines whether or not the recombination breakpoints
+stored by the tskit TableCollection should be slightly jitted off of their
+x.5 default positions. Enabling this will render each recombination effectively
+unique, and thus will allow the tskit.TreeSequence to correctly report the
+number of trees (TreeSequence.num_trees). However, it will do this
+at the expense of additional memory usage, which could potentially be limiting.
+Thus, this should be set to <cite>True</cite> iff the TreeSequence information will be used
+in a way that requires accurate representation of the number of trees.</p>
 <p><strong>mut_log</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to save mutation logs</span>
 <span class="s1">&#39;mut_log&#39;</span><span class="p">:</span>                  <span class="kc">None</span><span class="p">,</span>
@@ -1663,7 +1689,19 @@ strength of selection will be the same for all locations on the
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>. When the value is an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code> of
 equal dimensions to the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> then the strength of
 selection will vary across space, as indicated by the values in this array
-(what Geonomics refers to as a “spatially contingent” selection regime).</p>
+(what Geonomics refers to as a “spatially contingent” selection regime).
+Importantly, most individuals will experience selection on a given trait that
+is only a fraction of the strength dictated by this parameter,
+because an individual’s fitness for a given trait
+is determined by the product of the trait’s selection coefficient
+and the individual’s degree of mismatch to its local environment,
+and it is often unlikely that individuals would occur in environments
+that are completely opposed to those individuals’ phenotypic values
+(e.g. a 0-valued individual in a 1-valued environmental cell).
+Because of this, selection coefficients that would be considered ‘strong’
+in classical, aspatial population genetics models will tend to behave
+less strongly in Geonomics models.
+(For mathematical detail, see the <a class="reference internal" href="overview.html#selection"><span class="std std-ref">Selection</span></a> section.)</p>
 <p><strong>n_loci</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#number of loci underlying trait</span>
 <span class="s1">&#39;n_loci&#39;</span><span class="p">:</span>               <span class="mi">1</span><span class="p">,</span>
@@ -2299,7 +2337,7 @@ single value for each timestep.</p>
 
   <div role="contentinfo">
     <p>
-        &#169; Copyright 2020, Drew Hart.
+        &#169; Copyright 2021, Drew Hart.
 
     </p>
   </div>

@@ -567,12 +567,12 @@ def _make_landscape(mod, params, num_hab_types=2, verbose=False):
                 "key '%s') appears to have parameters for more than one layer "
                 "type.  Choose a single layer type (valid values: 'random', "
                 "'defined', 'file', 'nlmpy') and provide a sub-dictionary "
-                "of parameters for only that type.") % (n, str(k)))
+                "of parameters for only that type.") % (n, str(lyr_name)))
         lyr_type = init_keys[0]
         assert lyr_type in ['random', 'defined', 'file', 'nlmpy'], ("The "
             "parameters sub-dictionary for the %ith layer (params['land']"
             "['layers'] key '%s') has an invalid key value. Valid keys are: "
-            "'random', 'defined', 'file'.") % (n, str(k))
+            "'random', 'defined', 'file'.") % (n, str(lyr_name))
 
         #create a random lyr, if called for
         if lyr_type == 'random':

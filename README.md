@@ -1,6 +1,15 @@
 # Geonomics <img align="right" width="200" height="90" src="./img/gnx_mini.png">
 
-### Forward-time, individual-based, spatially explicit, and arbitrarily complex landscape genomic simulation in Python
+### Landscape genomics simulation in Python
+ 
+**Geonomics** allows users to build and run arbitrarily complex, forward-time,
+agent-based, and spatially explicit simulations for landscape genomics. It is
+designed to allow novice Python users to create sophisticated simulations with
+minimal code, while also allowing advanced users a high level of extensibility
+and customizability.
+
+We will continue to expand and add functionality in future versions. Please
+contact us with questions, suggestions, or requests!
 
 ``` 
        .                  .   ::::::          :::    :: :::::::::::.           .
@@ -20,17 +29,7 @@
            .        .  ::                      ::::                      .
                           . ::                                     .                .
 ```
-          
  
-**Geonomics** allows users to build and run arbitrarily complex, forward-time,
-agent-based, and spatially explicit simulations for landscape genomics. It is
-designed to allow novice Python users to create sophisticated simulations with
-minimal code, while also allowing advanced users a high level of extensibility
-and customizability.
-
-We will continue to expand and add functionality in future versions. Please
-contact us with questions, suggestions, or requests!
-
 ----------------------------
 
 ## Main Features

@@ -72,8 +72,8 @@ To jump right in, check out :ref:`Getting started` and :ref:`Examples`.
 For more information, see :ref:`Motivation`, :ref:`Data structures`,
 and :ref:`Operations`.
 
-For fine detail about particular :ref:`Parameters` or :ref:`Functions and classes`,
-see those sections.
+For fine detail about particular :ref:`Parameters`,
+:ref:`Data structures`, or :ref:`Operations`, see those sections.
 
 **Merry modeling!**
 

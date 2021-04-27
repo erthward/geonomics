@@ -17,7 +17,7 @@ Quick start
      ('Data structures' and 'Operations'), to get a general
      undertsanding of the logic, components, and necessary and optional
      behaviors of a Geonomics model.
-  3. Skim the 'Parameters Guide', to understand the structure
+  3. Skim the 'Parameters' section, to understand the structure
      and use of a Geonomics parameters file.
   4. Use `pip` to install Geonomics (:bash:`$ pip install geonomics`);
   5. Open Python and run :py:`import geonomics as gnx`;

@@ -3,7 +3,7 @@ Geonomics
 *********
 
 .. image:: ./img/gnx_mini.png
-   :scale: 50
+   :scale: 25%
    :align: left
 
 Forward-time, individual-based, landscape genomic simulation in Python.

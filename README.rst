@@ -2,7 +2,7 @@
 Geonomics
 *********
 
-.. image:: ./img/gnx_mini.png
+.. image:: ./img/gnx_mini.svg
    :width: 100
    :align: left
 

@@ -11,5 +11,5 @@ pyvcf
 rasterio
 msprime>=0.7.4
 tskit>=0.2.3
-sphinxcontrib-napoleon
+psutil
 geonomics

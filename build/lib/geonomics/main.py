@@ -14,15 +14,13 @@ Provides:
 4. Functions for model visualization.
 5. A variety of parameters, for construction of arbitrarily complex simulation scenarios.
 
-
 How to use the documentation
 ----------------------------
 There are two levels of documentation available:
 - Basic, procedural documentation is available as docstrings in the code,
-  which are returned when requesting Python's help on a class or function.
-
+which are returned when requesting Python's help on a class or function.
 - Detailed documentation is available at the
-`Geonomics homepage<https://geonomics.readthedocs.io/en/latest/>`_.
+`Geonomics homepage <https://geonomics.readthedocs.io/en/latest/>`_.
 
 All documentation examples assume that `geonomics` has been imported as `gnx`::
 

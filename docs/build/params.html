@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Parameters &mdash; geonomics 1.1.1 documentation</title>
+  <title>Parameters &mdash; geonomics 1.1.2 documentation</title>
   
 
   
@@ -1619,8 +1619,9 @@ x.5 default positions. Enabling this will render each recombination effectively
 unique, and thus will allow the tskit.TreeSequence to correctly report the
 number of trees (TreeSequence.num_trees). However, it will do this
 at the expense of additional memory usage, which could potentially be limiting.
-Thus, this should be set to <cite>True</cite> iff the TreeSequence information will be used
-in a way that requires accurate representation of the number of trees.</p>
+Thus, this should be set to <cite>True</cite> if and only if the TreeSequence
+information will be used in a way that requires
+accurate representation of the number of trees.</p>
 <p><strong>mut_log</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to save mutation logs</span>
 <span class="s1">&#39;mut_log&#39;</span><span class="p">:</span>                  <span class="kc">None</span><span class="p">,</span>

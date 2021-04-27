@@ -1999,8 +1999,9 @@ x.5 default positions. Enabling this will render each recombination effectively
 unique, and thus will allow the tskit.TreeSequence to correctly report the
 number of trees (TreeSequence.num_trees). However, it will do this
 at the expense of additional memory usage, which could potentially be limiting.
-Thus, this should be set to `True` iff the TreeSequence information will be used
-in a way that requires accurate representation of the number of trees.
+Thus, this should be set to `True` if and only if the TreeSequence
+information will be used in a way that requires
+accurate representation of the number of trees.
 
 
 

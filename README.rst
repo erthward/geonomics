@@ -1,17 +1,13 @@
-# Geonomics <img align="right" width="200" height="90" src="./img/gnx_mini.png">
+*********
+Geonomics
+*********
 
-### Landscape genomics simulation in Python
- 
-**Geonomics** allows users to build and run arbitrarily complex, forward-time,
-agent-based, and spatially explicit simulations for landscape genomics. It is
-designed to allow novice Python users to create sophisticated simulations with
-minimal code, while also allowing advanced users a high level of extensibility
-and customizability.
+.. image:: ./img/gnx_mini.png
 
-We will continue to expand and add functionality in future versions. Please
-contact us with questions, suggestions, or requests!
+Forward-time, individual-based, landscape genomic simulation in Python.
 
-``` 
+.. code-block:: python
+         
        .                  .   ::::::          :::    :: :::::::::::.           .
                     .::::::    ::::   :::      ::    :: :: ::::::::::: ::.                 .
     .      .     .:::::::::     ::            ::   :::::::::::::::::::::::::.        .   
@@ -28,65 +24,83 @@ contact us with questions, suggestions, or requests!
   .              .    :::                      :::::  ::              ::::: .              . 
            .        .  ::                      ::::                      .
                           . ::                                     .                .
-```
+          
  
-----------------------------
+**Geonomics** allows users to build and run arbitrarily complex, forward-time,
+agent-based, and spatially explicit simulations for landscape genomics. It is
+designed to allow novice Python users to create sophisticated simulations with
+minimal code, while also allowing advanced users a high level of extensibility
+and customizability.
 
-## Main Features
+We will continue to expand and add functionality in future versions. Please
+contact us with questions, suggestions, or requests!
 
+Main Features
+-------------
 The following is a short list of highlights. For the full monty, please see
-the [homepage](https://github.com/drewhart/geonomics),
-the [docs](https://geonomics.readthedocs.org),
-and the [original methods paper](PAPER_URL_HERE).
+the `homepage <https://github.com/drewhart/geonomics>`_,
+the `docs <https://geonomics.readthedocs.org>`_,
+and the `original methods paper <PAPER_URL_HERE>`_.
 
-  - a model object, which serves as the primary user interface and which contains all other model components
-  - a landscape object consisting of an arbitrary number of environmental raster layers
-  - a community object consisting of an arbitrary number of species objects, each consisting of an arbitrary number of individuals
-  - an optional genomic-architecture object, upon which individuals' genomes are based
-  - spatialized logistic growth regulating local population densities
-  - the capability to model realistic movement and offspring dispersal across conductance surfaces
-  - neutral and non-neutral evolution capabilities, with spatially contingent selection
-  - demographic- and environmental-change capabilities
-  - the capability to run an arbitrary number of iterations of a model
-  - the capability to sample data and a variety of statistics at any desired timesteps during a model run
-  - numerous visualization methods to aid in model design, exploration, analysis, and presentation
+    - a model object, which serves as the primary user interface and which
+      contains all other model components
+    - a landscape object consisting of an arbitrary number of environmental
+      raster layers
+    - a community object consisting of an arbitrary number of species objects,
+      each consisting of an arbitrary number of individuals
+    - an optional genomic-architecture object, upon which individuals' genomes
+      are based
+    - spatialized logistic growth regulating local population densities
+    - the capability to model realistic movement and offspring dispersal
+      across conductance surfaces
+    - neutral and non-neutral evolution capabilities, with spatially contingent
+      selection
+    - demographic- and environmental-change capabilities
+    - the capability to run an arbitrary number of iterations of a model
+    - the capability to sample data and a variety of statistics at any desired
+      timesteps during a model run
+    - numerous visualization methods to aid in model design, exploration,
+      analysis, and presentation
 
 
-## Installation
+Installation
+------------
 
 Geonomics can be installed with `pip`:
 
-```
+.. code-block:: python
+
     pip install geonomics
-```
 
-## Quickstart
 
+Quickstart
+----------
 For impatient beginners, the following code will run Geonomics' default model::
 
-```
   >>> import geonomics as gnx
   >>> mod = gnx.run_default_model(delete_params_file=False)
-```
 
-This will build and run the default model, return its _Model_ object
+This will build and run **geonomics**' default model, return its `Model` object
 as `mod`, and leave its parameters file in your current working directory under
-the name `GNX_default_model_params.py`.
+the name 'GNX_default_model_params.py'.
 
 For patient folks, the following diagrams should provide more insight, and the
-[documentation](https://geonomics.readthedocs.org) provides full details.
+`documentation <https://geonomics.readthedocs.org>`_
+provides full details.
 
 
-## Details
+Details
+-------
 
-### Procedural Diagram
+Procedural Diagram
+~~~~~~~~~~~~~~~~~~
 
-<img src="./img/procedural_diagram.jpg">
+.. image:: ./img/procedural_diagram.jpg
 
 Users can run Geonomics models in as few as three steps.
 
-  1. **Create and edit a parameters file**: After importing geonomics as `gnx`,
-   users can run the function `gnx.make_parameters_file()`, feeding in
+1. **Create and edit a parameters file**: After importing geonomics as `gnx`,
+   users can run the function `gnx.make_parameters_file()` function, feeding in
    a series of arguments to indicate the desired number and type of landscape layers,
    number and parameterization of species, data and statistics to be recorded, and parameters
    file name. Users can then edit the default parameter values in the resulting file to parameterize
@@ -94,21 +108,22 @@ Users can run Geonomics models in as few as three steps.
    to be used by their model, including static raster files or directories of raster time series, as well
    as a CSV file defining a custom genomic architecture.
 
-  1. **Use the parameters file to create a model**: After setting up their parameters file, users can
+2. **Use the parameters file to create a model**: After setting up their parameters file, users can
    call the `gnx.make_model()` function, providing their parameters file's name as an argument. This
    will create a new `gnx.Model` object, containing a `gnx.Landscape` with the defined number of layers,
    and a `gnx.Community` with the defined number of species composed of starting individuals. The landscape,
    species, and individuals will all be described by a number of characteristics, in accordance with the values
    defined in the parameters file.
 
-  1. **Run the model**: Users can then call the model's `mod.run` or `mod.walk` methods, to either run their model
+3. **Run the model**: Users can then call the model's `mod.run` or `mod.walk` methods, to either run their model
    to completion or run it manually for some number of time steps. Each time step will include, as applicable,
    movement, mating, mortality, environmental and demographic change, and data-writing operations. For more detail
    on these operations, see the conceptual diagram that follows.
 
-### Conceptual Diagram
+Conceptual Diagram
+~~~~~~~~~~~~~~~~~~
 
-<img src="./img/conceptual_diagram.jpg">
+.. image:: ./img/conceptual_diagram.jpg
 
 Operations during the main phase of a Geonomics model run. In the center is a
 species on a multi-layer landscape that includes a selection layer (above) and
@@ -135,27 +150,30 @@ boxes are optional.
 
 ------------------------------------------------------------------
 
-## Attribution
+Attribution
+***********
 
 This package was written by Drew Ellison Terasaki Hart, as part of his PhD work.
 It is available to freely distribute and modify, with proper
 attribution, under the MIT License. Should you have any questons or
-concerns, please feel free to get in touch! (drew dot hart at berkeley dot edu)
+concerns, please feel free to get in touch! (drew <dot> hart <at> berkeley <dot> edu)
 
 Should you use Geonomics for research, education, or any other purpose, please
 cite as:
 
        Terasaki Hart, D.E., Bishop, A.P., Wang, I.J. 2021. Geonomics:
        forward-time, spatially explicit, and arbitrarily complex
-       landscape genomic simulations. Manuscript submitted for publication.                                                                                                                                                                                           
+       landscape genomic simulations. Manuscript submitted for publication.
+
+
 
 -------------------------------------------------------
 
-## Disclaimer
-
+Disclaimer
+----------
 **Geonomics** claims no affiliation with the philosophy and economic ideology
-[Georgism](https://en.wikipedia.org/wiki/Georgism), sometimes referred to as
+`Georgism <https://en.wikipedia.org/wiki/Georgism>`_, sometimes referred to as
 'geonomics'.
 
-Instead, it is a portmanteau of **geo**graphy and ge**nomics**. 
+Rather, it is a portmanteau of **geo**\graphy and ge\ **nomics**.
 We thought it sounded neat, and found it delightfully confusing.

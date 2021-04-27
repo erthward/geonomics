@@ -10,8 +10,12 @@ Defines the core Model class, as well as its public and private methods
 #geonomics imports
 from geonomics.structs.landscape import _make_landscape
 from geonomics.structs.community import _make_community
-from geonomics.sim.data import _DataCollector
+from geonomics.sim.data import (_DataCollector, _tskit_table_to_pandas,
+                                _get_adhoc_sample, _format_vcf, _format_fasta)
+
 from geonomics.sim.stats import _StatsCollector
+from geonomics.utils.io import (_write_csv, _write_shapefile, _write_geojson,
+                                _write_file)
 from geonomics.utils._str_repr_ import _get_str_spacing
 from geonomics.utils.viz import _check_display
 
@@ -1244,7 +1248,7 @@ class Model:
 
 
     #wrapper around Species._plot_density
-    def plot_density(self, spp, normalize=False, individs=None,
+    def plot_density(self, spp=0, normalize=False, individs=None,
             text=False, color='black', edge_color='face',
             text_color='black', size=25, text_size = 9,
             alpha=0.5, zoom_width=None, x=None, y=None, ticks=None,
@@ -1257,7 +1261,7 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species whose Individuals should be scattered
             on the plot. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
@@ -1350,7 +1354,7 @@ class Model:
 
 
     #wrapper around Species._plot_genotype
-    def plot_genotype(self, spp, locus, lyr=None, by_dominance=False,
+    def plot_genotype(self, spp=0, locus=0, lyr=None, by_dominance=False,
                       individs=None, text=False, edge_color='black',
                       text_color='black', cbar=True, size=25, text_size = 9,
                       alpha=1, zoom_width=None, x=None, y=None, ticks=None,
@@ -1364,13 +1368,13 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species whose Individuals should be scattered
             on the plot. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
             string).
 
-        locus : int
+        locus : int, optional, default: 0
             The index of the locus for which Individuals' genotypes should be
             depicted. Must be 0 <= val <= (genome length - 1)
 
@@ -1485,7 +1489,7 @@ class Model:
 
     # wrapper around Species._plot_phenotype
     # for a given trait
-    def plot_phenotype(self, spp, trt, lyr=None, individs=None,
+    def plot_phenotype(self, spp=0, trt=0, lyr=None, individs=None,
                        text=False,  edge_color='black', text_color='black',
                        cbar=True, size=25, text_size=9, alpha=1,
                        zoom_width=None, x=None, y=None, ticks=None,
@@ -1499,13 +1503,13 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species whose Individuals should be scattered
             on the plot. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
             string).
 
-        trt : {int, str}
+        trt : {int, str}, optional, default: 0
             A reference to the Trait whose phenotypes should be used to color
             Individuals in the plot. Can be either the Trait's index number
             (i.e. its integer key in the GenomicArchitecture's traits dict),
@@ -1629,7 +1633,7 @@ class Model:
 
 
     #wrapper around Species._plot_fitness
-    def plot_fitness(self, spp, trt=None, lyr=None, individs=None,
+    def plot_fitness(self, spp=0, trt=None, lyr=None, individs=None,
                      text=False, phenotype_text=False, fitness_text=False,
                      edge_color='black', text_color='black',
                      phenotype_text_color='black', fitness_text_color='black',
@@ -1647,7 +1651,7 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species whose Individuals should be scattered
             on the plot. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
@@ -1797,7 +1801,7 @@ class Model:
 
 
     #wrapper around Species._plot_allele_frequencies
-    def plot_allele_frequencies(self, spp):
+    def plot_allele_frequencies(self, spp=0):
         """
         Plot a Species' current allele frequencies for all alleles
 
@@ -1807,7 +1811,7 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species whose allele frequencies will be
             plotted. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
@@ -1825,7 +1829,7 @@ class Model:
 
 
     #wrapper around Species._plot_hist_fitness
-    def plot_hist_fitness(self, spp):
+    def plot_hist_fitness(self, spp=0):
         """
         Plot a Species
 
@@ -1834,7 +1838,7 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species whose Individuals' fitness will be
             plotted. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
@@ -1852,7 +1856,7 @@ class Model:
 
 
     #wrapper around Species._plot_direction_surface for _move_surf
-    def plot_movement_surface(self, spp, style,  color='black', cbar=True,
+    def plot_movement_surface(self, spp=0, style='hist',  color='black', cbar=True,
                               ticks=None, cmap='plasma', zoom_width=None,
                               x=None, y=None, scale_fact=4.5, mask_rast=None):
         """
@@ -1866,13 +1870,13 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species whose MovementSurface should be plotted.
             Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
             string).
 
-        style : str
+        style : str, optional, default: 'hist'
             Determines the style of plot produced. There are four options:
                 'hist':
                     Plot a classic histogram approximating the von Mises
@@ -1946,7 +1950,7 @@ class Model:
 
 
     #wrapper around Species._plot_direciton_surface for _disp_surf
-    def plot_dispersal_surface(self, spp, style, x=None, y=None,
+    def plot_dispersal_surface(self, spp=0, style='hist', x=None, y=None,
                                zoom_width=None, scale_fact=4.5, color='black',
                                cbar = True, ticks=None, cmap='plasma',
                                mask_rast=None):
@@ -1961,13 +1965,13 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species whose DispersalSurface should be
             plotted. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
             string).
 
-        style : str
+        style : str, optional, default: 'hist'
             Determines the style of plot produced. There are four options:
                 'hist':
                     Plot a classic histogram approximating the von Mises
@@ -2054,7 +2058,7 @@ class Model:
 
 
     #wrapper around Species._plot_demographic_pyramid
-    def plot_demographic_pyramid(self, spp):
+    def plot_demographic_pyramid(self, spp=0):
         """
         Plot a demographic pyramid for the chosen Species
 
@@ -2063,7 +2067,7 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species whose demographic pyramid will be
             plotted. Can be either the Species' index number (i.e. its
             integer key in the Community dict), or its name (as a character
@@ -2081,7 +2085,7 @@ class Model:
 
 
     #wrapper around Species._plot_pop_growth
-    def plot_pop_growth(self, spp, expected=True, actual=True,
+    def plot_pop_growth(self, spp=0, expected=True, actual=True,
                         expected_color='red', actual_color='blue'):
         """
         Plot the chosen Species' population over time
@@ -2093,7 +2097,7 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species whose population growth will be plotted.
             Can be either the Species' index number (i.e. its integer key
             in the Community dict), or its name (as a character string).
@@ -2118,7 +2122,7 @@ class Model:
 
 
     #wrapper around Species._plot_example_recombinant_genome
-    def plot_example_recombinant_genome(self, spp):
+    def plot_example_recombinant_genome(self, spp=0):
         """
         Plot an example recombinant genome for the chosen Species
 
@@ -2134,7 +2138,7 @@ class Model:
 
         Parameters
         ----------
-        spp : {int, str}
+        spp : {int, str}, optional, default: 0
             A reference to the Species for which an example recombinant genome
             should be plotted. Can be either the Species' index number
             (i.e. its integer key in the Community dict), or its name
@@ -2154,10 +2158,12 @@ class Model:
 
 
     #wrapper around Species._plot_demographic_changes
-    def plot_demographic_changes(self, spp):
+    def plot_demographic_changes(self, spp=0):
         """
         TEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.
         """
+        print('\nTEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.\n')
+        return
 #       TODO: FIX ME! BUGS HAVE EMERGED.
 #
 #        Plot the scheduled demographic changes for the chosen Species
@@ -2168,7 +2174,7 @@ class Model:
 #
 #        Parameters
 #        ----------
-#        spp : {int, str}
+#        spp : {int, str}, optional, default: 0
 #            A reference to the Species whose demographic changes should be
 #            plotted. Can be either the Species' index number (i.e. its
 #            integer key in the Community dict), or its name (as a character
@@ -2188,10 +2194,12 @@ class Model:
 
 
     #wrapper around Species._plot_stat
-    def plot_stat(self, spp, stat):
+    def plot_stat(self, stat, spp=0):
         """
         TEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.
         """
+        print('\nTEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.\n')
+        return
 #        TODO: FIX ME! BUGS HAVE EMERGED.
 #
 #        Plot the chosen statistic's data for the chosen Species
@@ -2201,13 +2209,14 @@ class Model:
 #
 #        Parameters
 #        ----------
-#        spp : {int, str}
+#        stat : str
+
+#        spp : {int, str}, optional, default: 0
 #            A reference to the Species for which the chosen statistic should
 #            be plotted. Can be either the Species' index number (i.e. its
 #            integer key in the Community dict), or its name (as a character
 #            string).
 #
-#        stat : str
 #
 #        Returns
 #        -------
@@ -2287,3 +2296,548 @@ class Model:
             raise ValueError("Invalid GEA method. Valid methods include: %s" % (
                              ", ".join(methods)))
         return results
+
+
+    ##############
+    #getting data#
+    ##############
+
+    def get_coords(self, spp=0, individs=None):
+        """
+        Returns the x,y coordinates of any or all Individuals in a Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose coordinates should be returned.
+            If None, all Individuals' coordinates will be returned.
+
+        Returns
+        -------
+        np.array
+            Returns an nx2 numpy array, where n is the number of Individuals
+            whose coordinates were requested, and the 2 columns correspond to
+            the x then y (i.e. lon then lat) coordinates.
+
+        Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        if individs is not None:
+            individs = np.sort(individs)
+        coords = spp._get_coords(individs=individs)
+        return coords
+
+
+    def get_x(self, spp=0, individs=None):
+        """
+        Returns the x coordinates of any or all Individuals in a Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose coordinates should be returned.
+            If None, all Individuals' coordinates will be returned.
+
+        Returns
+        -------
+        np.array
+            Returns an nx1 numpy array, where n is the number of Individuals
+            whose coordinates were requested.
+
+        Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        if individs is not None:
+            individs = np.sort(individs)
+        x = spp._get_x(individs=individs)
+        return x
+
+
+    def get_y(self, spp=0, individs=None):
+        """
+        Returns the y coordinates of any or all Individuals in a Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose coordinates should be returned.
+            If None, all Individuals' coordinates will be returned.
+
+        Returns
+        -------
+        np.array
+            Returns an nx1 numpy array, where n is the number of Individuals
+            whose coordinates were requested.
+
+        Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        if individs is not None:
+            individs = np.sort(individs)
+        y = spp._get_y(individs=individs)
+        return y
+
+
+    def get_cells(self, spp=0, individs=None):
+        """
+        Returns the cell coordinates of any or all Individuals in a Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose cell coordinates should be returned.
+            If None, all Individuals' cell coordinates will be returned.
+
+        Returns
+        -------
+        np.array
+            Returns an nx2 numpy array, where n is the number of Individuals
+            whose coordinates were requested, and the 2 columns correspond to
+            the i then j (i.e. lat then lon) array coordinates.
+
+            Note: Ccolumns are in the reverse order of the columns
+            of the array returned by `Model.get_coords()`, to facilitate
+            array-subsetting of the Landscape Layer raster arrays.
+
+            Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+
+
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        if individs is not None:
+            individs = np.sort(individs)
+        cells = spp._get_cells(individs=individs)
+        return cells
+
+
+    def get_random_individs(self, n, spp=0):
+        """
+        Returns a size-n sample of index numbers
+        for random individuals in a Species.
+
+        Parameters
+        ----------
+        n : int
+            The number of random Individuals to sample
+
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        Returns
+        -------
+        np.array
+            Returns a length-n 1d numpy array containing the sorted index
+            numbers of the sampled Individuals.
+
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        individs = np.sort(spp._get_random_individuals(n))
+        return individs
+
+
+    def get_e(self, spp=0, lyr_num=None, individs=None):
+        """
+        Returns the current environmental values of any or all
+        Individuals in a Species, for one or all Landscape Layers
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose environmental values should be returned.
+            If None, all Individuals' environmental values  will be returned.
+
+        lyr_num : int, default:None
+            If provided, indicates the Layer for which values should be
+            returned. If None, values will be returned for all Layers.
+
+        Returns
+        -------
+        np.array
+            Returns an nxl numpy array, where n is the number of Individuals
+            whose coordinates were requested, and l is the number of Layers
+            requested, ordered by increasing Layer number.
+
+            Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        if individs is not None:
+            individs = np.sort(individs)
+        e = spp._get_e(individs=individs, lyr_num=lyr_num)
+        return e
+
+
+    def get_z(self, spp=0, trt=None, individs=None):
+        """
+        Returns the phenotypic values of any or all Individuals in a Species,
+        for one or all Traits
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose phenotypes should be returned.
+            If None, all Individuals' phenotypes will be returned.
+
+        trt : {int, str}, optional, default: 0
+            A reference to the Trait for which the GEA should be run.
+            Can be either the Trait's index number (i.e. its integer key in the
+            GenomicArchitecture's traits dict), or its name (as a character
+            string).
+
+        Returns
+        -------
+        np.array
+            Returns an nxt numpy array, where n is the number of Individuals
+            whose coordinates were requested, and t is the number of Traits
+            requested.
+
+            Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        assert (spp.gen_arch is not None and
+                spp.gen_arch.traits is not None), ("Species without Traits "
+                                                   "have no phenotypic values "
+                                                   "to be calculated.")
+        if trt is not None:
+            trait_num = self._get_trt_num(spp, trt)
+        else:
+            trait_num = None
+        if individs is not None:
+            individs = np.sort(individs)
+        z = spp._get_z(individs=individs, trait_num=trait_num)
+        return z
+
+
+    def get_fitness(self, spp=0, trt=None, individs=None):
+        """
+        Returns the current fitness of any or all Individuals in a Species,
+        for one or all Traits
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the Individuals
+            whose fitness should be returned.
+            If None, all Individuals' fitness values will be returned.
+
+        trt : {int, str}, optional, default: 0
+            A reference to the Trait for which the GEA should be run.
+            Can be either the Trait's index number (i.e. its integer key in the
+            GenomicArchitecture's traits dict), or its name (as a character
+            string).
+
+        Returns
+        -------
+        np.array
+            Returns an nxt numpy array, where n is the number of Individuals
+            whose coordinates were requested, and t is the number of Traits
+            requested.
+
+            Note: Rows are sorted by index number of the Individuals,
+            regardless of input index order.
+
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        assert (spp.gen_arch is not None and
+                spp.gen_arch.traits is not None), ("Species without Traits "
+                                                   "have no fitness values "
+                                                   "to be calculated.")
+        trait_num = self._get_trt_num(spp, trt)
+        if individs is not None:
+            individs = np.sort(individs)
+        z = spp._get_z(individs=individs, trait_num=trait_num)
+        fit = spp._get_fit(individs=individs)
+        return fit
+
+
+    def get_genotypes(self, spp=0, loci=None, individs=None, biallelic=False):
+        """
+        Returns the genotypes of any or all Individuals in a Species
+        and for any or all loci
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        loci : iterable collection of ints, optional, default: None
+            If provided, indicates the loci for which genotypes should be
+            returned. If None, genotypes will be returned for all loci.
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the only Individuals
+            for whom genotypes should be returned.
+            If None, all Individuals' genotypes will be returned.
+
+        biallelic : bool, optional, default: False
+            If False, results are returned as nxL numpy arrays, where n is the
+            number of Individuals requested and L is the number of loci
+            requested.
+            If True, results are returned as nxLx2 numpy arrays, where the 2
+            dimensions on the third axis represent the two haploid genotypes of
+            each diploid Individual.
+
+        Returns
+        -------
+        np.array
+            Returns a numpy array containing the requested genotypes.
+            The shape of the array depends on the number of Individuals and
+            loci and the return format requested.
+            The first and second axes represent the Individuals and loci,
+            returned in sorted numerical order. The optional third axis
+            represents ploidy, if biallelic genotypes are requested.
+            (See explanation of the argument 'biallelic', above,
+            for more detail.)
+
+            Note: All axes are sorted by index number of the object they
+            represent (Individuals, Loci), regardless of input index order.
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        assert (spp.gen_arch is not None and
+                spp.gen_arch.traits is not None), ("Species without Traits "
+                                                   "have no fitness values "
+                                                   "to be calculated.")
+        if individs is not None:
+            individs = np.sort(individs)
+        if loci is not None:
+            loci = np.sort(loci)
+
+        gts = spp._get_genotypes(loci=loci, individs=individs,
+                                 biallelic=biallelic)
+        return gts
+
+
+    def get_tree_sequence(self, spp=0):
+        """
+        Returns the tskit.TreeSequence object for the indicated Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+        """
+        spp = self.comm[self._get_spp_num(spp)]
+        assert spp.gen_arch is not None, ("Species without Genomes "
+                                          "have no tskit data structures "
+                                          "to be returned.")
+        # prep the TableCollection, then get its TreeSequence
+        spp._sort_simplify_table_collection()
+        ts = spp._tc.tree_sequence()
+        return ts
+
+
+    ##############
+    #writing data#
+    ##############
+
+    def write_gendata(self, filepath, spp=0, n=None, include_fixed_sites=True):
+        """
+        A convenience function, designed for interactive use, that writes
+        genetic data for a sample of n Individuals to the given filepath
+
+        Parameters
+        ----------
+        filepath : str
+            The path and filename indicating the destination of the output file.
+            Output format ('VCF', 'FASTA') will be determined by the
+            filepath extension ('.vcf', .'fasta').
+
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        n : {int, None}, optional, default: None
+            The number of individuals of randomly sample.
+            If None, output file will contain the entire current population.
+
+        include_fixed_sites : bool, optional, default: True
+            A flag indicating whether or not to include fixed sites. Only valid
+            for VCF files. Defaults to True.
+
+        Notes
+        -----
+        This function is only designed for use with small models
+        or in interactive mode. For simulations being run to generate
+        datasets for research use, it is preferable to generate a
+        parameters file containing a section for data section
+        (`gnx.make_parameters_file(..., data=True)`), then parameterize
+        data collection there.
+        """
+        # get and check extension
+        extension  = filepath.split('.')[-1].lower()
+        assert extension in ['vcf', 'fasta'], ('Must provide valid file '
+                                               'extension. Valid extensions '
+                                               'include ".vcf" and ".fasta".')
+        # get the species
+        spp = self.comm[self._get_spp_num(spp)]
+        # get the index-keyed dict of the sample of individuals
+        sample = _get_adhoc_sample(spp, n)
+        # get the genotypes
+        gts = spp._get_genotypes(individs=[*sample], as_dict=True)
+        # format and write out the file, per the extension
+        if extension == 'vcf':
+            gen_data = _format_vcf(sample, gts, spp.gen_arch,
+                                   include_fixed_sites = include_fixed_sites)
+        elif extension == 'fasta':
+            gen_data = _format_fasta(sample, gts)
+
+        # write the data out
+        _write_file(filepath, gen_data)
+
+
+    def write_geodata(self, filepath, spp=0, n=None):
+        """
+        A convenience function, designed for interactive use, that writes
+        tabular geodata for a sample of n Individuals to the given filepath
+
+        Parameters
+        ----------
+        filepath : str
+            The path and filename indicating the destination of the output file.
+            Output format ('CSV', 'Shapefile', 'GeoJSON') will be determined
+            by the filepath extension ('.csv', '.shp', '.json').
+
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        n : {int, None}, optional, default: None
+            The number of individuals of randomly sample.
+            If None, output file will contain the entire current population.
+
+        Notes
+        -----
+        This function is only designed for use with small models
+        or in interactive mode. For simulations being run to generate
+        datasets for research use, it is preferable to generate a
+        parameters file containing a section for data section
+        (`gnx.make_parameters_file(..., data=True)`), then parameterize
+        data collection there.
+        """
+        # get and check extension
+        extension  = filepath.split('.')[-1].lower()
+        assert extension in ['csv', 'shp',
+                             'json'], ('Must provide valid file '
+                                       'extension. Valid extensions '
+                                       'include ".csv", ".shp", and ".json".')
+        # get the species
+        spp = self.comm[self._get_spp_num(spp)]
+        # get the sample of sorted individuals' index values
+        sample = _get_adhoc_sample(spp, n)
+        # format and write out the file, per the extension
+        if extension == 'csv':
+            _write_csv(filepath=filepath, individuals=sample)
+        elif extension == 'shp':
+            _write_shapefile(filepath=filepath, individuals=sample)
+        elif extension == 'json':
+            _write_geojson(filepath=filepath, individuals=sample)
+
+
+    def write_tskit_table_collection(self, file_basename, spp=0, sep=','):
+        """
+        A convenience function, designed for interactive use, that writes the
+        tskit.TableCollection containing the spatial pedigree into CSV tables
+
+        Parameters
+        ----------
+        file_basename : str
+            The path and file basename to use for the resulting table files.
+            Each file will be appended with a capitalized suffix indicating
+            the table it contains (NODES, EDGES, SITES, MUTATIONS, INDIVIDUALS).
+
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        sep : str, optional, default: ','
+            Character separator to use in the output CSV
+
+        Notes
+        -----
+        This function is only designed for use with small models
+        or in interactive mode. For simulations being run to generate
+        datasets for research use, it is preferable to generate a
+        parameters file containing a section for data section
+        (`gnx.make_parameters_file(..., data=True)`), then parameterize
+        data collection there.
+        """
+        # get the species
+        spp = self.comm[self._get_spp_num(spp)]
+        # list of the needed tables
+        needed = ['nodes', 'edges', 'sites', 'mutations', 'individuals']
+        # get the tskit.TableCollection as a dict of dicts, keeping only the
+        # needed tables, and converting them in pandas.DataFrames
+        tables = {k: _tskit_table_to_pandas(v) for (k,
+                                v) in spp._tc.asdict().items() if k in needed}
+        # write out each table
+        for k, table in tables.items():
+            filepath = file_basename + '_' + k.upper() + '.csv'
+            table.to_csv(filepath, index=False, sep=sep)

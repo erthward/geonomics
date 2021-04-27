@@ -415,7 +415,7 @@ GENOME_PARAMS = '''
                     #scale of distr of deleterious effect sizes
                     'delet_alpha_distr_scale':  0.2,
                     #alpha of distr of recomb rates
-                    'r_distr_alpha':            None,
+                    'r_distr_alpha':            0.5,
                     #beta of distr of recomb rates
                     'r_distr_beta':             None,
                     #whether loci should be dominant (for allele '1')
@@ -432,6 +432,8 @@ GENOME_PARAMS = '''
                     'n_recomb_sims':            10_000,
                     #whether to generate recombination paths at each timestep
                     'allow_ad_hoc_recomb':      False,
+                    #whether to jitter recomb bps, to correctly track num_trees
+                    'jitter_breakpoints':       False,
                     #whether to save mutation logs
                     'mut_log':                  False,
 %s

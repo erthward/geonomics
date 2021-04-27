@@ -35,7 +35,7 @@ import statsmodels.api as sm
 # function defs
 ###############
 
-def map_genetic_PCA(mod):
+def map_genetic_PCA(mod, mark_size):
     """run genetic PCA and mapping individuals colored in RGB
     space by the first 3 PCs"""
     species = mod.comm[0]
@@ -249,11 +249,15 @@ def fix_yax_n_ticks_digits(ax, vals, n_ticks, n_digits):
 # set some plotting params
 img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
            'img/final/')
-ax_fontdict = {'fontsize': 25,
+ax_fontdict = {'fontsize': 65,
                'name': 'Bitstream Vera Sans'}
-ttl_fontdict = {'fontsize': 25,
+ze_ax_fontdict = {'fontsize': 35,
+                  'name': 'Bitstream Vera Sans'}
+threed_ax_fontdict = {'fontsize': 35,
+                  'name': 'Bitstream Vera Sans'}
+ttl_fontdict = {'fontsize': 65,
                 'name': 'Bitstream Vera Sans'}
-mark_size = 60
+mark_size = 275
 
 
 def _make_params():
@@ -514,6 +518,7 @@ def _make_params():
                         'n_recomb_sims':            10000,
                         'start_neut_zero':          False,
                         'allow_ad_hoc_recomb':      False,
+                        'jitter_breakpoints':       False,
                         #whether to save mutation logs
                         'mut_log':                  False,
 
@@ -696,12 +701,13 @@ def _run(params, save_figs=False, time_it=False,
     #n1_3d_ax = fig.add_subplot(gs[n1_3d_top:n1_3d_bot,
                                   #n1_3d_L:n1_3d_R], projection='3d')
     n1_3d_ax.view_init(elev=3, azim=83)
-    n1_3d_ax.set_xlabel('$\longleftarrow$ geo. dist.', size=25, labelpad=-13)
+    n1_3d_ax.set_xlabel('$\longleftarrow$ geo. dist.', labelpad=-13,
+                        fontdict=threed_ax_fontdict)
     #n1_3d_ax.set_ylabel(' ' * 35 + '$\longleftarrow$ Env. Dist.', size=9,
     #                    labelpad=20)
     n1_3d_ax.zaxis.set_rotate_label(False)
-    n1_3d_ax.set_zlabel('gen. dist. $\longrightarrow$', size=25, labelpad=-13,
-                        rotation=90)
+    n1_3d_ax.set_zlabel('gen. dist. $\longrightarrow$', labelpad=-13,
+                        rotation=90, fontdict=threed_ax_fontdict)
     n1_3d_ax.set_xticklabels([])
     n1_3d_ax.set_yticklabels([])
     n1_3d_ax.set_zticklabels([])
@@ -727,11 +733,12 @@ def _run(params, save_figs=False, time_it=False,
     #n3_3d_ax = fig.add_subplot(gs[n3_3d_top:n3_3d_bot,
     #                              n3_3d_L:n3_3d_R], projection='3d')
     n3_3d_ax.view_init(elev=3, azim=7)
-    #n3_3d_ax.set_xlabel('$\longleftarrow$ Geo. Dist.' + ' ' * 25, size=9,
-    #                    labelpad=10)
-    n3_3d_ax.set_ylabel('env. dist. $\longrightarrow$', size=25, labelpad=-13)
+    n3_3d_ax.set_zlabel('gen. dist. $\longrightarrow$', labelpad=-13,
+                        rotation=90, fontdict=threed_ax_fontdict)
+    n3_3d_ax.set_ylabel('env. dist. $\longrightarrow$', labelpad=-13,
+                        fontdict=threed_ax_fontdict)
     n3_3d_ax.zaxis.set_rotate_label(False)
-    #n3_3d_ax.set_zlabel('gen. dist. $\longrightarrow$', size=25, labelpad=-13,
+    #n3_3d_ax.set_zlabel('gen. dist. $\longrightarrow$', size=12, labelpad=-13,
     #                    rotation=90)
     n3_3d_ax.set_xticklabels([])
     n3_3d_ax.set_yticklabels([])
@@ -788,7 +795,7 @@ def _run(params, save_figs=False, time_it=False,
 
     # plot genetic PCA before evolution begins
     plt.sca(gen_b4_ax)
-    map_genetic_PCA(mod)
+    map_genetic_PCA(mod, mark_size)
 
     # plot phenotypes before evolution begins
     mask = np.ma.masked_where(mod.land[1].rast == 0, mod.land[1].rast)
@@ -823,7 +830,7 @@ def _run(params, save_figs=False, time_it=False,
 
     # plot genetic PCA after 1/4T timesteps
     plt.sca(gen_af_ax)
-    map_genetic_PCA(mod)
+    map_genetic_PCA(mod, mark_size)
 
     # plot the individuals' phenotypes
     plt.sca(phn_af_ax)
@@ -906,15 +913,18 @@ def _run(params, save_figs=False, time_it=False,
     if not time_it:
         L_color = '#096075'
         R_color = '#bf2659'
-        ze_fit_ax_L.set_xlabel('time (steps)', fontdict=ax_fontdict)
-        ze_fit_ax_L.set_ylabel('mean($|z-e|$)', fontdict=ax_fontdict,
+        ze_fit_ax_L.set_xlabel('time (steps)', fontdict=ze_ax_fontdict)
+        ze_fit_ax_L.set_ylabel('mean($|z-e|$)', fontdict=ze_ax_fontdict,
                                color=L_color)
-        ze_fit_ax_L.tick_params(axis='y', labelcolor=L_color, labelrotation=45)
+        ze_fit_ax_L.tick_params(axis='y', labelcolor=L_color, labelrotation=45,
+                               labelsize=30)
+        ze_fit_ax_L.tick_params(axis='x', labelsize=30)
         ze_fit_ax_L.plot(range(len(mean_z_e_diffs)), mean_z_e_diffs, color=L_color)
         fix_yax_n_ticks_digits(ze_fit_ax_L, mean_z_e_diffs, 5, 2)
         ze_fit_ax_R.set_ylabel('mean fitness', color=R_color,
-                               fontdict=ax_fontdict)
-        ze_fit_ax_R.tick_params(axis='y', labelcolor=R_color, labelrotation=-45)
+                               fontdict=ze_ax_fontdict)
+        ze_fit_ax_R.tick_params(axis='y', labelcolor=R_color,
+                                labelrotation=-45, labelsize=30)
         ze_fit_ax_R.plot(range(len(mean_fits)), mean_fits, color=R_color)
         fix_yax_n_ticks_digits(ze_fit_ax_R, mean_fits, 5, 3)
         #ax.set_xlabel('time')

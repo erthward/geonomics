@@ -6,6 +6,7 @@
 import geonomics as gnx
 
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from collections import Counter as C
 from itertools import combinations
@@ -26,6 +27,22 @@ ax_fontdict = {'fontsize': axlabelsize,
 ttl_fontdict = {'fontsize': titlesize,
                 'name': 'Bitstream Vera Sans'}
 color_dict = dict(zip(np.linspace(0,1,3), plt.cm.coolwarm(np.linspace(0,1,3))))
+
+
+"""
+def plot_phenotype_map(ax, mod, title):
+    xs = mod.get_x()-0.5
+    ys = mod.get_y()-0.5
+    zs = mod.get_z(0)
+    ax.imshow(mod.land[0].rast, cmap='Wistia')
+    if np.all(zs == 1):
+        ax.scatter(xs, ys, c=mpl.colors.to_hex(mpl.cm.Wistia_r(256)),
+                   edgecolor='black')
+    else:
+        ax.scatter(xs, ys, c=zs, cmap='Wistia_r', edgecolor='black')
+    ax.set_title(title, fontsize=20)
+"""
+
 
 def calc_pi(mod, nonneut_loc, window_width=6):
     print("\nCalculating nucleotide diversity (WILL TAKE A WHILE)...\n")
@@ -133,6 +150,11 @@ ax3.set_xlabel("recombination distance (sum of interlocus recomb. rates)",
 ax3.set_ylabel("linkage ($R^{2}$)", fontdict=ax_fontdict)
 ax3.tick_params(labelsize=ticklabelsize)
 
+# create a figure to hold the 3 phenotype maps of the sweep
+# (one showing the phenotype plot right after fixation,
+# the next showing it part-way, and the third after fixation)
+map_fig = plt.figure()
+
 # run for 1 main step, so that all individuals have fitness values
 mod.walk(1, 'main', True)
 
@@ -156,9 +178,15 @@ while not sweeping_allele_established:
 
     pi_at_intro.append(calc_pi(mod, nonneut_loc))
 
+    # map the phenotypes
+    #map_ax = map_fig.add_subplot(131)
+    #map_ax.cla()
+    #plot_phenotype_map(map_ax, mod, 'beginning')
+
+
     # walk 50 timesteps
     for _ in range(5):
-        mod.walk(10)
+        mod.walk(11)
         # calclate and store mean fitness
         mean_fit.append(calc_mean_fit(mod))
 
@@ -169,6 +197,7 @@ while not sweeping_allele_established:
         print('\n\nMUTANT ESTABLISHED.\n')
         # calculate and store ending nucleotide diversity
         pi.append(pi_at_intro[-1])
+
 
     else:
         print('\n\nMutation lost...\n')
@@ -182,6 +211,10 @@ for _ in range(10):
     # calclate and store mean fitness
     mean_fit.append(calc_mean_fit(mod))
     print('\tallele_freq = %0.3f' % calc_nonneut_loc_freq(mod))
+
+    # map the phenotypes
+    #map_ax = map_fig.add_subplot(132)
+    #plot_phenotype_map(map_ax, mod, 'during')
 
 # walk until mutant fixed
 nonneut_loc_freq = np.mean(np.vstack(
@@ -200,6 +233,13 @@ while not fixed:
 # calculate and store ending nucleotide diversity
 pi.append(calc_pi(mod, nonneut_loc))
 print('\ncalculating linkage...\n')
+
+# map phenotype last time
+#map_ax = map_fig.add_subplot(133)
+#plot_phenotype_map(map_ax, mod, 'after')
+#map_fig.show()
+
+# calculate linkage
 ld.append(gnx.sim.stats._calc_ld(mod.comm[0]))
 r2s, dists = gen_data_linkage_dist_plot(ld[1],
                                         mod.comm[0].gen_arch.recombinations._rates)
@@ -234,7 +274,7 @@ ax2.tick_params(labelsize=ticklabelsize)
 fig.subplots_adjust(hspace=.5)
 
 plt.show()
-plt.savefig(os.path.join(img_dir, 'SWEEP_pop_and_nuc_div.pdf'))
+#plt.savefig(os.path.join(img_dir, 'SWEEP_pop_and_nuc_div.pdf'))
 print('Sweep complete')
 
 plt.rcParams['figure.figsize'] = [5.5, 4]
@@ -249,4 +289,4 @@ ax.set_yticks(np.linspace(0.8, 1.0, 5))
 ax.tick_params(labelsize=ticklabelsize)
 
 plt.show()
-plt.savefig(os.path.join(img_dir, 'SWEEP_mean_fit.pdf'))
+#plt.savefig(os.path.join(img_dir, 'SWEEP_mean_fit.pdf'))

@@ -355,6 +355,29 @@ def _make_point_buffers(points, radius):
     return(cu)
 
 
+# a function that returns an ad hoc sample of size n
+# from the current population of the given spp,
+# in the format index-keyed dict format needed by the data-writing functions
+# (to be used by the convenience methods of the Model object)
+def _get_adhoc_sample(spp, n):
+    #get a set of indices for the individuals in the sample
+    sample = set()
+    #take the whole species, if scheme is 'all'
+    if n is None:
+        sample.update([*spp])
+    #or take a random sample, if scheme is 'random'
+    else:
+        if len(spp) > n:
+            inds = r.choice([*spp], size = n, replace = False)
+        else:
+            inds = [*spp]
+        sample.update(inds)
+    #sort sample, then convert to a dict of individuals
+    sample = sorted([*sample])
+    sample = {i:spp[i] for i in sample}
+    return(sample)
+
+
 def _format_fasta(sample, genotypes):
     '''
     FASTA FORMAT:
@@ -473,3 +496,25 @@ def _format_vcf(sample, genotypes, gen_arch, include_fixed_sites=False):
 
     #return it
     return(out_vcf)
+
+
+def _tskit_table_to_pandas(table):
+    """
+    Takes a raw tskit.TableCollection table dict,
+    as returned from tskit.TableCollection.<TABLENAME>.asdict(),
+    and converts it into a pandas.DataFrame, for write-out
+    """
+    # get the max column length
+    max_col_len = max([len(col) for col in table.values()])
+    # fill in columns with np.nan
+    filled_table = {}
+    for k, col in table.items():
+        if len(col) > 0:
+            filled_table[k] = np.concatenate((col,
+                                    np.nan * np.ones(max_col_len - len(col)))) 
+        else:
+            filled_table[k] = np.ones(max_col_len) * np.nan
+    # convert to pandas.DataFrame
+    pd_table = pd.DataFrame.from_dict(filled_table)
+    return pd_table
+

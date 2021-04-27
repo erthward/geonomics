@@ -5,8 +5,8 @@
       :language: bash
 
 
-Model Overview
-""""""""""""""
+Overview
+""""""""
 As you're reading, you may want to refer to the :ref:`Conceptual Diagram` as a useful reference.
 The primary data structures are depicted in the central image.
 Most of the key operations are depicted in the cycle of four corner boxes.

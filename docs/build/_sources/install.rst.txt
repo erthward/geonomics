@@ -14,55 +14,6 @@ in C (`GEOS`_, `GDAL`_, and `PROJ`_).
 They can sometimes be tricky to install. Please make sure you have them installed first.
 Then you can follow the `pip` installation instructions below.
 
-.. They can sometimes be tricky to install.
-.. Thus, if you are unsure if you already have a working install of those
-.. libraries, then we recommend :ref:`Installing with \`conda\```.
-.. 
-.. Alternatively, you can try :ref:`Installing with \`pip\```. That will work fine,
-.. as long as `pip` can successfully install Geonomics' dependencies as well.
-
-
-.. Installing with `conda`
-.. -----------------------
-.. 
-.. You may want to install with `conda`_, as it will automatically install
-.. third-party dependencies (such as `GEOS`_, `GDAL`_, and `PROJ`_) for you
-.. as well. 
-.. 
-.. The `conda` software can be installed by following
-.. the installation instructions on the `conda`_ webpage.
-.. 
-.. Then, Geonomics can be installed using:
-.. 
-.. .. code-block:: bash
-..   
-..     conda config --env --add channels conda-forge
-..     conda install geonomics
-.. 
-.. If you prefer, you may first create a new `conda` environment, then install
-.. Geonomics there. This will avoid potential dependency conflicts with other
-.. packages using Geonomics' dependencies. You can do that by running:
-.. 
-.. .. code-block:: bash
-.. 
-..   conda create -n gnx
-..   conda activate gnx
-..   conda config --env --add channels conda-forge
-..   conda install python=3 geonomics
-.. 
-.. Once installed, Geonomics can then be tested by launching a Python prompt and running:
-.. 
-.. .. code-block:: python
-..     
-..     import geonomics as gnx
-..     gnx.run_default_model()
-.. 
-.. This will load the Geonomics package, create in your current working
-.. directory a new Geonomics parameters file containing the default
-.. parameter values, use that file to instantiate and run a Geonomics model,
-.. then delete the parameters file (by default).
-.. 
-
 Installing with `pip`
 ---------------------
 
@@ -147,13 +98,9 @@ segmentation fault**:
   `scipy <http://www.scipy.org/scipylib/index.html>`_'s interpolate module
   (e.g. `scipy.interpolate.griddata`), such as discussed
   `here <https://stackoverflow.com/questions/59274750/segmentation-fault-when-running-scipy-interpolate>`_). The only fix we are aware of, as of now, is to use
-  `conda`_ to set up a clean `conda` environment, the install Geonomics
+  `conda`_ to set up a clean `conda` environment, then install Geonomics
   and its dependencies there. While we are not sure why, this appears to
   make things all better.
-
-  In :ref:`Installing with \`conda\``` we have provided code for
-  creating a new `conda` environment and installing Geonomics there.
-
 
 
 .. _GDAL: https://www.gdal.org/

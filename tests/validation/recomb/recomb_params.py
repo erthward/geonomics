@@ -187,10 +187,10 @@ params = {
 
                 'gen_arch': {
                     #file defining custom genomic arch
-                    'gen_arch_file': ('/home/deth/Desktop/stuff/berk/'
+                    'gen_arch_file': ('/home/deth/Desktop/UCB'
                                       '/research/projects/sim/geonomics'
-                                      '/tests/validation/recomb/validate'
-                                      '_recomb_params_spp-0_gen_arch.csv'),
+                                      '/tests/validation/recomb/'
+                                      'recomb_params_spp-0_gen_arch.csv'),
                     #num of loci
                     'L':                        1000,
                     #fixed starting allele freq; None/False -> rand; True -> 0.5

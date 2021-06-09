@@ -589,7 +589,7 @@ class Species(OD):
         return mating_pairs
 
     #function for executing mating for a species
-    def _do_mating(self, land, mating_pairs, burn=False):
+    def _do_mating(self, land, mating_pairs, burn=False, check_haps=False):
 
         #draw the number of births for each pair, and append
         #total births to self.n_births list
@@ -726,6 +726,53 @@ class Species(OD):
                         ) for homol, seg_set in enumerate(
                         genome_segs) for seg in [*seg_set]]
 
+                    if check_haps:
+                        # check the individ's edge-length sum
+                        print(('CHECKING EDGE-LENGTH SUM FOR INDIVIDUAL '
+                               '%i') % offspring_key)
+
+                        def get_edges_df(tc):
+                            """
+                            function to get pandas df from first
+                            4 cols of edges table
+                            """
+                            l = tc.edges.left
+                            r = tc.edges.right
+                            p = tc.edges.parent
+                            c = tc.edges.child
+                            assert len(l) == len(r) == len(p) == len(c)
+                            df = pd.DataFrame.from_dict({'left': l,
+                                                         'right': r,
+                                                         'parent': p,
+                                                         'child': c})
+                            return df
+
+                        nodes_tab_ids = self[offspring_key]._nodes_tab_ids
+                        for i, nodes_tab_id in nodes_tab_ids.items():
+                            #self._sort_simplify_table_collection()
+                            #ts = self._tc.tree_sequence()
+                            #hap = [*ts.haplotypes()][nodes_tab_id]
+                            #if '-' in hap:
+                            #print(offspring_key)
+                            #print(edge_id)
+                            #print(nodes_tab_id)
+                            #    print()
+                            #    print('#\n'*10)
+                            #    print(hap)
+                            #    print()
+                            #    print(new_genome)
+                            #    print()
+                            #print([[*seg] for seg in genome_segs])
+                            #print('-----------------------------------')
+                            edf = get_edges_df(self._tc)
+                            child_edf = edf[edf.child == nodes_tab_id]
+                            assert np.allclose(sum(child_edf.right -
+                                                   child_edf.left),
+                                               self.gen_arch.L), (sum(
+                                            child_edf.right - child_edf.left),
+                                                                  child_edf)
+
+
 
         # sample all individuals' environment values, to initiate for offspring
         self._set_e(land)
@@ -734,6 +781,15 @@ class Species(OD):
         # do mutation if necessary
         if self.mutate and not burn:
              _do_mutation(keys_list, self, log = self.mut_log)
+
+        # check haploytpes have no missing data, if necessary
+        if check_haps and self.burned:
+            print('\n\nCHECKING THAT HAPLOTYPES HAVE NO MISSING DATA\n\n')
+            self._sort_simplify_table_collection()
+            ts = self._tc.tree_sequence()
+            haps = [*ts.haplotypes()]
+            missing = ['-' in hap for hap in haps]
+            assert sum(missing) == 0, 'some haplotypes have missing data!'
 
 
     #method to do species dynamics
@@ -1028,7 +1084,8 @@ class Species(OD):
         # each value is the new node ID of the node that was in that index's
         # row position in the old nodes table (and -1 if that node was
         # dropped during simplication); see tskit docs for details
-        output = self._tc.simplify(curr_nodes, filter_individuals=True,
+        output = self._tc.simplify(curr_nodes,
+                                   filter_individuals=True,
                                    filter_sites=False)
 
         # make an Nx3 np array containing 1.) gnx ids, 2.) the new
@@ -1401,7 +1458,7 @@ class Species(OD):
             'index', 'individual'], ("Argument return_format can take only "
                                      "'index' or 'individual' as values "
                                      "(defaults to 'index').")
-        choices = choices = r.choice(list(range(len(self))), n)
+        choices = choices = r.choice(list(range(len(self))), n, replace=False)
         inds = np.array(list(self.keys()))[choices]
         if return_format=='individual':
             inds = [self[ind] for ind in inds]
@@ -2489,4 +2546,6 @@ def read_pickled_spp(filename):
     with open(filename, 'rb') as f:
         spp = cPickle.load(f)
     return spp
+
+
 

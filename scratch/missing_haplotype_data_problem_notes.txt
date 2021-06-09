@@ -1,0 +1,91 @@
+# NOTES: 05-25:
+- recomb_test suddenly not working!!!
+- Anusha's model throws error whether jitter == T of F!!!
+- squatch model only throws error if jitter == T!!!
+- WTF IS GOING ON!?!?!
+
+
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+
+# NOTES: 05-27
+
+P1: broke recomb in current code vs current code on github
+
+P2: broke code btwn current push and past push such that first locus has missing data now
+  - works in Desktop gnx version, tskit==0.2.3
+
+---------------------------------------------
+
+it appears that the change that happened during tskit's 0.2.3-->0.3.0 was that haplotypes with missing info used to throw an error by defualt (unless tskit was told to impute them), but now they don't throw an error and instead return haplotypes with missing data values stuck into them ('-' by defualt).
+thus, I don't think -- based on THAT change at least -- that this set of problems could be a result of tskit's breaking changes from 0.2.3 to 0.3.0. 
+
+Instead, seems like I've done something somewhere to my code that broke the recombination behavior. HOWEVER, it works when I git clone the repo and run that version of the code, even though it appears to be IDENTICAL according to all the diffs I'm running!!....
+
+Even weirder still, Anusha reported the error but is almost certainly using a pip-isntalled version of gnx rather than running it using the source code. But that pip-installed version should be made from the latest version of the code on github, as far as I know (I cna 2x check this...)
+
+#################################
+05-27-21: 8:58 pm
+I reverted my local code in genome.py back all the way. Now, for the recomb test, both the local code and the freshly cloned github repo code produce identical results:
+    - recomb test passed
+    - first locus of each haplotype marked as missing
+
+----------------
+But they appear to have diff results for the default MODEL!!!!!
+  - fresh clone:
+        - no missing gts within any haplotypes
+  - local code:
+        - most haplotypes complete, but then a handful have a large number of missing gts, including some with interspersed missing, some with only 0s that aren't missing, and even one with missing gts beginning to end!!!
+
+importantly, both models have jitter_breakpoints: False for the default model
+
+
+
+################################
+06-07-21: 10:00 pm
+
+TODO:
+
+  1. add ability for gnx to add parent info to the parents col in the individuals table
+
+  2. consider using tskit's ld functionality to calculte LD for a gnx sim
+
+  3. SHOULD I REIMPLEMENT STARTING MUTATIONS USING tree.map_mutations, THEN SEE IF THAT FIXES MY PROB?
+     - it would be a 'lazy' way of going about fixing the problem, and a stupid one, ecause I haven't found a mechanistic explanation for the problem yet
+     - however, probably makes most sense to switch my starting-pop msprime seeding to use the best practices highlighted in tskit docs anyhow
+     - however, even if that miraculously did fix the bug I would still not feel satisfied that it's fixed until I have a mechanistic explanation for what's going wrong...
+  
+
+note that the check_nodes and check_individuals checks written into _sort_simplify_table_collection both run clean
+
+okay, I swear to god I'll set something on fire... I realized that I was able to reduce the number of individuals in a model to a small enough number to print the tree for a given locus (i.e. locus 0), then print it, see the isolated individs on there, and match their plotted node ids to the ids returned for tree.is_isolated(u) across all u's, and then I realized that those same isolated nodes at a given locus were missing the pertinent edges in the edges table, thus rendering them isolated, so then I realized I was able to check all edges pertaining to this node in the edges table, sum the lright-left diffs, and assert that the sum equals L, in order to throw an assertion error on the individuals whose edges were being f'd up, in order to track down the moment the f-up happens and diagnose it, so I wrote code to implement that assert statement and then... I CAN'T REPRODUCE THE ERROR NOW!!?!?!?!?!? WHAT THE FUUUUUUCK!???
+
+    ...  holy shit. it's the PRINT STATEMENTS that were doing it!!! AAAHH!!! I was printing information from within the genomes_and_segs data struct and that must have somehow been behaving similar to pop, removing info from it, so that some edges weren't being added and then nodes were being left marooned in the pedigree and thus isolated and thus their data was recorded as missing.... AHHHH!!!!!
+
+okay, tomorrow I can jump back into this then and hopefully use the assert statement I wrote to clean up everything and double-check it (and hopefully trace this back to some print statement that I left in the version of the code that Anusha was running???)
+
+
+################################
+06-08-21: 08:20 pm
+
+okay, after removing the print statement then Anusha's code still broke (but only when the jitter_breakpoints param was True).
+I believe what all happened was:
+  1.) it breaks because of a bug in the jitter_breakpoints behavior that wasn't caught by
+      my recomb test code earlier
+  2.) the bug is that not all the sets of breakpoints for a recombinant gamete started at 0 and ended at L, such that the first locus had frequent missing data that was being filled in with the '-' default char
+  3.) in my effort to debug that, I introduced print statements to print out the seg info and try to see what was going on
+  4.) that printed out the contents of zip objects by start unpacking them, but zip objects
+      are iterators, so could only be iterated over once, then became empty
+  5.) those empty iterators then created bigger problems with missing data because their info was not making it into the edges table
+  6.) because that problem was the same in kind (though not in mechanism) as the problem I was trying to debug, it masked the original problem and made it look as though the original problem was just more pronounced in some test cases than others (and also that it was only responsive to the jitter_breakpoints flag in some cases and not others because the new print-statement bug occurred whether or not I set jitter_breakpoints to True)
+  7.) comparison to cloned code from the source-code repo wasn't initially helpful beacuse it was 'identical' by diff except for print statements, yet produced diff results ... because, of course, it turned out that the print statements were the broken pieces!! (the computer NEVER, never lies...)
+  8.) now that I figured out the print statement bug (the medicine was worse than the disease there...) the original bug remains standing and could be diagnosed
+  9.) I've debugged the original by making all sets of recombinant segment info start at 0 and end at L
+        9.5) I also, incidentally, caught another dumb bug, which was that I failed to make the L and R segment ends numerically equal, so I was actually modeling recomb segments with small gaps between them! that's also fixed now.
+  10.) Anusha's code now runs without error
+  11.) recomb test also still runs successfully
+
+

@@ -20,9 +20,9 @@ Ne = 1000
 num_bins = 250
 
 # read the parameters file
-params_filename = ('/home/deth/Desktop/stuff/berk/research/'
+params_filename = ('/home/deth/Desktop/UCB/research/'
                    'projects/sim/geonomics/tests/validation/'
-                   'recomb/validate_recomb_params.py')
+                   'recomb/recomb_params.py')
 params = gnx.read_parameters_file(params_filename)
 
 # read the custom gen_arch file and create an msprime recomb-map object from it
@@ -77,8 +77,8 @@ ts_gnx = mod.get_tree_sequence()
 
 # add the gnx breakpoint densities to the plot
 gnx_breakpoints = np.array(list(ts_gnx.breakpoints()))
-v, bin_edges = np.histogram(gnx_breakpoints, num_bins, density=True)
-ax_obs.plot(bin_edges[:-1], v, '-r', label='geonomics')
-ax_obs.legend()
+v_gnx, bin_edges_gnx = np.histogram(gnx_breakpoints, num_bins, density=True)
+ax_obs.plot(bin_edges_gnx[:-1], v_gnx, '-r', label='geonomics')
+ax_obs.legend(prop={"size":16})
 
 fig_cus.show()

@@ -67,8 +67,6 @@ Required dependencies:
 
 - `bitarray <http://pypi.org/project/bitarray/>`_
 
-- `pyvcf <http://pyvcf.readthedocs.io/en/latest/>`_
-
 - `rasterio <https://rasterio.readthedocs.io/en/latest/index.html>`_
 
 Optional dependencies:

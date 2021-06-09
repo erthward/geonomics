@@ -555,7 +555,7 @@ def _run(params, save_figs=False, time_it=False):
     plt.plot(range(len(z_e_diffs[0])), z_e_diffs[0], trt_colors[0])
     plt.plot(range(len(z_e_diffs[1])), z_e_diffs[1], trt_colors[1])
     ax.legend(labels=['trait = %i' % trt for trt in range(2)],
-              loc='best', fontsize='15')
+              loc='best', prop={'size': 18})
     ax.set_xlabel('time', size=18)
     ax.set_ylabel(('mean difference between individuals\'\nphenotypes and '
                    'environmental values'), size=18)

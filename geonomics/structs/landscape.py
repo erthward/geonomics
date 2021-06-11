@@ -642,9 +642,9 @@ def _make_landscape(mod, params, num_hab_types=2, verbose=False):
                                     file_lyr_params['coord_precs'])]
 
     #create the land object
-    #for lyr_name, lyr in lyrs.items():
-    #    lyrs[lyr_name].rast[lyrs[lyr_name].rast<0] = 0
-    #    lyrs[lyr_name].rast[lyrs[lyr_name].rast>1] = 1
+    for lyr_name, lyr in lyrs.items():
+        lyrs[lyr_name].rast[lyrs[lyr_name].rast<0] = 0
+        lyrs[lyr_name].rast[lyrs[lyr_name].rast>1] = 1
     land = Landscape(lyrs, res=res, ulc=ulc, prj=prj, mod=mod)
 
     # set all Layers' cell-bounds attributes

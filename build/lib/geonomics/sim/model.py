@@ -947,7 +947,7 @@ class Model:
         NOTE: Using the following file, in the current working directory to create the Model object:
                 GNX_params_21-01-2020_17:22:08.py
         >>> #run the burn-in until it is complete
-        >>> mod.walk(T = 1000, mode = 'burn')
+        >>> mod.walk(T=1000, mode='burn')
         ###############################################################################################
         Running model "GNX_params_21-01-2020_17:22:08"...
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -969,9 +969,8 @@ class Model:
         .
         Assigning genomes for species "spp_0"...
         Burn-in complete.
-        Burn-in complete.
         >>> #now run in main mode for 50 timesteps
-        >>> mod.walk(T = 50, mode = 'main')
+        >>> mod.walk(T=50, mode='main')
          main:   it=1:  t=0
                  species: spp_0                         N=131    (births=35      deaths=214)
          .......................................................................................
@@ -2652,10 +2651,8 @@ class Model:
             represent (Individuals, Loci), regardless of input index order.
         """
         spp = self.comm[self._get_spp_num(spp)]
-        assert (spp.gen_arch is not None and
-                spp.gen_arch.traits is not None), ("Species without Traits "
-                                                   "have no fitness values "
-                                                   "to be calculated.")
+        assert spp.gen_arch is not None, ("Species without genomes "
+                                          "have no genotypes.")
         if individs is not None:
             individs = np.sort(individs)
         if loci is not None:

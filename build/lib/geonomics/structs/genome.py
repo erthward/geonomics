@@ -232,9 +232,20 @@ class Recombinations:
         # are essentially not repeated, and this way tskit can correctly track
         # the number of breakpoints and number of trees
         if self._jitter_breakpoints:
-            left, right = [np.clip(seg_bps + np.random.uniform(0, 0.0001,
-                                                               len(seg_bps)),
-                                   0, self._L) for seg_bps in [left, right]]
+            left[1:] = left[1:] + np.random.uniform(0, 0.0001, len(left)-1)
+            #left, right = [np.clip(seg_bps + np.random.uniform(0, 0.0001,
+            #                                                   len(seg_bps)),
+            #                       0, self._L) for seg_bps in [left, right]]
+
+            # NOTE: must make sure that each set of seg_info
+            # always starts at 0 on the leftmost segment
+            # (and ends at gen_arch.L on the rightmost, but that will already
+            #  happen in the above code because we're only ever adding a
+            #  positive value to original rightmost value, which is gen_arch.L,
+            #  then clipping that value back down to gen_arch.L)
+            #left[0] = 0
+            right[:-1] = left[1:]
+
         homologue_nodes = node_ids[[(i + start_homologue) % 2 for i in range(
                                                                    len(left))]]
         seg_info = zip(homologue_nodes, left, right)

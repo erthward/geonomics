@@ -8,7 +8,7 @@ def readme():
 setuptools.setup(
     name='geonomics',
     # version num.: MAJOR.MINOR.PATCH
-    version='1.1.6',
+    version='1.1.7',
     author='Drew Ellison Hart',
     author_email='drew.ellison.hart@gmail.com',
     description='A package for landscape genomic simulation',
@@ -16,7 +16,7 @@ setuptools.setup(
     long_description_content_type='text/x-rst',
     url='https://github.com/drewhart/geonomics',
     # include the download URL, from the latest release on Github
-    download_url='https://github.com/drewhart/geonomics/archive/1.1.6.tar.gz',
+    download_url='https://github.com/drewhart/geonomics/archive/1.1.7.tar.gz',
     include_package_data=True,
     # packages=setuptools.find_packages(),
     packages=['geonomics',

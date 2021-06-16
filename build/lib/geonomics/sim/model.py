@@ -680,7 +680,7 @@ class Model:
                             print("\n\tNUMBER EDGES AFTER SIMPLIFICATION: ",
                                   self.comm[0]._tc.edges.num_rows)
                             print("\tNUMBER INDIVIDS AFTER SIMPLIFICATION: ",
-                                  self.comm[0]._tc.individuals.num_rows,
+                                  self.comm[0]._tc.individuals.num_rows, '\n',
                                   flush=True)
 
         #then check if any species are extinct and

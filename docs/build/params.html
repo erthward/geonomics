@@ -99,6 +99,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro_video.html">Intro Video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="procedural_diagram.html">Workflow Diagram</a></li>
 <li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -1491,15 +1492,14 @@ truncated to the interval [0,1].)</p>
 </pre></div>
 </div>
 <p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">float</span></span></code>, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
-<p>default: 0.5</p>
+<p>default: None</p>
 <p>reset? P</p>
 <p>This defines the alpha parameter of the beta distribution from which
 interlocus recombination rates are drawn. (Values drawn will be truncated to
 the interval [0, 0.5].)
 If <strong>r_distr_beta</strong> is None, recombination rates will be fixed at this value.
-(Defaults to 0.5, and <strong>r_distr_beta</strong> defaults to None,
-such that all loci will be independent by default.)
-If set to None, all recombination rates will be fixed at a value (1/<strong>L</strong>)
+Defaults to None, and <strong>r_distr_beta</strong> defaults to None,
+such that all recombination rates will be fixed at a value (1/<strong>L</strong>)
 that yields approximately 1 expected recombination event
 per gamete per generation.</p>
 <p><strong>r_distr_beta</strong></p>
@@ -1515,7 +1515,8 @@ interlocus recombination rates are drawn. (Values drawn will be truncated to
 the interval [0, 0.5].) Defaults to None, which will fix recombination rates
 at the value of <strong>r_distr_alpha</strong> (which defaults to 0.5, i.e. independence),
 or else will fix all rates at a value (1/<strong>L</strong>) that yields
-approximately 1 expected recombination event per gamete per generation.</p>
+approximately 1 expected recombination event per gamete per generation
+(if <strong>r_distr_alpha</strong> is None).</p>
 <p><strong>dom</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether loci should be dominant (for allele &#39;1&#39;)</span>
 <span class="s1">&#39;dom&#39;</span><span class="p">:</span>                      <span class="kc">False</span><span class="p">,</span>

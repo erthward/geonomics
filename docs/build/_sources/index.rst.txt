@@ -84,6 +84,7 @@ For fine detail about particular :ref:`Parameters`,
 
    Installation <install>
    Quick Start <quickstart>
+   Intro Video <intro_video>
    Workflow Diagram <procedural_diagram>
    Motivation <motivation>
    Examples <examples>

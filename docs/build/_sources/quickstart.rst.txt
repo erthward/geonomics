@@ -32,6 +32,9 @@ Quick start
 As you work through these steps, it may be helpful to refer to the
 :ref:`Workflow Diagram` for guidance.
 
+Alternatively, you can take a look at our :ref:`Intro Video`
+for a guided introduction.
+
 
 *Really* Quick Start
 --------------------
@@ -39,6 +42,11 @@ As you work through these steps, it may be helpful to refer to the
 **For the impatient beginner**:
 
 1. Install Geonomics
+
+.. code-block:: bash
+
+     $ pip install --user geonomics
+
 2. Launch Python
 3. Import Geonomics
 

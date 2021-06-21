@@ -1804,7 +1804,7 @@ truncated to the interval [0,1].)
 
 {:py:`float`, :py:`None`}
 
-default: 0.5
+default: None
 
 reset? P
 
@@ -1812,11 +1812,11 @@ This defines the alpha parameter of the beta distribution from which
 interlocus recombination rates are drawn. (Values drawn will be truncated to
 the interval [0, 0.5].)
 If **r_distr_beta** is None, recombination rates will be fixed at this value.
-(Defaults to 0.5, and **r_distr_beta** defaults to None,
-such that all loci will be independent by default.)
-If set to None, all recombination rates will be fixed at a value (1/**L**)
+Defaults to None, and **r_distr_beta** defaults to None,
+such that all recombination rates will be fixed at a value (1/**L**)
 that yields approximately 1 expected recombination event
 per gamete per generation. 
+
 
 
 
@@ -1838,7 +1838,8 @@ interlocus recombination rates are drawn. (Values drawn will be truncated to
 the interval [0, 0.5].) Defaults to None, which will fix recombination rates
 at the value of **r_distr_alpha** (which defaults to 0.5, i.e. independence),
 or else will fix all rates at a value (1/**L**) that yields
-approximately 1 expected recombination event per gamete per generation. 
+approximately 1 expected recombination event per gamete per generation
+(if **r_distr_alpha** is None). 
 
 
 

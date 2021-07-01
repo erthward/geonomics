@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 # set some plotting params
 #img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
-           'img/final/')
+#           'img/final/')
 titlesize=20
 axlabelsize=18
 ticklabelsize=15

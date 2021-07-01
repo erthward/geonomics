@@ -12,7 +12,7 @@ orig_params = gnx.read_parameters_file(('/home/deth/Desktop/geonomics/'
 
 # set some image params
 #img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/'
-           'methods_paper_images/final/')
+#           'methods_paper_images/final/')
 ax_fontdict = {'fontsize': 18,
                'name': 'Bitstream Vera Sans'}
 ttl_fontdict = {'fontsize': 20,

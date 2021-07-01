@@ -18,7 +18,7 @@ import itertools
 
 # set some plotting params
 #img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
-                      'img/final/')
+#                      'img/final/')
 ax_fontdict = {'fontsize': 18}
 ttl_fontdict = {'fontsize': 20}
 ticklabelsize=15

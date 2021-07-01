@@ -128,9 +128,7 @@ params = {
         'burn_T':       30,
         #seed number
         'num':          None,
-        #time step interval for simplication of tskit tables
-        'tskit_simp_interval':      100,
-
+        
 %s
 %s
 %s
@@ -436,6 +434,11 @@ GENOME_PARAMS = '''
                     'jitter_breakpoints':       False,
                     #whether to save mutation logs
                     'mut_log':                  False,
+                    #whether to use tskit (to record full spatial pedigree)
+                    'use_tskit':                False,
+                    #time step interval for simplication of tskit tables
+                    'tskit_simp_interval':      100,
+
 %s
                     }, # <END> 'gen_arch'
 '''

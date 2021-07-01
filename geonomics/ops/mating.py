@@ -131,18 +131,24 @@ def _do_mating_sngl_offspr(spp, pair, recomb_keys):
     # choose a start homologue
     # NOTE: for now, this will only work for diploidy
     start_homologues = r.binomial(1, 0.5, 2)
-    # generate the segment info for each parent's new, recombined gamete
+
+    # if using tskit, generate the segment info for each parent's new,
+    # recombined gamete
     # NOTE: reverse the order of the recomb_paths object so that the resulting
     # segment info objects' order matches the order in which the recombination
     # paths are popped in the following line of code (because they will pop
     # off the right end of their list)
-    seg_info = [spp.gen_arch.recombinations._get_seg_info(
-                    start_homologue=start_homologues[i],
-                    event_key=k,
-                    node_ids=np.array([spp[pair[i]]._nodes_tab_ids[
+    if spp.gen_arch.use_tskit:
+        seg_info = [spp.gen_arch.recombinations._get_seg_info(
+                        start_homologue=start_homologues[i],
+                        event_key=k,
+                        node_ids=np.array([spp[pair[i]]._nodes_tab_ids[
                              homol] for homol in range(
                              spp.gen_arch.x)])
-                   ) for i, k in enumerate(recomb_keys)]
+                        ) for i, k in enumerate(recomb_keys)]
+    else:
+        seg_info = None
+
     # generate each parent's new, recombined gamete (and make into a new genome
     # by stacking and transposing)
     # NOTE: the first path winds up the left side of the new genome, thus
@@ -150,14 +156,15 @@ def _do_mating_sngl_offspr(spp, pair, recomb_keys):
     # `seg_info` list and the first (i.e. left) half of the new genome
     # both correspond to the genomic material inherited from the first of the
     # two parents whose ids are listed in `pair`
-    if len(spp.gen_arch.nonneut_loci) > 0:
+    if ((spp.gen_arch.use_tskit and len(spp.gen_arch.nonneut_loci) > 0)
+        or not spp.gen_arch.use_tskit):
         subsetters = [spp.gen_arch.recombinations._get_subsetter(
                                         event_key=k) for k in recomb_keys]
         #NOTE: flip the genome L-R before subsetting, if the start homologue is
         # 1, then flatten genome and subset
         new_genome = [np.fliplr(spp[ind].g).flatten(
             )[[*sub]] if hom else spp[ind].g.flatten(
-            )[[*sub]] for ind, hom, sub in zip(pair, 
+            )[[*sub]] for ind, hom, sub in zip(pair,
                                                start_homologues, subsetters)]
         new_genome = np.vstack(new_genome).T
     else:

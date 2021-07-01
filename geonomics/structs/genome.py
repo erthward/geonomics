@@ -95,14 +95,27 @@ class Recombinations:
         else:
             self._rates = self._draw_recombination_rates()
 
-    def _set_events(self, use_subsetters, nonneutral_loci):
-        # set the potential recombination breakpoints, their recombination
+    def _set_events(self, use_subsetters, nonneutral_loci, use_tskit):
+        # get the potential recombination breakpoints, their recombination
         # rates, and the cache of simulated recombination events to be used
         # by the model
-        (self._breakpoints,
-         self._subsetters) = self._draw_recombination_events(
-                use_subsetters=use_subsetters, nonneutral_loci=nonneutral_loci)
-        self._set_seg_info()
+        # NOTE: each item will only be generated and stored if it is needed,
+        #       depending on whether or not tskit is being used and, if it is
+        #       being used, whether or not there are non-neutral loci whose
+        #       genotypes need to be tracked
+        breakpoints, subsetters = self._draw_recombination_events(
+                                            use_subsetters=use_subsetters,
+                                            nonneutral_loci=nonneutral_loci,
+                                            use_tskit=use_tskit)
+        # if using tskit, set seg_info and use the breakpoints dict
+        if use_tskit:
+            self._breakpoints = breakpoints
+            self._set_seg_info()
+        # otherwise don't set seg_info and make the breakpoints dict None
+        else:
+            self._breakpoints = None
+        # either way, set the subsetters
+        self._subsetters = subsetters
 
     def _get_events(self, size):
         events = random.sample(self._events, size)
@@ -169,7 +182,8 @@ class Recombinations:
 
 
     # simulate recombination events
-    def _draw_recombination_events(self, use_subsetters, nonneutral_loci):
+    def _draw_recombination_events(self, use_subsetters, nonneutral_loci,
+                                   use_tskit):
         """
         NOTE: Positions and recomb_rates must be provided already sorted!
         """
@@ -184,13 +198,24 @@ class Recombinations:
 
         if use_subsetters:
             # get the recombination paths used to make the bitarray subsetters
-            if len(nonneutral_loci) > 0:
+            if ((use_tskit and len(nonneutral_loci) > 0)
+                or not use_tskit):
                 recomb_paths = [np.cumsum(
                                     recomb) % 2 for recomb in recombinations]
-                # grab just the values at the nonneutral loci
+                for recomb, bps_item in [*zip(recombinations,
+                                              breakpoints.items())][:10]:
+                    print(recomb)
+                    print(np.cumsum(recomb)%2)
+                    print(bps_item[1])
+                # if using tskit, grab just the values at the nonneutral loci
                 # (because the subsetters will be used only for subsetting
                 # the non-neutral genotypes carried with the individuals)
-                paths = [path[nonneutral_loci] for path in recomb_paths]
+                if use_tskit:
+                    paths = [path[nonneutral_loci] for path in recomb_paths]
+                # otherwise, use all values
+                else:
+                    paths = [path for path in recomb_paths]
+
                 subsetters = [bitarray.bitarray(''.join([self._bitarray_dict[
                             step] for step in path])) for path in paths]
                 # recast as integer-indexed dict
@@ -207,14 +232,17 @@ class Recombinations:
     # calculate the left and right segment edges for each recombination event
     def _set_seg_info(self):
         seg_info = {}
+        ##@##
         for k, recomb in self._breakpoints.items():
-            # NOTE: subtracting 0.5 from all recombination breakpoints,
+            # NOTE: adding 0.5 to all recombination breakpoints,
             # to indicate that recombination 'actually' happens halfway between
             # a pair of loci, (i.e. it actually subsets Individuals'
             # genomes in that way) without having the hold all the 0.5's
             # in the Recombinations._events data struct (to save on memory)
-            left = np.array([0] + [*recomb - 0.5])
-            right = np.array([*recomb - 0.5] + [self._L])
+            left = np.array([0] + [*recomb + 0.5])
+            right = np.array([*recomb + 0.5] + [self._L])
+            assert np.all((right-left)>0), ("Some of the following breakpoints"
+                        " are invalid: :%s") % str([*zip(left, right)])
             seg_info[k] = (left, right)
         self._seg_info = seg_info
 
@@ -287,17 +315,19 @@ class Trait:
         idx:
             Index number of the trait (i.e. its key within the traits dict)
 
-        loc_idx:
+        loci_idxs:
             A 1d numpy array containing the index positions within an
-            Individual's non-neutral genotypes object
+            Individual's genotypes array
             (attribute 'g' of an Individual) that
             correspond to the loci subtending this trait.
             (This is designed such that an Individual's genotype
             for the locus number stored at Trait.loci[i]
-            can be accessed by calling Individual.g[Trait.loc_idx[i], :].)
+            can be accessed by calling Individual.g[Trait.loci_idxs[i], :].)
             This method of tracking allows Individuals' full genotypes to be
-            stored in the tskit tables while they carry their non-neutral
-            genotypes with them (a computational optimization).
+            stored in tskit tables (if tskit is being used)
+            while they carry their non-neutral genotypes with them
+            (a computational optimization).
+            Set to None if tskit is not being used.
 
         loci:
             A numerically sorted 1d numpy array containing
@@ -336,7 +366,6 @@ class Trait:
             corresponding to this trait (i.e. selection will be spatially
             varying). When False, phenotypes closer to 1 will be more
             advantageous globally on the Landscape.
-
     """
     def __init__(self, idx, name, phi, n_loci, mu, layer, alpha_distr_mu,
                  alpha_distr_sigma, max_alpha_mag, gamma, univ_adv):
@@ -355,7 +384,7 @@ class Trait:
         self.univ_adv = univ_adv
 
         self.loci = np.int64([])
-        self.loc_idx = np.int64([])
+        self.loci_idxs = np.int64([])
         self.alpha = np.array([])
 
     def _get_phi(self, spp):
@@ -372,11 +401,16 @@ class Trait:
         # set the number of loci
         self.n_loci = self.loci.size
 
-    def _set_loc_idx(self, nonneut_loci):
-        # set an index of the loci's indices in the nonneut_loci object,
+    def _set_loci_idxs(self, nonneut_loci, use_tskit):
+        # if using tskit then only non-neutral loci will be stored in
+        # Individuals' genotype arrays,
+        # so set an index of the loci's indices in the nonneut_loci object,
         # to use when subsetting for the trait's genotypes
-        self.loc_idx = np.array([np.where(
+        if use_tskit:
+            self.loci_idxs = np.array([np.where(
                                 nonneut_loci == n)[0][0] for n in self.loci])
+        else:
+            self.loci_idxs = None
 
     def _add_locus(self, locus, alpha, idx):
         # get insertion index for the locus 
@@ -391,12 +425,12 @@ class Trait:
                                alpha,
                                self.alpha[insert_pt:]))
 
-        # insert in the loc_idx
+        # insert in the loci_idxs
         # NOTE: add 1 to all superseding locus indexes, to account for
         # locus newly inserted into genotype arrays
-        self.loc_idx = np.hstack((self.loc_idx[:insert_pt],
+        self.loci_idxs = np.hstack((self.loci_idxs[:insert_pt],
                                   idx,
-                                  self.loc_idx[insert_pt:] + 1))
+                                  self.loci_idxs[insert_pt:] + 1))
 
         # increment the number of loci
         self.n_loci += 1
@@ -425,18 +459,19 @@ class GenomicArchitecture:
         delet_loci:
             A 1d numpy array that tracks all deleterious loci
 
-        delet_loc_idx:
+        delet_loci_idxs:
             A 1d numpy array containing the index positions within an
-            Individual's non-neutral genotypes object
-            (attribute 'g' of an Individual) that
-            correspond to the deleterious loci.
+            Individual's genotypes array (attribute 'g' of an Individual)
+            that correspond to the deleterious loci.
             (This is designed such that an Individual's genotype for
             the deleterious locus number stored at
             GenomicArchitecture.delet_loci[i] can be accessed by calling
-            Individual.g[GenomicArchitecture.delet_loc_idx[i], :].)
+            Individual.g[GenomicArchitecture.delet_loci_idxs[i], :].)
             This method of tracking allows Individuals' full genotypes to be
-            stored in the tskit tables while they carry their non-neutral
-            genotypes with them (a computational optimization).
+            stored in the tskit tables (if tskit is being used)
+            while they carry their non-neutral genotypes with them
+            (a computational optimization).
+            Set to None if tskit is not being used.
 
         delet_loci_s:
             A 1d numpy array containing the selection strengths
@@ -446,7 +481,7 @@ class GenomicArchitecture:
             the deleterious locus referenced at
             GenomicArchitecture.delet_loci[i] is stored at
             GenomicArchitetcture.delet_loci_s[i].)
-            
+
         dom:
             Dominance values for all loci (stored as an L-length,
             1d numpy array in which 0 indicates a codominant locus
@@ -464,7 +499,7 @@ class GenomicArchitecture:
         mu_neut:
             Genome-wide neutral mutation rate (expressed in mutations
             per locus per timestep).
-        
+
         neut_loci:
             A 1d numpy array that tracks all loci that do not influence the
             phenotypes of any traits.
@@ -486,22 +521,20 @@ class GenomicArchitecture:
             necessary for simulation of recombination. Not intended for public
             use at this time.
 
-        sex: 
+        sex:
             A bool indicating whether or not Individuals of this Species
             will be assigned a sex (0 for female, 1 for male)
 
         traits:
             A dict containing all of a Species' Trait objects, keyed by serial
             integers.
-         
+
         x:
             Ploidy
             NOTE: only diploidy is currently implemented, but this attribute
                   serves as a placeholder for use in possible
                   future generalization to arbitrary ploidy.)
-
     """
-
     def __init__(self, dom, g_params, land, recomb_rates=None,
                  recomb_positions=None):
         # ploidy (NOTE: for now will be 2 by default; later could consider
@@ -522,6 +555,19 @@ class GenomicArchitecture:
         # whether or not to use sexes for this species
         self.sex = g_params.sex
 
+        # whether or not to use tskit to track this species' spatial pedigree
+        self.use_tskit = g_params.use_tskit
+        assert self.use_tskit in [True, False], (("'use_tskit' must be either "
+                                                  "True or False for each "
+                                                  "Species."))
+        # set interval for simplifying the tskit TableCollection
+        self.tskit_simp_interval = g_params.tskit_simp_interval
+        if self.use_tskit:
+            assert isinstance(self.tskit_simp_interval,
+                              int), (("If using tskit then the "
+                                      "'tskit_simp_interval' parameter must be "
+                                      " an integer."))
+
         # genome-wide neutral mutation rate
         self.mu_neut = g_params.mu_neut
         # array to keep track of all loci that don't influence the
@@ -540,7 +586,7 @@ class GenomicArchitecture:
         # arrays to track deleterious loci, their genotype indices, and their
         # strengths of selection
         self.delet_loci = np.int64([])
-        self.delet_loc_idx = np.int64([])
+        self.delet_loci_idxs = np.int64([])
         self.delet_loci_s = np.array([])
 
         # add a dict of Trait objects, if necessary
@@ -720,6 +766,8 @@ class GenomicArchitecture:
                 self.traits[n]._add_locus(locus, alpha, idx)
         # or else add to the deleterious loci
         elif delet_s is not None and trait_nums is None:
+            # TODO: DECIDE IF NEED TO USE self.loci INSTEAD OF self.delet_loci
+            #       HERE IF use_tskit==False
             del_idx = bisect.bisect_left(self.delet_loci, locus)
             # add the locus, its genome-index (for subsetting individuals'
             # genomes when calculating fitness), and its strength of selection
@@ -727,17 +775,15 @@ class GenomicArchitecture:
             self.delet_loci = np.hstack((self.delet_loci[:del_idx],
                                          locus,
                                          self.delet_loci[del_idx:]))
-            self.delet_loc_idx = np.hstack((self.delet_loc_idx[:del_idx],
-                                         idx,
-                                         self.delet_loc_idx[del_idx:]))
+            if self.use_tskit:
+                self.delet_loci_idxs = np.hstack(
+                    (self.delet_loci_idxs[:del_idx], idx,
+                     self.delet_loci_idxs[del_idx:]))
+            else:
+                self.delet_loci_idxs = None
             self.delet_loci_s = np.hstack((self.delet_loci_s[:del_idx],
                                          delet_s,
                                          self.delet_loci_s[del_idx:]))
-
-        #TODO REMOVE NEXT 2 LINES AFTER TESTING
-        else:
-            assert True == False, "BOTH TRAITS_NUMS AND DELET_S CANT BE NONE!"
-
         return idx
 
 
@@ -858,14 +904,25 @@ def _make_genomic_architecture(spp_params, land):
 
     # get the custom recomb_rates and recomb_positions from the
     # custom gen-arch file, if provided
-    # NOTE: add 0.5 to each locus' position, because each recombination rate
-    #       stipulated in gen_arch file is construed as the recombination rate
-    #       at the midway point between that locus and the subsequent one
+    # NOTE: subtract 0.5 from each locus' position,
+    #       because each recombination rate
+    #       stipulated in gen_arch file
+    #       is construed as the recombination rate
+    #       at the midway point between that locus
+    #       and the previous one
+    #       (NOTE: this is of course non-sensical for the 0th
+    #              locus, which has its rate expressed as
+    #              the rate of recomb between the -1th and the 0th,
+    #              but that's fine because the first rate is constrained to 0
+    #              anyhow; the starting homologue of the recombination path,
+    #              i.e. the sister chromatid placed into the gamete,
+    #              is later chosen using a ~Bern(0.5) draw at the time
+    #              mating occurs; see mating.py)
     recomb_rates = None
     recomb_positions = None
     if gen_arch_file is not None:
-        recomb_rates = gen_arch_file['r'].values[:-1]
-        recomb_positions = gen_arch_file['locus'].values[:-1] + 0.5
+        recomb_rates = gen_arch_file['r'].values
+        recomb_positions = gen_arch_file['locus'].values - 0.5
 
     # set locus-wise dominance values for the 1-alleles, using the 'dom' value
     # in the gen_arch params, unless a gen_arch_file was provided
@@ -931,11 +988,12 @@ def _make_genomic_architecture(spp_params, land):
                 gen_arch._set_trait_loci(trait_num, mutational=False)
 
     # now that all nonneutral loci have been selected, 
-    # set each trait's loc_idx (which maps a trait's numeric loci to
+    # set each trait's loci_idxs (which maps a trait's numeric loci to
     # their index positions in individuals' genomes)
+    # NOTE: will just be set to None if not using tskit
     if gen_arch.traits is not None:
         for trt in gen_arch.traits.values():
-            trt._set_loc_idx(gen_arch.nonneut_loci)
+            trt._set_loci_idxs(gen_arch.nonneut_loci, gen_arch.use_tskit)
 
     assert_msg = ("The union of the gen_arch.neut_loci and "
                   "gen_arch.nonneut_loci sets does not contain all loci "
@@ -956,12 +1014,13 @@ def _make_genomic_architecture(spp_params, land):
                 # if False, draw randomly
                 else:
                     gen_arch.p = _draw_allele_freqs(g_params.L)
-            # if not a bool then should be a float, so assert, then set to that val
+            # if not a bool then should be a float, so assert,
+            # then set to that val
             else:
-                assert 0 <= g_params.start_p_fixed <= 1, ("If a starting allele "
-                                                          "frequency value is "
-                                                          "provided then it must "
-                                                          "be between 0 and 1.")
+                assert 0 <= g_params.start_p_fixed <= 1, ("If a starting allele"
+                                                        " frequency value is "
+                                                        "provided then it must "
+                                                        "be between 0 and 1.")
                 gen_arch.p = np.array([g_params.start_p_fixed]*g_params.L)
         # if the value is None, then draw randomly
         else:
@@ -974,9 +1033,11 @@ def _make_genomic_architecture(spp_params, land):
         gen_arch.p = gen_arch_file['p'].values
 
     # set the recombination events
-    use_subsetters = (len(gen_arch.nonneut_loci) > 0 or
-                      gen_arch._mu_nonneut > 0)
-    gen_arch.recombinations._set_events(use_subsetters, gen_arch.nonneut_loci)
+    use_subsetters = ((gen_arch.use_tskit and (len(gen_arch.nonneut_loci) > 0 or
+                                               gen_arch._mu_nonneut > 0))
+                      or not gen_arch.use_tskit)
+    gen_arch.recombinations._set_events(use_subsetters, gen_arch.nonneut_loci,
+                                        gen_arch.use_tskit)
 
     return gen_arch
 
@@ -1048,16 +1109,23 @@ def _make_starting_mutations(spp, tables):
         np.random.shuffle(homologues)
         homologues_to_mutate = homologues[:n_mutations]
         for ind, homol in homologues_to_mutate:
-            # create a mutation in the individual's genome, if this is a
-            # non-neutral locus
-            if site in spp.gen_arch.nonneut_loci:
-                spp[ind].g[np.where(spp.gen_arch.nonneut_loci == site),
-                           homol] = 1
-            # get the homologue's nodes-table id,
-            # then add a row to the mutations table
-            node_id = spp[ind]._nodes_tab_ids[homol]
-            tables.mutations.add_row(site, node=node_id, parent=-1,
-                                     derived_state='1')
+            # if using tskit, add muts to individis' genotype arrays as needed,
+            # and also to mutations table
+            if spp.gen_arch.use_tskit:
+                # create a mutation in the individual's genome, if this is a
+                # non-neutral locus
+                if site in spp.gen_arch.nonneut_loci:
+                    spp[ind].g[np.where(spp.gen_arch.nonneut_loci == site),
+                               homol] = 1
+                # get the homologue's nodes-table id,
+                # then add a row to the mutations table
+                node_id = spp[ind]._nodes_tab_ids[homol]
+                tables.mutations.add_row(site, node=node_id, parent=-1,
+                                         derived_state='1')
+
+            # if not using tskit just add all muts to individs' genotypes arrays
+            else:
+                spp[ind].g[site, homol] = 1
 
     # and then reset the individuals' phenotypes, if needed
     if spp.gen_arch.traits is not None:
@@ -1266,7 +1334,8 @@ def _calc_lineage_direction(lin_dict):
         # convert to all positive values, 0 - 360
         if ang < 0:
             ang += 360
-        #convert to all positive clockwise angles, expressed as 0 at compass north
+        #convert to all positive clockwise angles,
+        # expressed as 0 at compass north
         # (i.e. angles clockwise from vector (X,Y) = (0,1)
         ang = (-ang + 90) % 360
         return ang

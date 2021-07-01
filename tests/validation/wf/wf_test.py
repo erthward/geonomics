@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-orig_params = gnx.read_parameters_file(('/home/drew/Desktop/stuff/berk'
+orig_params = gnx.read_parameters_file(('/home/deth/Desktop/UCB'
                                         '/research/projects/sim/geonomics/'
                                         'tests/validation/wf/wf_params.py'))
 

@@ -61,8 +61,9 @@ def _do_neutral_mutation(spp, offspring, locus=None, individ=None):
     # NOTE: not mutating the individual's genome because we're only tracking
     # non-neutral mutations now
 
-    # add a row to the tskit.TableCollection.mutations table
-    _do_add_row_muts_table(spp, individ, homol, locus)
+    # add a row to the tskit.TableCollection.mutations table, if necessary
+    if spp.gen_arch.use_tskit:
+        _do_add_row_muts_table(spp, individ, homol, locus)
     return(individ, locus)
 
 
@@ -89,17 +90,25 @@ def _do_nonneutral_mutation(spp, offspring, locus=None, individ=None,
     idx = spp.gen_arch._add_nonneut_locus(locus, trait_nums, delet_s)
     #create the mutation
     homol = r.binomial(1, 0.5)
+
     # add a new row for this locus, with '0' genotypes,
-    # to the individuals' genotype arrays
-    spp._add_new_locus(idx, locus)
+    # to the individuals' genotype arrays,
+    # NOTE: only is using tskit, because only in that case will individuals'
+    #       genotype arrays not already contain all simulated loci
+    if spp.gen_arch.use_tskit:
+        spp._add_new_locus(idx, locus)
+
     # mutate the chosen individual's chosen homologue's genotype to 1
     spp[individ].g[idx, homol] = 1
     # update the individual's phenotype
     spp._set_z_individ(individ)
-    # add a row to the tskit.TableCollection.mutations table
-    _do_add_row_muts_table(spp, individ, homol, locus)
-    # update the recombination subsetters
-    spp.gen_arch.recombinations._update_subsetters(locus, idx)
+
+    # manage tskit data structs, if necessary
+    if spp.gen_arch.use_tskit:
+        # add a row to the tskit.TableCollection.mutations table
+        _do_add_row_muts_table(spp, individ, homol, locus)
+        # update the recombination subsetters
+        spp.gen_arch.recombinations._update_subsetters(locus, idx)
     return(individ, locus)
 
 

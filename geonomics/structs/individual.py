@@ -57,11 +57,13 @@ class Individual:
             documentation for further details)
 
         g:
-            The Individual's non-neutral genotypes,
-            stored as an L_n x 2 numpy array, where L_n is the current number
-            of non-neutral loci in the Individual's Species.
-            Individual's only carry copies of their non-neutral genotypes
-            (stored in this attribute). This is a computational optimization,
+            The Individual's genotype array,
+            stored as an L_g x 2 numpy array, where L_g is the number
+            of loci being tracked by each Individual in the Species.
+
+            If tskit is being used then Individuals only carry
+            copies of their non-neutral genotypes
+            (stored in this attribute); this is a computational optimization,
             as it allows fitness-based operations to be calculated
             quickly on the fly (using this attribute's data), while minimizing
             the memory required to stored the full (neutral and non-netural)
@@ -70,6 +72,11 @@ class Individual:
             The successive rows in this array store the genotypes corresponding
             to the loci indicated by the successive locus numbers in
             Species.GenomicArchitecture.nonneut_loci.
+
+            If tskit is not being used then this array will store genotypes
+            for all loci in the simulated genome (i.e. it will be of shape
+            L x 2, where L is genome-length parameter in the this Individual's
+            Species' section of the paramters file).
 
         sex:
             The Individual's sex (0=female, 1=male; None, if the Species is

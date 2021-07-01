@@ -63,8 +63,6 @@ ax_obs.plot(bin_edges[:-1], v, '-b', label='msprime')
 ax_obs.set_ylabel("breakpoint density", fontsize=18)
 ax_obs.tick_params(labelsize=15)
 
-#num_trees_dict_cus['msp'].append(ts.num_trees)
-
 # run a geonomics model for that length of time
 print('\n\t\tGNX RUNNING...\n')
 #assert True == False
@@ -78,7 +76,32 @@ ts_gnx = mod.get_tree_sequence()
 # add the gnx breakpoint densities to the plot
 gnx_breakpoints = np.array(list(ts_gnx.breakpoints()))
 v_gnx, bin_edges_gnx = np.histogram(gnx_breakpoints, num_bins, density=True)
-ax_obs.plot(bin_edges_gnx[:-1], v_gnx, '-r', label='geonomics')
+ax_obs.plot(bin_edges_gnx[:-1], v_gnx, '-r', label='geonomics: tskit')
 ax_obs.legend(prop={"size":16})
+
+
+# run the same model, without using tskit
+params['comm']['species']['spp_0']['gen_arch']['use_tskit'] = False
+mod = gnx.make_model(params)
+mod.walk(100000, 'burn')
+mod.walk(20)
+
+# function to recover breakpoints from subsetters
+def get_subsetter_bps(subsetter):
+    path = np.array([int(n) for n in sub][::2])
+    bps = np.where((path[:-1] - path[1:]) != 0)[0] + 0.5
+    #jitter = np.random.normal(0, 0.0000001, len(bps))
+    #bps = bps + jitter
+    return bps
+
+gnx_notskit_breakpoints = []
+for sub in mod.comm[0].gen_arch.recombinations._subsetters.values():
+    gnx_notskit_breakpoints.extend(get_subsetter_bps(sub))
+v_gnx_nots, bin_edges_gnx_nots = np.histogram(gnx_notskit_breakpoints,
+                                    num_bins, density=True)
+ax_obs.plot(bin_edges_gnx_nots[:-1], v_gnx_nots,
+            '-y', label='geonomics: no tskit')
+ax_obs.legend(prop={"size":16})
+
 
 fig_cus.show()

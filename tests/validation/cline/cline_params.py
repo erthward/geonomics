@@ -240,7 +240,7 @@ params = {
                     #scale of distr of deleterious effect sizes
                     'delet_alpha_distr_scale':  0.2,
                     #alpha of distr of recomb rates
-                    'r_distr_alpha':            None,
+                    'r_distr_alpha':            0.5,
                     #beta of distr of recomb rates
                     'r_distr_beta':             None,
                     #whether loci should be dominant (for allele '1')
@@ -258,6 +258,10 @@ params = {
                     'jitter_breakpoints':       False,
                     #whether to save mutation logs
                     'mut_log':                  False,
+                    #whether to use tskit (to record full spatial pedigree)
+                    'use_tskit':                False,
+                    #time step interval for simplification of tskit tables
+                    'tskit_simp_interval':      100,
 
                     'traits': {
 
@@ -321,8 +325,6 @@ params = {
         'burn_T':       60,
         #seed number
         'num':          None,
-        #time step interval for simplification of tskit tables
-        'tskit_simp_interval':      100,
 
         #-----------------------------#
         #--- iterations parameters ---#

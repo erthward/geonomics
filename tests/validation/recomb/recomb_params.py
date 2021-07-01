@@ -226,6 +226,10 @@ params = {
                     'jitter_breakpoints':       True,
                     #whether to save mutation logs
                     'mut_log':                  False,
+                    #whether to use tskit (to record full spatial pedigree)
+                    'use_tskit':                True,
+                    #time step interval for simplification of tskit tables
+                    'tskit_simp_interval':      100,
 
                     }, # <END> 'gen_arch'
 
@@ -255,8 +259,6 @@ params = {
         'burn_T':       30,
         #seed number
         'num':          None,
-        #time step interval for simplication of tskit tables
-        'tskit_simp_interval':      100,
 
 
         #-----------------------------#

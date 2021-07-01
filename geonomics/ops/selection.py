@@ -20,11 +20,17 @@ from collections import OrderedDict as OD
 
 #Get the phenotypic values of all individuals for a given trait
 def _calc_phenotype(ind, gen_arch, trait_num):
-    #get number of loci and their allelic effect sizes
+    # get number of loci and their allelic effect sizes
     n_loci = gen_arch.traits[trait_num].n_loci
     alpha = gen_arch.traits[trait_num].alpha
-    #get the mean genotype array (using the trait's locus index)
-    genotype = np.mean(ind.g[gen_arch.traits[trait_num].loc_idx], axis = 1)
+    # get the mean genotype array (using the trait's locus index)
+    # NOTE: use loci_idxs if tskit is being used and Individuals' genotype
+    #       arrays only hold their non-neutral genotypes;
+    #       otherwise, just use the trait.loci directly
+    if gen_arch.use_tskit:
+        genotype = np.mean(ind.g[gen_arch.traits[trait_num].loci_idxs], axis=1)
+    else:
+        genotype = np.mean(ind.g[gen_arch.traits[trait_num].loci], axis=1)
     #use dominance, if required (to save considerable compute time otherwise)
     if gen_arch._use_dom:
         #get the dominance values
@@ -74,8 +80,15 @@ def _calc_fitness_deleterious_mutations(spp):
     #diploid genotypes for each of the deleterious loci in the cols
     #(0, 1, or 2, to facilitate the fitness math, because s values
     #(i.e. selection coefficients) are expressed per allele)
-    deletome = np.sum(np.stack([ind.g[
-            spp.gen_arch.delet_loc_idx, :] for ind in spp.values()]), axis = 2)
+    # NOTE: use delet_loci_idxs if tskit is being used and Individuals' genotype
+    #       arrays only hold their non-neutral genotypes;
+    #       otherwise, just use the delet_loci directly
+    if spp.gen_arch.use_tskit:
+        deletome = np.sum(np.stack([ind.g[
+            spp.gen_arch.delet_loci_idxs, :] for ind in spp.values()]), axis=2)
+    else:
+        deletome = np.sum(np.stack([ind.g[
+            spp.gen_arch.delet_loci, :] for ind in spp.values()]), axis=2)
     fit = 1 - np.multiply(deletome, spp.gen_arch.delet_loci_s)
     fit = fit.prod(axis = 1)
     return(fit)

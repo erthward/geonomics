@@ -192,9 +192,9 @@ params = {
                     #file defining custom genomic arch
                     'gen_arch_file':            None,
                     #num of loci
-                    'L':                        500,
+                    'L':                        100,
                     #num of chromosomes
-                    'l_c':                      [500],
+                    'l_c':                      [100],
                     #whether starting allele frequencies should be fixed at 0.5
                     'start_p_fixed':            0.5,
                     'start_neut_zero':          False,
@@ -207,7 +207,7 @@ params = {
                     #scale of distr of deleterious effect sizes
                     'delet_alpha_distr_scale':  0.2,
                     #alpha of distr of recomb rates
-                    'r_distr_alpha':            None,
+                    'r_distr_alpha':            0.5,
                     #beta of distr of recomb rates
                     'r_distr_beta':             None,
                     #whether loci should be dominant (for allele '1')

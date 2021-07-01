@@ -14,7 +14,7 @@ from matplotlib.lines import Line2D
 import statsmodels.api as sm
 
 # set some plotting params
-img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
+#img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
            'img/final/')
 titlesize=20
 axlabelsize=18

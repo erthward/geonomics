@@ -17,7 +17,7 @@ from sympy import symbols
 import itertools
 
 # set some plotting params
-img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
+#img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
                       'img/final/')
 ax_fontdict = {'fontsize': 18}
 ttl_fontdict = {'fontsize': 20}

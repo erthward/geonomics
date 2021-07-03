@@ -192,7 +192,7 @@ params = {
                     #file defining custom genomic arch
                     'gen_arch_file':            None,
                     #num of loci
-                    'L':                        100,
+                    'L':                        500,
                     #num of chromosomes
                     'l_c':                      [100],
                     #whether starting allele frequencies should be fixed at 0.5

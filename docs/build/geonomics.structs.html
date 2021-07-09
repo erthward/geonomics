@@ -98,6 +98,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro_video.html">Intro Video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="procedural_diagram.html">Workflow Diagram</a></li>
 <li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -295,19 +296,20 @@ the effect sizes (i.e. alphas) of deleterious loci are drawn</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="geonomics.structs.genome.GenomicArchitecture.delet_loc_idx">
-<span class="sig-name descname"><span class="pre">delet_loc_idx</span></span><a class="headerlink" href="#geonomics.structs.genome.GenomicArchitecture.delet_loc_idx" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="geonomics.structs.genome.GenomicArchitecture.delet_loci_idxs">
+<span class="sig-name descname"><span class="pre">delet_loci_idxs</span></span><a class="headerlink" href="#geonomics.structs.genome.GenomicArchitecture.delet_loci_idxs" title="Permalink to this definition">¶</a></dt>
 <dd><p>A 1d numpy array containing the index positions within an
-Individual’s non-neutral genotypes object
-(attribute ‘g’ of an Individual) that
-correspond to the deleterious loci.
+Individual’s genotypes array (attribute ‘g’ of an Individual)
+that correspond to the deleterious loci.
 (This is designed such that an Individual’s genotype for
 the deleterious locus number stored at
 GenomicArchitecture.delet_loci[i] can be accessed by calling
-Individual.g[GenomicArchitecture.delet_loc_idx[i], :].)
+Individual.g[GenomicArchitecture.delet_loci_idxs[i], :].)
 This method of tracking allows Individuals’ full genotypes to be
-stored in the tskit tables while they carry their non-neutral
-genotypes with them (a computational optimization).</p>
+stored in the tskit tables (if tskit is being used)
+while they carry their non-neutral genotypes with them
+(a computational optimization).
+Set to None if tskit is not being used.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -485,18 +487,20 @@ of effect sizes for this trait’s loci.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="geonomics.structs.genome.Trait.loc_idx">
-<span class="sig-name descname"><span class="pre">loc_idx</span></span><a class="headerlink" href="#geonomics.structs.genome.Trait.loc_idx" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="geonomics.structs.genome.Trait.loci_idxs">
+<span class="sig-name descname"><span class="pre">loci_idxs</span></span><a class="headerlink" href="#geonomics.structs.genome.Trait.loci_idxs" title="Permalink to this definition">¶</a></dt>
 <dd><p>A 1d numpy array containing the index positions within an
-Individual’s non-neutral genotypes object
+Individual’s genotypes array
 (attribute ‘g’ of an Individual) that
 correspond to the loci subtending this trait.
 (This is designed such that an Individual’s genotype
 for the locus number stored at Trait.loci[i]
-can be accessed by calling Individual.g[Trait.loc_idx[i], :].)
+can be accessed by calling Individual.g[Trait.loci_idxs[i], :].)
 This method of tracking allows Individuals’ full genotypes to be
-stored in the tskit tables while they carry their non-neutral
-genotypes with them (a computational optimization).</p>
+stored in tskit tables (if tskit is being used)
+while they carry their non-neutral genotypes with them
+(a computational optimization).
+Set to None if tskit is not being used.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -623,11 +627,12 @@ documentation for further details)</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="geonomics.structs.individual.Individual.g">
 <span class="sig-name descname"><span class="pre">g</span></span><a class="headerlink" href="#geonomics.structs.individual.Individual.g" title="Permalink to this definition">¶</a></dt>
-<dd><p>The Individual’s non-neutral genotypes,
-stored as an L_n x 2 numpy array, where L_n is the current number
-of non-neutral loci in the Individual’s Species.
-Individual’s only carry copies of their non-neutral genotypes
-(stored in this attribute). This is a computational optimization,
+<dd><p>The Individual’s genotype array,
+stored as an L_g x 2 numpy array, where L_g is the number
+of loci being tracked by each Individual in the Species.</p>
+<p>If tskit is being used then Individuals only carry
+copies of their non-neutral genotypes
+(stored in this attribute); this is a computational optimization,
 as it allows fitness-based operations to be calculated
 quickly on the fly (using this attribute’s data), while minimizing
 the memory required to stored the full (neutral and non-netural)
@@ -636,6 +641,10 @@ genotypes of all current Individuals and their ancestors (i.e. the
 The successive rows in this array store the genotypes corresponding
 to the loci indicated by the successive locus numbers in
 Species.GenomicArchitecture.nonneut_loci.</p>
+<p>If tskit is not being used then this array will store genotypes
+for all loci in the simulated genome (i.e. it will be of shape
+L x 2, where L is genome-length parameter in the this Individual’s
+Species’ section of the paramters file).</p>
 </dd></dl>
 
 <dl class="py attribute">

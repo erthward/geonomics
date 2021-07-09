@@ -62,17 +62,28 @@ Genomes, :py:`GenomicArchitecture`, and :py:`Trait` objects
 and :py:\`Community\` objects`, below)
 can optionally be assigned genomes.
 If they are, each :py:`Individual`'s genome is conceptually modeled as a 
-2-by-L array (where 2 is the ploidy, currently fixed at
-diploidy, and L is the genome length) containing 0s and 1s (because
+L-by-1 array (where L is the genome length,
+and 2 is the ploidy, currently fixed at
+diploidy) containing 0s and 1s (because
 Geonomics strictly models biallelic SNPs, i.e SNPs with '0'- and '1'-alleles).
-(In actuality, Geonomics stores genomes by combining 
+(In actuality, the way in which Geonomics stores genomes 
+depends on the parameter `use_tskit`.
+If `use_tskit` is True, Geonomics stores genomes by combining 
 Numpy arrays for non-neutral genotypes with a `tskit`_ :py:`TableCollection`
 for neutral genotypes and for the current population's spatial pedigree.
 Although this makes for more complicated data structures,
 it optimizes information retention while minimizing memory usage,
 keeping Geonomics fast yet nonetheless enabling powerful
 spatiotemporal population genomics research.
-See :ref:`:py:\`tskit.tables.TableCollection\``, below, for details.)
+See :ref:`:py:\`tskit.tables.TableCollection\``, below, for details.
+If `use_tskit` is False, each :py:`Individual` stores its full genome,
+including neutral and non-neutral loci,
+as an L-by-2 array, and no special data structures are used.
+The choice of whether or not to use :py:`tskit` depends on the parameterization
+of a user's model, with models requiring larger numbers of independent loci
+running more smoothly without :py:`tskit`.
+See the :py:`use_tskit` section of the :ref:`Parameters` section
+for more details.)
 
 The parameter L, as well as numerous other genomic parameters (including 
 locus-wise starting frequencies of the 1 alleles; locus-wise dominance effects;

@@ -126,7 +126,7 @@ def _draw_n_births(num_pairs, n_births_distr_lambda):
     return num_births
 
 
-# function for mating a chosen mating-pair
+# function for mating for a single offspring for a certain mating pair
 def _do_mating_sngl_offspr(spp, pair, recomb_keys):
     # choose a start homologue
     # NOTE: for now, this will only work for diploidy
@@ -172,26 +172,43 @@ def _do_mating_sngl_offspr(spp, pair, recomb_keys):
     return new_genome, seg_info
 
 
-def _do_mating_sngl_pair(spp, pair, n_offspring, pairs_recomb_keys):
+# function for mating a chosen mating-pair
+def _do_mating_sngl_pair(spp, pair, n_births, pairs_recomb_keys):
     # generate a list of n offspring for the given pair
     offspring = [_do_mating_sngl_offspr(spp, pair,
                                         [pairs_recomb_keys.pop(
                                         ) for _ in range(2)]) for off in range(
-                                                                  n_offspring)]
+                                                                  n_births)]
     return offspring
 
 
-# function for mating a chosen mating-pair
-def _do_mating(spp, mating_pairs, n_offspring, recomb_keys):
+# function for mating a whole species
+def _do_mating(spp, mating_pairs, n_births, recomb_keys):
+    """
+    NOT INTENDED FOR PUBLIC USE
+
+    spp: a gnx Species object
+
+    mating_pairs: an nx2 2d np.array of ints, where n = number of mating pairs,
+                  2 columns correspond to each of the two mates in each pair,
+                  and each int is the index number of an Individual in a pair
+
+    n_births: a length-n 1d np.array of ints, where n = number of mating pairs
+              and each int is the number of offspring the nth pair will produce
+
+    recomb_keys: an m-length list of ints, where m = twice the
+                 total number of births and each int is a randomly drawn
+                 recombination event's key
+    """
     # use list of number of offspring per mating pair to create
     # list of start and stop indices for subsetting the recomb paths into
     # groups of paths to be used for each gamete-production event for each pair
-    start_stop_idxs = np.hstack((0, np.cumsum([2*n for n in n_offspring])))
+    start_stop_idxs = np.hstack((0, np.cumsum([2*n for n in n_births])))
     # get the recombination paths to be used by each pair
     pairs_recomb_keys = [recomb_keys[start_stop_idxs[i]: start_stop_idxs[
-                                    i + 1]] for i in range(len(n_offspring))]
+                                    i + 1]] for i in range(len(n_births))]
     # use the pairs' paths to produce recombinant genomes for each pair (where
     # number of genomes equals that pair's number of offspring)
     new_genomes = list(starmap(_do_mating_sngl_pair, zip(repeat(spp),
-                               mating_pairs, n_offspring, pairs_recomb_keys)))
+                               mating_pairs, n_births, pairs_recomb_keys)))
     return new_genomes

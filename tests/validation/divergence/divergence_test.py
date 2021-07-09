@@ -68,6 +68,9 @@ for phi in phis:
     # burn in the model
     mod.walk(mode='burn', T=200000, verbose=True)
 
+    # using tskit?
+    use_tskit = mod.comm[0].gen_arch.use_tskit
+
     # create data structures to record allele frequencies in each half of the
     # landscape, migrations between the halves, and z-e diffs at each timestep
     allele_freqs_this_phi = {0: [], 1: []}
@@ -82,8 +85,13 @@ for phi in phis:
 
     # update it for the starting allele frequencies
     for allele in (0, 1):
-        allele_counts = [np.sum(i.g == allele) for i in mod.comm[0].values(
+        if use_tskit:
+            allele_counts = [np.sum(i.g == allele) for i in mod.comm[0].values(
                              ) if i.e[0] == allele]
+        else:
+            nonneut_loc = mod.comm[0].gen_arch.traits[0].loci[0]
+            allele_counts = [np.sum(i.g[nonneut_loc,
+                :] == allele) for i in mod.comm[0].values() if i.e[0] == allele]
         allele_freq = sum(allele_counts) / (2 * len(allele_counts))
         # flip the freq, if tracking the 0 allele
         if allele == 0:
@@ -97,8 +105,14 @@ for phi in phis:
         mod.walk(1, verbose=True)
         # get allele frequencies for each half of the environment
         for allele in (0, 1):
-            allele_counts = [np.sum(i.g == allele) for i in mod.comm[0].values(
-                                 ) if i.e[0] == allele]
+            if use_tskit:
+                allele_counts = [np.sum(i.g == allele) for i in mod.comm[
+                    0].values() if i.e[0] == allele]
+            else:
+                nonneut_loc = mod.comm[0].gen_arch.traits[0].loci[0]
+                allele_counts = [np.sum(i.g[nonneut_loc,
+                                :] == allele) for i in mod.comm[
+                                0].values() if i.e[0] == allele]
             allele_freq = sum(allele_counts) / (2 * len(allele_counts))
             # flip the freq, if tracking the 0 allele
             if allele == 0:

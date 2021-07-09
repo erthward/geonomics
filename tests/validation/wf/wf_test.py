@@ -4,7 +4,9 @@ import geonomics as gnx
 from copy import deepcopy
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import seaborn as sns
+import pandas as pd
 import os
 
 orig_params = gnx.read_parameters_file(('/home/deth/Desktop/UCB'
@@ -205,7 +207,7 @@ ax.set_ylabel('persistence time (time steps)', size=20)
 def rgb2hex(r,g,b):
     return "#{:02x}{:02x}{:02x}".format(r,g,b)
 
-cmap = matplotlib.cm.get_cmap('plasma')
+cmap = mpl.cm.get_cmap('plasma')
 cols = [rgb2hex(*cmap(n, bytes=True)[:3]) for n in np.linspace(0.1, 0.9, 3)]
 
 fig_hist = plt.figure()

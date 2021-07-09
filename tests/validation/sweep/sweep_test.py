@@ -125,9 +125,12 @@ mod = gnx.make_model('./tests/validation/sweep/sweep_params.py')
 
 #get the non-neutral locus
 nonneut_loc = mod.comm[0].gen_arch.traits[0].loci[0]
-# NOTE: changing this to 0 because only the single non-neutral locus
+if not mod.comm[0].gen_arch.use_tskit:
+    nonneut_loc_idx = nonneut_loc
+# NOTE: for tskit, set this to 0, because only the single non-neutral locus
 # will be in each individ's genome array, so idx will be 0
-nonneut_loc_idx = 0
+else:
+    nonneut_loc_idx = 0
 
 # burn the model in
 mod.walk(20000, 'burn', True)

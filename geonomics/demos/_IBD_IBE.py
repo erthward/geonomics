@@ -42,7 +42,10 @@ def map_genetic_PCA(mod, mark_size):
     land = mod.land
     # get array of resulting genomic data (i.e. 'speciome'),
     # genotypes meaned by individual
-    speciome = np.mean(np.stack([i.g for i in species.values()]), axis=2)
+    if species.gen_arch.use_tskit:
+        speciome = species._get_genotypes(biallelic=False)
+    else:
+        speciome = np.mean(np.stack([i.g for i in species.values()]), axis=2)
     # run PCA on speciome
     pca = PCA(n_components=3)
     PCs = pca.fit_transform(speciome)
@@ -88,6 +91,10 @@ def plot_genetic_PCA(mod):
     species = mod.comm[0]
     # get array of resulting genomic data (i.e.
     # 'speciome'), genotypes meaned by individual
+    if species.gen_arch.use_tskit:
+        speciome = species._get_genotypes(biallelic=False)
+    else:
+        speciome = np.mean(np.stack([i.g for i in species.values()]), axis=2)
     speciome = np.mean(np.stack([i.g for i in species.values()]), axis=2)
     # run PCA on speciome
     pca = PCA(n_components=2)

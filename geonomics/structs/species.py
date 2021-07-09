@@ -589,7 +589,13 @@ class Species(OD):
         return mating_pairs
 
     #function for executing mating for a species
-    def _do_mating(self, land, mating_pairs, burn=False, check_haps=False):
+    def _do_mating(self, land, mating_pairs, burn=False,
+                   check_haps=False, check_genotypes=False):
+
+        # set the genotype-check counter, if necessary
+        if check_genotypes:
+            gt_check_num = 0
+
         #draw the number of births for each pair, and append
         #total births to self.n_births list
         if self.n_births_fixed:
@@ -633,7 +639,7 @@ class Species(OD):
 
             n_offspring = n_births[n_pair]
 
-            for n in range(n_offspring):
+            for offspring_i in range(n_offspring):
 
                 #get the next offspring_key
                 offspring_key = offspring_keys.pop()
@@ -655,9 +661,10 @@ class Species(OD):
                 #set the new_genome correctly
                 if self.gen_arch is not None:
                     if not burn:
-                        new_genome = genomes_and_segs[n_pair][n][0]
-                        # NOTE: genome_segs is all None if use_tskit == False
-                        genome_segs = genomes_and_segs[n_pair][n][1]
+                        new_genome = genomes_and_segs[n_pair][offspring_i][0]
+                        # NOTE: genome_segs will just be all Nones
+                        #       if self.use_tskit == False
+                        genome_segs = genomes_and_segs[n_pair][offspring_i][1]
                     else:
                         new_genome=None
                 else:
@@ -754,6 +761,40 @@ class Species(OD):
                                                self.gen_arch.L), (sum(
                                             child_edf.right - child_edf.left),
                                                                   child_edf)
+
+                    if check_genotypes:
+                        self._sort_simplify_table_collection()
+                        ts = self._tc.tree_sequence()
+                        manual_gt = self[offspring_key].g
+                        tskit_gts_dict = dict(zip(ts.samples(),
+                                                  ts.haplotypes()))
+                        tskit_gts = [tskit_gts_dict[
+                            node_id] for node_id in self[
+                            offspring_key]._nodes_tab_ids.values()]
+                        tskit_gt = np.stack([[int(n) for n in gt] for gt in
+                            tskit_gts]).T[self.gen_arch.nonneut_loci, :]
+                        print('OFFSPRING %i\n\n' % offspring_key)
+                        segs_0 = [* self.gen_arch.recombinations._get_seg_info(
+                                  start_homologue=0,
+                                  event_key=recomb_keys[gt_check_num],
+                                  node_ids=np.array([0, 1]))]
+                        print('\tgenome_segs 0:', segs_0)
+                        segs_1 = [* self.gen_arch.recombinations._get_seg_info(
+                                  start_homologue=0,
+                                  event_key=recomb_keys[gt_check_num+1],
+                                  node_ids=np.array([0, 1]))]
+                        print('\tgenome_segs 1:', segs_1)
+                        print('\tnonneut loci:', self.gen_arch.nonneut_loci)
+                        print('recomb at nonneut',
+                            np.any([np.floor(i[2]
+                            ) in self.gen_arch.nonneut_loci for i in (segs_0 +
+                                                                      segs_1)]))
+                        assert np.all(manual_gt == tskit_gt), ("manually "
+                            "tracked genotype differs from genotype recorded "
+                            "in tskit TableCollection:\n\nMANUAL\n\t%s"
+                            "\n\nTSKIT\n\t%s") % (str(manual_gt),
+                                                  str(tskit_gt))
+                        gt_check_num += 2
 
         # sample all individuals' environment values, to initiate for offspring
         self._set_e(land)
@@ -1417,7 +1458,7 @@ class Species(OD):
     def _get_z(self, trait_num=None, individs=None):
         zs = self._get_scalar_attr('z', individs=individs)
         if trait_num is not None:
-            zs = zs[:,trait_num]
+            zs = np.atleast_2d(zs)[:,trait_num]
         return zs
 
     #convenience method for getting whole species' fitnesses

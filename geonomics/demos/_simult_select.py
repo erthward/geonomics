@@ -293,7 +293,7 @@ def _make_params():
                         #scale of distr of deleterious effect sizes
                         'delet_alpha_distr_scale':  0.2,
                         #alpha of distr of recomb rates
-                        'r_distr_alpha':            0.5,
+                        'r_distr_alpha':            None,
                         #beta of distr of recomb rates
                         'r_distr_beta':             None,
                         #whether loci should be dominant (for allele '1')

@@ -1638,6 +1638,45 @@ accurate representation of the number of trees.</p>
 save a record of each mutation that occurs for a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>, for each iteration. If <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>, no mutation log
 will be created and written to.</p>
+<p><strong>use_tskit</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to use tskit (to record full spatial pedigree)</span>
+<span class="s1">&#39;use_tskit&#39;</span><span class="p">:</span>                  <span class="kc">True</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">True</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates whether Geonomics should use the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code> API
+to store individuals’ genomes in a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">TableCollection</span></span></code>.
+If <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code> is used the the full spatial pedigree of the current population
+will be available at any time, and each Individual will carry a numpy.ndarray
+containing just its genotypes for any non-neutral loci.
+If <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code> is not used, each Individual will carry a numpy.ndarray
+containing its genotypes for all simulated loci (neutral and non-neutral).
+Defaults to using <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code> (True),
+but may need to be switched to False for models
+using large numbers of independent loci
+and not needing access to the spatial pedigree
+(because larger numbers of independent loci cause a geometric
+expansion of the number of trees stored in the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">TreeSequence</span></span></code>,
+requiring significantly more memory overall,
+and significantly greater runtime to store them at each time step).</p>
+<p><strong>tskit_simp_interval</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#time step interval for simplification of tskit tables</span>
+<span class="s1">&#39;tskit_simp_interval&#39;</span><span class="p">:</span>          <span class="mi">100</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
+<p>default: 100</p>
+<p>reset? N</p>
+<p>This sets the interval, in timesteps,
+between subsequent <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code> simplifications.
+Defaults to simplifying every 100 timesteps, as suggested by the
+tskit package authors (see
+<a class="reference external" href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006581">here</a>
+). This most likely need not be changed, but for simulations
+with especially large population and/or genome sizes the user may
+wish to experiment with reducing this interval so as to improve performance.</p>
 <hr class="docutils" />
 <div class="section" id="traits">
 <h5>Traits<a class="headerlink" href="#traits" title="Permalink to this headline">¶</a></h5>
@@ -2027,22 +2066,6 @@ size of each <code class="code py python docutils literal notranslate"><span cla
 generators (by calling <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">random</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">seed</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">random</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">seed</span></span></code>)
 before building and running a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>. If value is an integer, the seeds
 will be set to that value. If value is <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>, seeds will not be set.</p>
-<p><strong>tskit_simp_interval</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#time step interval for simplification of tskit tables</span>
-<span class="s1">&#39;tskit_simp_interval&#39;</span><span class="p">:</span>          <span class="mi">100</span><span class="p">,</span>
-</pre></div>
-</div>
-<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">int</span></span></code></p>
-<p>default: 100</p>
-<p>reset? N</p>
-<p>This sets the interval, in timesteps,
-between subsequent <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code> simplifications.
-Defaults to simplifying every 100 timesteps, as suggested by the
-tskit package authors (see
-<a class="reference external" href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006581">here</a>
-). This most likely need not be changed, but for simulations
-with especially large population and/or genome sizes the user may
-wish to experiment with reducing this interval so as to improve performance.</p>
 </div>
 <hr class="docutils" />
 <div class="section" id="iterations">

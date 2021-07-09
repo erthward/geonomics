@@ -191,6 +191,9 @@ class Recombinations:
         recombinations = [r.binomial(1, self._rates) for _ in range(self._n)]
         breakpoints = [self._positions[np.where(
                                         recomb)] for recomb in recombinations]
+        for bp in breakpoints:
+            if len(bp) > 0:
+                assert 0 not in bp, '%s' % str(bp)
         # recast it as an int-keyed dict, so that when I use the recombination
         # events to simulate recombination I don't have to pass around the long
         # arrays, but instead can just random keys to index them out on the fly
@@ -202,11 +205,6 @@ class Recombinations:
                 or not use_tskit):
                 recomb_paths = [np.cumsum(
                                     recomb) % 2 for recomb in recombinations]
-                for recomb, bps_item in [*zip(recombinations,
-                                              breakpoints.items())][:10]:
-                    print(recomb)
-                    print(np.cumsum(recomb)%2)
-                    print(bps_item[1])
                 # if using tskit, grab just the values at the nonneutral loci
                 # (because the subsetters will be used only for subsetting
                 # the non-neutral genotypes carried with the individuals)
@@ -234,13 +232,13 @@ class Recombinations:
         seg_info = {}
         ##@##
         for k, recomb in self._breakpoints.items():
-            # NOTE: adding 0.5 to all recombination breakpoints,
+            # NOTE: subtracting 0.5 from all recombination breakpoints,
             # to indicate that recombination 'actually' happens halfway between
             # a pair of loci, (i.e. it actually subsets Individuals'
             # genomes in that way) without having the hold all the 0.5's
             # in the Recombinations._events data struct (to save on memory)
-            left = np.array([0] + [*recomb + 0.5])
-            right = np.array([*recomb + 0.5] + [self._L])
+            left = np.array([0] + [*recomb - 0.5])
+            right = np.array([*recomb - 0.5] + [self._L])
             assert np.all((right-left)>0), ("Some of the following breakpoints"
                         " are invalid: :%s") % str([*zip(left, right)])
             seg_info[k] = (left, right)
@@ -904,17 +902,16 @@ def _make_genomic_architecture(spp_params, land):
 
     # get the custom recomb_rates and recomb_positions from the
     # custom gen-arch file, if provided
-    # NOTE: subtract 0.5 from each locus' position,
-    #       because each recombination rate
+    # NOTE: each recombination rate
     #       stipulated in gen_arch file
     #       is construed as the recombination rate
     #       at the midway point between that locus
     #       and the previous one
     #       (NOTE: this is of course non-sensical for the 0th
-    #              locus, which has its rate expressed as
+    #              locus, which would thus have its rate expressed as
     #              the rate of recomb between the -1th and the 0th,
-    #              but that's fine because the first rate is constrained to 0
-    #              anyhow; the starting homologue of the recombination path,
+    #              but that's fine because the first rate is later coerced to 0
+    #              anyhow, then the starting homologue of the recomb path,
     #              i.e. the sister chromatid placed into the gamete,
     #              is later chosen using a ~Bern(0.5) draw at the time
     #              mating occurs; see mating.py)
@@ -922,7 +919,7 @@ def _make_genomic_architecture(spp_params, land):
     recomb_positions = None
     if gen_arch_file is not None:
         recomb_rates = gen_arch_file['r'].values
-        recomb_positions = gen_arch_file['locus'].values - 0.5
+        recomb_positions = gen_arch_file['locus'].values# - 0.5
 
     # set locus-wise dominance values for the 1-alleles, using the 'dom' value
     # in the gen_arch params, unless a gen_arch_file was provided

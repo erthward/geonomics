@@ -99,6 +99,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intro_video.html">Intro Video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="procedural_diagram.html">Workflow Diagram</a></li>
 <li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -256,17 +257,28 @@ real-world GIS rasters.</p>
 (see <a class="reference internal" href="#individual-species-and-community-objects"><span class="std std-ref">Individual, Species, and Community objects</span></a>, below)
 can optionally be assigned genomes.
 If they are, each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>’s genome is conceptually modeled as a
-2-by-L array (where 2 is the ploidy, currently fixed at
-diploidy, and L is the genome length) containing 0s and 1s (because
+L-by-1 array (where L is the genome length,
+and 2 is the ploidy, currently fixed at
+diploidy) containing 0s and 1s (because
 Geonomics strictly models biallelic SNPs, i.e SNPs with ‘0’- and ‘1’-alleles).
-(In actuality, Geonomics stores genomes by combining
+(In actuality, the way in which Geonomics stores genomes
+depends on the parameter <cite>use_tskit</cite>.
+If <cite>use_tskit</cite> is True, Geonomics stores genomes by combining
 Numpy arrays for non-neutral genotypes with a <a class="reference external" href="https://tskit.readthedocs.io/en/latest/index.html">tskit</a> <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TableCollection</span></span></code>
 for neutral genotypes and for the current population’s spatial pedigree.
 Although this makes for more complicated data structures,
 it optimizes information retention while minimizing memory usage,
 keeping Geonomics fast yet nonetheless enabling powerful
 spatiotemporal population genomics research.
-See <a class="reference internal" href="#tskit-tables-tablecollection"><span class="std std-ref">tskit.tables.TableCollection</span></a>, below, for details.)</p>
+See <a class="reference internal" href="#tskit-tables-tablecollection"><span class="std std-ref">tskit.tables.TableCollection</span></a>, below, for details.
+If <cite>use_tskit</cite> is False, each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> stores its full genome,
+including neutral and non-neutral loci,
+as an L-by-2 array, and no special data structures are used.
+The choice of whether or not to use <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code> depends on the parameterization
+of a user’s model, with models requiring larger numbers of independent loci
+running more smoothly without <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span></code>.
+See the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">use_tskit</span></span></code> section of the <a class="reference internal" href="params.html#parameters"><span class="std std-ref">Parameters</span></a> section
+for more details.)</p>
 <p>The parameter L, as well as numerous other genomic parameters (including
 locus-wise starting frequencies of the 1 alleles; locus-wise dominance effects;
 locus-wise recombination rates; and genome-wide mutation rates for neutral,

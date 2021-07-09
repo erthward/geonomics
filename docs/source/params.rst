@@ -2025,6 +2025,63 @@ save a record of each mutation that occurs for a :py:`Species`
 :py:`Species`, for each iteration. If :py:`None`, no mutation log
 will be created and written to.
 
+
+
+**use_tskit**
+
+.. code-block:: python
+
+                      #whether to use tskit (to record full spatial pedigree)
+                      'use_tskit':                  True,
+
+
+:py:`bool`
+
+default: :py:`True`
+
+reset? P
+
+This indicates whether Geonomics should use the :py:`tskit` API
+to store individuals' genomes in a :py:`tskit.TableCollection`.
+If :py:`tskit` is used the the full spatial pedigree of the current population
+will be available at any time, and each Individual will carry a numpy.ndarray
+containing just its genotypes for any non-neutral loci.
+If :py:`tskit` is not used, each Individual will carry a numpy.ndarray
+containing its genotypes for all simulated loci (neutral and non-neutral).
+Defaults to using :py:`tskit` (True),
+but may need to be switched to False for models
+using large numbers of independent loci
+and not needing access to the spatial pedigree
+(because larger numbers of independent loci cause a geometric
+expansion of the number of trees stored in the :py:`tskit.TreeSequence`,
+requiring significantly more memory overall,
+and significantly greater runtime to store them at each time step).
+
+
+
+**tskit_simp_interval**
+
+.. code-block:: python
+
+          #time step interval for simplification of tskit tables
+          'tskit_simp_interval':          100,
+
+:py:`int`
+
+default: 100
+
+reset? N
+       
+This sets the interval, in timesteps,
+between subsequent :py:`tskit` simplifications.
+Defaults to simplifying every 100 timesteps, as suggested by the
+tskit package authors (see 
+`here <https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006581>`_
+). This most likely need not be changed, but for simulations
+with especially large population and/or genome sizes the user may
+wish to experiment with reducing this interval so as to improve performance.
+
+
 ------------------------------
 
 
@@ -2627,29 +2684,6 @@ before building and running a :py:`Model`. If value is an integer, the seeds
 will be set to that value. If value is :py:`None`, seeds will not be set.
 
 
-
-
-**tskit_simp_interval**
-
-.. code-block:: python
-
-          #time step interval for simplification of tskit tables
-          'tskit_simp_interval':          100,
-
-:py:`int`
-
-default: 100
-
-reset? N
-       
-This sets the interval, in timesteps,
-between subsequent :py:`tskit` simplifications.
-Defaults to simplifying every 100 timesteps, as suggested by the
-tskit package authors (see 
-`here <https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006581>`_
-). This most likely need not be changed, but for simulations
-with especially large population and/or genome sizes the user may
-wish to experiment with reducing this interval so as to improve performance.
 
 
 

@@ -226,7 +226,7 @@ params = {
                     #whether to save mutation logs
                     'mut_log':                  False,
                     #whether to use tskit (to record full spatial pedigree)
-                    'use_tskit':                False,
+                    'use_tskit':                True,
                     #time step interval for simplification of tskit tables
                     'tskit_simp_interval':      100,
 

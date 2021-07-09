@@ -194,7 +194,7 @@ params = {
                     #num of loci
                     'L':                        500,
                     #num of chromosomes
-                    'l_c':                      [500],
+                    'l_c':                      [100],
                     #whether starting allele frequencies should be fixed at 0.5
                     'start_p_fixed':            0.5,
                     'start_neut_zero':          False,

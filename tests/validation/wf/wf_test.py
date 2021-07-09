@@ -14,8 +14,8 @@ orig_params = gnx.read_parameters_file(('/home/deth/Desktop/UCB'
                                         'tests/validation/wf/wf_params.py'))
 
 # set some image params
-img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/'
-           'methods_paper_images/final/')
+#img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/'
+#           'methods_paper_images/final/')
 ax_fontdict = {'fontsize': 18,
                'name': 'Bitstream Vera Sans'}
 ttl_fontdict = {'fontsize': 20,
@@ -118,7 +118,7 @@ for n, K_fact in enumerate(K_factors[::-1]):
     freqdf.to_csv('freqs_K_fact-%i.csv' % K_fact)
 plt.subplots_adjust(hspace=0.35)
 plt.show()
-#plt.savefig(os.path.join(img_dir, 'WF_allele_trajectories.pdf'))
+plt.savefig(os.path.join('WF_allele_trajectories.pdf'))
 
 # save a dataframe of the persistence times
 df = pd.DataFrame({k:v for k,v in zip(K_factors[::-1], persist_list)})
@@ -167,18 +167,19 @@ for mean_pop_size, mean_t_persist in zip(mean_pop_size_list, mean_t_persist_list
     plt.plot(xs, [2.776*mean_pop_size]*2, color='red', linewidth=1, alpha=0.8)
 ax = fig_scat.axes[0]
 ax.tick_params(labelsize=ticklabelsize)
-#plt.savefig(os.path.join(img_dir, 'WF_mean_persist_vs_pop_size.pdf'))
+plt.savefig(os.path.join('WF_mean_persist_vs_pop_size.pdf'))
 
 
 ###################################
 # same idea, but with a violin plot:
 
 # make a new, long-format dataframe
+n_loci = 100
 fig_viol, ax = plt.subplots(1,1)
-K_fact = [10]*250 + [20]*250 + [30]*250
+K_fact = [10]*n_loci + [20]*n_loci + [30]*n_loci
 t_persist = [*df[10].values] + [*df[20].values] + [*df[30].values]
-pop_size = [mean_pop_size_list[0]]*250 + [mean_pop_size_list[1]]*250 + [
-                                                    mean_pop_size_list[2]]*250
+pop_size = [mean_pop_size_list[0]]*n_loci + [mean_pop_size_list[1]]*n_loci + [
+                                                    mean_pop_size_list[2]]*n_loci
 pop_size = [np.round(size, 1) for size in pop_size]
 newdf = pd.DataFrame({'pop_size': pop_size,
                       'K_fact':K_fact,
@@ -220,6 +221,3 @@ ax = fig_hist.axes[0]
 ax.tick_params(labelsize=ticklabelsize)
 ax.set_xlabel('persistence time (time steps)', size=20)
 ax.set_ylabel('count', size=20)
-
-
-

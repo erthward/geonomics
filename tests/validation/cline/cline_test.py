@@ -16,8 +16,8 @@ import matplotlib.pyplot as plt
 import vcf
 
 # set some plotting params
-img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper/'
-                      'img/final/')
+#img_dir = ('/home/deth/Desktop/UCB/research/projects/sim/methods_paper/'
+#                      'img/final/')
 titlesize=20
 axlabelsize=18
 ticklabelsize=15

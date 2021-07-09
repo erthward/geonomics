@@ -20,8 +20,8 @@ axlabelsize = 18
 titlesize = 20
 ticklabelsize=15
 
-img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper_images/'
-           'final/')
+#img_dir = ('/home/drew/Desktop/stuff/berk/research/projects/sim/methods_paper_images/'
+#           'final/')
 ax_fontdict = {'fontsize': axlabelsize,
                'name': 'Bitstream Vera Sans'}
 ttl_fontdict = {'fontsize': titlesize,

@@ -2733,7 +2733,7 @@ saved and reused for each subsequent iteration.
 
 
 
-**rand_community**
+**rand_comm**
 
 .. code-block:: python
 
@@ -2753,6 +2753,32 @@ saved and reused for each subsequent iteration (and whether that
 :py:`Community` is saved before or after being burned in will depend on
 the value provided to the **repeat_burn** parameter).
 
+
+**rand_genarch**
+
+.. code-block:: python
+
+              #whether to randomize GenomicArchitectures each iteration
+              'rand_genarch':    False,
+
+:py:`bool`
+
+default: True
+
+reset? N
+
+This indicates whether all :py:`Species` with genomes should have their
+:py:`GenomicArchitectures` randomized (and then genomes redrawn) for each
+iteration.
+Defaults to True because this, in combination with the other default settings
+(**rand_landscape** False, **rand_comm** False, **repeat_burn** False) creates
+a reasonable default behavior for the set of iterations in a run:
+Each iteration will use the same landscape and the same number and spatial
+distribution of starting individuals, thus obviating the need for the most
+computationally costly components of a Geonomics model prior to the main phase,
+but those individuals' :py:`GenomicArchitectures` and genomes
+will be drawn at random, providing independent instantiations
+of the landscape genomic scenario being simulated.
 
 
 **repeat_burn**

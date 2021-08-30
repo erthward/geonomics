@@ -157,6 +157,12 @@ class _DataCollector:
             and 'geo_rast_format' in format_params.keys()):
             self.rast_format = format_params.geo_rast_format
 
+        # grab the format for CSV files containing the non-neutral loci
+        # NOTE: None indicates that these files should not be produced
+        self.nonneut_loc_format = format_params.nonneut_loc_format
+        assert self.nonneut_loc_format in ['csv', None], ("the "
+            "'nonneut_loc_format' parameter must be either 'csv' or None.")
+
     #method to set self.next_t
     def _set_next_t(self):
         try:
@@ -256,6 +262,11 @@ class _DataCollector:
                         filepath = os.path.join(subdirname, filename)
                         self._write_gendata(filepath, '')
 
+                # write the non-neutral loci CSV file, if required,
+                # and if this is the final timestep
+                if self.nonneut_loc_format is not None:
+                    self._write_nonneut_loc_file(spp, subdirname, iteration)
+
             #write the raster, if necessary
             if self.rast_format is not None:
                 #for each Layer
@@ -332,6 +343,38 @@ class _DataCollector:
     def _write_geodata(self, filepath, data_format, sample):
         write_fn = self.write_geodata_fn_dict[data_format]
         write_fn(filepath = filepath, individuals = sample)
+
+
+    def _write_nonneut_loc_file(self, spp, subdir, iteration,
+                                format='csv'):
+        """
+        NOTE: this is agnostic of the fact that the number of non-neutral
+              loci can grow throughout a simulation because of mutation.
+              the user would need to compare across nonneutral locus files,
+              and/or compare with the mutation log,
+              in order to determine when loci became non-neutral.
+        """
+        # get all the non-neutral loci for each trait
+        locs_dict = {trt.name:
+                     [*trt.loci] for trt in spp.gen_arch.traits.values()}
+        # make the number of rows even across columns
+        max_nrow = np.max([len(v) for v in locs_dict.values()])
+        for k,v in locs_dict.items():
+            if len(v) < max_nrow:
+                locs_dict[k] = np.array([*v] + [np.nan]*(max_nrow-len(v)))
+        # recast as a DataFrame
+        locs_df = pd.DataFrame.from_dict(locs_dict)
+        # make the filename and filepath
+        filename = 'mod-%s_it-%i_t-%i_spp-%s_NONNEUTS.%s' % (self.model_name,
+                                                             iteration,
+                                                             self.next_t,
+                                                             spp.name,
+                                                             format)
+        filepath = os.path.join(subdir, filename)
+        # write the file, with trait names as column names
+        # and locus numbers down the non-fixed-length columns
+        locs_df.to_csv(filepath, index=False)
+
 
 
 ######################################

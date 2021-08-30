@@ -468,7 +468,6 @@ class Model:
                         spp.gen_arch = _make_genomic_architecture(
                             spp_params=self.params['comm']['species'][spp.name],
                             land=self.land)
-                        print((self.burn_T, self.T))
                         # if burn-in will not be repeated then reset the
                         # genomes and tskit tables
                         if not self.repeat_burn:

@@ -10,6 +10,7 @@ Defines the core Model class, as well as its public and private methods
 #geonomics imports
 from geonomics.structs.landscape import _make_landscape
 from geonomics.structs.community import _make_community
+from geonomics.structs.genome import _make_genomic_architecture
 from geonomics.sim.data import (_DataCollector, _tskit_table_to_pandas,
                                 _get_adhoc_sample, _format_vcf, _format_fasta)
 
@@ -137,6 +138,18 @@ class Model:
         #genomes should be reassigned after burn-in; in that case it will be 
         #reset to False as soon as the genomes are reassigned
         self.reassign_genomes = None
+
+        # grab the rand_genarch param into a self.rand_genarch flag,
+        # to determine whether or not to randomly reassign the genomes and
+        # genomic architectures before each iteration
+        # NOTE: only applicable if rand_comm is False; the effect will be that
+        #       the burn-in will not need to be rerun,
+        #       so each iteration will start
+        #       with the same number and spatial distribution of individuals, 
+        #       but those individuals will have different genomes each
+        #       iteration (and the GenomicArchitecture object that the genomes
+        #       are based upon will be different as well
+        self.rand_genarch = m_params.its.rand_genarch
 
         #and set the orig_land and orig_comm objects, if rand_landscape and
         #rand_comm are False
@@ -394,7 +407,7 @@ class Model:
         if not rand_landscape:
             #verbose output
             if self._verbose:
-                print(('Copying the original Landscape '
+                print(('Copying the original landscape '
                        'for iteration %i...\n\n') % self.it, flush=True)
             #deepcopy the original land
             self.land = deepcopy(self.orig_land)
@@ -410,7 +423,7 @@ class Model:
         else:
             #verbose output
             if self._verbose:
-                print(('Creating new Landscape for '
+                print(('Creating new landscape for '
                                 'iteration %i...\n\n') % self.it, flush=True)
             self.land = self._make_landscape()
 
@@ -443,6 +456,29 @@ class Model:
                             'object for species " %s"...\n\n') % spp.name,
                               flush=True)
                     spp._changer._set_changes(spp, self.land)
+            # reset the species' GenomicArchitectures and genomes, if necessary
+            if self.rand_genarch:
+                for spp in self.comm.values():
+                    if spp.gen_arch is not None:
+                        # recreate the genomic architecture
+                        if self._verbose:
+                            print(('\nRecreating genomic architecture for '
+                                    'species "%s"...\n\n') % spp.name,
+                                  flush=True)
+                        spp.gen_arch = _make_genomic_architecture(
+                            spp_params=self.params['comm']['species'][spp.name],
+                            land=self.land)
+                        print((self.burn_T, self.T))
+                        # if burn-in will not be repeated then reset the
+                        # genomes and tskit tables
+                        if not self.repeat_burn:
+                            #verbose output
+                            if self._verbose:
+                                print(('\nAssigning genomes for '
+                                       'species "%s"...\n\n') % spp.name,
+                                      flush=True)
+                            spp._set_genomes_and_tables(self.burn_T, self.T)
+
         else:
             #verbose ouput
             if self._verbose:
@@ -477,12 +513,15 @@ class Model:
 
     #method to reset all the model's objects
     #(land, community, and associated) and attributes
-    def _reset(self, rand_landscape=None, rand_comm=None, repeat_burn=None):
+    def _reset(self, rand_landscape=None, rand_comm=None, rand_genarch=None,
+               repeat_burn=None):
         #default to the self.rand_<_> attributes, if not otherwise provided
         if rand_landscape is None:
             rand_landscape = self.rand_landscape
         if rand_comm is None:
             rand_comm = self.rand_comm
+        if rand_genarch is None:
+            rand_genarch = self.rand_genarch
         if repeat_burn is None:
             repeat_burn = self.repeat_burn
 
@@ -710,8 +749,9 @@ class Model:
         #reset the model (including the burn-in,
         #if self.repeat_burn or if this is the first iteration) 
         self._reset(rand_landscape = self.rand_landscape,
-                         rand_comm = self.rand_comm,
-                         repeat_burn = self.repeat_burn)
+                    rand_comm = self.rand_comm,
+                    rand_genarch=self.rand_genarch,
+                    repeat_burn = self.repeat_burn)
 
 
     #method for running the model's next iteration

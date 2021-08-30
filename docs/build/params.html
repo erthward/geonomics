@@ -2094,7 +2094,7 @@ and stats to be collected.)</p>
 iteration. If True, a new <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> will be generated at the start
 of each iteration. If False, the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> from iteration 0 will be
 saved and reused for each subsequent iteration.</p>
-<p><strong>rand_community</strong></p>
+<p><strong>rand_comm</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to randomize Community each iteration</span>
 <span class="s1">&#39;rand_comm&#39;</span><span class="p">:</span>    <span class="kc">False</span><span class="p">,</span>
 </pre></div>
@@ -2108,6 +2108,26 @@ of each iteration. If False, the <code class="code py python docutils literal no
 saved and reused for each subsequent iteration (and whether that
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code> is saved before or after being burned in will depend on
 the value provided to the <strong>repeat_burn</strong> parameter).</p>
+<p><strong>rand_genarch</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to randomize GenomicArchitectures each iteration</span>
+<span class="s1">&#39;rand_genarch&#39;</span><span class="p">:</span>    <span class="kc">False</span><span class="p">,</span>
+</pre></div>
+</div>
+<p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
+<p>default: True</p>
+<p>reset? N</p>
+<p>This indicates whether all <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> with genomes should have their
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitectures</span></span></code> randomized (and then genomes redrawn) for each
+iteration.
+Defaults to True because this, in combination with the other default settings
+(<strong>rand_landscape</strong> False, <strong>rand_comm</strong> False, <strong>repeat_burn</strong> False) creates
+a reasonable default behavior for the set of iterations in a run:
+Each iteration will use the same landscape and the same number and spatial
+distribution of starting individuals, thus obviating the need for the most
+computationally costly components of a Geonomics model prior to the main phase,
+but those individuals’ <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitectures</span></span></code> and genomes
+will be drawn at random, providing independent instantiations
+of the landscape genomic scenario being simulated.</p>
 <p><strong>repeat_burn</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to burn in each iteration</span>
 <span class="s1">&#39;repeat_burn&#39;</span><span class="p">:</span>  <span class="kc">False</span><span class="p">,</span>

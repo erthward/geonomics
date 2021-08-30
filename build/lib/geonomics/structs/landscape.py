@@ -47,7 +47,7 @@ class Layer:
         coord_prec:
             The precision (i.e. number of significant digits) to which
             coordinate values should be round when the Layer is plotted.
-       
+
         dim:
             The x,y (i.e. lon,lat; or i,j in array terms) dimensions of the
             Layer. (Must be the same as the Landscape to which the Layer
@@ -77,7 +77,7 @@ class Layer:
             A string indicating the type of the Layer ('random', 'defined',
             'file', or 'nlmpy')
 
-        ulc: 
+        ulc:
             The x,y (i.e. lon,lat; or i,j in array terms) coordinates of the
             upper left corner of the layer. (Must be the same as the Landscape
             to which the Layer belongs.)
@@ -85,7 +85,7 @@ class Layer:
         units:
             A string representation of the units of the Layer's variable
             (to be used for plotting).
-    
+
     """
 
     #######################

@@ -267,6 +267,7 @@ params = {
             'rand_landscape':   False,
             #whether to randomize Community each iteration
             'rand_comm':        False,
+            'rand_genarch':     True,
             #whether to burn in each iteration
             'repeat_burn':      False,
             }, # <END> 'iterations'

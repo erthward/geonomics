@@ -312,6 +312,10 @@ def _make_params():
                         'jitter_breakpoints':       False,
                         #whether to save mutation logs
                         'mut_log':                  False,
+                        # whether to use tskit (to track the spatial pedigree)
+                        'use_tskit':                False,
+                        #time step interval for simplification of tskit tables
+                        'tskit_simp_interval':      100,
 
                         'traits': {
 
@@ -399,8 +403,6 @@ def _make_params():
             'burn_T':       60,
             #seed number
             'num':          None,
-            #time step interval for simplification of tskit tables
-            'tskit_simp_interval':      100,
 
             ###############################
             #### iterations parameters ####

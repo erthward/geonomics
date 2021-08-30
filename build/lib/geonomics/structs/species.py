@@ -435,7 +435,7 @@ class Species(OD):
             "or else None.")
 
         # create a tskit.TableCollection object, if the species uses genomes
-        if self.gen_arch is not None:
+        if self.gen_arch is not None and self.gen_arch.use_tskit:
             self._tc = tskit.TableCollection(sequence_length=self.gen_arch.L)
             self._tc_sorted_and_simplified = False
         else:
@@ -589,7 +589,12 @@ class Species(OD):
         return mating_pairs
 
     #function for executing mating for a species
-    def _do_mating(self, land, mating_pairs, burn=False, check_haps=False):
+    def _do_mating(self, land, mating_pairs, burn=False,
+                   check_haps=False, check_genotypes=False):
+
+        # set the genotype-check counter, if necessary
+        if check_genotypes:
+            gt_check_num = 0
 
         #draw the number of births for each pair, and append
         #total births to self.n_births list
@@ -634,7 +639,7 @@ class Species(OD):
 
             n_offspring = n_births[n_pair]
 
-            for n in range(n_offspring):
+            for offspring_i in range(n_offspring):
 
                 #get the next offspring_key
                 offspring_key = offspring_keys.pop()
@@ -656,8 +661,10 @@ class Species(OD):
                 #set the new_genome correctly
                 if self.gen_arch is not None:
                     if not burn:
-                        new_genome = genomes_and_segs[n_pair][n][0]
-                        genome_segs = genomes_and_segs[n_pair][n][1]
+                        new_genome = genomes_and_segs[n_pair][offspring_i][0]
+                        # NOTE: genome_segs will just be all Nones
+                        #       if self.use_tskit == False
+                        genome_segs = genomes_and_segs[n_pair][offspring_i][1]
                     else:
                         new_genome=None
                 else:
@@ -678,8 +685,9 @@ class Species(OD):
                     self[offspring_key]._set_z(self.gen_arch)
 
                 # during the main phase, for species with genomes,
-                # update the tskit tables
+                # update the tskit tables, if necessary
                 if (self.gen_arch is not None
+                    and self.gen_arch.use_tskit
                     and not burn):
                     loc = [offspring_x, offspring_y]
                     if self.gen_arch.traits is not None:
@@ -719,9 +727,6 @@ class Species(OD):
                     # the zip object
                     edge_id = [self._tc.edges.add_row(
                         parent=seg[0], left=seg[1], right=seg[2],
-                        # TODO: DOES THIS LINE THROW AN ERROR B/C IT LOOPS
-                        # OVER >2 seg_sets, SO INDEXING FOR homol = >1 IS
-                        # A KEY ERROR FOR A DICT WITH KEYS 0 AND 1?
                         child=self[offspring_key]._nodes_tab_ids[homol]
                         ) for homol, seg_set in enumerate(
                         genome_segs) for seg in [*seg_set]]
@@ -749,21 +754,6 @@ class Species(OD):
 
                         nodes_tab_ids = self[offspring_key]._nodes_tab_ids
                         for i, nodes_tab_id in nodes_tab_ids.items():
-                            #self._sort_simplify_table_collection()
-                            #ts = self._tc.tree_sequence()
-                            #hap = [*ts.haplotypes()][nodes_tab_id]
-                            #if '-' in hap:
-                            #print(offspring_key)
-                            #print(edge_id)
-                            #print(nodes_tab_id)
-                            #    print()
-                            #    print('#\n'*10)
-                            #    print(hap)
-                            #    print()
-                            #    print(new_genome)
-                            #    print()
-                            #print([[*seg] for seg in genome_segs])
-                            #print('-----------------------------------')
                             edf = get_edges_df(self._tc)
                             child_edf = edf[edf.child == nodes_tab_id]
                             assert np.allclose(sum(child_edf.right -
@@ -772,7 +762,39 @@ class Species(OD):
                                             child_edf.right - child_edf.left),
                                                                   child_edf)
 
-
+                    if check_genotypes:
+                        self._sort_simplify_table_collection()
+                        ts = self._tc.tree_sequence()
+                        manual_gt = self[offspring_key].g
+                        tskit_gts_dict = dict(zip(ts.samples(),
+                                                  ts.haplotypes()))
+                        tskit_gts = [tskit_gts_dict[
+                            node_id] for node_id in self[
+                            offspring_key]._nodes_tab_ids.values()]
+                        tskit_gt = np.stack([[int(n) for n in gt] for gt in
+                            tskit_gts]).T[self.gen_arch.nonneut_loci, :]
+                        print('OFFSPRING %i\n\n' % offspring_key)
+                        segs_0 = [* self.gen_arch.recombinations._get_seg_info(
+                                  start_homologue=0,
+                                  event_key=recomb_keys[gt_check_num],
+                                  node_ids=np.array([0, 1]))]
+                        print('\tgenome_segs 0:', segs_0)
+                        segs_1 = [* self.gen_arch.recombinations._get_seg_info(
+                                  start_homologue=0,
+                                  event_key=recomb_keys[gt_check_num+1],
+                                  node_ids=np.array([0, 1]))]
+                        print('\tgenome_segs 1:', segs_1)
+                        print('\tnonneut loci:', self.gen_arch.nonneut_loci)
+                        print('recomb at nonneut',
+                            np.any([np.floor(i[2]
+                            ) in self.gen_arch.nonneut_loci for i in (segs_0 +
+                                                                      segs_1)]))
+                        assert np.all(manual_gt == tskit_gt), ("manually "
+                            "tracked genotype differs from genotype recorded "
+                            "in tskit TableCollection:\n\nMANUAL\n\t%s"
+                            "\n\nTSKIT\n\t%s") % (str(manual_gt),
+                                                  str(tskit_gt))
+                        gt_check_num += 2
 
         # sample all individuals' environment values, to initiate for offspring
         self._set_e(land)
@@ -783,7 +805,7 @@ class Species(OD):
              _do_mutation(keys_list, self, log = self.mut_log)
 
         # check haploytpes have no missing data, if necessary
-        if check_haps and self.burned:
+        if check_haps and self.burned and self.gen_arch.use_tskit:
             print('\n\nCHECKING THAT HAPLOTYPES HAVE NO MISSING DATA\n\n')
             self._sort_simplify_table_collection()
             ts = self._tc.tree_sequence()
@@ -856,16 +878,27 @@ class Species(OD):
             return dens
 
     # method to set the species' genomes to all zeros (after burn-in),
-    # if the species has any nonneutral loci or has non-zero nonneutral
-    # mutation rates
+    # NOTE:
+    # IF USING TSKIT:
+        # does this only if the species has any nonneutral loci
+        # or has non-zero nonneutral mutation rates
+    # IF NOT USING TSKIT:
+        # does this for all loci in the full-length simulated genome
     def _set_null_genomes(self):
-        if (len(self.gen_arch.nonneut_loci) > 0 or
-            (self.gen_arch.traits is not None and
-             len([trt.mu > 0 for trt in self.gen_arch.traits]) > 0) or
-            self.gen_arch.mu_delet > 0):
+        # set null genome arrays to track just nonneut_loc, if using tskit
+        if self.gen_arch.use_tskit:
+            if (len(self.gen_arch.nonneut_loci) > 0 or
+                (self.gen_arch.traits is not None and
+                 len([trt.mu > 0 for trt in self.gen_arch.traits]) > 0) or
+                self.gen_arch.mu_delet > 0):
+                [ind._set_g(np.zeros(
+                            (len(self.gen_arch.nonneut_loci),
+                             self.gen_arch.x))) for ind in self.values()]
+        # or set null genome arrays to track all loci, if not using tskit
+        else:
             [ind._set_g(np.zeros(
-                (len(self.gen_arch.nonneut_loci),
-                    self.gen_arch.x))) for ind in self.values()]
+                        (self.gen_arch.L,
+                         self.gen_arch.x))) for ind in self.values()]
 
     # add new row to the individuals' numpy arrays, for a given mutation locus
     def _add_new_locus(self, idx, locus):
@@ -916,8 +949,7 @@ class Species(OD):
     # and fill the tskit.TableCollection's tables
     # (to be called after the model has burned in)
     def _set_genomes_and_tables(self, burn_T, T):
-        # set the species' neutral and non-netural loci,
-        # and set genomes to all zeros
+        # set starting genome arrays to all zeros
         self._set_null_genomes()
 
         # use mean n_births at tail end of burn-in to estimate number of
@@ -929,115 +961,129 @@ class Species(OD):
         # check whether there are adequate mutable loci for this species
         _check_mutation_rates(self.gen_arch, est_tot_muts, burn_T, T)
 
-        # simulate a coalescent ancestry with number of samples equal to our
-        # species' number of haploid genomes (i.e. 2*N_0)
-        ts = msprime.simulate(len(self) * 2, Ne=1000, length=self.gen_arch.L)
+        # create and configure tskit tables
+        if self.gen_arch.use_tskit:
+            # simulate a coalescent ancestry with number of samples equal to our
+            # species' number of haploid genomes (i.e. 2*N_0)
+            ts = msprime.simulate(len(self) * 2,
+                                  Ne=1000,
+                                  length=self.gen_arch.L)
 
-        # then grab the simulation's tree, and the tree's TableCollection
-        # NOTE: the TreeSequence object only has one tree,
-        # because no recombination was used in the sim
-        tree = ts.first()
-        tables = ts.dump_tables()
+            # then grab the simulation's tree, and the tree's TableCollection
+            # NOTE: the TreeSequence object only has one tree,
+            # because no recombination was used in the sim
+            tree = ts.first()
+            tables = ts.dump_tables()
 
-        # set the sequence length
-        #tables.sequence_length = self.gen_arch.L
-        # clear the mutations table
-        tables.mutations.clear()
+            # set the sequence length
+            #tables.sequence_length = self.gen_arch.L
+            # clear the mutations table
+            tables.mutations.clear()
 
-        # loop over all sites, so that each site's row goes into
-        # the sites table in order (such that 1.) there's no need
-        # to track how gnx sites map onto sites-table row ids,
-        # and 2.) there will be no need to deduplicate sites later on)
-        for site in range(self.gen_arch.L):
-            #determine whether this is a neutral or non-neutral site
-            if site in self.gen_arch.neut_loci:
-                metadata='n'.encode('ascii')
-            elif site in self.gen_arch.nonneut_loci:
-                metadata='t'.encode('ascii')
-            # add the variant's site to the sites table
-            tables.sites.add_row(position=site, ancestral_state='0',
-                                 metadata=metadata)
+            # loop over all sites, so that each site's row goes into
+            # the sites table in order (such that 1.) there's no need
+            # to track how gnx sites map onto sites-table row ids,
+            # and 2.) there will be no need to deduplicate sites later on)
+            for site in range(self.gen_arch.L):
+                #determine whether this is a neutral or non-neutral site
+                if site in self.gen_arch.neut_loci:
+                    metadata='n'.encode('ascii')
+                elif site in self.gen_arch.nonneut_loci:
+                    metadata='t'.encode('ascii')
+                # add the variant's site to the sites table
+                tables.sites.add_row(position=site, ancestral_state='0',
+                                     metadata=metadata)
 
-        # grab the nodes flags, which are 1 for current nodes,
-        # 0 for past nodes, into two separate objects
-        current_nodes = [*np.where(tables.nodes.flags == 1)[0]]
-        # reverse, so that I can pop nodes off the 'front'
-        current_nodes = current_nodes[::-1]
-        past_nodes = [*np.where(tables.nodes.flags != 1)[0]]
-        # create an empty list, to fill up the individual ids for each node
-        # NOTE: setting to a vector of -1 initially, to easily check that
-        # all values have been assigned at the end by asking if all >= 0 
-        nodes_tab_individual_col = np.int32(np.ones(len(
-                                                    tables.nodes.flags))*-1)
+            # grab the nodes flags, which are 1 for current nodes,
+            # 0 for past nodes, into two separate objects
+            current_nodes = [*np.where(tables.nodes.flags == 1)[0]]
+            # reverse, so that I can pop nodes off the 'front'
+            current_nodes = current_nodes[::-1]
+            past_nodes = [*np.where(tables.nodes.flags != 1)[0]]
+            # create an empty list, to fill up the individual ids for each node
+            # NOTE: setting to a vector of -1 initially, to easily check that
+            # all values have been assigned at the end by asking if all >= 0 
+            nodes_tab_individual_col = np.int32(np.ones(len(
+                                                        tables.nodes.flags))*-1)
 
-        # NOTE: there are no requirements or restrictions for the individuals
-        # and nodes tables (e.g. order, etc.), and thus the tables' order
-        # is not affected by the TableCollection.simplify algorithm.
-        # So, I could add either current or past individuals and nodes first;
-        # choosing to add past first, so that all 'real' individuals
-        # from the start of the geonomics simulation forward will
-        # wind up having their individuals and nodes rows in a single
-        # block at the tables' bottoms
+            # NOTE: there are no requirements
+            #       or restrictions for the individuals
+            # and nodes tables (e.g. order, etc.), and thus the tables' order
+            # is not affected by the TableCollection.simplify algorithm.
+            # So, I could add either current
+            # or past individuals and nodes first;
+            # choosing to add past first, so that all 'real' individuals
+            # from the start of the geonomics simulation forward will
+            # wind up having their individuals and nodes rows in a single
+            # block at the tables' bottoms
 
-        # add an individual to the individuals table for
-        # each coalescent-simulated node before the current time
-        # NOTE: adding no metadata, and no location, to indicate that this is
-        # a 'fake' individual, invented just to match up to the nodes
-        # simulated for the starting population
-        for node in past_nodes:
-            ind_id = tables.individuals.add_row(flags=0)
-            # store its individual id in the nodes table's individuals column
-            nodes_tab_individual_col[node] = ind_id
+            # add an individual to the individuals table for
+            # each coalescent-simulated node before the current time
+            # NOTE: adding no metadata, and no location,
+            #       to indicate that this is a 'fake' individual,
+            #       invented just to match up to the nodes
+            #       simulated for the starting population
+            for node in past_nodes:
+                ind_id = tables.individuals.add_row(flags=0)
+                # store its individ id in the nodes table's individuals column
+                nodes_tab_individual_col[node] = ind_id
 
-        # create and add to the individuals table a new row for
-        # each real individual
-        for ind in self.values():
-            # get the 'location' column info, which will include the x and y
-            # positions of an individual, as well as the individual's
-            # phenotypes and fitness, if traits are being used
-            loc = [ind.x, ind.y]
-            if self.gen_arch.traits is not None:
-                loc = loc + ind.z + [ind.fit]
-            # add a new row to the individuals table, setting the location
-            # column's value to loc
-            # NOTE: using the metadata column to store to the gnx
-            # individual idx, for later matching to update
-            # Individual._individuals_tab_id after tskit's simplify
-            # algorithm filters individuals
-            ind_id = tables.individuals.add_row(flags=1, location=loc,
-                metadata=ind.idx.to_bytes(length=4, byteorder='little'))
-            ind._individuals_tab_id = ind_id
+            # create and add to the individuals table a new row for
+            # each real individual
+            for ind in self.values():
+                # get the 'location' column info, which will include the x and y
+                # positions of an individual, as well as the individual's
+                # phenotypes and fitness, if traits are being used
+                loc = [ind.x, ind.y]
+                if self.gen_arch.traits is not None:
+                    loc = loc + ind.z + [ind.fit]
+                # add a new row to the individuals table, setting the location
+                # column's value to loc
+                # NOTE: using the metadata column to store to the gnx
+                # individual idx, for later matching to update
+                # Individual._individuals_tab_id after tskit's simplify
+                # algorithm filters individuals
+                ind_id = tables.individuals.add_row(flags=1, location=loc,
+                    metadata=ind.idx.to_bytes(length=4, byteorder='little'))
+                ind._individuals_tab_id = ind_id
 
-            # assign the individual 2 randomly chosen nodes from
-            # the current time step, and associate the individual's
-            # _individuals_tab_id with those 2 nodes in some data
-            # structure to collect this
-            ind_node_ids =[current_nodes.pop() for _ in range(self.gen_arch.x)]
-            ind._set_nodes_tab_ids(*ind_node_ids)
-            # add this individual's ind_id to the
-            # nodes_tab_individual_col list, once for each node
-            nodes_tab_individual_col[ind_node_ids] = ind_id
-        # make sure that all nodes were assigned to individuals
-        assert np.all(nodes_tab_individual_col >= 0), ('Some nodes not '
-                                                       'given individs')
+                # assign the individual 2 randomly chosen nodes from
+                # the current time step, and associate the individual's
+                # _individuals_tab_id with those 2 nodes in some data
+                # structure to collect this
+                ind_node_ids =[current_nodes.pop() for _ in range(
+                                                            self.gen_arch.x)]
+                ind._set_nodes_tab_ids(*ind_node_ids)
+                # add this individual's ind_id to the
+                # nodes_tab_individual_col list, once for each node
+                nodes_tab_individual_col[ind_node_ids] = ind_id
+            # make sure that all nodes were assigned to individuals
+            assert np.all(nodes_tab_individual_col >= 0), ('Some nodes not '
+                                                           'given individs')
 
-        nodes_cols = tables.nodes.asdict()
-        # use the node_tab_individual_col data structure to reset
-        # the individuals column in the nodes table
-        nodes_cols['individual'][:] = nodes_tab_individual_col
-        # increment all the birth times by 1, so that all individuals are
-        # marked as having been born before the start of the model's main phase
-        nodes_cols['time'] += 1
-        tables.nodes.set_columns(**nodes_cols)
+            nodes_cols = tables.nodes.asdict()
+            # use the node_tab_individual_col data structure to reset
+            # the individuals column in the nodes table
+            nodes_cols['individual'][:] = nodes_tab_individual_col
+            # increment all birth times by 1, so that all individs are marked
+            # as having been born before the start of the model's main phase
+            nodes_cols['time'] += 1
+            tables.nodes.set_columns(**nodes_cols)
 
-        # add sufficient mutations, at only current nodes, to produce
-        # the starting 1-allele frequencies parameterized for this species
+        # otherwise, if tskit isn't to be used, then set tables to None
+        else:
+            tables = None
+
+        # add sufficient mutations, (at only current nodes, is using tskit),
+        # to produce the starting 1-allele frequencies
+        # parameterized for this species
         _make_starting_mutations(self, tables)
 
         # TODO: ADD PROVENANCES ROW!
 
         # assign as the species' TableCollection
         self._tc = tables
+
         return
 
 
@@ -1059,7 +1105,7 @@ class Species(OD):
         # the nodes for which the tables will be simplified
         curr_nodes = self._get_nodes()
 
-        # run code necessary for checing that individuals' table ids are
+        # run code necessary for checking that individuals' table ids are
         # correctly assigned, if requested
         if check_individuals:
         # NOTE: this check will only work for models that have at least one
@@ -1113,7 +1159,6 @@ class Species(OD):
         # check that individuals' nodes-table ids were correclty updated,
         # if the check is requested
         if check_nodes:
-            import pandas as pd
             #create another identically structured Nx3 np array, to hold the
             #individuals' gnx ids and their node ids according to the tskit
             #nodes table (for cross-checking)
@@ -1211,13 +1256,13 @@ class Species(OD):
                         individ = [ind for ind in self.values() if
                                    ind._individuals_tab_id == tc_individs_id]
                         assert len(individ) == 1, ("Found multiple individuals "
-                                                   "with the same individuals id "
-                                                   "in the tskit tables.")
+                                                   "with the same individuals "
+                                                   "id n the tskit tables.")
                         individ = individ[0]
                         curr_pos = np.array([individ.x, individ.y])
-                        birth_t = lin_dicts[locus][curr_node_id][curr_node_id][0]
+                        birth_t =lin_dicts[locus][curr_node_id][curr_node_id][0]
                         lin_dicts[locus][curr_node_id][curr_node_id] = (birth_t,
-                                                                        curr_pos)
+                                                                       curr_pos)
         return lin_dicts
 
 
@@ -1257,7 +1302,8 @@ class Species(OD):
                             max_time_ago=None, min_time_ago=None):
         '''
         Calculate stats for the lineages of a given set of nodes and loci;
-        returns dict of struct: {k=stat, v={k=loc, v=[val_node1 ... val_node_N]}}
+        returns dict of struct:
+            {k=stat, v={k=loc, v=[val_node1 ... val_node_N]}}
         '''
         # get all nodes for the provided individuals, or for all individuals,
         # if nodes IDs not provided
@@ -1283,6 +1329,10 @@ class Species(OD):
                 stats[stat][loc] = loc_stat_list
         return stats
 
+    ##############################################
+    # END FUNCTIONS FROM TRACK_SPATIAL_PEDIGREE.PY
+    ##############################################
+
 
     # method to get individs' environment values
     def _get_e(self, lyr_num=None, individs=None):
@@ -1304,13 +1354,6 @@ class Species(OD):
 
     def _get_genotypes(self, loci=None, individs=None, biallelic=True,
                        as_dict=False):
-        # sort and simplify the table collection
-        # (thus dropping any unnecessary individuals' data in there and also
-        # making the tables' structure simler and more predictable)
-        self._sort_simplify_table_collection()
-        # then get the TreeSequence
-        ts = self._tc.tree_sequence()
-
         # make sure as_dict and biallelic are True or False
         assert as_dict in [True, False], ("The 'as_dict' argument "
                                           "must be either "
@@ -1338,28 +1381,42 @@ class Species(OD):
         # structures
         individs = np.sort(individs)
 
-        # get the list of the individuals' nodes
-        samples_to_keep = np.int64(np.hstack([[*self[ind]._nodes_tab_ids.values(
-                                                    )] for ind in individs]))
-        assert len(samples_to_keep) == self.gen_arch.x * len(individs), ('Num'
-                        'ber of nodes does not match number of individs!')
+        # if using tskit, get genotypes from there
+        if self.gen_arch.use_tskit:
+            # sort and simplify the table collection
+            # (thus dropping any unnecessary individuals' data in there and also
+            # making the tables' structure simler and more predictable),
+            self._sort_simplify_table_collection()
+            # then get the TreeSequence
+            ts = self._tc.tree_sequence()
 
-        # get haplotypes for all samples
-        # TODO: np.where(self._tc.nodes.flags)[1] gets only the nodes with
-        #       flags of 1, i.e. only 'real' individuals who were not part of
-        #       the msprime-sourced pre-simulation fake genealogy
-        # TODO: haplotypes returned in order of samples???
-        #haps = [np.int8([*hap]) for n, hap in zip(
-        #                                    np.where(self._tc.nodes.flags)[0],
-        #                                    ts.haplotypes()) if n in samples]
-        haps_dict = {s:h for s, h in zip(ts.samples(), ts.haplotypes())}
-        haps = [np.int8([*haps_dict[s]]) for s in samples_to_keep]
+            # get the list of the individuals' nodes
+            samples_to_keep = np.int64(np.hstack([
+                [*self[ind]._nodes_tab_ids.values()] for ind in individs]))
+            assert len(samples_to_keep) == self.gen_arch.x * len(individs), (''
+                        'Number of nodes does not match number of individs!')
 
-        # get the genotypes by combining each consecutive group
-        # of x haplotypes, where x is the ploidy, then vstacking them
-        grouped_haps = zip(*[haps[i::self.gen_arch.x] for i in range(
-                                                        self.gen_arch.x)])
-        gts = [np.vstack(h).T for h in grouped_haps]
+            # get haplotypes for all samples
+            # TODO: np.where(self._tc.nodes.flags)[1] gets only the nodes with
+            #       flags of 1, i.e. only 'real' individuals
+            #       who were not part of the msprime-sourced
+            #       pre-simulation fake genealogy
+            # TODO: haplotypes returned in order of samples???
+            #haps = [np.int8([*hap]) for n, hap in zip(
+            #                               np.where(self._tc.nodes.flags)[0],
+            #                               ts.haplotypes()) if n in samples]
+            haps_dict = {s:h for s, h in zip(ts.samples(), ts.haplotypes())}
+            haps = [np.int8([*haps_dict[s]]) for s in samples_to_keep]
+
+            # get the genotypes by combining each consecutive group
+            # of x haplotypes, where x is the ploidy, then vstacking them
+            grouped_haps = zip(*[haps[i::self.gen_arch.x] for i in range(
+                                                            self.gen_arch.x)])
+            gts = [np.vstack(h).T for h in grouped_haps]
+
+        # otherwise, get the genotypes from the individuals directly
+        else:
+            gts = [ind.g for idx, ind in self.items() if idx in individs]
 
         # subset loci, if needed
         if loci is not None:
@@ -1401,7 +1458,7 @@ class Species(OD):
     def _get_z(self, trait_num=None, individs=None):
         zs = self._get_scalar_attr('z', individs=individs)
         if trait_num is not None:
-            zs = zs[:,trait_num]
+            zs = np.atleast_2d(zs)[:,trait_num]
         return zs
 
     #convenience method for getting whole species' fitnesses
@@ -1492,7 +1549,8 @@ class Species(OD):
         self._set_kd_tree()
 
         # if mating_radius is None, then just use Wright-Fisher
-        # style panmixia (draw with replacement a sample of size = Nt*b, where Nt is the 
+        # style panmixia (draw with replacement a sample
+        # of size = Nt*b, where Nt is the 
         # current pop size and b is the birth rate (i.e. mating probability);
         # that sample represents all mating individuals, and each of those
         # individuals randomly chooses its mate
@@ -1524,9 +1582,9 @@ class Species(OD):
 
             #query the tree to get mating pairs
             pairs = self._kd_tree._get_mating_pairs(coords=coords,
-                                                    dist=self.mating_radius,
-                                                    choose_nearest=choose_nearest,
-                                            inverse_dist_mating=inverse_dist_mating)
+                                                dist=self.mating_radius,
+                                                choose_nearest=choose_nearest,
+                                        inverse_dist_mating=inverse_dist_mating)
 
             # use the species' birth rate to decide (as bernoulli draws)
             # whether each pair can mate
@@ -1560,7 +1618,8 @@ class Species(OD):
         """
         gen = self._get_genotypes()
 
-        #loop to convert binary allele genotypes (0|1) into single digit genotypes (0, 0.5, 1)
+        #loop to convert binary allele genotypes (0|1)
+        #into single digit genotypes (0, 0.5, 1)
         geno_ind = []
         for ind in range(len(gen)):
             geno_loc = []
@@ -1603,7 +1662,8 @@ class Species(OD):
         trt_num : int
             The number of the Trait to run the GEA on. Defaults to 0.
         scale : bool
-            If True, scales the variable, individual, and locus loadings from -1 to 1 to make them easier
+            If True, scales the variable, individual,
+            and locus loadings from -1 to 1 to make them easier
             to visualize. Defaults to True.
         plot : bool
             Whether or not to plot the model. Defaults to True.
@@ -1680,16 +1740,21 @@ class Species(OD):
             if scale == True:
                 rmin = -1
                 rmax = 1
-                loci_df = rmin + (loci_df - loci_df.values.min()) * (rmax - (rmin)) / (loci_df.values.max() - loci_df.values.min())
-                var_df = rmin + (var_df - var_df.values.min()) * (rmax - (rmin)) / (var_df.values.max() - var_df.values.min())
-                ind_df = rmin + (ind_df - ind_df.values.min()) * (rmax - (rmin)) / (ind_df.values.max() - ind_df.values.min())
+                loci_df = rmin + (loci_df - loci_df.values.min()) * (rmax -
+                        (rmin)) / (loci_df.values.max() - loci_df.values.min())
+                var_df = rmin + (var_df - var_df.values.min()) * (rmax -
+                        (rmin)) / (var_df.values.max() - var_df.values.min())
+                ind_df = rmin + (ind_df - ind_df.values.min()) * (rmax -
+                        (rmin)) / (ind_df.values.max() - ind_df.values.min())
 
 
             #get max and mins to set axis later on
-            maxdf = max(ind_df.values.max(), var_df.values.max(), loci_df.values.max())
-            mindf = abs(min(ind_df.values.min(), var_df.values.min(), loci_df.values.min()))
+            maxdf = max(ind_df.values.max(), var_df.values.max(),
+                        loci_df.values.max())
+            mindf = abs(min(ind_df.values.min(), var_df.values.min(),
+                            loci_df.values.min()))
             axmax = max(maxdf, mindf) * 1.20 #adding a 20% buffer
-            
+
             #set up figure
             fig = plt.figure(figsize=(20, 15))
             for n, cc_axes_pair in enumerate([[1, 2], [1, 3], [2, 3]]):
@@ -1702,7 +1767,7 @@ class Species(OD):
                 #add center lines
                 ax.axhline(y=0, color='lightgray', linestyle='dotted')
                 ax.axvline(x=0, color='lightgray', linestyle='dotted')
-                
+
                 # set axes range
                 plt.xlim(-axmax, axmax)
                 plt.ylim(-axmax, axmax)
@@ -1750,7 +1815,8 @@ class Species(OD):
                             c = 'red', label = str(sd) + " StdDev")
 
                 #EVERYTHING BELOW THIS LINE IN THE LOOP IS JUST PLOT FORMATTING 
-                #xlabel is the label at the bottom (vertical axis label) and ylabel is on the left side (horizontal axis label)
+                #xlabel is the label at the bottom (vertical axis label)
+                # and ylabel is on the left side (horizontal axis label)
                 label = ax.set_xlabel('CCA' + str(cc_axis2), fontsize = 9)
                 ax.xaxis.set_label_coords(0.5, -0.02)
                 label = ax.set_ylabel('CCA' + str(cc_axis1), fontsize = 9)
@@ -1758,8 +1824,8 @@ class Species(OD):
 
                 #make into box
                 ax.set_aspect('equal', adjustable='box')
-                
-                #Move left y-axis and bottom x-axis to center, passing through (0,0)
+
+                #Move left y-axis & bottom x-axis to center, passing thru (0,0)
                 ax.spines['left'].set_position('center')
                 ax.spines['bottom'].set_position('center')
 
@@ -2157,6 +2223,10 @@ class Species(OD):
     def _plot_gene_flow(self, locus, style, land, nodes=None, individs=None,
                        color=None, phenotype=None, lyr_num=0, jitter=True,
                        alpha=0.5, size=25, add_roots=False):
+        if not self.gen_arch.use_tskit:
+            raise Exception(("Gene flow cannot be plotted for a Species "
+                             "whose spatial pedigree is not being tracked "
+                             "by tskit."))
         assert style in ['lineage', 'vector'], ("The style argument must be "
                                                 "given either 'lineage' or "
                                                 "'vector' as a value.")
@@ -2206,10 +2276,12 @@ class Species(OD):
                 locs = np.vstack([v[1] for v in lin_dict[node].values()])
                 if jitter:
                     locs = locs + np.random.normal(0, 0.01,
-                                                size=locs.size).reshape(locs.shape)
-                # create list of colors for plotting, using linearly interpolated
-                # colors if the color argument was not provided, 
-                # or else just using the solid color provided to the color argument
+                                            size=locs.size).reshape(locs.shape)
+                # create list of colors for plotting,
+                # using linearly interpolated colors
+                # if the color argument was not provided, 
+                # or else just using the solid color
+                # provided to the color argument
                 color_nums = np.int8(np.linspace(0, 100, locs.shape[0]-1))
                 if color is None:
                     plot_colors =[viz._calc_reshaded_color(start_col,
@@ -2256,6 +2328,11 @@ class Species(OD):
 
     # plot the lineage for a given node and locus
     def _plot_lineage_roots(self, tc, tree, alpha=0.8, size=75):
+        if not self.gen_arch.use_tskit:
+            raise Exception(("Lineage roots cannot be plotted for a Species "
+                             "whose spatial pedigree is not being tracked "
+                             "by tskit."))
+
         # get the nodes
         all_nodes = self._get_nodes()
 

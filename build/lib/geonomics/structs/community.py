@@ -51,7 +51,7 @@ class Community(dict):
 
     n_spps:
         The number of Species in the Community
-    
+
     t:
         The index of the last completed time step run for this Community.
         This attribute holds the value -1 until all Species in the Community

@@ -104,10 +104,6 @@ class Model:
         #beginning of the timestep
         self.t = -1
 
-        # get the tskit-table simplification interval
-        # (will only be used if there are genomes in any species)
-        self._tskit_simp_interval = m_params.tskit_simp_interval
-
         #get the number of model iterations to run
         self.n_its = m_params.its.n_its
         #set the its list
@@ -660,23 +656,28 @@ class Model:
             # set each species' flag that indicates whether or not the
             # TableCollection is sorted and simplified to False
             for spp in self.comm.values():
-                if spp._tc_sorted_and_simplified:
+                if (spp.gen_arch is not None
+                    and spp.gen_arch.use_tskit
+                    and spp._tc_sorted_and_simplified):
                     spp._tc_sorted_and_simplified = False
 
             if self._verbose:
                 self._print_timestep_info(mode)
             # sort and simplify tskit tables, if needed
-            if (self.t + 1) % self._tskit_simp_interval == 0 and self.t !=-1:
-                for spp in self.comm.values():
-                    if spp.gen_arch is not None:
+            for spp in self.comm.values():
+                    if (spp.gen_arch is not None
+                        and spp.gen_arch.use_tskit
+                        and (self.t + 1) % spp.gen_arch.tskit_simp_interval == 0
+                        and self.t !=-1):
                         if self._verbose:
                             print(('\n\nnow sorting and simplifying '
-                                   'tskit tables'))
+                                   "tskit tables for Species: '%s'") % spp.name)
                             print("\tNUMBER EDGES BEFORE SIMPLIFICATION:",
                                   self.comm[0]._tc.edges.num_rows)
                             print("\tNUMBER INDIVIDS BEFORE SIMPLIFICATION:",
                                   self.comm[0]._tc.individuals.num_rows)
-                            spp._sort_simplify_table_collection()
+                        spp._sort_simplify_table_collection()
+                        if self._verbose:
                             print("\n\tNUMBER EDGES AFTER SIMPLIFICATION: ",
                                   self.comm[0]._tc.edges.num_rows)
                             print("\tNUMBER INDIVIDS AFTER SIMPLIFICATION: ",
@@ -2676,6 +2677,10 @@ class Model:
             string).
         """
         spp = self.comm[self._get_spp_num(spp)]
+        if not spp.gen_arch.use_tskit:
+            raise Exception(("TreeSequence object cannot be generated "
+                             "for a Species whose pedigree is not being "
+                             "tracked by tskit."))
         assert spp.gen_arch is not None, ("Species without Genomes "
                                           "have no tskit data structures "
                                           "to be returned.")

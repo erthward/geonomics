@@ -55,17 +55,17 @@ class _StatsCollector:
         #a dictionary to link the stats' names in the params dict 
         #to the functions to be called to write them to disk
         self.write_fn_dict = {'ld':  self._write_array_to_stack,
-                             'het': self._write_row_to_csv,
-                             'maf': self._write_row_to_csv,
+                              'het': self._write_row_to_csv,
+                              'maf': self._write_row_to_csv,
                              }
 
         #a dictionary to link stats to the file extensions that 
         #should be used to write them to disk
         self.file_suffix_dict = {'Nt': 'OTHER_STATS.csv',
-                                'ld':  'LD.txt',
-                                'het': 'HET.csv',
-                                'maf': 'MAF.csv',
-                                'mean_fit': 'OTHER_STATS.csv',
+                                 'ld':  'LD.txt',
+                                 'het': 'HET.csv',
+                                 'maf': 'MAF.csv',
+                                 'mean_fit': 'OTHER_STATS.csv',
                                  }
 
         #get the species names

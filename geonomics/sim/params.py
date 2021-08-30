@@ -588,6 +588,8 @@ ITS_PARAMS = '''
             'rand_landscape':   False,
             #whether to randomize Community each iteration
             'rand_comm':        False,
+            #whether to randomize GenomicArchitectures each iteration
+            'rand_genarch':     True,
             #whether to burn in each iteration
             'repeat_burn':      False,
             }, # <END> 'iterations'

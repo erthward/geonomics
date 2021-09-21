@@ -2313,6 +2313,20 @@ and <code class="code py python docutils literal notranslate"><span class="liter
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> arrays). Currently valid formats include <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘geotiff’</span></span></code>
 and <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘txt’</span></span></code>. Either format may be specified. Note that this parameter
 will only be used if the <strong>include_landscape</strong> parameter is set to True.</p>
+<p><strong>nonneut_loc_format</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#format for files containing non-neutral loci</span>
+<span class="s1">&#39;nonneut_loc_format&#39;</span><span class="p">:</span>      <span class="s1">&#39;csv&#39;</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>{<code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘csv’</span></span></code>, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
+<p>default: <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘csv’</span></span></code></p>
+<p>reset? P</p>
+<p>This indicates the format to use for writing files
+containing lists (in columns) of the non-neutral loci subtending
+each of the traits (whose names are used as column names).
+Currently valid values include <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">‘csv’</span></span></code>,
+which saves a simple CSV file, and <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>,
+which tells Geonomics not to save these files as output.</p>
 </div>
 </div>
 <hr class="docutils" />

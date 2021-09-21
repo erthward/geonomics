@@ -162,17 +162,13 @@ def _do_mating_sngl_offspr(spp, pair, recomb_keys):
                                         event_key=k) for k in recomb_keys]
         #NOTE: flip the genome L-R before subsetting, if the start homologue is
         # 1, then flatten genome and subset
-        print(spp[pair[0]].g.shape)
-        print(spp[pair[1]].g.shape)
         new_genome = [np.fliplr(spp[ind].g).flatten(
             )[np.bool8([*sub])] if hom else spp[ind].g.flatten(
             )[np.bool8([*sub])] for ind, hom, sub in zip(pair,
                                                start_homologues, subsetters)]
-        print([v.shape for v in new_genome])
         new_genome = np.vstack(new_genome).T
     else:
         new_genome = None
-    print('SHAPE!', new_genome.shape)
     return new_genome, seg_info
 
 

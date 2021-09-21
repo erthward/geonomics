@@ -3071,6 +3071,28 @@ This indicates the format to use for writing geographic raster data (i.e.
 and :py:`'txt'`. Either format may be specified. Note that this parameter
 will only be used if the **include_landscape** parameter is set to True.
 
+
+**nonneut_loc_format**
+
+.. code-block:: python
+
+                  #format for files containing non-neutral loci
+                  'nonneut_loc_format':      'csv',
+
+{:py:`'csv'`, :py:`None`}
+
+default: :py:`'csv'`
+
+reset? P
+
+This indicates the format to use for writing files
+containing lists (in columns) of the non-neutral loci subtending
+each of the traits (whose names are used as column names).
+Currently valid values include :py:`'csv'`,
+which saves a simple CSV file, and :py:`None`,
+which tells Geonomics not to save these files as output.
+
+
 ----------------
 
 

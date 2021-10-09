@@ -1049,6 +1049,9 @@ class Model:
         if self._verbose:
             print('\n')
 
+        # coerce animate to tuple if list was provided
+        if isinstance(animate, list):
+            animate = tuple(animate)
         # start animated plot, if animate == True
         if animate not in (False, None):
             if (isinstance(animate, tuple)
@@ -1062,7 +1065,7 @@ class Model:
                 points = self.plot(spp=0, animate=True)
             plt.ion()
             plt.draw()
-            plt.pause(0.1)
+            plt.pause(0.05)
 
         # run the model for the stipulated number of timesteps
         for t in range(T):

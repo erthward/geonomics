@@ -51,10 +51,11 @@ from geonomics import demos
 
 #other imports
 import re
-import os, sys, traceback
+import os, sys, traceback, shutil
 from collections import Counter as C
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 ######################################
@@ -459,7 +460,7 @@ def make_params_dict(params, model_name=None):
 
 
 #function to create a model from a ParametersDict object
-def make_model(parameters=None, verbose=False):
+def make_model(parameters=None, name=None, verbose=False):
     """
     Create a new Model object.
 
@@ -487,6 +488,16 @@ def make_model(parameters=None, verbose=False):
         directory with the filename "GNX_params_<...>.py", will use that
         file to make a ParametersDict object, then will use that object to
         make the Model.
+
+    name: str, optional, default: None
+        The name to assign to the model being created. If None, the name will
+        either be taken from parameters['model']['name'], if available;
+        or else set as the parameters filename, if `parameters` is a string;
+        or else set as 'unnamed_model'.
+
+    verbose: bool, optional, default: False
+        Whether or not to run the model in verbose mode, printing model-run
+        information to STDOUT at each time step.
 
     Returns
     -------
@@ -589,7 +600,7 @@ def make_model(parameters=None, verbose=False):
 
     if type(parameters) is dict:
         try:
-            parameters = make_params_dict(params, 'unnamed_model')
+            parameters = make_params_dict(params, name)
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             raise ValueError(("A plain dict was provided as the value for "
@@ -601,7 +612,8 @@ def make_model(parameters=None, verbose=False):
     else:
         pass
     try:
-        name = parameters.model.name
+        if name is None:
+            name = parameters['model']['name']
         mod = Model(name, parameters, verbose=verbose)
         return(mod)
     except Exception as e:
@@ -614,7 +626,7 @@ def make_model(parameters=None, verbose=False):
 # convenience function for creating a parameters-file for, instantiating, and
 # running the default model, plotting the result, then returning the Model
 # object
-def run_default_model(delete_params_file=True, animate=False):
+def run_default_model(selection=False, delete_params_file=True, animate=False):
     """
     Run the default Geonomics model.
 
@@ -623,6 +635,12 @@ def run_default_model(delete_params_file=True, animate=False):
 
     Parameters
     ----------
+    selection : bool, optional, default: False
+        If False (default), will run a neutral model without traits or selection.
+        If True, will run a two-layer model in which the first layer serves as
+        the carrying-capacity and movement layer and the second layer is the
+        basis for selection on a 4-locus trait.
+
     delete_params_file : bool, optional, default: True
         Whether or not to delete the parameters file used for this model
         after the model has finished running
@@ -642,15 +660,37 @@ def run_default_model(delete_params_file=True, animate=False):
 
 
     # make the default params file
-    filename = 'GNX_default_model_params.py'
-    make_parameters_file(filename)
-    # create the default model
-    mod = make_model(parameters = filename)
+    filename = 'GNX_default_model_params%s.py'
+    if not selection:
+        filename = filename % '_NEUTRAL'
+        make_parameters_file(filename)
+        # create the default model
+        mod = make_model(parameters=filename)
+    else:
+        filename = filename % '_SELECTION'
+        gnx_dir = os.path.split(__file__)[0]
+        params_file_path = os.path.join(gnx_dir, "data", "default_models")
+        shutil.copy(os.path.join(params_file_path, "selection_params.py"),
+                    os.path.join('.', filename))
+        mod = make_model(parameters=filename)
     # run the default model in verbose mode
-    mod.walk(T=10000, mode='burn', verbose = True, animate=animate)
-    mod.walk(T=50, mode='main', verbose=True, animate=animate)
-    # plot the results
-    mod.plot(0,0,0)
+    if not selection:
+        mod.walk(T=10000, mode='burn', verbose = True, animate=animate)
+        mod.walk(T=50, mode='main', verbose=True, animate=animate)
+        # plot the results
+        mod.plot(0,0,0)
+    else:
+        mod.walk(T=10000, mode='burn', verbose = True)
+        if animate:
+            animate = (0,0,0)
+        fig = plt.figure()
+        mod.walk(T=50, mode='main', verbose=True, animate=animate)
+        ax1 = fig.add_subplot(121)
+        ax1.set_title('LYR_0:\nmovement, carrying capacity')
+        mod.plot(0,0)
+        ax2 = fig.add_subplot(122)
+        ax2.set_title('LYR_1:\nselection')
+        mod.plot_phenotype(0,0,0)
     # get rid of the params file it created
     if delete_params_file:
         os.remove(os.path.join('.', filename))

@@ -72,6 +72,8 @@ class Model:
         m_params = self.params.model
 
         #set the model name (which will come from the params filename)
+        if name is None:
+            name = 'unnamed_model'
         self.name = name
 
         # get the PID of the process the model is running on
@@ -1049,6 +1051,9 @@ class Model:
         if self._verbose:
             print('\n')
 
+        # coerce animate to tuple if list was provided
+        if isinstance(animate, list):
+            animate = tuple(animate)
         # start animated plot, if animate == True
         if animate not in (False, None):
             if (isinstance(animate, tuple)
@@ -1062,7 +1067,7 @@ class Model:
                 points = self.plot(spp=0, animate=True)
             plt.ion()
             plt.draw()
-            plt.pause(0.1)
+            plt.pause(0.05)
 
         # run the model for the stipulated number of timesteps
         for t in range(T):

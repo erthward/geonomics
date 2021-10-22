@@ -460,7 +460,7 @@ def make_params_dict(params, model_name=None):
 
 
 #function to create a model from a ParametersDict object
-def make_model(parameters=None, verbose=False):
+def make_model(parameters=None, name=None, verbose=False):
     """
     Create a new Model object.
 
@@ -488,6 +488,16 @@ def make_model(parameters=None, verbose=False):
         directory with the filename "GNX_params_<...>.py", will use that
         file to make a ParametersDict object, then will use that object to
         make the Model.
+
+    name: str, optional, default: None
+        The name to assign to the model being created. If None, the name will
+        either be taken from parameters['model']['name'], if available;
+        or else set as the parameters filename, if `parameters` is a string;
+        or else set as 'unnamed_model'.
+
+    verbose: bool, optional, default: False
+        Whether or not to run the model in verbose mode, printing model-run
+        information to STDOUT at each time step.
 
     Returns
     -------
@@ -590,7 +600,7 @@ def make_model(parameters=None, verbose=False):
 
     if type(parameters) is dict:
         try:
-            parameters = make_params_dict(params, 'unnamed_model')
+            parameters = make_params_dict(params, name)
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             raise ValueError(("A plain dict was provided as the value for "
@@ -602,7 +612,8 @@ def make_model(parameters=None, verbose=False):
     else:
         pass
     try:
-        name = parameters.model.name
+        if name is None:
+            name = parameters['model']['name']
         mod = Model(name, parameters, verbose=verbose)
         return(mod)
     except Exception as e:
@@ -673,12 +684,12 @@ def run_default_model(selection=False, delete_params_file=True, animate=False):
         if animate:
             animate = (0,0,0)
         fig = plt.figure()
+        mod.walk(T=50, mode='main', verbose=True, animate=animate)
         ax1 = fig.add_subplot(121)
-        mod.plot(None, 0)
         ax1.set_title('LYR_0:\nmovement, carrying capacity')
+        mod.plot(0,0)
         ax2 = fig.add_subplot(122)
         ax2.set_title('LYR_1:\nselection')
-        mod.walk(T=50, mode='main', verbose=True, animate=animate)
         mod.plot_phenotype(0,0,0)
     # get rid of the params file it created
     if delete_params_file:

@@ -72,6 +72,8 @@ class Model:
         m_params = self.params.model
 
         #set the model name (which will come from the params filename)
+        if name is None:
+            name = 'unnamed_model'
         self.name = name
 
         # get the PID of the process the model is running on

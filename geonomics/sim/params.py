@@ -1055,8 +1055,6 @@ def _make_params_dict(params):
 
 #read a params file and return a ParametersDict object
 def _read_params_file(filepath):
-    #get the filename (minus path and extension) as the model name
-    name = os.path.splitext(os.path.split(filepath)[-1])[0]
     #create a namespace to read the params dict into
     ns = {}
     #read and execute the file (to create a plain dict called 'params')
@@ -1066,6 +1064,11 @@ def _read_params_file(filepath):
     #turn the params dict into a ParametersDict object
     params = ParametersDict(params)
     #set the model's name
+    if 'name' in params['model'] and params['model']['name'] is not None:
+        name = params['model']['name']
+    else:
+        #get the filename (minus path and extension) as the model name
+        name = os.path.splitext(os.path.split(filepath)[-1])[0]
     params.model['name'] = name
     return(params)
 

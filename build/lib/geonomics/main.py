@@ -453,7 +453,9 @@ def make_params_dict(params, model_name=None):
     """
     params_dict=ParametersDict(params)
     if model_name is not None:
-        params_dict.model['name'] = model_name
+        params_dict['model']['name'] = model_name
+    elif 'name' in params['model'] and params['model']['name'] is not None:
+        pass
     else:
         params_dict.model['name'] = 'unnamed_model'
     return params_dict

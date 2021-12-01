@@ -1023,7 +1023,7 @@ def _make_genomic_architecture(spp_params, land):
         else:
             gen_arch.p = _draw_allele_freqs(g_params.L)
         # set the neutral loci to 0, if need be
-        if g_params.start_neut_zero:
+        if g_params.start_neut_zero and len(gen_arch.neut_loci) > 0:
             gen_arch.p[gen_arch.neut_loci] = 0
     # use starting allele freq values from the gen_arch_file instead, if given
     else:

@@ -1059,11 +1059,12 @@ def _check_mutation_rates(gen_arch, est_tot_muts, burn_T, T):
     # skip this step and force the neutral mutation rate to 0, if there are no
     # neutral loci in the genome as it was configured
     if len(gen_arch.neut_loci) == 0:
-        raise MutationRateError(("This species has been parameterized "
-                                 "with non-zero mutation rates but "
-                                 "without any neutral loci, leaving no target "
-                                 "for mutations. Please tweak the genome "
-                                 "length and/or mutation rates."))
+        warn_msg = ("This species has been parameterized "
+                    "with non-zero mutation rates but "
+                    "without any neutral loci, leaving no target "
+                    "for mutations. Please tweak the genome "
+                    "length and/or mutation rates.")
+        warnings.warn(warn_msg)
         gen_arch.mu_neut = 0
         gen_arch.mu_delet = 0
         for trt in gen_arch.traits.values():

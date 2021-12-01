@@ -1304,6 +1304,9 @@ class Species(OD):
         Calculate stats for the lineages of a given set of nodes and loci;
         returns dict of struct:
             {k=stat, v={k=loc, v=[val_node1 ... val_node_N]}}
+
+        NOTE: directions are expressed as 'compass' directions
+              (i.e., expressed in degrees, clockwise from 0 degrees at north)
         '''
         # get all nodes for the provided individuals, or for all individuals,
         # if nodes IDs not provided

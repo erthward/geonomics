@@ -36,7 +36,8 @@ Geonomics |version|
 Description
 ***********
 
-A Python package for simulation of genomic evolution on complex landscapes.
+A Python package for simulation of genomic evolution
+on complex and dynamic landscapes.
 Provides for easy construction of individual-based, spatially explicit,
 forward-time simulation models under arbitrarily complex scenarios.
 

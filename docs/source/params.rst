@@ -1600,15 +1600,16 @@ default: {:py:`None`, :py:`'<your_model_name>_spp-<n>_gen_arch.csv'`
 
 reset? P
 
-This arguments indicates whether a custom genomic architecture file should
+This argument indicates whether a custom genomic architecture file should
 be used to create a :py:`Species`' :py:`GenomicArchitecture`, and if so,
 where that file is located. If the value is :py:`None`, no file will be
 used and the values of this :py:`Species`' other genomic
 architecture parameters in the parameters file will be used to create
 the :py:`GenomicArchitecture`. If the value is a :py:`str` pointing to a
 custom genomic-architecture file 
-(i.e. a CSV file with loci as rows and 'locus_num',
-'p', 'dom', 'r', 'trait', and 'alpha' as columns stipulating the starting
+(i.e. a CSV file with loci as rows and 'locus',
+'p', 'dom', 'r', 'trait', and 'alpha' as columns stipulating the
+locus numbers, starting
 allele frequencies, dominance values, inter-locus recombination rates,
 trait names, and effect sizes of all loci; values can be left blank if not applicable).
 Geonomics will create an empty
@@ -1621,7 +1622,7 @@ Note that when Geonomics reads in a custom genomic architecture file
 to create a :py:`Model`, it will check
 that the length (i.e. number of rows) in this file is equal to the length
 stipulated by the **L** parameter, and will also check that the first value
-at the top of the 'r' column is 0.5 (which is used to implement independent
+at the top of the 'r' column is 0 (which is used to implement independent
 assortment during gametogenesis). If either of these checks fails,
 Geonomics throws an Error.
 

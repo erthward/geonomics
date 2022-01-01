@@ -919,7 +919,7 @@ def _make_genomic_architecture(spp_params, land):
     recomb_positions = None
     if gen_arch_file is not None:
         recomb_rates = gen_arch_file['r'].values
-        recomb_positions = gen_arch_file['locus'].values# - 0.5
+        recomb_positions = gen_arch_file['locus'].values
 
     # set locus-wise dominance values for the 1-alleles, using the 'dom' value
     # in the gen_arch params, unless a gen_arch_file was provided

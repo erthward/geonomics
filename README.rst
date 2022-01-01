@@ -12,7 +12,7 @@ Forward-time, individual-based, landscape genomic simulation in Python.
  
 **Geonomics** allows users to build and run arbitrarily complex, forward-time,
 agent-based, and spatially explicit simulations for landscape genomics. It is
-designed to allow novice Python users to create sophisticated simulations with
+designed to allow even novice Python users to create sophisticated simulations with
 minimal code, while also allowing advanced users a high level of extensibility
 and customizability.
 

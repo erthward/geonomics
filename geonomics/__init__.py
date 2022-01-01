@@ -7,6 +7,7 @@ from . import utils
 from . import help
 from . import demos
 from .main import *
+from .version import __version__
 
 __docformat__ = 'restructuredtext'
 

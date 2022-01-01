@@ -1,14 +1,25 @@
 import setuptools
+import re
 
 def readme():
     with open("README.rst", 'r') as f:
         return f.read()
 
+# version-handling code stolen from: https://stackoverflow.com/questions/
+    #458550/standard-way-to-embed-version-into-python-package
+VERSIONFILE="geonomics/version.py"
+verstrline = open(VERSIONFILE, "rt").read()
+VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+mo = re.search(VSRE, verstrline, re.M)
+if mo:
+    verstr = mo.group(1)
+else:
+    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
 setuptools.setup(
     name='geonomics',
     # version num.: MAJOR.MINOR.PATCH
-    version='1.3.5',
+    version=verstr,
     author='Drew Ellison Hart',
     author_email='drew.ellison.hart@gmail.com',
     description='A package for landscape genomic simulation',
@@ -16,7 +27,8 @@ setuptools.setup(
     long_description_content_type='text/x-rst',
     url='https://github.com/drewhart/geonomics',
     # include the download URL, from the latest release on Github
-    download_url='https://github.com/drewhart/geonomics/archive/1.3.5.tar.gz',
+    download_url=('https://github.com/drewhart/geonomics/archive/'
+                  '%s.tar.gz') % verstr,
     include_package_data=True,
     # packages=setuptools.find_packages(),
     packages=['geonomics',

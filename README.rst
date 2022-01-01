@@ -6,8 +6,7 @@ Geonomics
    :width: 100
    :align: left
 
-Forward-time, individual-based, landscape genomic simulation in Python.
-
+A Python package for simulation of genomic evolution on complex and dynamic landscapes 
          
  
 **Geonomics** allows users to build and run arbitrarily complex, forward-time,

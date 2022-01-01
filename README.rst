@@ -3,7 +3,7 @@ Geonomics
 *********
 
 .. image:: ./img/gnx_mini_350dpi.png
-   :width: 100
+   :width: 250
    :align: left
 
 A Python package for simulation of genomic evolution on complex and dynamic landscapes 

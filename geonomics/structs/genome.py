@@ -868,6 +868,18 @@ def _make_genomic_architecture(spp_params, land):
     if 'gen_arch_file' in g_params.keys():
         if g_params.gen_arch_file is not None:
             gen_arch_file = pd.read_csv(g_params.gen_arch_file)
+
+            # check that each trait is assigned an alpha value
+            for trt_val, alpha_val in zip(gen_arch_file['trait'],
+                                          gen_arch_file['alpha']):
+                if pd.notnull(trt_val):
+                    assert pd.notnull(alpha_val), ("All trait-associated loci "
+                                                   "specified in a custom "
+                                                   "genomic architecture file "
+                                                   "must be assigned non-null "
+                                                   "alpha values. Please check "
+                                                   "your file, then rerun.")
+
             # ensure that trait and alpha columns are strings to start (because
             # in many cases alpha would likely read in as a float, if each row
             # has at most one alpha value because there's no pleiotropy, but in

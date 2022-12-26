@@ -1070,7 +1070,7 @@ def _check_mutation_rates(gen_arch, est_tot_muts, burn_T, T):
 
     # skip this step and force the neutral mutation rate to 0, if there are no
     # neutral loci in the genome as it was configured
-    if len(gen_arch.neut_loci) == 0:
+    if len(gen_arch.neut_loci) == 0 and gen_arch._mu_tot > 0:
         warn_msg = ("This species has been parameterized "
                     "with non-zero mutation rates but "
                     "without any neutral loci, leaving no target "
@@ -1322,6 +1322,10 @@ def _calc_lineage_stat(lin_dict, stat):
 
 # calculate the angular direction of gene flow along a locus' lineage
 def _calc_lineage_direction(lin_dict):
+    """
+    returns 'compass' directions of gene flow, with directions expressed
+    as angles (in degrees) clockwise from compass north
+    """
     # if the lineage has 1 or less node, don't calculate anything
     if len(lin_dict.values()) < 2:
         return

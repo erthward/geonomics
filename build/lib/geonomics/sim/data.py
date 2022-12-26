@@ -18,7 +18,6 @@ import os, sys
 import datetime
 import re
 from shapely.geometry import Point
-from shapely.ops import cascaded_union
 import pandas as pd
 import geopandas as gpd
 from itertools import chain
@@ -94,9 +93,9 @@ class _DataCollector:
 
         #create the point buffers, if either 'transect' or 'point' is the 
         #chosen sampling scheme
-        self.pts_area = None
+        self.pts_areas = None
         if sampling_params.scheme in ['transect', 'point']:
-            self.pts_area = _make_point_buffers(self.pts,
+            self.pts_areas = _make_point_buffers(self.pts,
                                         sampling_params.radius)
 
         #get the 'include_landscape' param (defaults False)
@@ -293,10 +292,10 @@ class _DataCollector:
 
     def _get_point_sample(self, spp):
         #TODO: check if this should be sped up any more
-        sample = [i for i,v in spp.items() if self.pts_area.contains(
-                                                        Point(v.x, v.y))]
-        if len(sample) > self.n:
-            sample = self._get_random_sample(individuals = sample)
+        pt_samples = [[i for i,v in spp.items() if pa.contains(Point(v.x, v.y))]
+                   for pa in self.pts_areas]
+        pt_samples = [self._get_random_sample(individuals=ps) for ps in pt_samples]
+        sample = [s for ps in pt_samples for s in ps]
         return(sample)
 
 
@@ -310,7 +309,7 @@ class _DataCollector:
         elif self.scheme == 'random':
             inds = self._get_random_sample([*spp])
             sample.update(inds)
-        #or take individuals within a given radius of self.buffs (which could
+        #or take individuals within a given radius of self.pts_areas (which could
         #have come from a set of input points or from a calculated set of
         #transect points), if scheme is 'point' or 'transect'
         elif self.scheme in ['point', 'transect']:
@@ -355,10 +354,15 @@ class _DataCollector:
               in order to determine when loci became non-neutral.
         """
         # get all the non-neutral loci for each trait
-        locs_dict = {trt.name:
-                     [*trt.loci] for trt in spp.gen_arch.traits.values()}
-        # make the number of rows even across columns
-        max_nrow = np.max([len(v) for v in locs_dict.values()])
+        if spp.gen_arch.traits is not None:
+            locs_dict = {trt.name:
+                         [*trt.loci] for trt in spp.gen_arch.traits.values()}
+            # make the number of rows even across columns
+            max_nrow = np.max([len(v) for v in locs_dict.values()])
+        # NOTE: if there are no non-neutral loci then it will write an empty CSV
+        else:
+            locs_dict = {}
+            max_nrow = 0
         for k,v in locs_dict.items():
             if len(v) < max_nrow:
                 locs_dict[k] = np.array([*v] + [np.nan]*(max_nrow-len(v)))
@@ -394,8 +398,7 @@ def _get_transect_points(endpoints, n):
 def _make_point_buffers(points, radius):
     pts = [Point(*p) for p in points]
     buffs = [p.buffer(radius) for p in pts]
-    cu = cascaded_union(buffs)
-    return(cu)
+    return(buffs)
 
 
 # a function that returns an ad hoc sample of size n

@@ -1562,7 +1562,7 @@ class Species(OD):
             # with num trials equal to pop size and probability equal to
             # the species' birth rate
             if self.b < 1:
-                n_mates = np.random.binomial(n=len(self), p=self.b, size=1)
+                n_mates = np.random.binomial(n=len(self), p=self.b)
             else:
                 n_mates = len(self)
             tree_inds = self._kd_tree.tree.indices

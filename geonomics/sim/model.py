@@ -29,6 +29,8 @@ import sys, os, traceback, psutil
 import matplotlib as mpl
 _check_display()
 import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+
 
 
 ######################################
@@ -1844,6 +1846,150 @@ class Model:
         #plt.suptitle(spp.name)
 
 
+    def plot_genetic_PCA(self, spp=0, lyr=0,
+                        individs=None, text=False,
+                        edge_color='black', text_color='black', cbar=True,
+                        size=25, text_size=9,
+                        alpha=False, zoom_width=None, x=None, y=None,
+                        ticks=False, hide_land=False, mask_rast=None):
+        """
+        Create a scatter plot of the Individuals in a Species,
+        on top of any Landscape Layer, and color the points by
+        the first 3 PCS in a genetic PCA (Principal Components Analysis).
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species whose Individuals should be scattered
+            on the plot. Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string). If None, will cause only the Landscape
+            to be plotted.
+
+        lyr : {int, str}, optional, default: None
+            A reference to the Layer whose raster should be plotted. Can be
+            either the Layer's index number (i.e. its integer key in the
+            Landscape dict), or its name (as a character string). Defaults
+            to None, which will either cause only the Layer associated with the
+            chosen Trait to be plotted, if *trt* is not None; or else
+            will cause all Layers to be plotted as an overlay of transparent
+            rasters, each with a different colormap, if *trt* is None.
+
+        individs : iterable collection of ints, optional, default: None
+            If provided, indicates the integer indices of the only Individuals
+            to be plotted. If None, all Individuals will be plotted.
+
+        text : bool, optional, default: False
+            If True, each Individual's index number will be displayed next to
+            it. Can be useful for model introspection.
+
+        edge_color : valid mpl.plt color value, optional, default: 'face'
+            Edge color for the points in the Individual scatter. If 'face',
+            will always match the face color (i.e. the color provided to
+            *color*). Passed to the *edgecolor* argument of
+            matplotlib.pyplot.scatter.
+
+        text_color : valid mpl.plt color value, default 'black'
+            Color for the plotted text. (Will only be used if the *text*
+            argument is True.) Passed to the *color* argument of
+            matplotlib.pyplot.text.
+
+        cbar : bool, optional, default: True
+            If True, a colorbar will be included, depicting the mapping of
+            color onto the Landscape's environmental values.
+
+        size : scalar or array_like, optional, default: 25
+            Size of the scatter points. Passed to the *s* argument
+            of matplotlib.pyplot.scatter.
+
+        text_size : {size in points, valid string}, optional, default: 9
+            Text size. (Will only be used if *text* is True.) Can be expressed
+            as a numeric size in points, or as any string that is a valid size
+            argument for matplotlib.text.Text.
+
+        alpha : {scalar, bool, None}, optional, default: None
+            The transparency level of the points. If scalar is passed, it is
+            passed on to the *alpha* value fed to matplotlib.pyplot.scatter.
+            If True, alpha value will be set to 0.6. If False or None, points
+            will be opaque.
+
+        zoom_width : {scalar, None}, optional, default: None
+            Width, in raster cells, of the window to which to zoom to resulting
+            plot. If None, plot shows full Landscape.
+
+        x,y : {scalar, None}, default: None
+            The x and y coordinates of the center of the resulting plot.
+            Only used if *zoom_width* is not None.
+
+        ticks : bool, optional, default: False
+            If True, x- and y-axis ticks will be added to the plot.
+
+        hide_land : bool, optional, default: False
+            If True, Landscape Layer raster will not be plotted beneath the
+            scatterplot.
+
+        mask_rast : array_like, optional default: None
+            An array to use to mask values in the Layer(s) being plotted.
+            All np.nan values in the array will be plotted as light gray,
+            instead of the color that would otherwise map to their
+            environmental values in their raster(s).
+            The array must be of the same x,y dimensions as the Layer(s)
+            being plotted.
+
+        Returns
+        -------
+        None
+            Returns no output
+
+        Notes
+        -----
+        - For more detail on plotting parameters, see the documentation for
+          matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
+          and matplotlib.pyplot.text.
+
+        """
+        #get the lyr num
+        lyr_num = self._get_lyr_num(lyr)
+        #get the spp
+        spp = self.comm[self._get_spp_num(spp)]
+
+        # get array of resulting genomic data (i.e. 'speciome'),
+        # genotypes meaned by individual
+        if spp.gen_arch.use_tskit:
+            speciome = spp._get_genotypes(biallelic=False)
+        else:
+            speciome = np.mean(np.stack([i.g for i in spp.values()]), axis=2)
+        # run PCA on speciome
+        pca = PCA(n_components=3)
+        PCs = pca.fit_transform(speciome)
+        # normalize the PC results
+        norm_PCs = (PCs - np.min(PCs,
+                                 axis=0)) / (np.max(PCs,
+                                                    axis=0) - np.min(PCs,
+                                                                     axis=0))
+        # use first 3 PCs to get normalized values for R, G, & B colors
+        PC_colors = norm_PCs * 255
+        # scatter all individuals on top of landscape, colored by the
+        # RBG colors developed from the first 3 geonmic PCs
+        xs = self.comm[0]._get_x()
+        ys = self.comm[0]._get_y()
+
+        # subset xs, ys, and PC_colors, if individs requested
+        if individs is not None:
+            indices = [i in individs for i in spp]
+            PC_colors = PC_colors[indices, :]
+            xs = xs[indices]
+            ys = ys[indices]
+
+        # plot it
+        self.plot(spp=spp.idx, lyr=lyr_num, color=PC_colors/255.0,
+                  individs=individs, text=text,
+                  edge_color=edge_color, text_color=text_color, cbar=cbar,
+                  size=size, text_size=text_size, alpha=alpha,
+                  zoom_width=zoom_width, x=x, y=y, ticks=ticks,
+                  hide_land=hide_land, mask_rast=mask_rast)
+
+
     #wrapper around Species._plot_allele_frequencies
     def plot_allele_frequencies(self, spp=0):
         """
@@ -2887,3 +3033,5 @@ class Model:
         for k, table in tables.items():
             filepath = file_basename + '_' + k.upper() + '.csv'
             table.to_csv(filepath, index=False, sep=sep)
+
+

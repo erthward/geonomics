@@ -1,4 +1,4 @@
-setuptools==57.5.0
+setuptools==49.2.1
 numpy
 matplotlib>=3.0.0
 pandas>=0.23.4

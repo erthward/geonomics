@@ -405,7 +405,7 @@ def _calc_het(spp, mean=False):
     het = np.sum(np.mean(speciome, axis = 2) == 0.5, axis = 0)/N
     #get the mean heterozygosity, if mean argument is True
     if mean:
-        het = mean(het)
+        het = np.mean(het)
     return(het)
 
 #function to calculate the locus-wise minor allele frequency of the species

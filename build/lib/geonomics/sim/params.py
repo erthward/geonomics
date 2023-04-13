@@ -628,7 +628,7 @@ DATA_PARAMS = '''
                 'geo_vect_format':      'csv',
                 #format for raster geodata {'geotiff', 'txt'}
                 'geo_rast_format':      'geotiff',
-                #format for files containing non-neutral loci
+                #format for file listing non-neut loci (if 'csv', will be saved)
                 'nonneut_loc_format': None,
                 },
             }, #<END> 'data'

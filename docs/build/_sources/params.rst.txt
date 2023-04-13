@@ -1222,7 +1222,7 @@ resulting surfaces calculated at different window widths, if trying
 to heuristically choose a reasonable value to set for a
 particular simulation scenario). But be aware that choosing particularly
 small window widths (in our experience, windows smaller than ~1/20th of
-the larger :py:`Landscape` dimension) will cause dramatic increases in the 
+the larger :py:`Landscape` dimension) can cause dramatic increases in the 
 run-time of the density calculation (which runs twice per timestep).
 Defaults to :py:`None`, which will internally be set to the integer
 nearest to 1/10th of the larger :py:`Landscape` dimension; 

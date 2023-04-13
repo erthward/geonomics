@@ -323,7 +323,7 @@ producing smoother, more homogeneous rasters). The window width can be
 controlled by setting the 'density_grid_window_width' parameter in the 
 'mortality' section of the :py:`Species` parameters, in a parameters file;
 however, if the default value (:py:`None`) is left then the window width will
-default to 1/20th of the width of the :py:`Landscape`. 
+default to 1/10th of the width of the :py:`Landscape`. 
 Note that setting the window width to a value less than ~1/20th of the
 :py:`Landscape` width is likely to result
 in dramatic increases in runtime, so this is generally advised against (but

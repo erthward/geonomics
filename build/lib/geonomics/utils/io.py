@@ -151,6 +151,11 @@ def _append_array2d_to_array_stack(filepath, locuswise_array2d):
 
 # append a row of data to a CSV file
 def _append_row_to_csv(filepath, locuswise_array1d, t):
+    if (not isinstance(locuswise_array1d, list) and
+        not isinstance(locuswise_array1d, np.ndarray)):
+        assert (isinstance(locuswise_array1d, float) or
+                isinstance(locuswise_array1d, int))
+        locuswise_array1d = np.array([locuswise_array1d])
     data_dict = dict(zip(range(locuswise_array1d.size), locuswise_array1d))
     write_header = not os.path.exists(filepath)
     with open(filepath, 'a') as f:

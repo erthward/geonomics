@@ -7,7 +7,7 @@ scikit-learn
 statsmodels>=0.9.0
 shapely
 bitarray
-pyvcf
+pyvcf>=0.6.8
 rasterio
 msprime>=0.7.4
 tskit>=0.2.3

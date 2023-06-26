@@ -50,21 +50,10 @@ def MMRR(Y, X, Xnames=None, nperm=999):
     for i in range(nperm):
         # shuffle the row numbers
         np.random.shuffle(rownums)
-        # NOTE: I thought I had triple-checked everything in this script,
-        #       but the following line was now just returning the 0s from the
-        #       diagonal, rather than a permuted symmetric matrix,
-        #       so I corrected; cannot determine whether this was an oversight
-        #       of numpy indexing behavior shifted...
         Yperm = Y[rownums,:][:, rownums]
         yperm = _unfold_tril(Yperm)
         permmod_y, permmod_x = _prep_mod_data(yperm, xs)
         permmod = sm.OLS(permmod_y, permmod_x).fit()
-        # NOTE: previous results were probably overly optimistic
-        #       because I forgot the first np.abs
-        #       in the following line, so negative permutation t-values
-        #       larger in absolute value than a positive main t-value
-        #       would not have been factored into the t-tests'
-        #       empirical p-values!
         tprob += (np.abs(permmod.tvalues) >= np.abs(tstat))
         Fprob += (permmod.fvalue >= Fstat)
 
@@ -79,7 +68,7 @@ def MMRR(Y, X, Xnames=None, nperm=999):
     output.update({c: cval for c, cval in zip(coeff_names, coeffs)})
     output.update({c+ "(t)": tval for c, tval in zip(coeff_names, tstat)})
     output.update({c+ "(p)": pval for c, pval in zip(coeff_names, tp)})
-    output["F-statistc"] = Fstat
+    output["F-statistic"] = Fstat
     output["F p-value"] = Fp
 
     return output

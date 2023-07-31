@@ -181,8 +181,8 @@ def _do_mortality(spp, death_probs):
 
 
 def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
-    births_before_deaths = False, asserts = True, debug = False):
-    '''Generalized function for implementation population dynamics.
+                     asserts = True, debug = False):
+    '''Generalized function for implementing population dynamics.
     Will carry out one round of mating and death, according to parameterization
     laid out in params dict (which were grabbed as Species attributes).
 
@@ -219,12 +219,9 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
     if debug:
         dp._next_plot('n_pairs', n_pairs)
 
-    #if births should happen before (and thus be included in the calculation of)
-    #deaths, then mate and disperse babies now
-    if births_before_deaths:
-        #Feed the land and mating pairs to spp.do_mating, to produce and
-        #disperse zygotes
-        spp._do_mating(land, pairs, burn)
+    #Feed the land and mating pairs to spp.do_mating, to produce and
+    #disperse zygotes
+    spp._do_mating(land, pairs, burn)
 
     #calc N raster, set it as spp.N, then get it  
     spp._calc_density(set_N = True)
@@ -298,26 +295,6 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
     if debug:
         dp._next_plot('d', d)
 
-    #If births should happen after (and thus not be included in the 
-    #calculation of) deaths, then instead of having mated and dispersed
-    #babies up above, do it now (i.e. now that the d raster has been 
-    #calculated)
-    #NOTE: The way I'm looking at it now, calculating likely births from number
-    #of existing pairs, then calculating death raster, then having births take
-    #place, then having per-individual death probabilies determined and having
-    #deaths take place (such that newborns could also immediately die after
-    #birth, based on the death raster calculated before they were born, and
-    #even based on individs who weren't their parents, assuming they dispersed
-    #across cell lines), which is what I'm doing currently, is the only
-    #obvious/reasonable way to do this. Of course there will always be an
-    #inherent rub between reality and discrete-time simulations because of
-    #the continuous/discrete time conflict. But in this case, is there any
-    #strong reason to CHANGE THIS? Or are there any foreseeable and undesirable
-    #results/effects?... NEED TO PUT MORE THOUGHT INTO THIS LATER.
-    if not births_before_deaths:
-        #Feed the land and mating pairs to the mating functions, to produce
-        #and disperse zygotes
-        spp._do_mating(land, pairs, burn)
     #Get death probabilities
     death_probs = d[spp.cells[:,1], spp.cells[:,0]]
     #If with_selection (i.e. if death probs should account for fitness),

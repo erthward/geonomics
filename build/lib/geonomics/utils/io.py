@@ -151,6 +151,9 @@ def _append_array2d_to_array_stack(filepath, locuswise_array2d):
 
 # append a row of data to a CSV file
 def _append_row_to_csv(filepath, locuswise_array1d, t):
+    # NOTE: if mean heterozygosity is requested then isntead of an array just a
+    # single, floating-point value will be returned, so we then to embed that
+    # inside an interable
     if (not isinstance(locuswise_array1d, list) and
         not isinstance(locuswise_array1d, np.ndarray)):
         assert (isinstance(locuswise_array1d, float) or

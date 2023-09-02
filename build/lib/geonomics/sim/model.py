@@ -595,9 +595,6 @@ class Model:
         #append the set_age_stage methods to the queue
         for spp in self.comm.values():
             queue.append(lambda: self._set_age_stage(spp.idx))
-        #append the set_Nt methods
-        for spp in self.comm.values():
-            queue.append(lambda: self._set_Nt(spp.idx))
         #append the do_movement_methods, if spp._move
         for spp in self.comm.values():
             if spp._move:
@@ -608,6 +605,11 @@ class Model:
         #multiple, interacting species
         for spp in self.comm.values():
             queue.append(lambda: self._do_pop_dynamics(spp.idx))
+
+        #append the set_Nt methods
+        # (now that this time step's population sizes are set)
+        for spp in self.comm.values():
+            queue.append(lambda: self._set_Nt(spp.idx))
 
         #add the Changer.make_change, data._DataCollector._write_data, and 
         #stats._StatsCollector._write_stats methods, if this is not the burn-in

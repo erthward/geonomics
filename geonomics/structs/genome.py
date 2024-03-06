@@ -793,8 +793,8 @@ class GenomicArchitecture:
             speciome = np.mean(np.stack([ind.g for ind in spp.values()]), axis=2)
         freqs = np.mean(speciome, axis=0)
         assert len(freqs) == spp.gen_arch.L
-        plt.plot(range(self.L), self.p, ':k', label='start freq.', alpha=0.7)
-        plt.plot(range(self.L), freqs, '|', color=color, label='curr. freq.')
+        plt.plot(range(self.L), self.p, ':k', label='start freq.', alpha=0.5)
+        plt.plot(range(self.L), freqs, '-', color=color, label='curr. freq.')
         plt.xlabel('locus')
         plt.ylabel('frequency')
         plt.legend()

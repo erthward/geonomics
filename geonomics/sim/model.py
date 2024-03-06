@@ -2014,13 +2014,13 @@ class Model:
 
 
     #wrapper around Species._plot_allele_frequencies
-    def plot_allele_frequencies(self, spp=0):
+    def plot_allele_frequencies(self, spp=0, color='red'):
         """
         Plot a Species' current allele frequencies for all alleles
 
         For the Species indicated, create a plot showing, across all loci,
-        the current allele frequencies (in solid blue) versus the starting
-        frequencies (in dashed red).
+        the current allele frequencies (in the indicated color) versus the starting
+        frequencies (in dashed black).
 
         Parameters
         ----------
@@ -2030,6 +2030,9 @@ class Model:
             integer key in the Community dict), or its name (as a character
             string).
 
+        color: str, optional, default: 'red'
+            The color to use for plotting the current allele frequencies.
+
         Returns
         -------
         None
@@ -2038,7 +2041,7 @@ class Model:
         #get the spp
         spp = self.comm[self._get_spp_num(spp)]
         #call the fn
-        spp._plot_allele_frequencies()
+        spp._plot_allele_frequencies(color=color)
 
 
     #wrapper around Species._plot_hist_fitness

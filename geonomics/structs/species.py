@@ -2113,12 +2113,12 @@ class Species(OD):
             viz._make_fitness_cbar(make_cbar_fn, min_fit)
 
     #method to plot a species' allele frequencies
-    def _plot_allele_frequencies(self):
+    def _plot_allele_frequencies(self, color='red'):
         if self.gen_arch is None:
             print(("Species._plot_allele_frequencies is not valid for "
                    "species without genomes.\n"))
         else:
-            self.gen_arch._plot_allele_frequencies(self)
+            self.gen_arch._plot_allele_frequencies(self, color=color)
 
     # method for plotting a histogram of the current fitness values
     def _plot_hist_fitness(self):

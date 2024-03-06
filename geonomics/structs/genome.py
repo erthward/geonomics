@@ -786,11 +786,15 @@ class GenomicArchitecture:
 
 
     # method for plotting all allele frequencies for the species
-    def _plot_allele_frequencies(self, spp):
-        speciome = np.stack([ind.g for ind in spp.values()])
-        freqs = speciome.sum(axis=2).sum(axis=0) / (2*speciome.shape[0])
-        plt.plot(range(self.L), self.p, ':r', label='start freq.')
-        plt.plot(range(self.L), freqs, '-b', label='curr. freq.')
+    def _plot_allele_frequencies(self, spp, color='red'):
+        if spp.gen_arch.use_tskit:
+            speciome = spp._get_genotypes(biallelic=False)
+        else:
+            speciome = np.mean(np.stack([ind.g for ind in spp.values()]), axis=2)
+        freqs = np.mean(speciome, axis=0)
+        assert len(freqs) == spp.gen_arch.L
+        plt.plot(range(self.L), self.p, ':k', label='start freq.', alpha=0.7)
+        plt.plot(range(self.L), freqs, '|', color=color, label='curr. freq.')
         plt.xlabel('locus')
         plt.ylabel('frequency')
         plt.legend()

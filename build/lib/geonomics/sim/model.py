@@ -1848,7 +1848,7 @@ class Model:
         #plt.suptitle(spp.name)
 
 
-    def plot_genetic_PCA(self, spp=0, lyr=0,
+    def plot_genetic_PCA(self, n_pcs=3, spp=0, lyr=0,
                         individs=None, text=False,
                         edge_color='black', text_color='black', cbar=True,
                         size=25, text_size=9,
@@ -1867,6 +1867,15 @@ class Model:
             integer key in the Community dict), or its name (as a character
             string). If None, will cause only the Landscape
             to be plotted.
+
+        n_pcs : int, optional, default: 3
+            The number of top PCs to use for the plot. If 1 is used, all three
+            red, green, and blue (RGB) channels will be scaled the same,
+            creating a grayscale mapping of the top PC. If 2 are used, the red
+            and blue channels only will be used, creating a visualization of
+            the top 2 PCs that is colorblind-friendly. If 3 are used, the top 3
+            PCs will be fed into all RGB channels, creating a visualization
+            with the most information but which is not colorblind-friendly.
 
         lyr : {int, str}, optional, default: None
             A reference to the Layer whose raster should be plotted. Can be
@@ -1962,17 +1971,29 @@ class Model:
         else:
             speciome = np.mean(np.stack([i.g for i in spp.values()]), axis=2)
         # run PCA on speciome
-        pca = PCA(n_components=3)
+        pca = PCA(n_components=n_pcs)
         PCs = pca.fit_transform(speciome)
         # normalize the PC results
         norm_PCs = (PCs - np.min(PCs,
                                  axis=0)) / (np.max(PCs,
                                                     axis=0) - np.min(PCs,
                                                                      axis=0))
-        # use first 3 PCs to get normalized values for R, G, & B colors
-        PC_colors = norm_PCs * 255
-        # scatter all individuals on top of landscape, colored by the
-        # RBG colors developed from the first 3 geonmic PCs
+        # use top PCs to get normalized values for R, G, & B colors
+        # grayscale if n_pcs==1
+        # red-blue if n_pcs==2
+        # RGB if n_pcs==3
+        if n_pcs == 1:
+            PC_colors = np.hstack([norm_PCs * 255 for _ in range(3)])
+        if n_pcs == 2:
+            PC_colors = np.vstack([norm_PCs[:, 0] * 255,
+                                   np.zeros(norm_PCs.shape[0]),
+                                   norm_PCs[:, 1] * 255,
+                                  ]).T
+        if n_pcs == 3:
+            PC_colors = norm_PCs * 255
+
+        # scatter all individuals on top of landscape, colored by top PCs
+        # (number determined by n_pcs)
         xs = self.comm[0]._get_x()
         ys = self.comm[0]._get_y()
 

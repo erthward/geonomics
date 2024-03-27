@@ -270,6 +270,9 @@ class Model:
     #method for getting a species' number, given a name (str) or number
     def _get_spp_num(self, spp_id):
         if isinstance(spp_id, int):
+            assert spp_id in self.comm.keys(), (f"A Species with numeric "
+                                                "spp_id {spp_id} does "
+                                                 "not exist.")
             return(spp_id)
         elif isinstance(spp_id, str):
             #get nums for all spps with  matching names
@@ -277,7 +280,7 @@ class Model:
                                                     ) if spp.name == spp_id]
             assert len(spp_nums) == 1, ("Expected to find a single Species "
                 "with a name matching the name provided (%s). Instead "
-                "found %i.") % (spp_id, len(nums))
+                "found %i.") % (spp_id, len(spp_nums))
             spp_num = spp_nums[0]
             return spp_num
         else:
@@ -720,7 +723,7 @@ class Model:
                                   self.comm[0]._tc.edges.num_rows)
                             print("\tNUMBER INDIVIDS BEFORE SIMPLIFICATION:",
                                   self.comm[0]._tc.individuals.num_rows)
-                        spp._sort_simplify_table_collection()
+                        spp._sort_and_simplify_table_collection()
                         if self._verbose:
                             print("\n\tNUMBER EDGES AFTER SIMPLIFICATION: ",
                                   self.comm[0]._tc.edges.num_rows)
@@ -2543,7 +2546,7 @@ class Model:
             the x then y (i.e. lon then lat) coordinates.
 
         Note: Rows are sorted by index number of the Individuals,
-            regardless of input index order.
+              regardless of input index order.
         """
         spp = self.comm[self._get_spp_num(spp)]
         if individs is not None:
@@ -2901,9 +2904,50 @@ class Model:
                                           "have no tskit data structures "
                                           "to be returned.")
         # prep the TableCollection, then get its TreeSequence
-        spp._sort_simplify_table_collection()
+        spp._sort_and_simplify_table_collection()
         ts = spp._tc.tree_sequence()
         return ts
+
+
+    ###############
+    #altering data#
+    ###############
+
+    def remove_individs(self,
+                        spp=0,
+                        individs=None,
+                        n=None,
+                        ):
+        """
+        Remove Individuals from a Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs: {list, tuple, numpy.ndarray, None}, optional, default: None
+            An iterable (e.g., list, tuple, or numpy.ndarray)
+            that contains the integer IDs (i.e., the Species dict's keys)
+            of the Individuals to be removed. If None then 'n' must be provided.
+
+        n: {int, None}, optional, default: None
+            An int indicating the number of random Individuals to be removed.
+            If None then 'individs' must be provided.
+
+        Returns
+        -------
+        None
+
+        """
+        # get the desired species
+        spp = self.comm[self._get_spp_num(spp)]
+
+        # call that species' corresponding method
+        spp._remove_individs(individs=individs, n=n)
 
 
     ##############
@@ -3059,5 +3103,6 @@ class Model:
         for k, table in tables.items():
             filepath = file_basename + '_' + k.upper() + '.csv'
             table.to_csv(filepath, index=False, sep=sep)
+
 
 

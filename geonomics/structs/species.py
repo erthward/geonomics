@@ -377,8 +377,8 @@ class Species(OD):
         self.n_deaths = []
         #attributes for storing numpy arrays of all individuals'
         #coordinates and cells, to avoid repeat compute time each turn
-        self.coords = None
-        self.cells = None
+        self._coords = None
+        self._cells = None
         #create empty attributes to hold spatial objects that will
         #be created after the species is instantiated
         self._kd_tree = None
@@ -763,7 +763,7 @@ class Species(OD):
                                                                   child_edf)
 
                     if check_genotypes:
-                        self._sort_simplify_table_collection()
+                        self._sort_and_simplify_table_collection()
                         ts = self._tc.tree_sequence()
                         manual_gt = self[offspring_key].g
                         tskit_gts_dict = dict(zip(ts.samples(),
@@ -807,7 +807,7 @@ class Species(OD):
         # check haploytpes have no missing data, if necessary
         if check_haps and self.burned and self.gen_arch.use_tskit:
             print('\n\nCHECKING THAT HAPLOTYPES HAVE NO MISSING DATA\n\n')
-            self._sort_simplify_table_collection()
+            self._sort_and_simplify_table_collection()
             ts = self._tc.tree_sequence()
             haps = [*ts.haplotypes()]
             missing = ['-' in hap for hap in haps]
@@ -931,12 +931,12 @@ class Species(OD):
 
     #method to set species' coords and cells arrays
     def _set_coords_and_cells(self):
-        self.coords = self._get_coords()
-        self.cells = np.int32(np.floor(self.coords))
+        self._coords = self._get_coords()
+        self._cells = np.int32(np.floor(self._coords))
 
     #method to set the species' kd_tree attribute (a spatial._KDTree)
     def _set_kd_tree(self, leafsize = 100):
-        self._kd_tree = spt._KDTree(coords = self.coords, leafsize = leafsize)
+        self._kd_tree = spt._KDTree(coords = self._coords, leafsize = leafsize)
 
 
     #method to set the species' spatial._DensityGridStack attribute
@@ -965,14 +965,16 @@ class Species(OD):
         if self.gen_arch.use_tskit:
             # simulate a coalescent ancestry with number of samples equal to our
             # species' number of haploid genomes (i.e. 2*N_0)
+            # NOTE: DETH: 25-03-24: msprime.simulate is now
+            #                       a deprecated legacy fn from v0.x,
+            #                       in favor of msprime.sim_ancestry,
+            #                       but it is indefinitely supported,
+            #                       so no immediate need to switch
             ts = msprime.simulate(len(self) * 2,
                                   Ne=1000,
                                   length=self.gen_arch.L)
 
-            # then grab the simulation's tree, and the tree's TableCollection
-            # NOTE: the TreeSequence object only has one tree,
-            # because no recombination was used in the sim
-            tree = ts.first()
+            # then grab the simulation's TableCollection
             tables = ts.dump_tables()
 
             # set the sequence length
@@ -1039,7 +1041,7 @@ class Species(OD):
                     loc = loc + ind.z + [ind.fit]
                 # add a new row to the individuals table, setting the location
                 # column's value to loc
-                # NOTE: using the metadata column to store to the gnx
+                # NOTE: using the metadata column to store the gnx
                 # individual idx, for later matching to update
                 # Individual._individuals_tab_id after tskit's simplify
                 # algorithm filters individuals
@@ -1074,7 +1076,7 @@ class Species(OD):
         else:
             tables = None
 
-        # add sufficient mutations, (at only current nodes, is using tskit),
+        # add sufficient mutations, (at only current nodes, if using tskit),
         # to produce the starting 1-allele frequencies
         # parameterized for this species
         _make_starting_mutations(self, tables)
@@ -1090,14 +1092,14 @@ class Species(OD):
     # method to sort and simplify the TableCollection,
     # and update Individuals' node IDs
     # NOTE: rather than deduplicate sites (and sometimes
-    # computer parent sites), as recommended by tskit's docs,
+    # compute parent sites), as recommended by tskit's docs,
     # we only have to sort and simplify here, because we have
     # chosen to just add all simulated sites to the sites table (in
     # Species._set_table_collection) at the simulation's outset,
     # and also to only allow an infinite-sites model
     # (FOR NOW, anyhow... could relax these constraints later, if desired,
     # in which case would need to revamp this approach)
-    def _sort_simplify_table_collection(self, check_nodes=False,
+    def _sort_and_simplify_table_collection(self, check_nodes=False,
                                         check_individuals=False):
         # sort the TableCollection
         self._tc.sort()
@@ -1126,7 +1128,7 @@ class Species(OD):
 
         # now simplify the tables and get the new ids output 
         # from the tc.simplify method
-        # NOTE: we are not using the ouput, but it is an array where
+        # NOTE: we are not using the output, but it is an array where
         # each value is the new node ID of the node that was in that index's
         # row position in the old nodes table (and -1 if that node was
         # dropped during simplication); see tskit docs for details
@@ -1214,11 +1216,18 @@ class Species(OD):
 
     # get the nodes-table IDs for all individuals
     def _get_nodes(self, individs=None):
-        if individs is None:
-            individs = [*self]
-        nodes = np.hstack([[*self[i]._nodes_tab_ids.values(
+        # handle the instance where the population has size 0
+        # (e.g., after running spp._remove_individs() to get rid of all
+        # individuals before then replacing them with individuals from a source
+        # population)
+        if len(self) == 0:
+            return np.array([])
+        else:
+            if individs is None:
+                individs = [*self]
+            nodes = np.hstack([[*self[i]._nodes_tab_ids.values(
                                                         )] for i in individs])
-        return nodes
+            return nodes
 
 
     ##########################################
@@ -1237,7 +1246,7 @@ class Species(OD):
         if nodes is None:
             #sort and simplify the TableCollection, if needed
             if not self._tc_sorted_and_simplified:
-                self._sort_simplify_table_collection()
+                self._sort_and_simplify_table_collection()
             nodes = self._get_nodes()
         lin_dicts = _get_lineage_dicts(self, nodes, loci, t_curr=self.t,
                                        drop_before_sim=drop_before_sim,
@@ -1272,7 +1281,7 @@ class Species(OD):
     def _check_coalescence(self, individs=None, loci=None, all_loci=False):
         #sort and simplify the TableCollection, if needed
         if not self._tc_sorted_and_simplified:
-            self._sort_simplify_table_collection()
+            self._sort_and_simplify_table_collection()
         if individs is None:
             individs = [*self]
         # get the node IDs
@@ -1313,7 +1322,7 @@ class Species(OD):
         if nodes is None:
             #sort and simplify the TableCollection, if needed
             if not self._tc_sorted_and_simplified:
-                self._sort_simplify_table_collection()
+                self._sort_and_simplify_table_collection()
             nodes = self._get_nodes(individs)
         # get all loci, if loci not provided
         if loci is None:
@@ -1389,7 +1398,7 @@ class Species(OD):
             # sort and simplify the table collection
             # (thus dropping any unnecessary individuals' data in there and also
             # making the tables' structure simler and more predictable),
-            self._sort_simplify_table_collection()
+            self._sort_and_simplify_table_collection()
             # then get the TreeSequence
             ts = self._tc.tree_sequence()
 
@@ -1524,14 +1533,64 @@ class Species(OD):
             inds = [self[ind] for ind in inds]
         return(inds)
 
-    # method to reduce a spp to some chosen number, by randomly removing
+    # remove a predetermined or random set of Individuals from the Species
+    def _remove_individs(self,
+                         individs=None,
+                         n=None,
+                         ):
+
+        # validate args
+        assert ((individs is not None and n is None) or
+                (individs is None and n is not None)), ("Either 'individs' "
+                                                        "or 'n' must be "
+                                                        "provided, not both.")
+        if individs is not None:
+            for id in individs:
+                assert id in self.keys(), f"Individual {id} does not exist."
+        if individs is None:
+            assert isinstance(n, int) and n >= 0, ("'n' must either be "
+                                                   "a non-negative int "
+                                                   "or None.")
+            assert n <= len(self), ("Cannot remove more Individuals than "
+                                   "currently exist (current population size "
+                                   f"is {len(self)}).")
+
+        # draw random Individuals, if necessary
+        if individs is None:
+            ids = [*self]
+            individs = np.random.choice(ids, n, replace=False)
+
+        # get number of Individuals before operation
+        N_b4 = len(self)
+
+        # remove the Individuals
+        for id in individs:
+            goodbye = self.pop(id)
+
+        # assert that population size has changed the correct amount
+        N_af = len(self)
+        assert (N_b4 - N_af) == len(individs), ("Incorrect number of "
+                                                "Individuls removed!")
+
+        # update the TableCollection, if necessary
+        if self.gen_arch.use_tskit:
+            self._sort_and_simplify_table_collection()
+
+        # update self.coords and self.cells attributes
+        self._set_coords_and_cells()
+
+        # and update extinct flag
+        self.extinct = self._check_extinct()
+
+        # print informative output
+        print(f"\n{len(individs)} Individuals successfully removed.\n")
+
+
+    # method to reduce the Species to some chosen number, by randomly removing
     # N_curr_t - n individuals
-    def _reduce(self, n):
-        inds = [*self]
-        keep = np.random.choice(inds, n, replace=False)
-        for ind in inds:
-            if ind not in keep:
-                self.pop(ind)
+    def _reduce_to_size_n(self, n):
+        n_remove = len(self) - n
+        self._remove_individs(n=n_remove)
 
     #use the kd_tree attribute to find mating pairs either
     #within the species, if within == True, or between the species
@@ -1578,10 +1637,10 @@ class Species(OD):
         # otherwise, choose mates using mating radius
         else:
             #if neighbors are to be found within the species,
-            #set coords to self.coords (otherwise, the coords to
+            #set coords to self._coords (otherwise, the coords to
             #find nearest neighbors with should have been provided)
             if within:
-                coords = self.coords
+                coords = self._coords
 
             #query the tree to get mating pairs
             pairs = self._kd_tree._get_mating_pairs(coords=coords,
@@ -1919,7 +1978,7 @@ class Species(OD):
         assert type(normalize) is bool, ("The 'normalize' argument takes "
             "a boolean value.\n")
         #update the species' coordinates and cells, in case it hasn't
-        #been update since some internal or manual changes in population-size
+        #been updated since some internal or manual changes in population-size
         #have occurred
         self._set_coords_and_cells()
         dens = self._calc_density(normalize = normalize)
@@ -2239,12 +2298,12 @@ class Species(OD):
                 individs = np.random.choice([*self], individs, replace=False)
             #sort and simplify the TableCollection, if needed 
             if not self._tc_sorted_and_simplified:
-                self._sort_simplify_table_collection()
+                self._sort_and_simplify_table_collection()
             nodes = self._get_nodes(individs=individs)
 
         # sort and simplify the TableCollection if needed
         if not self._tc_sorted_and_simplified:
-            self._sort_simplify_table_collection()
+            self._sort_and_simplify_table_collection()
         # grab the TableCollection and its TreeSequence
         tc = self._tc
         try:
@@ -2628,4 +2687,79 @@ def read_pickled_spp(filename):
     return spp
 
 
+
+    def remove_individs(self,
+                        spp=0,
+                        individs=None,
+                        n=None,
+                        ):
+        """
+        Remove Individuals from a Species
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        individs: {list, tuple, numpy.ndarray, None}, optional, default: None
+            An iterable (e.g., list, tuple, or numpy.ndarray)
+            that contains the integer IDs (i.e., the Species dict's keys)
+            of the Individuals to be removed. If None then 'n' must be provided.
+
+        n: {int, None}, optional, default: None
+            An int indicating the number of random Individuals to be removed.
+            If None then 'individs' must be provided.
+
+        Returns
+        -------
+        None
+
+        """
+        # get the desired species
+        spp = self.comm[self._get_spp_num(spp)]
+
+        # validate args
+        assert ((individs is not None and n is None) or
+                (individs is None and n is not None)), ("Either 'individs' "
+                                                        "or 'n' must be "
+                                                        "provided, not both.")
+        if individs is not None:
+            for id in individs:
+                assert id in spp.keys(), f"Individual {id} does not exist."
+        if individs is None:
+            assert isinstance(n, int) and n >= 0, ("'n' must either be "
+                                                   "a non-negative int "
+                                                   "or None.")
+            assert n <= len(spp), ("Cannot remove more Individuals than "
+                                   "currently exist (current population size "
+                                   f"is {len(spp)}).")
+
+        # draw random Individuals, if necessary
+        if individs is None:
+            ids = [*spp]
+            individs = np.random.choice(ids, n, replace=False)
+
+        # get number of Individuals before operation
+        N_b4 = len(spp)
+
+        # remove the Individuals
+        for id in individs:
+            goodbye = spp.pop(id)
+
+        # assert that population size has changed the correct amount
+        N_af = len(spp)
+        assert (N_b4 - N_af) == len(individs), ("Incorrect number of "
+                                                "Individuls removed!")
+
+        # update the TableCollection, if necessary
+        if spp.gen_arch.use_tskit:
+            spp._sort_and_simplify_table_collection()
+        # update spp.coords and spp.cells attributes
+        spp._set_coords_and_cells()
+
+        # print informative output
+        print(f"\n{len(individs)} Individuals successfully removed.\n")
 

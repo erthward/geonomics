@@ -196,7 +196,7 @@ class Recombinations:
                 assert 0 not in bp, '%s' % str(bp)
         # recast it as an int-keyed dict, so that when I use the recombination
         # events to simulate recombination I don't have to pass around the long
-        # arrays, but instead can just random keys to index them out on the fly
+        # arrays, but instead just random keys to index them out on the fly
         breakpoints = dict(zip(range(len(breakpoints)), breakpoints))
 
         if use_subsetters:
@@ -389,7 +389,7 @@ class Trait:
         if type(self.phi) in (float, int):
             phi = np.array([self.phi]*len(spp))
         else:
-            phi = self.phi[spp.cells[:, 1], spp.cells[:, 0]]
+            phi = self.phi[spp._cells[:, 1], spp._cells[:, 0]]
         return(phi)
 
     def _set_loci(self, loci):
@@ -1098,10 +1098,12 @@ def _check_mutation_rates(gen_arch, est_tot_muts, burn_T, T):
     return
 
 
-# function to generate mutations, after burn-in,
-# and to assign them to a species' TableCollection's  current nodes,
-# to produce the starting 1-allele frequencies parameterized for the species
 def _make_starting_mutations(spp, tables):
+    '''
+    function to generate mutations, after burn-in,
+    and to assign them to a species' TableCollection's current nodes,
+    to produce the starting 1-allele frequencies parameterized for the species
+    '''
     # get the starting frequencies for each site
     start_freqs = spp.gen_arch.p
 

@@ -2919,7 +2919,7 @@ class Model:
                         n=None,
                         ):
         """
-        Remove Individuals from a Species
+        Remove Individuals from a Species.
 
         Parameters
         ----------
@@ -2929,18 +2929,20 @@ class Model:
             integer key in the Community dict), or its name (as a character
             string).
 
-        individs: {list, tuple, numpy.ndarray, None}, optional, default: None
-            An iterable (e.g., list, tuple, or numpy.ndarray)
-            that contains the integer IDs (i.e., the Species dict's keys)
-            of the Individuals to be removed. If None then 'n' must be provided.
+        individs: {list, tuple, numpy.ndarray}, optional, default: None
+            An iterable containing the integer IDs (i.e., the Species dict's keys)
+            of the Individuals to be removed. If None then `n` must be provided.
 
-        n: {int, None}, optional, default: None
-            An int indicating the number of random Individuals to be removed.
-            If None then 'individs' must be provided.
+        n: {int}, optional, default: None
+            The number of random Individuals to be removed.
+            If None then `individs` must be provided.
 
         Returns
         -------
         None
+            Alters the specified Species in place by removing all specified
+            (if `individs` is not None) or randomly drawn (if `n` is not None)
+            Individuals.
 
         """
         # get the desired species

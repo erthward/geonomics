@@ -472,7 +472,7 @@ def make_model(parameters=None, name=None, verbose=False):
 
     Parameters
     ----------
-    parameters : {ParametersDict, dict, str}, optional, default: None
+    parameters: {ParametersDict, dict, str}, optional, default: None
         The parameters to be used to make the Model object.
 
         If `parameters` is a ParametersDict object, the object will be used to

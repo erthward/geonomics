@@ -34,8 +34,17 @@ def _calc_estimated_total_mutations(spp, burn_T, T):
 def _do_add_row_muts_table(spp, individ, homol, locus):
     # update the tskit.TableCollection.mutations table
     node_id = spp[individ]._nodes_tab_ids[homol]
-    mut_id = spp._tc.mutations.add_row(site=locus, node=node_id,
-                                       derived_state='1')
+    mut_id = spp._tc.mutations.add_row(site=locus,
+                                       node=node_id,
+                                       derived_state='1',
+                                       # NOTE: DETH: 29-03-24: gnx will now add
+                                       #       the time to the mutations table
+                                       #       (not required and not
+                                       #       influential, so no harm in
+                                       #       adding and I see no reason it
+                                       #       should break older code)
+                                       time=-1*spp.t,
+                                      )
     return mut_id
 
 

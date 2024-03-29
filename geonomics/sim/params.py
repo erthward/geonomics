@@ -260,6 +260,7 @@ LYR_CHANGE_EVENT_PARAMS = '''
 #STRING SLOTS:
     #%s = spp_name,
     #%i = spp_num,
+    #%s = msprime_init_params,
     #%i = spp_num,
     #%i = spp_num,
     #%i = spp_num,
@@ -282,7 +283,7 @@ SPP_PARAMS = '''
                     #carrying-capacity Layer name
                     'K_layer':          'lyr_0',
                     #multiplicative factor for carrying-capacity layer
-                    'K_factor':         1,
+                    'K_factor':         1,%s
                     }, # <END> 'init'
 
             #-------------------------------------#
@@ -355,6 +356,33 @@ SPP_PARAMS = '''
 %s
 %s
                 }, # <END> spp num. %i
+'''
+
+# block for params to initiate model with
+# individuals drawn from msprime simulations
+MSPRIME_INIT_PARAMS = '''
+                    'msprime'       : {%s
+                        },
+'''
+
+MSPRIME_POP_PARAMS = '''
+                        # index of msprime source pop
+                        %i:  {
+                            #number of individs to sample from the pop
+                            100: {
+                                 # params vals for gnx.sime_msprime_individs
+                                 'recomb_rate':         0.5,
+                                 'mut_rate':            0.0001,
+                                 # NOTE: demography can be a complex, custom
+                                 #       msprime.Demography object
+                                 'demography':          None,
+                                 'population_size':     None,
+                                 'ancestry_model':      None,
+                                 'random_seed':         None,
+                                 'gnx_spp_use_tskit':   True,
+                                 }
+                            },
+
 '''
 
 #block for movement-surface params
@@ -816,6 +844,15 @@ def _make_lyrs_params_str(lyrs=1):
 
 #function to create the spps-params section of a params file
 def _make_species_params_str(species=1):
+    assert (isinstance(species, int) or
+            (isinstance(species, list) and
+             np.all([isinstance(item, dict) for item in species]))), (
+                 "The 'species' param must be either an int (the number "
+                 "of species parameters sections to include in the file) "
+                 "or a list of dicts (one dict per species parameters "
+                 "section to be included in the file, with keys and "
+                 "values stipulating the aspects of the species to be "
+                 "parameterized).")
     #create an empty list, to be filled with one params string per spp
     spps_params_list = []
     #if species is an integer, create a string of identical parameter sections
@@ -831,8 +868,18 @@ def _make_species_params_str(species=1):
             #add no change params
             change_params = ''
             #create the spp_params str, with no move_surf or disp_surf params
-            spp_params_str = SPP_PARAMS % ("'spp_%i'" % i, i, i, i, i,
-                '', '', genome_params, change_params, i)
+            spp_params_str = SPP_PARAMS % ("'spp_%i'" % i,
+                                           i,
+                                           '',
+                                           i,
+                                           i,
+                                           i,
+                                           '',
+                                           '',
+                                           genome_params,
+                                           change_params,
+                                           i,
+                                          )
             #append to the spps_params_list
             spps_params_list.append(spp_params_str)
 
@@ -847,7 +894,9 @@ def _make_species_params_str(species=1):
             "objects of type dict.")
         #create a lookup dict for the params strings for different spp params
         #sections
-        params_str_dict = {'move_surf': {True: MOVE_SURF_PARAMS},
+        params_str_dict = {
+                        'msprime': {True: MSPRIME_INIT_PARAMS},
+                        'move_surf': {True: MOVE_SURF_PARAMS},
                         'disp_surf': {True: DISP_SURF_PARAMS},
                         'genome': {True: GENOME_PARAMS,
                                    'custom': GENOME_PARAMS},
@@ -861,7 +910,7 @@ def _make_species_params_str(species=1):
         for i, spp_dict in enumerate(species):
             #assert that the argument values are valid
             bool_args= ['movement_surface', 'genomes', 'parameter_change']
-            int_args = ['n_traits', 'demographic_change']
+            int_args = ['n_traits', 'demographic_change', 'msprime_source_pops']
             for arg in bool_args:
                 if arg in [*spp_dict]:
                     assert (type(spp_dict[arg]) is bool
@@ -880,10 +929,22 @@ def _make_species_params_str(species=1):
                         "value:\n\n\t" "'%s': %s ") % (arg, i, arg,
                                                             str(spp_dict[arg]))
                     int_arg_str_fmt_dict = {'n_traits':'Traits',
-                            'demographic_change': 'demographic change events'}
+                            'demographic_change': 'demographic change events',
+                            'msprime_source_pops': 'msprime source populations',
+                                           }
                     assert spp_dict[arg] >= 0, ("The number of %s to "
                                     "be created must be 0 or a positive "
                                     "integer.") % (int_arg_str_fmt_dict[arg])
+            # get the msprime source pops params, if required
+            if 'msprime_source_pops' in [*spp_dict]:
+                print('making msprime params')
+                n_pops = spp_dict['msprime_source_pops']
+                msprime_params = params_str_dict['msprime'][n_pops>0]
+                if n_pops > 0:
+                    msprime_params = msprime_params % ('\n'.join([
+                        MSPRIME_POP_PARAMS % i for i in range(n_pops)]))
+            else:
+                msprime_params = ''
             #get the movement surf and dispersal surf params, if required
             if 'movement_surface' in [*spp_dict]:
                 ms_arg = spp_dict['movement_surface']
@@ -964,9 +1025,18 @@ def _make_species_params_str(species=1):
             else:
                 change_params = ''
             #get the overall spp params str for this spp
-            spp_params_str = SPP_PARAMS % ("'spp_%i'" % i, i, i, i, i,
-                move_surf_params, disp_surf_params, genome_params,
-                change_params, i)
+            spp_params_str = SPP_PARAMS % ("'spp_%i'" % i,
+                                           i,
+                                           msprime_params,
+                                           i,
+                                           i,
+                                           i,
+                                           move_surf_params,
+                                           disp_surf_params,
+                                           genome_params,
+                                           change_params,
+                                           i,
+                                          )
             #append to the spps_params_list
             spps_params_list.append(spp_params_str)
     #join the whole list into one str

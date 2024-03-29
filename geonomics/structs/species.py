@@ -705,7 +705,8 @@ class Species(OD):
 
                     # add rows to the nodes table, setting
                     # the 'flags' column vals to 1
-                    # (to indicate they're real individs, not msprime-derived)
+                    # (to indicate they're associated with real individs,
+                    # not msprime-derived ones)
                     # and setting the 'individual' column vals to ids
                     # returned from tc.individuals.add_row(), then adding
                     # the returned tskit Node ids to Individual_nodes_tab_ids
@@ -935,9 +936,10 @@ class Species(OD):
         self._cells = np.int32(np.floor(self._coords))
 
     #method to set the species' kd_tree attribute (a spatial._KDTree)
-    def _set_kd_tree(self, leafsize = 100):
-        self._kd_tree = spt._KDTree(coords = self._coords, leafsize = leafsize)
-
+    def _set_kd_tree(self, leafsize=100):
+        self._kd_tree = spt._KDTree(coords=self._coords,
+                                    leafsize=leafsize,
+                                   )
 
     #method to set the species' spatial._DensityGridStack attribute
     def _set_dens_grids(self, land, widow_width = None):
@@ -987,7 +989,7 @@ class Species(OD):
             # to track how gnx sites map onto sites-table row ids,
             # and 2.) there will be no need to deduplicate sites later on)
             for site in range(self.gen_arch.L):
-                #determine whether this is a neutral or non-neutral site
+                #determine whether this started as a neutral or non-neutral site
                 if site in self.gen_arch.neut_loci:
                     metadata='n'.encode('ascii')
                 elif site in self.gen_arch.nonneut_loci:
@@ -1584,11 +1586,14 @@ class Species(OD):
 
         # print informative output
         print(f"\n{len(individs)} Individuals successfully removed.\n")
+        return
 
 
     # method to reduce the Species to some chosen number, by randomly removing
     # N_curr_t - n individuals
     def _reduce_to_size_n(self, n):
+        assert n <= len(self), ("Cannot reduce a Species to a number "
+                                "greater than its current size.")
         n_remove = len(self) - n
         self._remove_individs(n=n_remove)
 

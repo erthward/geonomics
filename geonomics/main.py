@@ -77,7 +77,7 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
     """
     Create a new parameters file.
 
-    Write to disk a new, template parameters file. The file will contain the
+    Write to disk a new template parameters file. The file will contain the
     numbers and types of sections indicated by the parameters fed to this
     function. The new file can then be used 'out of the box'
     to make a new Model object, but typically it will be
@@ -133,6 +133,8 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
             Each dict in this list can contain any of the following
             key-value pairs:
                 KEY                     VALUE
+
+                'msprime_source_pops':  int,
 
                 'movement':             bool,
 
@@ -299,10 +301,19 @@ def make_parameters_file(filepath=None, layers=1, species=1, data=False,
 
     #check if any keys in the layers or species dicts are abnormal, and
     #provide warning if so
-    valid_l_keys = ['type', 'change']
-    valid_p_keys = ['movement', 'movement_surface', 'dispersal_surface',
-        'genomes', 'n_traits', 'custom_genomic_architecture',
-        'demographic_change', 'parameter_change']
+    valid_l_keys = ['type',
+                    'change',
+                   ]
+    valid_p_keys = ['msprime_source_pops',
+                    'movement',
+                    'movement_surface',
+                    'dispersal_surface',
+                    'genomes',
+                    'n_traits',
+                    'custom_genomic_architecture',
+                    'demographic_change',
+                    'parameter_change',
+                   ]
     if isinstance(layers, list):
         for n, lyr_dict in enumerate(layers):
             if False in [k in valid_l_keys for k in lyr_dict.keys()]:

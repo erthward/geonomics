@@ -1120,6 +1120,26 @@ class Model:
         self._verbose = old_verbose
 
 
+    # helper method to burn a model in if it hasn't been burned in already
+    # to succinctly differentiate it from 'run'
+    def burn(self):
+        """
+        Helper function to burn a model in, if it hasn't been burned in already.
+
+        Returns
+        -------
+        out : None
+            Returns no output. Alters Model in place by running burn-in phase.
+
+        """
+        if self.comm.burned:
+            print("\nModel has already been burned in.\n")
+        else:
+            while not self.comm.burned:
+                self.walk(10, 'burn')
+            print("\nModel has now been burned in.\n")
+
+
     # method to use the self._data_collector object to sample and write data
     def _write_data(self):
         self._data_collector._write_data(self.comm, self.land, self.it)
@@ -2915,8 +2935,8 @@ class Model:
 
     def remove_individs(self,
                         spp=0,
-                        individs=None,
                         n=None,
+                        individs=None,
                         ):
         """
         Remove Individuals from a Species.
@@ -2929,13 +2949,13 @@ class Model:
             integer key in the Community dict), or its name (as a character
             string).
 
-        individs: {list, tuple, numpy.ndarray}, optional, default: None
-            An iterable containing the integer IDs (i.e., the Species dict's keys)
-            of the Individuals to be removed. If None then `n` must be provided.
-
         n: {int}, optional, default: None
             The number of random Individuals to be removed.
             If None then `individs` must be provided.
+
+        individs: {list, tuple, numpy.ndarray}, optional, default: None
+            An iterable containing the integer IDs (i.e., the Species dict's keys)
+            of the Individuals to be removed. If None then `n` must be provided.
 
         Returns
         -------

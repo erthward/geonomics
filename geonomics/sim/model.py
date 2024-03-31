@@ -24,6 +24,7 @@ from geonomics.utils.viz import _check_display
 import numpy as np
 import numpy.random as r
 import random
+import warnings
 from copy import deepcopy
 import sys, os, traceback, psutil
 import matplotlib as mpl
@@ -2936,6 +2937,7 @@ class Model:
     def remove_individs(self,
                         spp=0,
                         n=None,
+                        n_left=None,
                         individs=None,
                         ):
         """
@@ -2951,11 +2953,16 @@ class Model:
 
         n: {int}, optional, default: None
             The number of random Individuals to be removed.
-            If None then `individs` must be provided.
+            If None then `n_out` or `individs` must be provided.
+
+        n_left: {int}, optional, default: None
+            The number of Individuals left in the Species
+            after a random selection of Individuals have been removed.
+            If None then `n` or `individs` must be provided.
 
         individs: {list, tuple, numpy.ndarray}, optional, default: None
             An iterable containing the integer IDs (i.e., the Species dict's keys)
-            of the Individuals to be removed. If None then `n` must be provided.
+            of the Individuals to be removed. If None then `n` or `n_out` must be provided.
 
         Returns
         -------
@@ -2969,7 +2976,114 @@ class Model:
         spp = self.comm[self._get_spp_num(spp)]
 
         # call that species' corresponding method
-        spp._remove_individs(individs=individs, n=n)
+        spp._remove_individs(individs=individs, n=n, n_left=n_left)
+
+
+    def add_individs(n,
+                     coords,
+                     land,
+                     recip_spp=0,
+                     source_spp=None,
+                     source_msprime_params=None,
+                     individs=None,
+                    ):
+        """
+        Add individuals to a recipient Species object, either using a second
+        Species object as the source population or feeding a dict of parameters
+        into msprime to simulate the source population.
+
+        Parameters
+        ----------
+        n: int
+            The number of Individuals to be added.
+
+        coords: {tuple, list, numpy.ndarray}
+            A tuple, list of numpy.ndarray indicating the x,y coordinates where the
+            new Individuals should be added to the recipient Species.
+            If `coords` contains 2 values then all added Individuals will be placed
+            at the x,y coordinate pair indicated by those 2 values.
+            Otherwise, `coords` may be of size `n` x 2, indicating the x,y
+            coordinate pair at which each of the `n` Individuals will be placed.
+
+        recip_spp: {gnx.structs.species.Species, int, str}, optional, default: None
+            An int or str referring to the Species in this Model to which
+            Individuals should be added.
+
+        source_spp: {gnx.structs.species.Species, int, str}, optional, default: None
+            A Geonomics.structs.species.Species object to act as the source
+            population from which individuals will be taken
+            (or an int or str referring to that Species within this Model).
+
+        source_msprime_params: dict, optional, default: None
+            A dict of keyword args to be fed to `gnx.sim_msprime_individs()`,
+            to parameterize the msprime source population model from which
+            new Individuals will be drawn. These include:
+                recomb_rate         (required)
+                mut_rate            (required)
+                demography          (optional; default: None)
+                population_size     (optional; default: None)
+                ancestry_model      (optional; default: None)
+                random_seed         (optional; default: None)
+            See `gnx.sim_msprime_individs` for details.
+
+        individs: {tuple, list, numpy.ndarray}, optional, default: None
+            A 1d numpy.ndarray or equivalent array-like containing the int indices
+            of the Individuals to be taken from `source_spp` and added to
+            `recip_spp`. If None
+
+        Returns
+        -------
+        None
+            Alters `recip_spp` in place by adding the provided
+            (if `source_spp` is not None) or simulated (if `source_msprime_params`
+            is not None) Individuals.
+
+        """
+        warnings.warn(("This function is new and has been checked but not "
+                       "extensively tested. User beware. Please immediately report "
+                       "any suspected bugs at "
+                       "https://github.com/erthward/geonomics/issues "
+                       "or drew.terasaki.hart@gmail.com"))
+
+        # get the recipient species
+        if isinstance(recip_spp, int) or isinstance(recip_spp, str):
+            recip_spp = self.comm[self._get_spp_num(recip_spp)]
+
+        # and make sure it has already been burned in
+        assert recip_spp.burned, ("Individuals cannot be manually added to a "
+                                  "Species that hasn't been burned in yet.")
+
+        # make sure either a Species object is given or a set of valid msprime args
+        assert ((source_spp is not None and source_msprime_params is None) or
+                (source_spp is None and source_msprime_params is not None)), (
+                        "Source population must be provided either as "
+                        "a gnx Species object ('source_spp') "
+                        "or as a set of valid args for gnx.run_msprime_sim() "
+                        "('source_msprime_params'), but not both.")
+        if source_spp is not None:
+            assert (isinstance(source_spp, gnx.structs.species.Species) or
+                    isinstance(source_spp, int) or
+                    isinstnace(source_spp, str)), ("The "
+                        "value given to 'source_spp' identifies a gnx "
+                        "Species object that will serve as the source "
+                        "population, so must be either a gnx Species "
+                        "instance (i.e., an object of the class "
+                        "gnx.structs.species.Species) whose Individuals will "
+                        "be added to the recipient Species, or a valid int or str "
+                        "identifier of another Species in this model whose"
+                        "Individuals will be added to the recipeint Species.")
+            # get the source_spp from this Model, if necessary
+            if isinstance(source_spp, int) or isinstance(source_spp, str):
+                source_spp = self.comm[self._get_spp_num(source_spp)]
+
+        # call the Species method
+        recip_spp._add_individs(n=n,
+                                coords=coords,
+                                land=self.land,
+                                source_spp=source_spp,
+                                source_msprime_params=source_msprime_params,
+                                individs=individs,
+                               )
 
 
     ##############

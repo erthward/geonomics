@@ -12,6 +12,7 @@ from geonomics.utils import viz, spatial as spt
 from geonomics.structs.genome import (_make_genomic_architecture,
                                       _check_mutation_rates,
                                       _make_starting_mutations,
+                                      _prep_tskit_tabcoll_for_gnx_spp_union,
                                       _get_lineage_dicts,
                                       _get_lineage_dicts_one_tree,
                                       _get_treenums,
@@ -45,6 +46,7 @@ import msprime
 from copy import deepcopy
 from operator import itemgetter
 from operator import attrgetter
+import warnings
 import sys
 
 
@@ -230,22 +232,22 @@ class Species(OD):
 
         N:
             The Species' current population-density raster.
-            This is a numpy array of shape `Landscape.dim`, with each value 
+            This is a numpy array of shape `Landscape.dim`, with each value
             indicating the population density of that cell in the Landscape,
-            as estimated by the Species' _DensityGridStack instance. 
+            as estimated by the Species' _DensityGridStack instance.
 
         Nt:
-            A chronologically ordered list, starting from the first timestep of
+            A chronologically ordered list, starting from the first time step of
             the burn-in, containing the Species' total population size at each
             time step.
 
         n_births:
-            A chronologically ordered list, starting from the first timestep of
+            A chronologically ordered list, starting from the first time step of
             the burn-in, containing the Species' number of births at each
             time step.
 
         n_births_distr_lambda:
-            If `Species.n_births_fixed` is False, then this value serves as the 
+            If `Species.n_births_fixed` is False, then this value serves as the
             $\lambda$ parameter of the Poisson distribution from which is drawn
             the number of offspring a mating pair will produce.
             If `Species.n_births_fixed` is True, then this is the fixed number
@@ -256,7 +258,7 @@ class Species(OD):
             be fixed at `Species.n_births_distr_lambda`
 
         n_deaths:
-            A chronologically ordered list, starting from the first timestep of
+            A chronologically ordered list, starting from the first time step of
             the burn-in, containing the Species' number of deaths at each
             time step.
 
@@ -1232,10 +1234,6 @@ class Species(OD):
             return nodes
 
 
-    ##########################################
-    # FUNCTIONS FROM TRACK_SPATIAL_PEDIGREE.PY
-    ##########################################
-
     # for a sample of nodes and a sample of loci, get the
     # loci-sequentially ordered dict of lineage dicts
     # (containing each node in a child node's lineage as the
@@ -1342,10 +1340,6 @@ class Species(OD):
                                             lin_dicts[loc][node], stat=stat))
                 stats[stat][loc] = loc_stat_list
         return stats
-
-    ##############################################
-    # END FUNCTIONS FROM TRACK_SPATIAL_PEDIGREE.PY
-    ##############################################
 
 
     # method to get individs' environment values
@@ -1539,17 +1533,24 @@ class Species(OD):
     def _remove_individs(self,
                          individs=None,
                          n=None,
+                         n_left=None,
                          ):
 
         # validate args
-        assert ((individs is not None and n is None) or
-                (individs is None and n is not None)), ("Either 'individs' "
-                                                        "or 'n' must be "
-                                                        "provided, not both.")
+        assert (np.sum([p is None for p in [individs, n, n_left]]) == 2 and
+                np.sum([p is not None for p in [individs, n, n_left]]) == 1), (
+                                    "One of 'individs', 'n', and 'n_left' must"
+                                    "be provided, the other two must be None.")
         if individs is not None:
             for id in individs:
                 assert id in self.keys(), f"Individual {id} does not exist."
         if individs is None:
+            if n_left is not None:
+                assert n_left >= 0 and n_left<= len(self), ("'n_left' must be "
+                                                "a number etween 0 and "
+                                                "the current size of the "
+                                                f"population ({len(self)}).")
+                n = len(self) - n_left
             assert isinstance(n, int) and n >= 0, ("'n' must either be "
                                                    "a non-negative int "
                                                    "or None.")
@@ -1589,13 +1590,444 @@ class Species(OD):
         return
 
 
-    # method to reduce the Species to some chosen number, by randomly removing
-    # N_curr_t - n individuals
-    def _reduce_to_size_n(self, n):
-        assert n <= len(self), ("Cannot reduce a Species to a number "
-                                "greater than its current size.")
-        n_remove = len(self) - n
-        self._remove_individs(n=n_remove)
+    ##############
+    # Model method
+    def _add_individs(n,
+                      coords,
+                      land,
+                      source_spp=None,
+                      source_msprime_params=None,
+                      individs=None,
+                     ):
+        """
+        Add individuals to this recipient Species object, either using a second
+        Species object as the source population or feeding a dict of parameters
+        into msprime to simulate the source population.
+        (docs in the model.py wrapper method)
+        """
+        # make sure source_spp is either a Species object or None
+        assert (isinstance(source_spp, Species) or source_spp is None), ("The "
+                        "source_spp param must be either None or another "
+                        "Species object.")
+
+        # get the next n gnx Individuals' ids
+        next_n_idxs = [*range(self.max_ind_idx + 1,
+                            self.max_ind_idx + n + 1)]
+
+        # check and handle the coords param
+        assert np.atleast_2d(coords).shape in [(1,2), (n,2)], (
+            "The 'coords' arg must be provided either "
+            "a single x,y coordinate pair (at which all Individuals "
+            "will be introduced) or an nx2 array of x,y coordinate pairs "
+            "(indicating the introduction locations for "
+            "each of the n Individuals being introduced.")
+        if np.atleast_2d(coords).shape == (1, 2):
+            coords = np.stack([coords for _ in range(n)])
+            assert coords.shape == (n, 2)
+        # make sure coords are all within the landscape
+        for coord in coords:
+            assert (0 <= coord[0] <= self._land_dim[0] and
+                    0 <= coord[1] <= self._land_dim[1]), ("Coords must be "
+                                                     "valid for the recipient "
+                                                     "Species' Landscape "
+                                                     "(i.e., x and y must be "
+                                                     "in the inclusive "
+                                                     " intervals "
+                                                     "[0, land_dim_x] and"
+                                                     "[0, land_dim_y], "
+                                                     "respectively.")
+
+        # either get Individuals and their tskit.TableCollection
+        # from the given gnx Species object...
+        if source_spp is not None:
+            # raise warning about potential unforeseen effects of introducing
+            # Individuals from an incorrectly parameterized source Species
+            warnings.warn(("Introducing Individuals from one Species object "
+                    "into another could cause unnoticed issues. "
+                    "Geonomics will check and prevent conflict between "
+                    "strictly incompatible attributes of the Species, "
+                    "GenomicArchitectures, and Traits. However, attributes "
+                    "whose compatibility depends on the scientific "
+                    "reasoning behind the scenario being simulated "
+                    "(e.g., mutational parameters, "
+                    "carrying capacity parameters, etc.) "
+                    "will be allowed to differ between the source and "
+                    "recipient Species objects and, "
+                    "if these differences were unintended but go "
+                    "undetected, could lead to incorrect or misleading data "
+                    "and results. Please use care when planning, "
+                    "implementing, and checking your code."))
+
+            # get the source Species from within this model, if necessary
+            if isinstance(source_spp, int) or isinstance(source_spp, str):
+                source_spp = self.comm[self._get_spp_num(source_spp)]
+
+            # assert that exactly one of the 'n' and 'individs'
+            # params is provided, and that the size of 'n'
+            # or size and contents of 'individs' are valid
+            assert ((n is not None and individs is None) or
+                    (n is None and individs is not None)), ("If using another "
+                                                        "Geonomics Species "
+                                                        "object as the source "
+                                                        "population then "
+                                                        "either `n` or "
+                                                        "`individs` must be "
+                                                        "provided, "
+                                                        "but not both.")
+            if individs is None:
+                assert n <= len(source_spp), ("`n` must not be greater than "
+                                              "the population size of "
+                                              "`source_spp`.")
+            else:
+                assert (len(np.unique(individs)) <= len(source_spp) and
+                        np.all([ind in source_spp for ind in individs])), (
+                            "`individs` contains Individual indices that do "
+                            "not exist in `source_spp`.")
+
+            # check that all Species params that need to match are the same
+            # in the source population's Species and in this Species' pop
+            spp_attrs_to_check = ['K_layer',
+                                  'selection',
+                                  'sex_ratio',
+                                  'move',
+                                 ]
+            for attr in spp_attrs_to_check:
+                assert np.all(getattr(source_spp, attr) ==
+                              getattr(self, attr)), (
+                                  "both the source and recipient Species "
+                                  "must have identical values for "
+                                  f"the attribute '{attr}'")
+
+            # check that all gen_arch params that need to match are the same
+            # in the source population's Species and this Species
+            source_gen_arch = source_spp.gen_arch
+            self.gen_arch = self.gen_arch
+            assert source_gen_arch.L == self.gen_arch.L, ("source "
+                                             "Species must have a "
+                                             "simulated genome of the same "
+                                             "length as the recpient Species.")
+            gen_arch_attrs_to_check = ['sex',
+                                       'use_tskit',
+                                       'x',
+                                      ]
+            # NOTE: not requiring p to be same in both populations facilitates
+            #       creating loci that differ in standing genetic variation in
+            #       the two populations, or even loci that are fixed differently
+            #       in one or more populations
+            # NOTE: making it so that attrs like mut rate, dominance params,
+            #       and the arrays of neutral and delet loci needn't be the
+            #       same (mutated loci almost certainly wouldn't be
+            #       if non-neutral mutation has been happening independently in
+            #       both populations). it isn't entirely realistic to model this
+            #       this way, but also not entirely unrealistic for the model to
+            #       behave such that loci that were neut in a population's prior
+            #       environment are suddenly not neutral in the new environment
+            for attr in gen_arch_attrs_to_check:
+                assert np.all(getattr(source_gen_arch, attr) ==
+                              getattr(self.gen_arch, attr)), ("both the source"
+                                                    " and recipient Species' "
+                                                    "GenomicArchitectures "
+                                                    "objects must have "
+                                                    "identical values for the "
+                                                    f"attribute '{attr}'")
+            # check recombination attributes
+            recomb_attrs_to_check = ['_rates',
+                                     '_r_distr_alpha',
+                                     '_r_distr_beta',
+                                     '_jitter_breakpoints',
+                                    ]
+            for attr in recomb_attrs_to_check:
+                assert np.all(getattr(source_gen_arch.recombinations, attr) ==
+                              getattr(self.gen_arch.recombinations, attr)), (
+                                                     "both the source "
+                                                     "and recipient Species' "
+                                                     "Recombinations objects "
+                                                     "must have identical "
+                                                     "values for the "
+                                                     f"attribute '{attr}'")
+
+            # check traits and their params
+            if self.gen_arch.traits is None:
+                assert source_gen_arch.traits is None, ("Individuals "
+                                                  "from a Species with "
+                                                  "Traits cannot be added to a "
+                                                  "Species without them.")
+            else:
+                assert (len(source_gen_arch.traits) ==
+                        len(self.gen_arch.traits)), ("The source population's "
+                                        "Species object must have the "
+                                        "same number of Traits "
+                                        "as the recipient Species.")
+                trt_attrs_to_check = ['name',
+                                      'phi',
+                                      'lyr_num',
+                                      'max_alpha_mag',
+                                      'gamma',
+                                      'univ_adv',
+                                     ]
+                # NOTE: not requiring 'n_loci' to be the same because they're
+                #       unlikely to be the same if non-neutral mutation 
+                #       has been happening independently in both populations
+                for n, trt in self.gen_arch.traits.items():
+                    for attr in trt_atts_to_check:
+                        assert np.all(getattr(trt, attr) ==
+                                getattr(source_gen_arch.traits[n], attr)), (
+                                         f"Attribute '{attr}' of trait {n} "
+                                          "in the source population's Species "
+                                          "object must be the same as "
+                                          "that attribute in the recipient "
+                                          "population's Species.")
+
+            # deepcopy the source_spp object, then subset to only the source
+            # individuals needed, which will also sort and simplify the
+            # TableCollection so that all extant nodes are nodes to be unioned
+            # into this Species' TableCollection 
+            source_spp_copy = deepcopy(source_spp)
+            # get individuals from the given Species object
+            if individs is not None:
+                individs_to_remove = [ind for ind in
+                                      source_spp_copy if ind not in individs]
+            else:
+                individs_to_remove = [*source_spp_copy][n:]
+            source_spp_copy._remove_individs(individs=individs_to_remove)
+            if individs is not None:
+                assert len(source_spp_copy) == len(individs)
+            else:
+                assert len(source_spp_copy) == n
+
+            # gather all remaining Individuals into a list
+            individs = [*source_spp_copy.values()]
+
+            # double-check that the source_spp_copy's TableCollection has been
+            # sorted and simplified
+            source_spp_copy._sort_and_simplify_table_collection()
+
+            # format TableCollection and return the list of new gnx Individ idxs
+            # that Table's individuals will be assigned w/in this Species
+            source_tc = source_spp_copy._tc
+            next_gnx_idxs = _prep_tskit_tabcoll_for_gnx_spp_union(tc=source_tc,
+                                                        recip_spp=self,
+                                                        coords=coords,
+                                                        source_software='gnx',
+                                                                 )
+
+        # ... or simulate them w/ the given msprime args
+        # and the this Species' genomic architecture
+        elif source_spp is None:
+            assert individs is None, ("The 'individs' argument indicates the "
+                                    "indices of Individuals to be added from "
+                                    "a gnx Species object serving as a source "
+                                    "population, so can only be used if "
+                                    "'source_msprime_params' is None and "
+                                    "'source_spp' is provided.")
+
+            # make sure Species has no selection before allowing use of msprime
+            assert not self.selection, ("msprime is a coalescent "
+                                         "simulator, so cannot be simulate "
+                                         "selection. Consider using a second "
+                                         "Geonomics model to simulate a source "
+                                         "population with selection.")
+
+            # check that required msprime params are provided and any others
+            # provided are among those allowed
+            required_msprime_params = ['recomb_rate', 'mut_rate']
+            allowed_msprime_params = ['demography', 'population_size',
+                                      'ancestry_model', 'random_seed',
+                                     ]
+            all_msprime_params = (required_msprime_params +
+                                  allowed_msprime_params)
+            assert np.all([k in all_msprime_params for
+                            k in source_msprime_params]), ("The only parameters"
+                                    " accepted in 'source_msprime_params' are: "
+                                   f"{', '.join(all_msprime_params)}.")
+            assert np.all([k in source_msprime_params for
+                            k in required_msprime_params]), ("Both "
+                                   f"{' and '.join(required_msprime_params)} "
+                                    "must be provided within "
+                                    "'source_msprime_params'.")
+
+            # run the simulation and return template Individuals
+            use_tskit = self.gen_arch.use_tskit
+            individs, source_tc = sim_msprime_individs(n=n,
+                                                    L=self.gen_arch.L,
+                                                    gnx_spp_use_tskit=use_tskit,
+                                                    **source_msprime_params,
+                                                    )
+
+            # run all TableCollection edits that are necessary to align msprime
+            # output with the TableCollection conventions used in gnx
+            # NOTE: edits the TableCollection in place;
+            #       returns the next n gnx Individual idxs assigned to those
+            #       Individuals for incorporation into the given Species
+            next_gnx_idxs = _prep_tskit_tabcoll_for_gnx_spp_union(tc=source_tc,
+                                                      recip_spp=self,
+                                                      coords=coords,
+                                                      source_software='msprime',
+                                                                 )
+
+        # set the source Individuals' coordinates
+        [ind._set_pos(*coords[i,:]) for i, ind in enumerate(individs)]
+
+        # update the index values identifying Individuals in gnx and tskit data
+        max_idx_b4 = self.max_ind_idx
+        new_idxs = []
+        for i, ind in enumerate(individs):
+            # increment the max_ind_idx
+            self.max_ind_idx += 1
+            # set the Individual's gnx index
+            ind.idx = self.max_ind_idx
+            new_idxs.append(self.max_ind_idx)
+            # set the Individuals' ids for the tskit nodes table
+            ind._nodes_tab_ids = {k: v + self._tc.nodes.num_rows for
+                                            k, v in ind._nodes_tab_ids.items()}
+            # set the Individuals' ids for the tskit individuals table
+            # NOTE: the inverse (the Individuals' gnx idx values,
+            #       as recored in the tskit individuals table's
+            #       metadata) should already be correct
+            #       because _prep_tskit_tabcoll_for_gnx_spp_union
+            #       generated the index values
+            #       and set them in the TableCollection
+            ind._individuals_tab_id += self._tc.individuals.num_rows
+        max_idx_af = self.max_ind_idx
+        assert max_idx_af - max_idx_b4 == len(individs)
+        # compare the idx values that were set on the Individuals to those that
+        # were set in the TableCollection.individuals table
+        assert np.all(np.array(next_gnx_idxs) == np.array(new_idxs)), (
+                                 "Individaul idx values set in the "
+                                    "TableCollection.individuals "
+                                    "table do not agree with those set on the "
+                                    "Individuals themselves.")
+
+        # sort and simplify the tskit.TableCollection
+        self._sort_and_simplify_table_collection()
+
+        # union source individuals' TableCollection into this Species' TableColl
+        nodes_tab_len_b4 = self._tc.nodes.num_rows
+        individs_tab_len_b4 = self._tc.individuals.num_rows
+        self._tc.union(source_tc,
+                            # NOTE: (for now at least) assuming  the introduced
+                            #       individuals come from totally indep pop,
+                            #       do not share a MRCA within our data, and ∴   
+                            #       have no common nodes that need to be mapped,
+                            #       hence we provide a list of tskit.NULLs
+                            #       to union()'s node_mapping argument
+                            node_mapping=[tskit.NULL] *source_tc.nodes.num_rows,
+                            # NOTE: populations of the newly added nodes
+                            #       will be flagged by an integer
+                            #       that is 1 greater than the largest
+                            #       population-flag integer in
+                            #       the pre-introduction TableCollection
+                            #       of this Species
+                            add_populations=True,
+                            # NOTE: best to just allow it to do this,
+                            #       in case we generalize things later on,
+                            #       but for now there will actually be
+                            #       nothing to check because we assume 
+                            #       no shared nodes between
+                            #       source and recipient TableCollections
+                            # TODO: HOWEVER, EQUALITY CHECK STILL FAILS! WHY?
+                            check_shared_equality=True,
+                            # NOTE: should copy provenance info over
+                            #       from the source Individuals' TableCollection
+                            #       to that of the receipient Species
+                            record_provenance=True,
+                                 )
+        nodes_tab_len_af = self._tc.nodes.num_rows
+        individs_tab_len_af = self._tc.individuals.num_rows
+
+        # check unioned tables have correct lengths
+        assert (nodes_tab_len_af - nodes_tab_len_b4) == source_tc.nodes.num_rows
+        assert ((individs_tab_len_af - individs_tab_len_b4) ==
+                                                source_tc.individuals.num_rows)
+
+        # check that all gnx idxs stored in the individuals table's
+        # metadata column occur only once (aside from 0,
+        # which is a null value for individuals that
+        # never existed as 'real' gnx Individual objects because
+        # they were in the past of a coalescent simulation)
+        recip_tc_individuals_ids = [int.from_bytes(
+                            self._tc.individuals[i].metadata, 'little') for
+                                i in range(self._tc.individuals.num_rows)]
+        assert (len(recip_tc_individuals_ids) ==
+                self._tc.individuals.num_rows)
+        counts = C(recip_tc_individuals_ids)
+        for k, v in counts.items():
+            if k != 0:
+                assert v == 1, (f"gnx Individual idx {i} occurs more than once "
+                                 "in the metadata column of the union of "
+                                 "the recipient and source Species' "
+                                 "TableCollections individuals tables.")
+
+        # add in the Individuals, keyed by idx
+        pop_size_b4 = len(self)
+        for ind in individs:
+            self[ind.idx] = ind
+        pop_size_af = len(self)
+        assert (pop_size_af - pop_size_b4) == len(individs), ("Incorrect number"
+                                " of Individuals added to recipient Species.")
+
+        # update each Individual's _individuals_tab_id and _nodes_tab_ids
+        # to match the new, unioned TableCollection
+        nodes_tab_individuals = self._tc.nodes.individual
+        for idx, ind in self.items():
+            print(idx)
+            print(ind)
+            print(np.argwhere(np.array(recip_tc_individuals_ids) == idx))
+            individuals_tab_id = np.argwhere(
+                            np.array(recip_tc_individuals_ids) == idx).ravel()
+            assert len(individuals_tab_id) == 1
+            individuals_tab_id = individuals_tab_id[0]
+            ind._individuals_tab_id = individuals_tab_id
+            nodes_tab_ids = np.argwhere(nodes_tab_individuals ==
+                                        individuals_tab_id).ravel()
+            assert len(nodes_tab_ids) == 2
+            ind._nodes_tab_ids = {i: id for i, id in enumerate(nodes_tab_ids)}
+
+        # final check that indices check out in the other direction
+        # (i.e., from nodes tab to individuals tab to gnx Individuals
+        # and that nodes ids check out too
+        curr_node_ct = 0
+        for node_id, node in enumerate(self._tc.nodes):
+            # NOTE: ignore -1s; they are msprime flags for non-sample nodes but
+            #       beahve as a Python indexer of the last Individual in the
+            #       Species and thus throw an error
+            if node.individual != -1:
+                gnx_individual_id = int.from_bytes(self._tc.individuals[
+                                            node.individual].metadata, 'little')
+                if gnx_individual_id in [*self]:
+                    curr_node_ct += 1
+                    assert (self[gnx_individual_id]._individuals_tab_id ==
+                            node.individual and node_id in
+                            self[gnx_individual_id]._nodes_tab_ids.values())
+        assert curr_node_ct == 2*len(self), ("Number of current Individuals "
+                                               "in the recipient Species does not "
+                                               "match the number expected based on "
+                                               "TableCollection contents.")
+
+        # sort and simplify the tskit.TableCollection again
+        self._sort_and_simplify_table_collection()
+
+        # reset the coords and cells attrs
+        self._set_coords_and_cells()
+
+        # reset the KDTree after adding the new individuals
+        self._set_kd_tree()
+
+        # reset the density grids
+        self._set_dens_grids(land)
+
+        # reset/set source Individuals' environmental and fitness values
+        self._set_e(land)
+
+        #reset phenotypes and fitnesses
+        if self.gen_arch is not None and self.gen_arch.traits is not None:
+            [ind._set_z(self.gen_arch) for ind in self.values()]
+            self._calc_fitness(set_fit=True)
+
+        # print informative output
+        print(f"\n{len(individs)} Individuals successfully "
+              f"added to Species {self.idx} ('{self.name}').\n")
+
 
     #use the kd_tree attribute to find mating pairs either
     #within the species, if within == True, or between the species
@@ -2691,80 +3123,4 @@ def read_pickled_spp(filename):
         spp = cPickle.load(f)
     return spp
 
-
-
-    def remove_individs(self,
-                        spp=0,
-                        individs=None,
-                        n=None,
-                        ):
-        """
-        Remove Individuals from a Species
-
-        Parameters
-        ----------
-        spp : {int, str}, optional, default: 0
-            A reference to the Species for which values should be returned.
-            Can be either the Species' index number (i.e. its
-            integer key in the Community dict), or its name (as a character
-            string).
-
-        individs: {list, tuple, numpy.ndarray, None}, optional, default: None
-            An iterable (e.g., list, tuple, or numpy.ndarray)
-            that contains the integer IDs (i.e., the Species dict's keys)
-            of the Individuals to be removed. If None then 'n' must be provided.
-
-        n: {int, None}, optional, default: None
-            An int indicating the number of random Individuals to be removed.
-            If None then 'individs' must be provided.
-
-        Returns
-        -------
-        None
-
-        """
-        # get the desired species
-        spp = self.comm[self._get_spp_num(spp)]
-
-        # validate args
-        assert ((individs is not None and n is None) or
-                (individs is None and n is not None)), ("Either 'individs' "
-                                                        "or 'n' must be "
-                                                        "provided, not both.")
-        if individs is not None:
-            for id in individs:
-                assert id in spp.keys(), f"Individual {id} does not exist."
-        if individs is None:
-            assert isinstance(n, int) and n >= 0, ("'n' must either be "
-                                                   "a non-negative int "
-                                                   "or None.")
-            assert n <= len(spp), ("Cannot remove more Individuals than "
-                                   "currently exist (current population size "
-                                   f"is {len(spp)}).")
-
-        # draw random Individuals, if necessary
-        if individs is None:
-            ids = [*spp]
-            individs = np.random.choice(ids, n, replace=False)
-
-        # get number of Individuals before operation
-        N_b4 = len(spp)
-
-        # remove the Individuals
-        for id in individs:
-            goodbye = spp.pop(id)
-
-        # assert that population size has changed the correct amount
-        N_af = len(spp)
-        assert (N_b4 - N_af) == len(individs), ("Incorrect number of "
-                                                "Individuls removed!")
-
-        # update the TableCollection, if necessary
-        if spp.gen_arch.use_tskit:
-            spp._sort_and_simplify_table_collection()
-        # update spp.coords and spp.cells attributes
-        spp._set_coords_and_cells()
-
-        # print informative output
-        print(f"\n{len(individs)} Individuals successfully removed.\n")
 

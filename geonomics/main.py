@@ -42,7 +42,8 @@ from geonomics.sim.model import Model
 from geonomics.sim.params import (_read_params_file, _make_params_file,
                                   ParametersDict)
 from geonomics.structs.landscape import _make_landscape
-from geonomics.structs.genome import _make_genomic_architecture
+from geonomics.structs.genome import (_make_genomic_architecture,
+                                      _sim_msprime_individuals)
 from geonomics.structs.individual import _make_individual
 from geonomics.structs.species import _make_species
 from geonomics.structs.community import _make_community
@@ -941,7 +942,7 @@ def make_species(landscape, spp_params):
     return(spp)
 
 
-#wrapper around community.make_comunity
+#wrapper around community.make_community
     #burn can be True (i.e. then the individuals will have a [[0,0]] genome)
 def make_community(landscape, params):
     """
@@ -968,3 +969,105 @@ def make_community(landscape, params):
     """
     comm = _make_community(landscape, params)
     return comm
+
+
+# wrapper around genome._sim_msprime_individuals
+def sim_msprime_individuals(n,
+                            L,
+                            recomb_rate,
+                            mut_rate,
+                            demography=None,
+                            population_size=None,
+                            ancestry_model=None,
+                            random_seed=None,
+                            use_tskit=True,
+                           ):
+    '''
+    Use an msprime simulation to generate new Geonomics Individuals.
+
+    Parameters
+    ----------
+
+    n: int
+        The number of Geonomics Individuals to be simulated
+
+    L: int
+        The length of the simulated genome.
+
+    recomb_rate: {float, list, numpy.ndarray}
+        Either a scalar float, indicating the genome-wide recombination rate;
+        or a 1d numpy.ndarray or 1d-array-like of length L-1, indicating the
+        inter-locus recombination rates along the length-L simulated genome.
+        (Note: This parameter is expressed according to the convention
+        used by Geonomics, as explained above. This differs from the convention
+        used by msprime, the translation to which will be handled internally by
+        Geonomics.)
+
+    mut_rate: {float, list, numpy.ndarray}
+        Either a scalar float, indicating the genome-wide neutral mutation rate;
+        or a 1d numpy.ndarray or 1d-array-like of length L, indicating the
+        mutation rates of all loci in the the length-L simulated genome.
+        (Note: This parameter is expressed according to the convention
+        used by Geonomics, as explained above. This differs from the convention
+        used by msprime, the translation to which will be handled internally by
+        Geonomics.)
+
+    demography: msprime.Demography, optional, default: None
+        An `msprime.Demography` object to be used by `msprime.sim_ancestry`.
+        `msprime` allows specification of complex demographic histories,
+        including multiple extant and ancestral populations with fixed
+        or variable sizes, growth rates, or migration rates, as well as
+        timed demographic events. Defaults to None, in which case
+        `msprime.sim_ancestry` will simulate a single population
+        whose size will be determined by the `population_size` parameter
+        (or will default to 1, if `population_size` is also None).
+        Cannot be specified along with `population_size`.
+        (See the `msprime.Demography` documentation and references therein
+        for more details.)
+
+    population_size: int, optional, default: None
+        The population size of the default single population to be simulated
+        by `msprime.sim_ancestry`. That default single population will only be
+        simulated if a more complex demographic scenario is not specified using
+        the `demography` parameter (i.e., if `demography` is None).
+        Thus, `population_size` cannot be specified along with `demography`.
+        If both are None then `msprime` simulates a single population of size 1.
+        (See the `msprime.sim_ancestry` documentation for more details.)
+
+    ancestry_model: {`msprime.AncestryModel`, list}, optional, default: None
+        The `msprime.AncestryModel instance (or list of them) to be used by
+        `msprime.sim_ancestry`. See `msprime.sim_ancestry` documentation and
+        references therein for more details.
+
+    random_seed: int, optional, default: None
+        The random seed value to be provided to `msprime.sim_ancestry` and
+        `msprime.sim_mutations`. Use if reproducibility is desirable.
+        See `msprime.sim_ancestry` and `msprime.sim_mutations` documentation
+        for detail.
+
+    use_tskit: bool, optional, default: True
+        Whether or not the Geonomics `Species` for which the `Individual`s are
+        intended uses tskit (i.e., has Species.gen_arch.use_tskit as True).
+        If not, `Individual`s will each store a copy of their Lx2 genotype
+        array in the 'g' attribute; otherwise, this attribute will be None.
+
+    Returns
+    -------
+    :class:`list`
+        A list of `geonomics.structs.individual.Individual` objects.
+        Individuals are assigned sequential index integers starting from 0,
+        placed at x,y coordinates (0, 0), and otherwise given default attribute
+        values. Attributes should be updated as necessary in downstream code.
+
+    '''
+    individs = _sim_msprime_individuals(n=n,
+                                        L=L,
+                                        recomb_rate=recomb_rate,
+                                        mut_rate=mut_rate,
+                                        population_size=population_size,
+                                        demography=demography,
+                                        ancestry_model=ancestry_model,
+                                        random_seed=random_seed,
+                                        use_tskit=use_tskit,
+                                       )
+    return individs

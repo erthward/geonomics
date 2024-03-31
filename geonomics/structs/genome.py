@@ -11,6 +11,7 @@ components
 
 # geonomics imports
 from geonomics.ops import mutation
+from geonomics.structs.individual import Individual
 from geonomics.utils.viz import _check_display
 
 # other imports
@@ -25,7 +26,9 @@ import warnings
 import random
 import bisect
 import bitarray
+import msprime
 import tskit
+
 
 ######################################
 # -----------------------------------#
@@ -344,7 +347,7 @@ class Trait:
 
         mu:
             Mutation rate for this trait (expressed in mutations per locus per
-            timestep)
+            time step)
 
         name:
             The string name of the trait
@@ -490,13 +493,13 @@ class GenomicArchitecture:
 
         mu_delet:
             Genome-wide deleterious mutation rate (expressed in mutations
-            per locus per timestep). Deleterious mutations do not influence
+            per locus per time step). Deleterious mutations do not influence
             trait phenotypes, but instead are univerally
             deleterious (to an extent determined by their effect sizes).
 
         mu_neut:
             Genome-wide neutral mutation rate (expressed in mutations
-            per locus per timestep).
+            per locus per time step).
 
         neut_loci:
             A 1d numpy array that tracks all loci that do not influence the
@@ -1158,9 +1161,475 @@ def read_pickled_genomic_architecture(filename):
     return gen_arch
 
 
-##########################################################################
-# FUNCTIONS FOR WORKING WITH THE SPATIAL PEDGREE SAVED IN tskit STRUCTURES
-##########################################################################
+################################################################
+# FUNCTIONS FOR WORKING WITH msprime TO SIMULATE GNX INDIVIDUALS
+################################################################
+
+def _format_msprime_rate(rate, L):
+    """
+    Either return a simple float, if the given rate
+    is homogeneous, or else return an msprime.RateMap object.
+    Used for msprime recombination and mutation rates.
+    """
+    assert (type(rate) in [float, list, np.ndarray] or rate == 0 or rate == 1)
+    if (isinstance(rate, float) or rate == 0 or rate == 1):
+        return rate
+    elif len(np.unique(rate)) == 1:
+        return rate[0]
+    else:
+        assert len(rate) == L
+        # NOTE: position array has to be one longer than the sequence length,
+        #       so that rightmost position brackets a stretch of genomic
+        #       intervals equal to the sequence_length
+        positions = np.linspace(0, L, L+1)
+        ratemap = msprime.RateMap(position=positions, rate=rate)
+        return ratemap
+
+
+def _sim_msprime_individuals(n,
+                             L,
+                             recomb_rate,
+                             mut_rate,
+                             demography=None,
+                             population_size=None,
+                             ancestry_model=None,
+                             random_seed=None,
+                             use_tskit=True,
+                            ):
+    '''
+    Use an msprime simulation to generate new Geonomics Individuals.
+    (docs in the main.py wrapper)
+    '''
+    # handle the recombination and mutation rates
+    if (not isinstance(recomb_rate, float) and
+        not (recomb_rate == 0)):
+        # NOTE: tack a 0.5 onto the righthand side of the recomb_rate vector,
+        #       to satisfy the difference between msprime (for which L
+        #       expresses length in intervals, each of which needs a recomb
+        #       rate specified, hence the recomb_rate vector needing to have a
+        #       number of rates equal to L) and gnx (for which L expressed
+        #       length in loci, between which recomb rates are needed, hence
+        #       needing L-1 recomb rates);
+        #       TODO: DOUBLE-CHECK THE FOLLOWING LOGIC
+        #       this 0.5 value will not affect gnx data because it effectively
+        #       sits between sites L-1 and L, but a simulated gnx genome of
+        #       length L only includes sites [0, L-1]
+        recomb_rate = [*recomb_rate] + [0.5]
+    recomb_rate = _format_msprime_rate(recomb_rate, L)
+    mut_rate = _format_msprime_rate(mut_rate, L)
+
+    # simulate ancestry and mutations
+    # TODO: look back at how gnx uses genome positions, because 
+    #       it looks like we need to provide discrete_genome=false
+    #       to sim_ancestry and true to sim_mutations;
+    #       or perhaps instead just fine to use false for both
+    #       and then subtract 0.5 from all non-zero 'left' values
+    #       from all non-L 'right' values when handles the edges table?
+    ts = msprime.sim_ancestry(samples=n,
+                              sequence_length=L,
+                              demography=demography,
+                              population_size=population_size,
+                              recombination_rate=recomb_rate,
+                              ploidy=2,
+                              model=ancestry_model,
+                              random_seed=random_seed,
+                              discrete_genome=True,
+                             )
+    # NOTE: mutations use a simple binary 0|1 model, with 0 always the
+    #       ancestral state, and with mutations being state-independent
+    #       (i.e., always placing a 1, even if this results in a silent
+    #       mutation of 1→1);
+    #       this model is the best aligned to gnx data
+    mut_model = msprime.BinaryMutationModel(state_independent=True)
+    mts = msprime.sim_mutations(tree_sequence=ts,
+                                rate=mut_rate,
+                                model=mut_model,
+                               )
+    # get the mutated tskit.TableCollection object
+    mtc = mts.dump_tables()
+
+    # double-check the number of Individuals
+    assert np.sum(mtc.nodes.asdict()['individual']>-1) == 2*n
+
+    # create the Individuals, assigning placeholder values for the attributes
+    # (to be later updated by downstream code)
+    individs = [Individual(idx=0, x=0, y=0) for i in range(n)]
+    # get the information linking Individuals to rows in TableCollection tables
+    nodes_tab_individs_col = mtc.nodes.asdict()['individual']
+    for i, ind in enumerate(individs):
+        # get the nodes table rows corresponding to this Individual
+        nodes_tab_ids = np.where(nodes_tab_individs_col==i)[0]
+        assert len(nodes_tab_ids) == 2
+        # set hidden attributes tracking the individs' rows in the 'nodes' table
+        # and id in the 'individuals' table
+        ind._set_nodes_tab_ids(nodes_tab_ids)
+        ind._individuals_tab_id = i
+        # if the gnx Model these Individuals are intended for is not using tskit
+        # then walk the variants generator and compile the individ's
+        # genotype array, then store it in the attribute 'g'
+        if not use_tskit:
+            var_gen = mts.variants(samples=nodes_tab_ids)
+            gt = np.stack([next(var_gen).genotypes for _ in range(L)])
+            ind.g = gt
+
+    return individs, mtc
+
+
+###############################################################################
+# FUNCTIONS FOR WORKING WITH THE SPATIAL PEDGREE SAVED IN tskit DATA STRUCTURES
+###############################################################################
+
+def _prep_tskit_tabcoll_for_gnx_spp_union(tc,
+                                          recip_spp,
+                                          coords,
+                                          source_software,
+                                         ):
+    '''
+    Reformat a tskit.TableCollection, produced by either a gnx simulation
+    or an msprime simulation, so that it conforms to Geonomics' expected format
+    and has the other data it needs to be fed into the .union() method
+    of the given Geonomics Species' current TableCollection.
+
+    The code and comments walk through each table, column by column,
+    and specify if and how the contents need to be reformatted or updated
+    in order to match Geonomics conventions.
+
+    Returns the list of gnx Individual idx numbers that were set in the
+    TableCollection, for downstream use and/or validation.
+    '''
+    # check source_software is valid
+    assert source_software in ['gnx', 'msprime'], ('This function can only '
+                                                   'prep TableCollections '
+                                                   'that originate from '
+                                                   'gnx Models or msprime '
+                                                   'simulations.')
+
+    # use the coords array to get the number of new individuals being unioned
+    # into the recipient population
+    assert (isinstance(coords, np.ndarray) and
+            len(coords.shape)==2 and
+            coords.shape[1] == 2), ("The coords param must be a 2d "
+                                    "numpy.ndarray with the x,y coords in "
+                                    "the 2 columns.")
+    n_source_individs = coords.shape[0]
+    if source_software == 'msprime':
+        assert tc.individuals.num_rows == n_source_individs
+
+    # reformat nodes table content:
+    #-----------------------------
+
+    if source_software == 'msprime':
+        # gnx uses the time column as follows:
+            # - smallest values are the most recent individuals
+            # - nodes with val 1 (i.e. -1 * t=-1 before main phase begins) are
+            #   nodes that originated at the end of the burn-in phase
+            # - nodes with val 0, -1, -2, ... (i.e., -1 * t =0, 1, 2,...)
+            #   originated during those time steps
+        # msprime times are expressed as t before present (i.e. samples are 0s).
+        # thus, convert msprime to gnx convention by subtracting from the whole
+        # column the value of spp.t at the time of their introduction
+        # (i.e., the time of their simulation and sampling)
+        time = tc.nodes.time - recip_spp.t
+        assert np.all([t>=(-1*recip_spp.t) for t in time]), ("Values "
+                            "attempting to be set on 'time' column of nodes "
+                            "table are invalid (i.e., are more negative than "
+                            "-1 * recipient Species' current model time, and "
+                            "thus would refer to future time steps not yet "
+                            "simulated.")
+        tc.nodes.time = time
+
+        # msprime uses the flags column to indicate extant nodes
+        # (i.e., docs say "NODE_IS_SAMPLE = 1"); gnx uses flags to distinguish
+        # between nodes in 'real' gnx Individuals and msprime nodes;
+        # thus, we actually just want to keep this column as is, because the
+        # samples are only nodes that will be assigned to new gnx Individuals,
+        # and thus are the only ones we would otherwise coerce to 1s anyhow!
+
+        # nothing to do the population column; TableCollection.union()
+        # will be asked to use the next available int in the recipient Species'
+        # populations table to automatically record the
+        # population these nodes came from
+
+        # the individual column needn't be touched; TableCollection.union()
+        # will automatically increment this col by using the next individual id
+        # available in the recipient Species' individuals table;
+        # we will just need to later track what the next id was and how many
+        # individuals were added, so that TableCollection.individuals ids can
+        # be matched to gnx Individuals via Individuals._individuals_tab_id attr
+
+        # metadata, metadata_offset, and metadata_schema columns are currently
+        # unused by both msprime and gnx
+
+    elif source_software == 'gnx':
+        # no need to alter any of this data if it's already from a gnx model
+        pass
+
+
+
+    # reformat individuals table content:
+    #-----------------------------------
+
+    if source_software == 'msprime':
+        # all individuals in the individuals table are extant and will be turned
+        # into gnx Individual objects, and gnx uses a 1 in the 'flags' column to
+        # indicated 'real' Individuals (i.e., individuals that were actual
+        # gnx.Individuals at some point), so set the entire 'flags' column to 1s
+        flags = tc.individuals.flags*0+1
+    elif source_software == 'gnx':
+        # flags should already be correct for a gnx model,
+        flags = tc.individuals.flags
+
+    # gnx stores individs' starting x,y coordinates in the 'location' column
+    # (NOTE: also the phenotype and fitness values, but those are not relevant
+    # in the neutral-loci-only msprime simulations permitted by gnx);
+    # TODO: think about if/how sweeps would be allowed and
+    #       how they would be represented/matched up to genarch
+    # location_offset tells the TableCollection to jump 2 values (x, y) per row
+    # NOTE: 'ragged columns' actually consist of the column's contents in a
+    #       flattened array format and a column of n+1 index values that can be
+    #       offset and used to index the start and end positions of each row's
+    #       contents within that array
+    if source_software == 'msprime':
+        location_offset = [int(n) for n in np.linspace(0,
+                                                   2*tc.individuals.num_rows,
+                                                   tc.individuals.num_rows+1)]
+    elif source_software == 'gnx':
+        # in a TableCollection from a gnx Model, locations will need to be
+        # blanked out for all Individuals, current or past (so that fns that
+        # later depend on the stored locations information don't accidentally
+        # use data conveying locations on a different landscape from before the
+        # introduction of these source Individuals to their new population),
+        # and then will need to be reset to the new coords values for only the
+        # bottom n rows; thus, need to tack leading zeros onto the
+        # location_offset values just generated, making the final vector
+        # num_rows+1 long
+        location_offset = [int(n) for n in np.linspace(0,
+                                                   2*n_source_individs,
+                                                   n_source_individs + 1)]
+        location_offset = [0] * (tc.individuals.num_rows -
+                                 n_source_individs) + location_offset
+        assert len(location_offset) == (tc.individuals.num_rows + 1), ("The "
+                                "location_offset vector must be one longer "
+                                "than the number of rows in the individuals "
+                                "table on which it will be set.")
+
+    # parents column is unused by geonomics
+    # (wasn't implemented until 21/01/21, after gnx was developed;
+    # tskit-dev commit 8ebfd8b2900217dab2b82d6f530c830238037fc8).
+    # useful but not necessary to implement;
+    # this column is also empty in msprime
+
+    # gnx uses the metadata column to store each individual's
+    # gnx Individual idx, for later matching to rows in the individuals table
+    # when the table is updated after tskit's simplify algo filters individuals;
+    # determine the next n indx values using the Species.max_ind_idx attribute
+    gnx_individ_idxs = [*range(recip_spp.max_ind_idx+1,
+                       recip_spp.max_ind_idx + n_source_individs + 1)]
+    metadata=[idx.to_bytes(length=4,
+                           byteorder='little') for idx in gnx_individ_idxs]
+    # for msprime, make location_offset vals uniform across new Individs' rows
+    if source_software == 'msprime':
+        metadata_offset = [int(n) for n in np.linspace(0,
+                                                   4*tc.individuals.num_rows,
+                                                   tc.individuals.num_rows+1)]
+    elif source_software == 'gnx':
+        # same as for location_offset above, need to tack leading zeros onto
+        # the metadata vector if setting columns in a gnx-generated individuals
+        # table
+        metadata_offset = [int(n) for n in np.linspace(0,
+                                                   4*n_source_individs,
+                                                   n_source_individs+1)]
+        metadata_offset = [0] * (tc.individuals.num_rows -
+                                 n_source_individs) + metadata_offset
+        assert len(metadata_offset) == (tc.individuals.num_rows + 1), ("The "
+                                "metadata_offset vector must be one longer "
+                                "than the number of rows in the individuals "
+                                "table on which it will be set.")
+
+    # NOTE the set_columns() method fails because the metadata column, although
+    #      supposed to be a binary data type according to the docs, is actually
+    #      coded as np.int8 and so fails to convert the 4-byte binary data we
+    #      are trying to provide; never ran into this problem in tha past
+    #      because the .add_row() method allows the binary data for some reason
+    #      and that's the only method I've used before (just adding 1
+    #      individual at a time as they're born);
+    #      however, somewhat conveniently, we were already planning to change
+    #      every column already containing data in this table anyhow, so for
+    #      now we are just:
+    #           1.) double-checking the length of the original table
+    #           2.) clearing the table
+    #           3.) manually looping and adding new rows
+    #           4.) confirming identical resulting length
+    if source_software == 'msprime':
+        assert (len(flags) ==
+            coords.shape[0] ==
+            (len(location_offset)-1) ==
+            len(metadata) ==
+            (len(metadata_offset)-1)), ("The 'flags', 'location', and "
+                                        "'metadata' columns for the "
+                                        "individuals table must all "
+                                        "be the same length as the coords "
+                                        "array's 0th dimension and the "
+                                        "'location_offset' and "
+                                        "'metadata_offset' columns must be "
+                                        "one longer.")
+    elif source_software == 'gnx':
+        assert (len(flags) ==
+                (len(location_offset)-1) ==
+                (len(metadata_offset)-1)), ("The 'flags' column must be "
+                            "one shorter than the 'location_offset' and "
+                            "'metadata_offset' columns.")
+        assert len(metadata) == coords.shape[0] == n_source_individs, ("The "
+                            "'metadata' column must have one value "
+                            "per coordinate pair provided.")
+    original_inds_tab_len = tc.individuals.num_rows
+    if source_software == 'msprime':
+        assert original_inds_tab_len == coords.shape[0], ("Length "
+                                             "of individuals table "
+                                             "generated by msprime "
+                                             "differs from length of coords "
+                                             "attempting to be added to it.")
+    tc.individuals.clear()
+    for i, flag in enumerate(flags):
+        # for gnx, add original flags and otherwise empty rows for all but the
+        # final rows corresponding to the Individuals being unioned into a
+        # recipient Species
+        if source_software == 'gnx':
+            if i < (len(flags) - n_source_individs):
+                row_coords = None
+                row_metadata = None
+            else:
+                i_adjusted = i - (len(flags) - n_source_individs)
+                row_coords = coords[i_adjusted, :]
+                row_metadata = metadata[i_adjusted]
+        elif source_software == 'msprime':
+            row_coords = coords[i, :]
+            row_metadata = metadata[i]
+        tc.individuals.add_row(flags=flag,
+                               location=row_coords,
+                               parents=None,
+                               metadata=row_metadata,
+                              )
+    assert tc.individuals.num_rows == original_inds_tab_len, ("Reconstructed "
+                                            "individuals table is not the same "
+                                            "length as the original table "
+                                            "generated by msprime.")
+
+
+    # reformat edges table content:
+    #-----------------------------
+
+    # geonomics models all edges as being delineated by positions belonging
+    # to the set [0, 0.5, 1.5, ..., L-2.5, L-1.5, L];
+    # this is more complicated than the saner msprime
+    # convention of using the set [0, 1, 2, ..., L-2, L-1, L],
+    # but this was a decision I made based on modeling recombination
+    # breakpoints halfway between loci and it is equally functional,
+    # so for msprime-derived tables we need to adjust the positions
+    if source_software == 'msprime':
+        L = recip_spp.gen_arch.L
+        left = tc.edges.left
+        right = tc.edges.right
+        left = np.clip(left - 0.5, a_min=0, a_max=L)
+        right = np.clip([r-0.5 if r != L else r for r in right], a_min=0, a_max=L)
+        tc.edges.left = left
+        tc.edges.right = right
+
+    # parent and child columns are both fine as is
+    # (have double-checked that node ids are all automatically and correctly
+    # updated by the tskit.TableCollection.union() method)
+
+    # metadata column is currently unused by both msprime and gnx
+
+
+    # reformat sites table content:
+    #-----------------------------
+
+    # double-check that position and ancestral state columns are identical in
+    # the recipient Species' TableCollection;
+    # if so, then just duplicate that table here
+    # (because the only difference between the two in the metadata column,
+    # which in gnx stores whether a site started as a neutral ('n')
+    # or non-neutral ('t', for trait-influencing) site
+    # NOTE: not running these checks for msprime-derived tables because
+    #       they can lack some sites, depending on recomb rate, Ne, etc
+    if source_software == 'gnx':
+        for col in ['position', 'ancestral_state']:
+            assert np.all(getattr(tc.sites, col) ==
+                          getattr(recip_spp._tc.sites, col)), (
+                                f"The {col} column in the sites table "
+                                f"generated by msprime disagrees with the {col} "
+                                 "column in the recipient Species' sites table.")
+    tc.sites.replace_with(recip_spp._tc.sites)
+
+
+    # reformat mutations table content:
+    #---------------------------------
+
+    # site, node, and parent columns are the core pieces needed to recover the
+    # genotypes produced by the mutations, and we want whatever genotypes
+    # msprime has simulated, so these columns should all remain untouched
+    # site vals are all in interval [0, L-1]
+    assert (np.all(0 <= tc.mutations.site) and
+            np.all(tc.mutations.site <= (recip_spp.gen_arch.L-1))), ("The "
+                        "site column in the mutations table contains values "
+                        "not in the interval [0, recip_spp.gen_arch.L-1].")
+
+    # Times for mutations created at the start of a gnx simulation, to
+    # match the starting allele frequency array ('p') provided to a gnx
+    # model, are artificial as they are all forcibly mutated at at once.
+    # Thus, those times are NaN. Unfortunately, tskit does not all
+    # mutation times to be mixed known and unknwon, so that means we must
+    # set all mutation times to NaN
+    time = [tskit.UNKNOWN_TIME] * len(tc.mutations.time)
+    tc.mutations.time = time
+
+    # double-check that the derived_state_offset column is just serial
+    # integers from 0 to the table length, inclusive
+    assert np.all(tc.mutations.derived_state_offset ==
+                  np.linspace(0,
+                              tc.mutations.num_rows,
+                              tc.mutations.num_rows + 1)), ("The "
+                "derived_state_offset column of the mutations table should "
+                "contain serial integers from 0 to the table length, "
+                "inclusive, but does not.")
+
+    # metadata, metadata_offset, and metadata_schema are all currently unused
+    # in both msprime and gnx
+
+
+    # reformat migrations table content:
+    #-----------------------------------
+
+    # this table is not used in gnx, but if it was used in a complex msprime
+    # Demography that simulated individuals for introduction into gnx then it
+    # will not be empty in this TableCollection; in that case, its contents
+    # will just be unioned into the otherwise empty migrations table of the 
+    # recipient Species and then left as is
+
+
+    # reformat populations table content:
+    #-----------------------------------
+
+    # This table is unused by gnx, but the msprime table has
+    # basic population names (e.g., 'pop_0') and descriptions ('' by default,
+    # but a user could specify).
+    # We won't touch or do anything with this data, and the
+    # TableCollection.union() method will pull it along without editing,
+    # but the rows in this table will be appended to existing rows in the gnx
+    # model and the nodes table will be constructed so as to match those indices
+
+    # reformat provenances table content:
+    #-----------------------------------
+
+    # no need to do anything here; all provenances info will be retained and
+    # combined when the union() method is called on the recipient Species'
+    # TableCollection
+
+    # return the gnx idxs that were set in the individuals table, for
+    # downstream use
+    return gnx_individ_idxs
+
 
 def _get_lineage_dicts(spp, nodes, loci, t_curr, drop_before_sim=True,
                        time_before_present=True, max_time_ago=None,
@@ -1396,3 +1865,24 @@ def _calc_lineage_speed(lin_dict):
         time = _calc_lineage_time(lin_dict)
         speed = dist/time
         return speed
+
+
+
+
+#######################################################
+#######################################################
+#######################################################
+#######################################################
+#######################################################
+#######################################################
+#######################################################
+
+
+import numpy as np
+import geonomics as gnx
+import msprime
+import tskit
+import warnings
+from copy import deepcopy
+from collections import Counter as C
+

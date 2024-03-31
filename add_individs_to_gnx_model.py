@@ -3,19 +3,17 @@ import geonomics as gnx
 import msprime
 import tskit
 import warnings
+from copy import deepcopy
 from collections import Counter as C
 
+
+# add start-up fns
+# work through remaining todos
 
 
 # TODO PICKUP:
 
-    # debug functionality to add individs from another gnx model (getting
-    # duplications of the same individual idx, which means I just to rset source
-    # individuals' idxs on them and in their tc
-
     # why check_shared_equality failing?
-
-    # move code to proper methods
 
     # make sure model plots correctly after adding individs,
     # once the fns are proper methods
@@ -229,97 +227,168 @@ def sim_msprime_individs(n,
 ############
 # Genome fn?
 
-def _prep_tablecollection_for_gnx_spp_union(tc,
-                                            recip_spp,
-                                            coords,
-                                           ):
+def _prep_tabcoll_for_gnx_spp_union(tc,
+                                    recip_spp,
+                                    coords,
+                                    source_software,
+                                   ):
     '''
-    Reformat a tskit.TableCollection produced by an msprime simulation
-    so that it conforms to Geonomics' expected format, and thus can be fed
-    into the .union() method of the given Geonomics Species' current TableCollection.
+    Reformat a tskit.TableCollection, produced by either a gnx simulation
+    or an msprime simulation, so that it conforms to Geonomics' expected format
+    and has the other data it needs to be fed into the .union() method
+    of the given Geonomics Species' current TableCollection.
 
     The code and comments walk through each table, column by column,
     and specify if and how the contents need to be reformatted or updated
     in order to match Geonomics conventions.
     '''
+    # check source_software is valid
+    assert source_software in ['gnx', 'msprime'], ('This function can only '
+                                                   'prep TableCollections '
+                                                   'that originate from '
+                                                   'gnx Models or msprime '
+                                                   'simulations.')
+
+    # use the coords array to get the number of new individuals being unioned
+    # into the recipient population
+    assert (isinstance(coords, np.ndarray) and
+            len(coords.shape)==2 and
+            coords.shape[1] == 2), ("The coords param must be a 2d "
+                                    "numpy.ndarray with the x,y coords in "
+                                    "the 2 columns.")
+    n_source_individs = coords.shape[0]
+    if source_software == 'msprime':
+        assert tc.individuals.num_rows == n_source_individs
 
     # reformat nodes table content:
     #-----------------------------
 
-    # TODO: DOUBLE CHECK (REALLY 0 = STARTING GNX TIME STEP?)
-    # gnx uses the time column as follows:
-        # - smallest values are the most recent individuals
-        # - nodes with val 0 originated at very beginning of sim's main
-        # - after that, new nodes are assigned a time of origination = -1*spp.t
-    # msprime times are expressed as time before present (i.e. samples are 0s).
-    # thus, convert msprime to gnx convention by subtracting from the whole
-    # column the value of spp.t at the time of their introduction
-    # (i.e., the time of their simulation and sampling)
-    time = tc.nodes.time - recip_spp.t
-    tc.nodes.time = time
+    if source_software == 'msprime':
+        # gnx uses the time column as follows:
+            # - smallest values are the most recent individuals
+            # - nodes with val 1 (i.e. -1 * t=-1 before main phase begins) are
+            #   nodes that originated at the end of the burn-in phase
+            # - nodes with val 0, -1, -2, ... (i.e., -1 * t =0, 1, 2,...)
+            #   originated during those time steps
+        # msprime times are expressed as t before present (i.e. samples are 0s).
+        # thus, convert msprime to gnx convention by subtracting from the whole
+        # column the value of spp.t at the time of their introduction
+        # (i.e., the time of their simulation and sampling)
+        time = tc.nodes.time - recip_spp.t
+        assert np.all([t>=(-1*recip_spp.t) for t in time]), ("Values "
+                            "attempting to be set on 'time' column of nodes "
+                            "table are invalid (i.e., are more negative than "
+                            "-1 * recipient Species' current model time, and "
+                            "thus would refer to future time steps not yet "
+                            "simulated.")
+        tc.nodes.time = time
 
-    # msprime uses the flags column to indicate extant nodes
-    # (i.e., docs say "NODE_IS_SAMPLE = 1"); gnx uses the flags to distinguish
-    # between nodes in 'real' gnx Individuals and msprime nodes;
-    # thus, we actually just want to keep this column as is, because the
-    # samples are the only nodes that will be assigned to new gnx Individuals,
-    # and thus are the only ones we would otherwise coerce to 1s anyhow!
+        # msprime uses the flags column to indicate extant nodes
+        # (i.e., docs say "NODE_IS_SAMPLE = 1"); gnx uses flags to distinguish
+        # between nodes in 'real' gnx Individuals and msprime nodes;
+        # thus, we actually just want to keep this column as is, because the
+        # samples are only nodes that will be assigned to new gnx Individuals,
+        # and thus are the only ones we would otherwise coerce to 1s anyhow!
 
-    # nothing to do the population column; TableCollection.union()
-    # will be asked to use the next available int in the recipient Species'
-    # populations table to automatically record the population these nodes came
-    # from
+        # nothing to do the population column; TableCollection.union()
+        # will be asked to use the next available int in the recipient Species'
+        # populations table to automatically record the
+        # population these nodes came from
 
-    # the individual column needn't be touched; TableCollection.union()
-    # will automatically increment this column by using the next individual id
-    # available in the recipient Species' individuals table;
-    # we will just need to later track what the next id was and how many
-    # individuals were added, so that TableCollection.individuals ids can
-    # be matched to gnx Individuals via the Individuals._individuals_tab_id attr
+        # the individual column needn't be touched; TableCollection.union()
+        # will automatically increment this col by using the next individual id
+        # available in the recipient Species' individuals table;
+        # we will just need to later track what the next id was and how many
+        # individuals were added, so that TableCollection.individuals ids can
+        # be matched to gnx Individuals via Individuals._individuals_tab_id attr
 
-    # metadata, metadata_offset, and metadata_schema columns are currently
-    # unused by both msprime and gnx
+        # metadata, metadata_offset, and metadata_schema columns are currently
+        # unused by both msprime and gnx
+
+    elif source_software == 'gnx':
+        # no need to alter any of this data if it's already from a gnx model
+        pass
+
 
 
     # reformat individuals table content:
     #-----------------------------------
 
-    # all individuals in the individuals table are extant and will be turned
-    # into gnx Individual objects, and gnx uses a 1 in the 'flags' column to
-    # indicated 'real' Individuals (i.e., individuals that were actual
-    # gnx.Individuals at some point), so set the entire 'flags' column to 1s
-    flags = tc.individuals.flags*0+1
+    if source_software == 'msprime':
+        # all individuals in the individuals table are extant and will be turned
+        # into gnx Individual objects, and gnx uses a 1 in the 'flags' column to
+        # indicated 'real' Individuals (i.e., individuals that were actual
+        # gnx.Individuals at some point), so set the entire 'flags' column to 1s
+        flags = tc.individuals.flags*0+1
+    elif source_software == 'gnx':
+        # flags should already be correct for a gnx model,
+        flags = tc.individuals.flags
 
     # gnx stores individs' starting x,y coordinates in the 'location' column
     # (NOTE: also the phenotype and fitness values, but those are not relevant
     # in the neutral-loci-only msprime simulations permitted by gnx);
-    # TODO: think about if/how sweeps would be allowed and how represented/matched up to genarch
+    # TODO: think about if/how sweeps would be allowed and
+    #       how they would be represented/matched up to genarch
     # location_offset tells the TableCollection to jump 2 values (x, y) per row
     # NOTE: 'ragged columns' actually consist of the column's contents in a
     #       flattened array format and a column of n+1 index values that can be
     #       offset and used to index the start and end positions of each row's
     #       contents within that array
-    location_offset = [int(n) for n in np.linspace(0,
+    if source_software == 'msprime':
+        location_offset = [int(n) for n in np.linspace(0,
                                                    2*tc.individuals.num_rows,
                                                    tc.individuals.num_rows+1)]
+    elif source_software == 'gnx':
+        # in a TableCollection from a gnx Model, locations will need to be
+        # blanked out for all Individuals, current or past (so that fns that
+        # later depend on the stored locations information don't accidentally
+        # use data conveying locations on a different landscape from before the
+        # introduction of these source Individuals to their new population),
+        # and then will need to be reset to the new coords values for only the
+        # bottom n rows; thus, need to tack leading zeros onto the
+        # location_offset values just generated, making the final vector
+        # num_rows+1 long
+        location_offset = [int(n) for n in np.linspace(0,
+                                                   2*n_source_individs,
+                                                   n_source_individs + 1)]
+        location_offset = [0] * (tc.individuals.num_rows -
+                                 n_source_individs) + location_offset
+        assert len(location_offset) == (tc.individuals.num_rows + 1), ("The "
+                                "location_offset vector must be one longer "
+                                "than the number of rows in the individuals "
+                                "table on which it will be set.")
 
     # parents column is unused by geonomics
     # (wasn't implemented until 21/01/21, after gnx was developed;
     # tskit-dev commit 8ebfd8b2900217dab2b82d6f530c830238037fc8).
     # useful but not necessary to implement;
-    # this column is also empty in msprime, so leaving empty for now
+    # this column is also empty in msprime
 
     # gnx uses the metadata column to store each individual's
     # gnx Individual idx, for later matching to rows in the individuals table
     # when the table is updated after tskit's simplify algo filters individuals;
     # determine the next n indx values using the Species.max_ind_idx attribute
-    # and the length of the individuals table
     gnx_idxs = [*range(recip_spp.max_ind_idx+1,
-                       recip_spp.max_ind_idx + tc.individuals.num_rows + 1)]
+                       recip_spp.max_ind_idx + n_source_individs + 1)]
     metadata=[idx.to_bytes(length=4, byteorder='little') for idx in gnx_idxs]
-    metadata_offset = [int(n) for n in np.linspace(0,
+    # for msprime, make location_offset vals uniform across new Individs' rows
+    if source_software == 'msprime':
+        metadata_offset = [int(n) for n in np.linspace(0,
                                                    4*tc.individuals.num_rows,
                                                    tc.individuals.num_rows+1)]
+    elif source_software == 'gnx':
+        # same as for location_offset above, need to tack leading zeros onto
+        # the metadata vector if setting columns in a gnx-generated individuals
+        # table
+        metadata_offset = [int(n) for n in np.linspace(0,
+                                                   4*n_source_individs,
+                                                   n_source_individs+1)]
+        metadata_offset = [0] * (tc.individuals.num_rows -
+                                 n_source_individs) + metadata_offset
+        assert len(metadata_offset) == (tc.individuals.num_rows + 1), ("The "
+                                "metadata_offset vector must be one longer "
+                                "than the number of rows in the individuals "
+                                "table on which it will be set.")
 
     # NOTE the set_columns() method fails because the metadata column, although
     #      supposed to be a binary data type according to the docs, is actually
@@ -335,11 +404,12 @@ def _prep_tablecollection_for_gnx_spp_union(tc,
     #           2.) clearing the table
     #           3.) manually looping and adding new rows
     #           4.) confirming identical resulting length
-    assert (len(flags) ==
+    if source_software == 'msprime':
+        assert (len(flags) ==
             coords.shape[0] ==
             (len(location_offset)-1) ==
             len(metadata) ==
-            (len(metadata_offset)-1)), ("Tne 'flags', 'location', and "
+            (len(metadata_offset)-1)), ("The 'flags', 'location', and "
                                         "'metadata' columns for the "
                                         "individuals table must all "
                                         "be the same length as the coords "
@@ -347,18 +417,42 @@ def _prep_tablecollection_for_gnx_spp_union(tc,
                                         "'location_offset' and "
                                         "'metadata_offset' columns must be "
                                         "one longer.")
+    elif source_software == 'gnx':
+        assert (len(flags) ==
+                (len(location_offset)-1) ==
+                (len(metadata_offset)-1)), ("The 'flags' column must be "
+                            "one shorter than the 'location_offset' and "
+                            "'metadata_offset' columns.")
+        assert len(metadata) == coords.shape[0] == n_source_individs, ("The "
+                            "'metadata' column must have one value "
+                            "per coordinate pair provided.")
     original_inds_tab_len = tc.individuals.num_rows
-    assert original_inds_tab_len == coords.shape[0], ("Length "
+    if source_software == 'msprime':
+        assert original_inds_tab_len == coords.shape[0], ("Length "
                                              "of individuals table "
                                              "generated by msprime "
                                              "differs from length of coords "
                                              "attempting to be added to it.")
     tc.individuals.clear()
     for i, flag in enumerate(flags):
+        # for gnx, add original flags and otherwise empty rows for all but the
+        # final rows corresponding to the Individuals being unioned into a
+        # recipient Species
+        if source_software == 'gnx':
+            if i < (len(flags) - n_source_individs):
+                row_coords = None
+                row_metadata = None
+            else:
+                i_adjusted = i - (len(flags) - n_source_individs)
+                row_coords = coords[i_adjusted, :]
+                row_metadata = metadata[i_adjusted]
+        elif source_software == 'msprime':
+            row_coords = coords[i, :]
+            row_metadata = metadata[i]
         tc.individuals.add_row(flags=flag,
-                               location=coords[i, :],
+                               location=row_coords,
                                parents=None,
-                               metadata=metadata[i],
+                               metadata=row_metadata,
                               )
     assert tc.individuals.num_rows == original_inds_tab_len, ("Reconstructed "
                                             "individuals table is not the same "
@@ -374,15 +468,16 @@ def _prep_tablecollection_for_gnx_spp_union(tc,
     # this is more complicated than the saner msprime
     # convention of using the set [0, 1, 2, ..., L-2, L-1, L],
     # but this was a decision I made based on modeling recombination
-    # breakpoints halfway between loci and it is equally functional, so...
-    # c'est la vie.
-    L = recip_spp.gen_arch.L
-    left = tc.edges.left
-    right = tc.edges.right
-    left = np.clip(left - 0.5, a_min=0, a_max=L)
-    right = np.clip([r-0.5 if r != L else r for r in right], a_min=0, a_max=L)
-    tc.edges.left = left
-    tc.edges.right = right
+    # breakpoints halfway between loci and it is equally functional,
+    # so for msprime-derived tables we need to adjust the positions
+    if source_software == 'msprime':
+        L = recip_spp.gen_arch.L
+        left = tc.edges.left
+        right = tc.edges.right
+        left = np.clip(left - 0.5, a_min=0, a_max=L)
+        right = np.clip([r-0.5 if r != L else r for r in right], a_min=0, a_max=L)
+        tc.edges.left = left
+        tc.edges.right = right
 
     # parent and child columns are both fine as is
     # (have double-checked that node ids are all automatically and correctly
@@ -400,17 +495,16 @@ def _prep_tablecollection_for_gnx_spp_union(tc,
     # (because the only difference between the two in the metadata column,
     # which in gnx stores whether a site started as a neutral ('n')
     # or non-neutral ('t', for trait-influencing) site
-    # TODO: ACTUALLY DON'T EVEN RUN THESE CHECKS BECAUSE SITES TABLE
-    #       CAN LACK SOME SITES DEPENDING ON RECOMB RATE, N_E, ETC
-    #print(tc.sites)
-    #print(recip_spp._tc.sites)
-    #for col in ['position', 'ancestral_state']:
-    #    assert np.all(getattr(tc.sites, col) ==
-    #                  getattr(recip_spp._tc.sites, col)), (
-    #                        f"The {col} column in the sites table "
-    #                        f"generated by msprime disagrees with the {col} "
-    #                         "column in the recipient Species' sites table.")
-    #tc.sites.replace_with(recip_spp._tc.sites)
+    # NOTE: not running these checks for msprime-derived tables because
+    #       they can lack some sites, depending on recomb rate, Ne, etc
+    if source_software == 'gnx':
+        for col in ['position', 'ancestral_state']:
+            assert np.all(getattr(tc.sites, col) ==
+                          getattr(recip_spp._tc.sites, col)), (
+                                f"The {col} column in the sites table "
+                                f"generated by msprime disagrees with the {col} "
+                                 "column in the recipient Species' sites table.")
+    tc.sites.replace_with(recip_spp._tc.sites)
 
 
     # reformat mutations table content:
@@ -425,16 +519,6 @@ def _prep_tablecollection_for_gnx_spp_union(tc,
                         "site column in the mutations table contains values "
                         "not in the interval [0, recip_spp.gen_arch.L-1].")
 
-    # Mutation times in msprime are expressed in generations before present
-    # (i.e., larger values are further toward the root of the coalescent tree).
-    # gnx also expresses time this way, but in gnx 0 demarcates the start of the
-    # forward-time simulation, and thus negative values represent -1 times the
-    # gnx time step. Thus, to convert to gnx time we just need to subtract the
-    # current gnx time step from msprime's time column (same as how we handled
-    # time for the nodes table, above; and in fact, if we didn't do this we
-    # would set ourselves up to fail to satisfy the tskit requirements
-    # for the comparison between the time of a mutation and the times of the
-    # nodes surrounding it in the tree
     # Times for mutations created at the start of a gnx simulation, to
     # match the starting allele frequency array ('p') provided to a gnx
     # model, are artificial as they are all forcibly mutated at at once.
@@ -757,21 +841,38 @@ def add_individs(n,
                                          "that attribute in the recipient "
                                           "population's Species.")
 
+        # deepcopy the recip_spp object, then subset to only the source
+        # individuals needed, which will also sort and simplify the
+        # TableCollection so that all extant nodes are nodes to be unioned into
+        # the recip_spp's TableCollection
+        source_spp_copy = deepcopy(source_spp)
         # get individuals from the given Species object
         if individs is not None:
-            individs = [ind for idx, ind in source_spp.items() if idx in individs]
+            individs_to_remove = [ind for ind in source_spp_copy if ind not in
+                                  individs]
         else:
-            individs = [*source_spp.values()][:n]
+            individs_to_remove = [*source_spp_copy][n:]
+        source_spp_copy._remove_individs(individs=individs_to_remove)
+        if individs is not None:
+            assert len(source_spp_copy) == len(individs)
+        else:
+            assert len(source_spp_copy) == n
 
-        # TODO UPDATE INDIVIDUALS TABLE TO REFLECT THESE NEW IDX VALS, EITHER
-        # EHERE OR BELOW
-        # get the list of indexes they should wind up having
-        next_gnx_idxs = [*range(recip_spp.max_ind_idx + 1,
-                                recip_spp.max_ind_idx + 1 + len(individs))]
+        # gather all remaining Individuals into a list
+        individs = [*source_spp_copy.values()]
 
-        # get their tskit.TableCollection
-        # TODO SUBSET TO ONLY THE INDIVIDUALS/NODES NEEDED!
-        source_tc = source_spp._tc
+        # double-check that the source_spp_copy's TableCollection has been
+        # sorted and simplified
+        source_spp_copy._sort_and_simplify_table_collection()
+
+        # format the TableCollection and return the list new gnx Individual idxs
+        # that the Table's individuals will be assigned in the recipient Species
+        source_tc = source_spp_copy._tc
+        next_gnx_idxs = _prep_tabcoll_for_gnx_spp_union(tc=source_tc,
+                                                        recip_spp=recip_spp,
+                                                        coords=coords,
+                                                        source_software='gnx',
+                                                       )
 
     # ... or simulate them w/ the given msprime args
     # and the recipient Species' genomic architecture
@@ -820,10 +921,11 @@ def add_individs(n,
         # NOTE: edits the TableCollection in place;
         #       returns the next n gnx Individual idxs assigned to those
         #       Individuals for incorporation into the given Species
-        next_gnx_idxs = _prep_tablecollection_for_gnx_spp_union(tc=source_tc,
+        next_gnx_idxs = _prep_tabcoll_for_gnx_spp_union(tc=source_tc,
                                                         recip_spp=recip_spp,
                                                         coords=coords,
-                                                               )
+                                                      source_software='msprime',
+                                                       )
 
     # set the source Individuals' coordinates
     [ind._set_pos(*coords[i,:]) for i, ind in enumerate(individs)]
@@ -843,7 +945,7 @@ def add_individs(n,
         # set the Individuals' ids for the tskit individuals table
         # NOTE: the inverse (the Individuals' gnx idx values, as recored in the
         #       tskit individuals table's metadata) should already be correct
-        #       because _prep_tablecollection_for_gnx_spp_union
+        #       because _prep_tabcoll_for_gnx_spp_union
         #       generated the index values and set them in the TableCollection
         ind._individuals_tab_id += recip_spp._tc.individuals.num_rows
     max_idx_af = recip_spp.max_ind_idx
@@ -900,10 +1002,11 @@ def add_individs(n,
     # occur only once (aside from 0, which is a null value for individuals that
     # never existed as 'real' gnx Individual objects because they were in the
     # past of a coalescent simulation)
-    recip_tc_idxs = [int.from_bytes(recip_spp._tc.individuals[i].metadata,
-                  'little') for i in range(recip_spp._tc.individuals.num_rows)]
-    assert len(recip_tc_idxs) == recip_spp._tc.individuals.num_rows
-    counts = C(recip_tc_idxs)
+    recip_tc_individuals_ids = [int.from_bytes(
+                        recip_spp._tc.individuals[i].metadata, 'little') for
+                                i in range(recip_spp._tc.individuals.num_rows)]
+    assert len(recip_tc_individuals_ids) == recip_spp._tc.individuals.num_rows
+    counts = C(recip_tc_individuals_ids)
     for k, v in counts.items():
         if k != 0:
             assert v == 1, (f"gnx Individual idx {i} occurs more than once "
@@ -911,7 +1014,7 @@ def add_individs(n,
                              "the recipient and source Species' "
                              "TableCollections individuals tables.")
 
-    # add the Individuals to the recipient Species's dict, keyed by idx
+    # add the Individuals to the recipient Species' dict, keyed by idx
     pop_size_b4 = len(recip_spp)
     for ind in individs:
         recip_spp[ind.idx] = ind
@@ -923,8 +1026,11 @@ def add_individs(n,
     # to match the new, unioned TableCollection
     nodes_tab_individuals = recip_spp._tc.nodes.individual
     for idx, ind in recip_spp.items():
-        print(np.argwhere(np.array(recip_tc_idxs) == idx))
-        individuals_tab_id = np.argwhere(np.array(recip_tc_idxs) == idx).ravel()
+        print(idx)
+        print(ind)
+        print(np.argwhere(np.array(recip_tc_individuals_ids) == idx))
+        individuals_tab_id = np.argwhere(np.array(recip_tc_individuals_ids) ==
+                                                                    idx).ravel()
         assert len(individuals_tab_id) == 1
         individuals_tab_id = individuals_tab_id[0]
         ind._individuals_tab_id = individuals_tab_id
@@ -981,204 +1087,3 @@ def add_individs(n,
           f"added to Species {recip_spp.idx} ('{recip_spp.name}').\n")
 
 
-
-
-#
-##
-##source_pops = {'A': {'initial_size':10000,
-##                     'growth_rate':0,
-##                     'description':'first'},
-##               'B': {'initial_size':1000,
-##                     'growth_rate':0.1,
-##                     'description':'second'},
-##               'C': {'initial_size':100,
-##                     'growth_rate': -0.1,
-##                     'description':'last',
-##                    },
-##              }
-##
-##source_pop_intros = {'A': [25, (4, 6)],
-##                     'B': [50, (1, 3)],
-##                     'C': [100, (5,6)],
-##                    }
-##
-##source_pop_allele_freqs = {'A': [0.1]*100,
-##                           'B': [0.9]*100,
-##                           'C': [0]*100,
-##                          }
-##
-##
-##def _make_msprime_demographies(source_pops):
-##    """
-##    use all of the distinct source populations identified in the provided
-##    parameters dict to create msprime.Demography objects that
-##    can be used to draw new gnx individuals
-##    """
-##    demogs = []
-##    for name, params in source_pops.items():
-##        disallowed_params = ['default_sampling_time',
-##                             'initially_active',
-##                            ]
-##        # NOTE: need to disallow certain parameters that might break gnx models
-##        #       render output inaccurate
-##        for dp in disallowed_params:
-##            assert dp not in params, ((f"parameter '{dp}' is not allowed in "
-##                                        "msprime simulations used to generate "
-##                                        "geonomics models; please reformulate "
-##                                        "population parameters, then rerun."))
-##        demog = msprime.Demography()
-##        demog.add_population(name=name, **params)
-##        demogs.append(demog)
-##    return demogs
-##
-##
-##def _get_msprime_demographies(source_pops):
-##    """
-##    either grab the msprime.Demography object
-##    (or list of msprime.Demography objects) provided in the gnx parameters file
-##    (for more complicated models involving e.g., migrations, splits, etc.),
-##    or grab the demographic parameters dict provided in the gnx parameters file
-##    and use it to create a list of msprime.Demography objects
-##    """
-##    if (isinstance(source_pops, msprime.Demography) and
-##        source_pops.num_populations > 0):
-##        return [source_pops]
-##    elif (isinstance(source_pops, list) and
-##          set([type(sp) for sp in source_pops]) == set([msprime.Demography])):
-##        return source_pops
-##    elif isinstance(source_pops, dict):
-##        return _make_msprime_demographies(source_pops)
-##    else:
-##        raise ValueError((f"'source_pops' component of species 'init' "
-##                           "parameters must be either an msprime.Demography "
-##                           "with at least one population or a dictionary of "
-##                           "name-keyed demographic parameters that can be used "
-##                           "to instantiate msprime.Population objects for a "
-##                           "Demography object."))
-##
-##
-##def _add_individs_from_msprime_source_pops(n_individs,
-##                                           demogs,
-##                                           spp,
-##                                           mut_rates=None
-##                                          ):
-##    """
-##    simulate the numbers of individuals indicated by n_individs
-##    (either an int, if demogs has only 1 population,
-##    or else a population-name-keyed dict of ints)
-##    using the given msprime.Demography and gnx.GenomicArchitecture objects,
-##    and adding then to the given tskit.TableCollection
-##    """
-##    assert (len(spp.gen_arch.nonneut_loci) == 0 and
-##            spp.gen_arch.traits is None), ("msprime can only currently "
-##                                           "be used to seed a model with "
-##                                           "individuals from source "
-##                                           "populations if the model "
-##                                           "has no selection. "
-##                                           "This constraint may be "
-##                                           "relaxed in the future.")
-##    assert spp.gen_arch.use_tskit, ("to use msprime to seed a population with "
-##                                    "individuals from source populations, "
-##                                    "please set the 'use_tskit' parameter to "
-##                                    "True.")
-##    assert ((isinstance(n_individs, int) and len(demogs) == 1) or
-##            (isinstance(n_individs, dict) and
-##                (len(demogs) == 1 and
-##                 isinstance(demogs[0], msprime.Demography) and
-##                 demogs[0].num_populations == len(n_individs)) or
-##                (len(n_individs) == len(demogs)))):
-##    if mut_rates is not None:
-##        assert len(mut_rates) == len(demogs)
-##    # get the tree-seq object for the simulated ancestry
-##    if len(np.unique(spp.gen_arch.recombinations._rates[1:])) == 1:
-##        recomb_rate = spp.gen_arch.recombinations._rates[1]
-##    else:
-##        # NOTE: position array has to be one longer than the sequence length,
-##        #       so that rightmost position brackets a stretch of genomic
-##        #       intervals equal to the sequence_length
-##        recomb_rate= msprime.RateMap(position=np.linspace(0,
-##                                                          spp.gen_arch.L,
-##                                                          spp.gen_arch.L+1,
-##                                                         ),
-##                              rate=[*spp.gen_arch.recombinations._rates[1:]]+[0.5])
-##    if len(demogs) == 1 and isinstance(demogs[0], msprime.Demography):
-##        ts = msprime.sim_ancestry(samples=n_individs,
-##                                  demography=demogs[0],
-##                                  sequence_length=spp.gen_arch.L,
-##                                  recombination_rate=recomb_rate,
-##                                  ploidy=2,
-##                                  # NOTE: DiscreteTimeWrightFisher ('dtwf') may be
-##                                  #       closest match to the discrete operations
-##                                  #       of gnx's forward-time simulations, but
-##                                  #       probably not necessary to match that and
-##                                  #       probably simpler, faster, and most
-##                                  #       reasonably expected to just use the
-##                                  #       standard coalescent
-##                                  model='hudson',
-##                                 )
-##        tcs = [ts.dump_tables()]
-##    else:
-##        tcs = []
-##        i = 0
-##        for n, demog in zip(n_individs, demogs):
-##            ts = msprime.sim_ancestry(samples=n,
-##                                      demography=demog,
-##                                      sequence_length=spp.gen_arch.L,
-##                                      recombination_rate=recomb_rate,
-##                                      ploidy=2,
-##                                      model='hudson',
-##                                     )
-##            # add mutations according to the gen_arch
-##            # (using starting allele frequencies as the mutation rate,
-##            # so that mutations will wind up approximating them)
-##           if mut_rates is None and len(np.unique(spp.gen_arch.p)) == 1:
-##                mut_rate = spp.gen_arch.p[0]
-##                # don't bother with mutations if mut_rate == 0
-##                if mut_rate == 0:
-##                    break
-##           else:
-##               if mut_rates is not None:
-##                   mut_rate_vals = mut_rates[i]
-##                else:
-##                    mut_rate_vals = spp.gen_arch.p
-##                # NOTE: position array has to be one longer than the sequence length,
-##                #       so that rightmost position brackets a stretch of genomic
-##                #       intervals equal to the sequence_length
-##                mut_rate= msprime.RateMap(position=np.linspace(0,
-##                                                          spp.gen_arch.L,
-##                                                          spp.gen_arch.L+1,
-##                                                         ),
-##                                          rate=mut_rate_vals,
-##                                         )
-##            mts = msprime.sim_mutations(tree_sequence=ts,
-##                                        rate=mut_rate,
-##                                        # state-independent binary mutation
-##                                        # means that all initial mutations
-##                                        # will create 1s, exactly as we want
-##                                        # when we want to create
-##                                        # specific initial allele frequencies
-##                                        model=msprime.BinaryMutationModel(state_independent=True),
-##                                       )
-##            tcs.append(mts.dump_tables())
-##            i += 1
-##
-##    # TODO: need some assert statements that can be run based on comparing
-##    #       calculations using spp._tc before and after the additions!
-##
-##    # for each TableCollection
-##    # (i.e., each introduction event from a source population)
-##    for tc in tcs:
-##        # increment all node and edge IDs to be > max node and edge IDs in the
-##        # species' current TableCollection
-##
-##        # add new individuals to the TableCollection, matching parent nodes, etc
-##
-##        # add new individuals to the species, using correct TableCollection
-##        # ids, correction geolocation, etc
-##
-##        # sort and simplify spp._tc
-##
-##    return
-##
-##
-##

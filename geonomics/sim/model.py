@@ -485,6 +485,15 @@ class Model:
                                        'species "%s"...\n\n') % spp.name,
                                       flush=True)
                             spp._set_genomes_and_tables(self.burn_T, self.T)
+                            # replace gnx-simulated Individuals with
+                            # msprime-simulated Individuals, if required
+                            if ('msprime' in self.params['comm']['species'][
+                                                            spp.name]['init']):
+                                msp = self.params['comm']['species'][
+                                                spp.name]['init']['msprime']
+                                spp._init_msprime_pop(land=self.land,
+                                                      msprime_init_params=msp,
+                                                     )
 
         else:
             #verbose ouput
@@ -686,6 +695,15 @@ class Model:
                                        'species "%s"...\n\n') % spp.name,
                                       flush=True)
                             spp._set_genomes_and_tables(self.burn_T, self.T)
+                            # replace gnx-simulated Individuals with
+                            # msprime-simulated Individuals, if required
+                            if ('msprime' in self.params['comm']['species'][
+                                                            spp.name]['init']):
+                                msp = self.params['comm']['species'][
+                                                spp.name]['init']['msprime']
+                                spp._init_msprime_pop(land=self.land,
+                                                      msprime_init_params=msp,
+                                                     )
                     #and then set the reassign_genomes attribute to False, so
                     #that they won't get reassigned again during this iteration
                     self.reassign_genomes = False
@@ -2934,12 +2952,12 @@ class Model:
     #altering data#
     ###############
 
-    def remove_individs(self,
-                        spp=0,
-                        n=None,
-                        n_left=None,
-                        individs=None,
-                        ):
+    def remove_individuals(self,
+                           spp=0,
+                           n=None,
+                           n_left=None,
+                           individs=None,
+                          ):
         """
         Remove Individuals from a Species.
 
@@ -2976,17 +2994,20 @@ class Model:
         spp = self.comm[self._get_spp_num(spp)]
 
         # call that species' corresponding method
-        spp._remove_individs(individs=individs, n=n, n_left=n_left)
+        spp._remove_individuals(individs=individs,
+                                n=n,
+                                n_left=n_left,
+                               )
 
 
-    def add_individs(n,
-                     coords,
-                     land,
-                     recip_spp=0,
-                     source_spp=None,
-                     source_msprime_params=None,
-                     individs=None,
-                    ):
+    def add_individuals(n,
+                        coords,
+                        land,
+                        recip_spp=0,
+                        source_spp=None,
+                        source_msprime_params=None,
+                        individs=None,
+                       ):
         """
         Add individuals to a recipient Species object, either using a second
         Species object as the source population or feeding a dict of parameters
@@ -3077,13 +3098,13 @@ class Model:
                 source_spp = self.comm[self._get_spp_num(source_spp)]
 
         # call the Species method
-        recip_spp._add_individs(n=n,
-                                coords=coords,
-                                land=self.land,
-                                source_spp=source_spp,
-                                source_msprime_params=source_msprime_params,
-                                individs=individs,
-                               )
+        recip_spp._add_individuals(n=n,
+                                   coords=coords,
+                                   land=self.land,
+                                   source_spp=source_spp,
+                                   source_msprime_params=source_msprime_params,
+                                   individs=individs,
+                                  )
 
 
     ##############

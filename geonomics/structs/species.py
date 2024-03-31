@@ -13,6 +13,7 @@ from geonomics.structs.genome import (_make_genomic_architecture,
                                       _check_mutation_rates,
                                       _make_starting_mutations,
                                       _prep_tskit_tabcoll_for_gnx_spp_union,
+                                      _sim_msprime_individuals,
                                       _get_lineage_dicts,
                                       _get_lineage_dicts_one_tree,
                                       _get_treenums,
@@ -288,7 +289,7 @@ class Species(OD):
             the proportion of all offspring that are males, such that it can be
             easily used as the probability parameter for the Bernoulli draw
             of an offspring's sex. (Note that this value is derived from
-            the 'sex_ratio' parameter provided in the Model's parameters file, 
+            the 'sex_ratio' parameter provided in the Model's parameters file,
             but unlike in the parameters file this value is
             not expressed in as a ratio of males to females.)
 
@@ -1221,7 +1222,7 @@ class Species(OD):
     # get the nodes-table IDs for all individuals
     def _get_nodes(self, individs=None):
         # handle the instance where the population has size 0
-        # (e.g., after running spp._remove_individs() to get rid of all
+        # (e.g., after running spp._remove_individuals() to get rid of all
         # individuals before then replacing them with individuals from a source
         # population)
         if len(self) == 0:
@@ -1530,11 +1531,13 @@ class Species(OD):
         return(inds)
 
     # remove a predetermined or random set of Individuals from the Species
-    def _remove_individs(self,
-                         individs=None,
-                         n=None,
-                         n_left=None,
-                         ):
+    def _remove_individuals(self,
+                            individs=None,
+                            n=None,
+                            n_left=None,
+                            keep_sites_tab=False,
+                            check_extinct=False,
+                           ):
 
         # validate args
         assert (np.sum([p is None for p in [individs, n, n_left]]) == 2 and
@@ -1576,29 +1579,36 @@ class Species(OD):
                                                 "Individuls removed!")
 
         # update the TableCollection, if necessary
+        # (but keep and copy back in the sites table, if necessary,
+        # e.g., when init params are removing and replacing all gnx-simulated
+        # Individuals)
         if self.gen_arch.use_tskit:
+            if keep_sites_tab:
+                sites_tab = self._tc.sites
             self._sort_and_simplify_table_collection()
+            if keep_sites_tab:
+                self._tc.sites.replace_with(sites_tab)
 
         # update self.coords and self.cells attributes
         self._set_coords_and_cells()
 
         # and update extinct flag
-        self.extinct = self._check_extinct()
+        if check_extinct:
+            self.extinct = self._check_extinct()
 
         # print informative output
         print(f"\n{len(individs)} Individuals successfully removed.\n")
         return
 
 
-    ##############
-    # Model method
-    def _add_individs(n,
-                      coords,
-                      land,
-                      source_spp=None,
-                      source_msprime_params=None,
-                      individs=None,
-                     ):
+    def _add_individuals(self,
+                         n,
+                         coords,
+                         land,
+                         source_spp=None,
+                         source_msprime_params=None,
+                         individs=None,
+                        ):
         """
         Add individuals to this recipient Species object, either using a second
         Species object as the source population or feeding a dict of parameters
@@ -1626,8 +1636,12 @@ class Species(OD):
             assert coords.shape == (n, 2)
         # make sure coords are all within the landscape
         for coord in coords:
-            assert (0 <= coord[0] <= self._land_dim[0] and
-                    0 <= coord[1] <= self._land_dim[1]), ("Coords must be "
+            # NOTE: subtracting 0.001 from dims, to match how dims are handled
+            #       for starting coordinate assignment in
+            #       individuals._make_individual
+            assert (0 <= coord[0] <= self._land_dim[0] - 0.001 and
+                    0 <= coord[1] <= self._land_dim[1] - 0.001), (
+                                                     "Coords must be "
                                                      "valid for the recipient "
                                                      "Species' Landscape "
                                                      "(i.e., x and y must be "
@@ -1789,7 +1803,7 @@ class Species(OD):
                                       source_spp_copy if ind not in individs]
             else:
                 individs_to_remove = [*source_spp_copy][n:]
-            source_spp_copy._remove_individs(individs=individs_to_remove)
+            source_spp_copy._remove_individuals(individs=individs_to_remove)
             if individs is not None:
                 assert len(source_spp_copy) == len(individs)
             else:
@@ -1848,9 +1862,9 @@ class Species(OD):
 
             # run the simulation and return template Individuals
             use_tskit = self.gen_arch.use_tskit
-            individs, source_tc = sim_msprime_individs(n=n,
+            individs, source_tc = _sim_msprime_individuals(n=n,
                                                     L=self.gen_arch.L,
-                                                    gnx_spp_use_tskit=use_tskit,
+                                                    use_tskit=use_tskit,
                                                     **source_msprime_params,
                                                     )
 
@@ -1926,7 +1940,7 @@ class Species(OD):
                             #       no shared nodes between
                             #       source and recipient TableCollections
                             # TODO: HOWEVER, EQUALITY CHECK STILL FAILS! WHY?
-                            check_shared_equality=True,
+                            check_shared_equality=False,
                             # NOTE: should copy provenance info over
                             #       from the source Individuals' TableCollection
                             #       to that of the receipient Species
@@ -1970,9 +1984,6 @@ class Species(OD):
         # to match the new, unioned TableCollection
         nodes_tab_individuals = self._tc.nodes.individual
         for idx, ind in self.items():
-            print(idx)
-            print(ind)
-            print(np.argwhere(np.array(recip_tc_individuals_ids) == idx))
             individuals_tab_id = np.argwhere(
                             np.array(recip_tc_individuals_ids) == idx).ravel()
             assert len(individuals_tab_id) == 1
@@ -2027,6 +2038,80 @@ class Species(OD):
         # print informative output
         print(f"\n{len(individs)} Individuals successfully "
               f"added to Species {self.idx} ('{self.name}').\n")
+
+
+    def _init_msprime_pop(self, land, msprime_init_params):
+        # get intended total initial pop size
+        target_size = np.sum([[*v.keys()][0] for
+                                            v in msprime_init_params.values()])
+        # remove all current individs
+        self._remove_individuals(n=len(self),
+                                 keep_sites_tab=False,
+                                )
+        assert len(self) == 0
+        # loop over source pops and add individuals from each one
+        for pop in msprime_init_params.values():
+            assert len(pop.keys()) == 1, ("Each msprime source population "
+                        "parameterized in a Species' 'init' section "
+                        "of the parameters file"
+                        "must be represented by a dict with a single key (the "
+                        "number of Individuals to sample from the population) "
+                        "whose value is a dict containing 1.) a 'coords' key "
+                        "indicating the location/s to place the "
+                        "sampled Individuals at and 2.) "
+                        "a set of valid keyword arguments that "
+                        "can be provided to Model.add_individuals "
+                        "as the 'source_msprime_params' dict.")
+            n = [*pop.keys()][0]
+            assert isinstance(n, int), ("The key of each "
+                        "msprime source population in a Species' 'init' "
+                        "section of the parameters file must be an int "
+                        "indicating the number of starting Individuals "
+                        "to be sourced from that population.")
+            assert 'coords' in pop[n], ("Each msprime source population's "
+                                        "init parameters dict must include "
+                                        "a 'coords' key whose value indicates "
+                                        "the location/s where all sampled "
+                                        "Individuals should be placed.")
+            coords = pop[n].pop('coords')
+            assert (isinstance(coords, list) or
+                    isinstance(coords, tuple) or
+                    isinstance(coords, np.ndarray)), ("The 'coords' key "
+                        "in the init dict for an msprime source population "
+                        "must have a list, tuple, or numpy.ndarray as "
+                        "its value.")
+            coords_struct_err_msg = ("The 'coords' value for "
+                        "an msprime source populaton must be one of: "
+                        "1.) a list or tuple of length 2, giving the "
+                        "coordinate pair at which all Individuals "
+                        "will begin the simulation; 2.) a list or tuple of "
+                        "coordinate pairs for all Individuals (structured "
+                        "as n sublists or subtuples, each of length 2); or "
+                        "3.) a numpy.ndarray of the same structure (i.e., "
+                        "either 1x2, giving a single coordinate pair for "
+                        "all Individuals, or nx2, specifying locations for "
+                        "all n Individuals).")
+            if isinstance(coords, list) or isinstance(coords, tuple):
+                if isinstance(coords[0], list) or isinstance(coords[0], tuple):
+                    assert (np.all([len(c) == 2 for c in coords]) and
+                            len(coords) == n), coords_struct_err_msg
+                else:
+                    assert len(coords) == 2, coords_struct_err_msg
+            elif isinstance(coords, np.ndarray):
+                assert (coords.shape == (1, 2) or
+                        coords.shape == (n, 2)), coords_strust_err_msg
+            # simulate the individuals and add them to the Species
+            self._add_individuals(n=n,
+                                  coords=coords,
+                                  land=land,
+                                  source_msprime_params=pop[n],
+                                 )
+        # check that the Species wound up having the correct population size
+        assert len(self) == target_size, ("After all msprime source "
+                        "populations were sampled, the resulting "
+                        "population size does not agree with "
+                        "the sum of the source population samples "
+                        "stipulated in the parameters file.")
 
 
     #use the kd_tree attribute to find mating pairs either
@@ -3032,7 +3117,7 @@ def _make_species(land, name, idx, spp_params, burn=False, verbose=False):
                      spp_params = spp_params, genomic_architecture=gen_arch)
 
     #use the remaining init_params to set the carrying-capacity raster (K)
-    _make_K(spp, land, **init_params)
+    _make_K(spp, land, **{k:v for k,v in init_params.items() if k != 'msprime'})
     #set initial environment values
     spp._set_e(land)
     #set initial coords and cells

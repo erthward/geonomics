@@ -370,16 +370,16 @@ MSPRIME_POP_PARAMS = '''
                         %i:  {
                             #number of individs to sample from the pop
                             100: {
-                                 # params vals for gnx.sime_msprime_individs
+                                 # 1x2 coord pair or nx2 coord pairs of individs
+                                 'coords':              [0,0],
+                                 # valid k:v pairs for gnx.add_individuals
+                                 # 'source_msprime_params' argument...
                                  'recomb_rate':         0.5,
                                  'mut_rate':            0.0001,
-                                 # NOTE: demography can be a complex, custom
-                                 #       msprime.Demography object
                                  'demography':          None,
                                  'population_size':     None,
                                  'ancestry_model':      None,
                                  'random_seed':         None,
-                                 'gnx_spp_use_tskit':   True,
                                  }
                             },
 

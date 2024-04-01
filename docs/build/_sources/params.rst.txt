@@ -901,6 +901,53 @@ capacity raster. Because :py:`Layer`\s' rasters are constrained to [0,1],
 this allows the user to stipulate that cells have carrying capacities in
 excess of 1.
 
+
+**msprime**
+
+.. code-block:: python
+
+                      # params for 1+ msprime pops for sampling starting individs
+                      'msprime':         {
+                          # index of msprime source pop
+                          0: {
+                             # number of individs to sample from pop
+                             100: {
+                                  # 1x2 coord pair of nx2 coord pairs of individs
+                                  'coords':             [0, 0],
+                                  # valid kwargs dict for Model.add_individuals
+                                  # 'source_msprime_params' argument...
+                                  'recomb_rate':         0.5,
+                                  'mut_rate':            0.0001,
+                                  'demography':          None,
+                                  'population_size':     None,
+                                  'ancestry_model':      None,
+                                  'random_seed':         None,
+                                  }
+                             },
+
+{:py:`dict`, :py:`None`}
+
+default: values displayed above
+
+reset? Y
+
+This block of parameters can be used to set up one or more `msprime`-simulated
+populations from which all starting `Individuals`
+for a Geonomics `Model` are sourced (replacing the `Individuals` simulated
+during a Geonomics burn-in).
+Each `dict` keyed to a serial integer defines a separate population.
+The only key in that `dict` is the number of `Individuals` to draw
+from that population, and the value is a dict of parameters that
+includes: 1.) the starting coordinates to be assigned to the `Individuals`
+(either a single coordinate pair at which all `Individuals` should be
+placed or an nx2 `numpy.ndarray` containing a coordinate pair for each
+`Individual`; and 2.) a series of parameters that can be fed
+as kwargs into the 'source_msprime_params' parameter of the
+`Model.add_individuals` method. See `help(Model.add_individuals)` for
+details on how those kwargs are specified and used.
+
+
+
 --------------------
 
 

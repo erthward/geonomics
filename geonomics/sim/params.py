@@ -361,18 +361,19 @@ SPP_PARAMS = '''
 # block for params to initiate model with
 # individuals drawn from msprime simulations
 MSPRIME_INIT_PARAMS = '''
-                    'msprime'       : {%s
+                    # params for 1+ msprime pops for sampling starting individs
+                    'msprime':        {%s
                         },
 '''
 
 MSPRIME_POP_PARAMS = '''
                         # index of msprime source pop
                         %i:  {
-                            #number of individs to sample from the pop
+                            # number of individs to sample from pop
                             100: {
                                  # 1x2 coord pair or nx2 coord pairs of individs
-                                 'coords':              [0,0],
-                                 # valid k:v pairs for gnx.add_individuals
+                                 'coords':              [0, 0],
+                                 # valid kwargs dict for Model.add_individuals
                                  # 'source_msprime_params' argument...
                                  'recomb_rate':         0.5,
                                  'mut_rate':            0.0001,

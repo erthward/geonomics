@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parameters &mdash; geonomics 1.3.9 documentation</title>
+  <title>Parameters &mdash; geonomics 1.4.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -31,7 +32,7 @@
             <img src="_static/gnx_mini.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.3
+                1.4
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -118,7 +119,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="parameters">
+  <section id="parameters">
 <h1>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline"></a></h1>
 <p>How to Use This Section:</p>
 <p>In order to create and run a Geonomics <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>, you will need a valid
@@ -242,9 +243,9 @@ if you confront any uncertainty while creating your own parameters files.
 We’ll start with the section of parameters that
 pertains to the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> object.</p>
 <hr class="docutils" />
-<div class="section" id="landscape-parameters">
+<section id="landscape-parameters">
 <h2>Landscape parameters<a class="headerlink" href="#landscape-parameters" title="Permalink to this headline"></a></h2>
-<div class="section" id="main">
+<section id="main">
 <h3>Main<a class="headerlink" href="#main" title="Permalink to this headline"></a></h3>
 <p><strong>dim</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># x,y (a.k.a. j,i) dimensions of the Landscape</span>
@@ -316,9 +317,9 @@ because this value will be automatically updated to match the projection
 of any GIS rasters that are read in for us as <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layers</span></span></code> (assuming they
 all share the same projection; otherwise, an Error is thrown)</p>
 </div></blockquote>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="layers">
+<section id="layers">
 <h3>Layers<a class="headerlink" href="#layers" title="Permalink to this headline"></a></h3>
 <p><strong>layer_&lt;n&gt;</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">################</span>
@@ -346,11 +347,11 @@ checks for unique names and throws an Error if this condition is not met.
 where n is a series of integers starting from 0 and counting the number
 of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>s.</p>
 <hr class="docutils" />
-<div class="section" id="init">
+<section id="init">
 <h4>Init<a class="headerlink" href="#init" title="Permalink to this headline"></a></h4>
 <p>There are four different types of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layers</span></span></code> that can be created. The
 parameters for each are explained in the next four subsections.</p>
-<div class="section" id="random">
+<section id="random">
 <h5>random<a class="headerlink" href="#random" title="Permalink to this headline"></a></h5>
 <p><strong>n_pts</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#parameters for a &#39;random&#39;-type Layer</span>
@@ -381,9 +382,9 @@ is chosen (<code class="code py python docutils literal notranslate"><span class
 on as an argument to <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">scipy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">interpolate</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">griddata</span></span></code>. Note that the
 <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">'nearest'</span></span></code> method will generate a random categorical array, such as
 might be used for modeling habitat types.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="defined">
+<section id="defined">
 <h5>defined<a class="headerlink" href="#defined" title="Permalink to this headline"></a></h5>
 <p><strong>rast</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#parameters for a &#39;defined&#39;-type Layer</span>
@@ -441,9 +442,9 @@ on as an argument to <code class="code py python docutils literal notranslate"><
 <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">'nearest'</span></span></code> method will generate a random categorical array, such as
 might be used for modeling habitat types. Can be left as <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code> if
 the <strong>rast</strong> parameter is given a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">numpy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code>.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="file">
+<section id="file">
 <h5>file<a class="headerlink" href="#file" title="Permalink to this headline"></a></h5>
 <p><strong>filepath</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#parameters for a &#39;file&#39;-type Layer</span>
@@ -536,9 +537,9 @@ the same coordinate precision value will be used for all input rasters.)</p>
 of the units in which a raster file’s variable is expressed.
 If provided, it will be used to label the colorbar on plots
 of the raster’s <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="nlmpy">
+<section id="nlmpy">
 <h5>nlmpy<a class="headerlink" href="#nlmpy" title="Permalink to this headline"></a></h5>
 <p><strong>function</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#parameters for an &#39;nlmpy&#39;-type Layer</span>
@@ -617,10 +618,10 @@ function to create this <code class="code py python docutils literal notranslate
 must be changed to the parameters that that function needs,
 and <em>only</em> those parameters (because they will be unpacked into that function,
 i.e. passed on to it, at the time it is called).</p>
-</div>
-</div>
+</section>
+</section>
 <hr class="docutils" />
-<div class="section" id="change">
+<section id="change">
 <h4>Change<a class="headerlink" href="#change" title="Permalink to this headline"></a></h4>
 <p><strong>change_rast</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#land-change event for this Layer</span>
@@ -706,13 +707,13 @@ These objects take up memory, which may be limiting for larger
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>s and/or <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> objects. This often will not be a
 major issue, but depending on your use case it could pose a problem, so
 is worth considering.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 <hr class="docutils" />
-<div class="section" id="community-and-species-parameters">
+<section id="community-and-species-parameters">
 <h2>Community and Species parameters<a class="headerlink" href="#community-and-species-parameters" title="Permalink to this headline"></a></h2>
-<div class="section" id="species">
+<section id="species">
 <h3>Species<a class="headerlink" href="#species" title="Permalink to this headline"></a></h3>
 <p><strong>spp_&lt;n&gt;</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#spp name (SPECIES NAMES MUST BE UNIQUE!)</span>
@@ -737,7 +738,7 @@ checks for unique names and throws an Error if this condition is not met.
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">spp_</span></span><span class="operator"><span class="pre">&lt;</span></span><span class="name"><span class="pre">n</span></span><span class="operator"><span class="pre">&gt;</span></span></code>, where n is a series of
 integers starting from 0 and counting the number of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>.</p>
 <hr class="docutils" />
-<div class="section" id="id1">
+<section id="id1">
 <h4>Init<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h4>
 <p><strong>N</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;init&#39;</span><span class="p">:</span> <span class="p">{</span>
@@ -788,9 +789,47 @@ by <strong>K_layer</strong> will be multiplied to create a <code class="code py 
 capacity raster. Because <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>s’ rasters are constrained to [0,1],
 this allows the user to stipulate that cells have carrying capacities in
 excess of 1.</p>
+<p><strong>msprime</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># params for 1+ msprime pops for sampling starting individs</span>
+<span class="s1">&#39;msprime&#39;</span><span class="p">:</span>         <span class="p">{</span>
+    <span class="c1"># index of msprime source pop</span>
+    <span class="mi">0</span><span class="p">:</span> <span class="p">{</span>
+       <span class="c1"># number of individs to sample from pop</span>
+       <span class="mi">100</span><span class="p">:</span> <span class="p">{</span>
+            <span class="c1"># 1x2 coord pair of nx2 coord pairs of individs</span>
+            <span class="s1">&#39;coords&#39;</span><span class="p">:</span>             <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="c1"># valid kwargs dict for Model.add_individuals</span>
+            <span class="c1"># &#39;source_msprime_params&#39; argument...</span>
+            <span class="s1">&#39;recomb_rate&#39;</span><span class="p">:</span>         <span class="mf">0.5</span><span class="p">,</span>
+            <span class="s1">&#39;mut_rate&#39;</span><span class="p">:</span>            <span class="mf">0.0001</span><span class="p">,</span>
+            <span class="s1">&#39;demography&#39;</span><span class="p">:</span>          <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;population_size&#39;</span><span class="p">:</span>     <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;ancestry_model&#39;</span><span class="p">:</span>      <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;random_seed&#39;</span><span class="p">:</span>         <span class="kc">None</span><span class="p">,</span>
+            <span class="p">}</span>
+       <span class="p">},</span>
+</pre></div>
 </div>
+<p>{<code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">dict</span></span></code>, <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>}</p>
+<p>default: values displayed above</p>
+<p>reset? Y</p>
+<p>This block of parameters can be used to set up one or more <cite>msprime</cite>-simulated
+populations from which all starting <cite>Individuals</cite>
+for a Geonomics <cite>Model</cite> are sourced (replacing the <cite>Individuals</cite> simulated
+during a Geonomics burn-in).
+Each <cite>dict</cite> keyed to a serial integer defines a separate population.
+The only key in that <cite>dict</cite> is the number of <cite>Individuals</cite> to draw
+from that population, and the value is a dict of parameters that
+includes: 1.) the starting coordinates to be assigned to the <cite>Individuals</cite>
+(either a single coordinate pair at which all <cite>Individuals</cite> should be
+placed or an nx2 <cite>numpy.ndarray</cite> containing a coordinate pair for each
+<cite>Individual</cite>; and 2.) a series of parameters that can be fed
+as kwargs into the ‘source_msprime_params’ parameter of the
+<cite>Model.add_individuals</cite> method. See <cite>help(Model.add_individuals)</cite> for
+details on how those kwargs are specified and used.</p>
+</section>
 <hr class="docutils" />
-<div class="section" id="mating">
+<section id="mating">
 <h4>Mating<a class="headerlink" href="#mating" title="Permalink to this headline"></a></h4>
 <p><strong>repro_age</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;mating&#39;</span>    <span class="p">:</span> <span class="p">{</span>
@@ -943,9 +982,9 @@ of being chosen as a mate.
 (Note that this parameter will only
 be used if <strong>choose_nearest_mate</strong> is False and <strong>mating_radius</strong>
 is not <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>.)</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="mortality">
+<section id="mortality">
 <h4>Mortality<a class="headerlink" href="#mortality" title="Permalink to this headline"></a></h4>
 <p><strong>max_age</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#maximum age</span>
@@ -1009,9 +1048,9 @@ Defaults to <code class="code py python docutils literal notranslate"><span clas
 nearest to 1/10th of the larger <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> dimension;
 for many purposes this will work, but in some cases
 the user may wish to control this.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="movement">
+<section id="movement">
 <h4>Movement<a class="headerlink" href="#movement" title="Permalink to this headline"></a></h4>
 <p><strong>move</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether or not the species is mobile</span>
@@ -1168,7 +1207,7 @@ of the <strong>dispersal_distance_distr</strong> parameter.</p>
 (‘lognormal’; default), a Lévy distribution (‘levy’),
 or a Wald distribution (‘wald’).</p>
 <hr class="docutils" />
-<div class="section" id="movement-and-dispersal-conductancesurfaces">
+<section id="movement-and-dispersal-conductancesurfaces">
 <h5>Movement and Dispersal _ConductanceSurfaces<a class="headerlink" href="#movement-and-dispersal-conductancesurfaces" title="Permalink to this headline"></a></h5>
 <p><strong>layer</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;move_surf&#39;</span>     <span class="p">:</span> <span class="p">{</span>
@@ -1250,10 +1289,10 @@ would need to be generated when the <code class="code py python docutils literal
 The value to use for this parameter will depend on the size of the
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>, the exact scenario being simulated, and the memory of the
 machine on which the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> is to be run.</p>
-</div>
-</div>
+</section>
+</section>
 <hr class="docutils" />
-<div class="section" id="genomicarchitecture">
+<section id="genomicarchitecture">
 <h4>_GenomicArchitecture<a class="headerlink" href="#genomicarchitecture" title="Permalink to this headline"></a></h4>
 <p><strong>gen_arch_file</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;gen_arch&#39;</span><span class="p">:</span> <span class="p">{</span>
@@ -1584,7 +1623,7 @@ tskit package authors (see
 with especially large population and/or genome sizes the user may
 wish to experiment with reducing this interval so as to improve performance.</p>
 <hr class="docutils" />
-<div class="section" id="traits">
+<section id="traits">
 <h5>Traits<a class="headerlink" href="#traits" title="Permalink to this headline"></a></h5>
 <p><strong>trait_&lt;n&gt;</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#trait name (TRAIT NAMES MUST BE UNIQUE!)</span>
@@ -1761,12 +1800,12 @@ universal (i.e. whether a phenotype of 1 should be optimal everywhere
 on the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>). When set to True, selection of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code>
 will be directional on the entire <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>, regardless
 of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s’ spatial contexts.</p>
-</div>
-</div>
+</section>
+</section>
 <hr class="docutils" />
-<div class="section" id="species-change">
+<section id="species-change">
 <h4>Species change<a class="headerlink" href="#species-change" title="Permalink to this headline"></a></h4>
-<div class="section" id="demographic-change">
+<section id="demographic-change">
 <h5>Demographic change<a class="headerlink" href="#demographic-change" title="Permalink to this headline"></a></h5>
 <p><strong>kind</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#kind of event {&#39;monotonic&#39;, &#39;stochastic&#39;,</span>
@@ -1890,9 +1929,9 @@ occur during a <code class="code py python docutils literal notranslate"><span c
 <p>reset? P</p>
 <p>This defines the series of particular fluctutations that should occur
 during a <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">'custom'</span></span></code> change event.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="life-history-change">
+<section id="life-history-change">
 <h5>Life-history change<a class="headerlink" href="#life-history-change" title="Permalink to this headline"></a></h5>
 <p><strong>&lt;life_hist_param&gt;</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#life-history parameter to change</span>
@@ -1927,14 +1966,14 @@ should change (to the values indicated by <strong>vals</strong>).</p>
 <p>reset? P</p>
 <p>This indicates the values to which the life-history parameter being changed
 should change (at the timesteps indicated by <strong>timesteps</strong>).</p>
-</div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
+</section>
 <hr class="docutils" />
-<div class="section" id="other-parameters">
+<section id="other-parameters">
 <h2>Other parameters<a class="headerlink" href="#other-parameters" title="Permalink to this headline"></a></h2>
-<div class="section" id="id2">
+<section id="id2">
 <h3>Main<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
 <p><strong>T</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#total Model runtime (in timesteps)</span>
@@ -1972,9 +2011,9 @@ size of each <code class="code py python docutils literal notranslate"><span cla
 generators (by calling <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">np</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">random</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">seed</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">random</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">seed</span></span></code>)
 before building and running a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>. If value is an integer, the seeds
 will be set to that value. If value is <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>, seeds will not be set.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="iterations">
+<section id="iterations">
 <h3>Iterations<a class="headerlink" href="#iterations" title="Permalink to this headline"></a></h3>
 <p><strong>num_iterations</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#num iterations</span>
@@ -2051,9 +2090,9 @@ is complete, and then will only have the main portion of its <code class="code p
 separately during each iteration. (Note that if <strong>rand_community</strong> is set to True then
 the value of this parameter will not be used.)</p>
 <hr class="docutils" />
-<div class="section" id="data">
+<section id="data">
 <h4>Data<a class="headerlink" href="#data" title="Permalink to this headline"></a></h4>
-<div class="section" id="sampling">
+<section id="sampling">
 <h5>Sampling<a class="headerlink" href="#sampling" title="Permalink to this headline"></a></h5>
 <p><strong>scheme</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#sampling scheme {&#39;all&#39;, &#39;random&#39;, &#39;point&#39;, &#39;transect&#39;}</span>
@@ -2179,9 +2218,9 @@ or array file (according to the format indicated by
 0 or 1 allele) should be included in any VCF files that are written. Thus,
 this parameter is only relevant if <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">'vcf'</span></span></code> is one of the genetic data
 formats indicated by <strong>gen_format</strong>.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="format">
+<section id="format">
 <h5>Format<a class="headerlink" href="#format" title="Permalink to this headline"></a></h5>
 <p><strong>gen_format</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#format for genetic data {&#39;vcf&#39;, &#39;fasta&#39;}</span>
@@ -2233,10 +2272,10 @@ each of the traits (whose names are used as column names).
 Currently valid values include <code class="code py python docutils literal notranslate"><span class="literal string single"><span class="pre">'csv'</span></span></code>,
 which saves a simple CSV file, and <code class="code py python docutils literal notranslate"><span class="keyword constant"><span class="pre">None</span></span></code>,
 which tells Geonomics not to save these files as output.</p>
-</div>
-</div>
+</section>
+</section>
 <hr class="docutils" />
-<div class="section" id="stats">
+<section id="stats">
 <h4>Stats<a class="headerlink" href="#stats" title="Permalink to this headline"></a></h4>
 <p>The stats parameters section has subsection for each statistc that Geonomics
 can calculate. (Currently valid statistics include:
@@ -2286,10 +2325,10 @@ when they are collected (containing one value per <code class="code py python do
 such as heterozygosity, this indicates
 whether those values should instead be meaned and saved as a
 single value for each timestep.</p>
-</div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
+</section>
 
 
            </div>

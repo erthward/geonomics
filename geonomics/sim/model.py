@@ -3000,9 +3000,9 @@ class Model:
                                )
 
 
-    def add_individuals(n,
+    def add_individuals(self,
+                        n,
                         coords,
-                        land,
                         recip_spp=0,
                         source_spp=None,
                         source_msprime_params=None,
@@ -3064,7 +3064,7 @@ class Model:
                        "extensively tested. User beware. Please immediately report "
                        "any suspected bugs at "
                        "https://github.com/erthward/geonomics/issues "
-                       "or drew.terasaki.hart@gmail.com"))
+                       "or by email to drew.terasaki.hart@gmail.com"))
 
         # get the recipient species
         if isinstance(recip_spp, int) or isinstance(recip_spp, str):

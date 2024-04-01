@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>geonomics.structs package &mdash; geonomics 1.3.9 documentation</title>
+  <title>geonomics.structs package &mdash; geonomics 1.4.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -30,7 +31,7 @@
             <img src="_static/gnx_mini.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.3
+                1.4
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -69,8 +70,8 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="geonomics.html#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="geonomics.html#geonomics-main-module">geonomics.main module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="geonomics.html#module-contents">Module contents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#module-geonomics.main">geonomics.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="geonomics.html#module-geonomics">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -103,15 +104,61 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="geonomics-structs-package">
+  <section id="geonomics-structs-package">
 <h1>geonomics.structs package<a class="headerlink" href="#geonomics-structs-package" title="Permalink to this headline"></a></h1>
-<div class="section" id="submodules">
+<section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline"></a></h2>
-</div>
-<div class="section" id="geonomics-structs-community-module">
-<h2>geonomics.structs.community module<a class="headerlink" href="#geonomics-structs-community-module" title="Permalink to this headline"></a></h2>
-</div>
-<div class="section" id="module-geonomics.structs.genome">
+</section>
+<section id="module-geonomics.structs.community">
+<span id="geonomics-structs-community-module"></span><h2>geonomics.structs.community module<a class="headerlink" href="#module-geonomics.structs.community" title="Permalink to this headline"></a></h2>
+<p>Defines the Community class, with its associated methods and supporting
+functions</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="geonomics.structs.community.Community">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">geonomics.structs.community.</span></span><span class="sig-name descname"><span class="pre">Community</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">land</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spps</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.community.Community" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+<p>Representation of a community (i.e. a collection of Species objects)</p>
+<p>Structured as a serial integer-keyed dict of Species objects.</p>
+<p>Because the Community class inherits from <cite>dict</cite>, Species can be indexed
+out using the index-number keys (e.g. <cite>mod.comm[&lt;idx&gt;]</cite>).</p>
+<p>The Community is stored as the ‘mod.comm’ attribute of its corresponding
+Model object.</p>
+<dl class="simple">
+<dt>NOTE: There is currently no special functionality implemented for</dt><dd><p>multi-species models (e.g. species interactions), such that
+this serves as nothing more than a way to synchronously simulate
+two species within the same model.
+However, this class is intended as a scaffold
+for use in possible future expansion of Geonomics to incorporate
+multi-species functionality.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.community.Community.burned">
+<span class="sig-name descname"><span class="pre">burned</span></span><a class="headerlink" href="#geonomics.structs.community.Community.burned" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not all Species within the Community
+have been burned in.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.community.Community.n_spps">
+<span class="sig-name descname"><span class="pre">n_spps</span></span><a class="headerlink" href="#geonomics.structs.community.Community.n_spps" title="Permalink to this definition"></a></dt>
+<dd><p>The number of Species in the Community</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.community.Community.t">
+<span class="sig-name descname"><span class="pre">t</span></span><a class="headerlink" href="#geonomics.structs.community.Community.t" title="Permalink to this definition"></a></dt>
+<dd><p>The index of the last completed time step run for this Community.
+This attribute holds the value -1 until all Species in the Community
+have been burned in, at which point it begins incrementing,
+Pythonically, from 0 (such that a Community with t == 999
+has been run for 1000 time steps).</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-geonomics.structs.genome">
 <span id="geonomics-structs-genome-module"></span><h2>geonomics.structs.genome module<a class="headerlink" href="#module-geonomics.structs.genome" title="Permalink to this headline"></a></h2>
 <p>Classes, associated methods, and supporting functions for all genomic
 components</p>
@@ -199,7 +246,7 @@ and 1 indicates a locus for which the ‘1’ allele is dominant)</p>
 <dt class="sig sig-object py" id="geonomics.structs.genome.GenomicArchitecture.mu_delet">
 <span class="sig-name descname"><span class="pre">mu_delet</span></span><a class="headerlink" href="#geonomics.structs.genome.GenomicArchitecture.mu_delet" title="Permalink to this definition"></a></dt>
 <dd><p>Genome-wide deleterious mutation rate (expressed in mutations
-per locus per timestep). Deleterious mutations do not influence
+per locus per time step). Deleterious mutations do not influence
 trait phenotypes, but instead are univerally
 deleterious (to an extent determined by their effect sizes).</p>
 </dd></dl>
@@ -208,7 +255,7 @@ deleterious (to an extent determined by their effect sizes).</p>
 <dt class="sig sig-object py" id="geonomics.structs.genome.GenomicArchitecture.mu_neut">
 <span class="sig-name descname"><span class="pre">mu_neut</span></span><a class="headerlink" href="#geonomics.structs.genome.GenomicArchitecture.mu_neut" title="Permalink to this definition"></a></dt>
 <dd><p>Genome-wide neutral mutation rate (expressed in mutations
-per locus per timestep).</p>
+per locus per time step).</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -388,7 +435,7 @@ when the model is parameterized.</p>
 <dt class="sig sig-object py" id="geonomics.structs.genome.Trait.mu">
 <span class="sig-name descname"><span class="pre">mu</span></span><a class="headerlink" href="#geonomics.structs.genome.Trait.mu" title="Permalink to this definition"></a></dt>
 <dd><p>Mutation rate for this trait (expressed in mutations per locus per
-timestep)</p>
+time step)</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -429,8 +476,8 @@ advantageous globally on the Landscape.</p>
 <span class="sig-prename descclassname"><span class="pre">geonomics.structs.genome.</span></span><span class="sig-name descname"><span class="pre">read_pickled_genomic_architecture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.genome.read_pickled_genomic_architecture" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-</div>
-<div class="section" id="module-geonomics.structs.individual">
+</section>
+<section id="module-geonomics.structs.individual">
 <span id="geonomics-structs-individual-module"></span><h2>geonomics.structs.individual module<a class="headerlink" href="#module-geonomics.structs.individual" title="Permalink to this headline"></a></h2>
 <p>Defines the Individual class, with its associated methods and supporting
 functions</p>
@@ -536,8 +583,8 @@ Trait number i (i.e. Species.traits[i]).</p>
 
 </dd></dl>
 
-</div>
-<div class="section" id="module-geonomics.structs.landscape">
+</section>
+<section id="module-geonomics.structs.landscape">
 <span id="geonomics-structs-landscape-module"></span><h2>geonomics.structs.landscape module<a class="headerlink" href="#module-geonomics.structs.landscape" title="Permalink to this headline"></a></h2>
 <p>Defines the Layer and Landscape classes, with their associated methods and
 supporting functions</p>
@@ -689,14 +736,376 @@ to which the Layer belongs.)</p>
 <span class="sig-prename descclassname"><span class="pre">geonomics.structs.landscape.</span></span><span class="sig-name descname"><span class="pre">read_pickled_land</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.landscape.read_pickled_land" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
-</div>
-<div class="section" id="geonomics-structs-species-module">
-<h2>geonomics.structs.species module<a class="headerlink" href="#geonomics-structs-species-module" title="Permalink to this headline"></a></h2>
-</div>
-<div class="section" id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline"></a></h2>
-</div>
-</div>
+</section>
+<section id="module-geonomics.structs.species">
+<span id="geonomics-structs-species-module"></span><h2>geonomics.structs.species module<a class="headerlink" href="#module-geonomics.structs.species" title="Permalink to this headline"></a></h2>
+<p>Defines the Species class, with its associated methods and supporting functions</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">geonomics.structs.species.</span></span><span class="sig-name descname"><span class="pre">Species</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">land</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spp_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genomic_architecture</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.species.Species" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">collections.OrderedDict</span></code></p>
+<p>Representation of the total simulated population of a species.</p>
+<p>Organized as a collections.OrderedDict of serial integer-keyed Individuals.
+Those serial indices continually increment through model time as new
+Individuals (i.e. offspring) as produced, such that no two Individuals
+within the full history of a simulation will ever have the same index
+number.</p>
+<p>Because the Species class inherits from <cite>collections.OrderedDict</cite>,
+Individuals can be indexed out using their index-number keys
+(e.g. Species[&lt;idx&gt;]).</p>
+<p>All Species within a simulation are stored as serial integer-keyed values
+within the Community dict (which in turn is stored at the Model’s
+‘mod.comm’ attribute).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.NOTE">
+<span class="sig-name descname"><span class="pre">NOTE</span></span><a class="headerlink" href="#geonomics.structs.species.Species.NOTE" title="Permalink to this definition"></a></dt>
+<dd><p>correspond to many of the following attributes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>For more detail, see the documentation for the parameters that</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.b">
+<span class="sig-name descname"><span class="pre">b</span></span><a class="headerlink" href="#geonomics.structs.species.Species.b" title="Permalink to this definition"></a></dt>
+<dd><p>The Species’ intrinsic birth rate, expressed as the probability (in
+a Bernoulli random draw) that an otherwise eligible potential
+mating pair will successfully reproduce</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.burned">
+<span class="sig-name descname"><span class="pre">burned</span></span><a class="headerlink" href="#geonomics.structs.species.Species.burned" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not the Species has been
+burned in.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.coords">
+<span class="sig-name descname"><span class="pre">coords</span></span><a class="headerlink" href="#geonomics.structs.species.Species.coords" title="Permalink to this definition"></a></dt>
+<dd><p>A 2d numpy array, length(Species) x 2, composed of columns
+containing the current x and y locations of all Individuals.
+Row order is equivalent to the order of individuals in the Species’
+OrderedDict.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.cells">
+<span class="sig-name descname"><span class="pre">cells</span></span><a class="headerlink" href="#geonomics.structs.species.Species.cells" title="Permalink to this definition"></a></dt>
+<dd><p>A 2d numpy array, length(Species) x 2, composed of columns
+containing the current j and i cell numbers of all Individuals.
+Row order is equivalent to the order of individuals in the Species’
+OrderedDict. (Note the order of the columns! These are not in the
+i,j order that would be necessary in order use them to subject a
+Layer.rast object!)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.choose_nearest_mate">
+<span class="sig-name descname"><span class="pre">choose_nearest_mate</span></span><a class="headerlink" href="#geonomics.structs.species.Species.choose_nearest_mate" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not Individuals should
+always choose their nearest neighbors as their potential mates</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.d_max">
+<span class="sig-name descname"><span class="pre">d_max</span></span><a class="headerlink" href="#geonomics.structs.species.Species.d_max" title="Permalink to this definition"></a></dt>
+<dd><p>The maximum probability of death that can be assigned to any
+Individual</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.d_min">
+<span class="sig-name descname"><span class="pre">d_min</span></span><a class="headerlink" href="#geonomics.structs.species.Species.d_min" title="Permalink to this definition"></a></dt>
+<dd><p>The minimum probability of death that can be assigned to any
+Individual</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.density_grid_window_width">
+<span class="sig-name descname"><span class="pre">density_grid_window_width</span></span><a class="headerlink" href="#geonomics.structs.species.Species.density_grid_window_width" title="Permalink to this definition"></a></dt>
+<dd><p>The width of the sliding window that is used by the Species’
+_DensityGridStack object when estimating the Species’
+population-density array.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">direction_distr_[mu/kappa]</span></span></dt>
+<dd><p>The $mu$ and $kappa$ parameters of the von Mises distribution
+from which the direction components of Individuals’ movement
+vectors will be drawn. (These parameters are only utilized if the
+Species is parameterized without a _MovementSurface.)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.dispersal_distance_distr">
+<span class="sig-name descname"><span class="pre">dispersal_distance_distr</span></span><a class="headerlink" href="#geonomics.structs.species.Species.dispersal_distance_distr" title="Permalink to this definition"></a></dt>
+<dd><p>A string indicating which distribution to use as
+the Species’ dispersal-distance distribution (‘lognormal’,
+‘wald’, or ‘levy’)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">dispersal_distance_distr_param[1/2]</span></span></dt>
+<dd><p>The values of the first and second parameters of the Species’
+dispersal-distance distribution (named abstractly like this
+because they could parameterize a Lognormal, Wald,
+or Levy distribution, depending on the value of
+Species.dispersal_distance_distr)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.extinct">
+<span class="sig-name descname"><span class="pre">extinct</span></span><a class="headerlink" href="#geonomics.structs.species.Species.extinct" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not the Species has gone extinct.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.idx">
+<span class="sig-name descname"><span class="pre">idx</span></span><a class="headerlink" href="#geonomics.structs.species.Species.idx" title="Permalink to this definition"></a></dt>
+<dd><p>Index number of the Species (i.e. its key within the Community dict)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.inverse_dist_mating">
+<span class="sig-name descname"><span class="pre">inverse_dist_mating</span></span><a class="headerlink" href="#geonomics.structs.species.Species.inverse_dist_mating" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not the probabilities that an
+Individual chooses any of its neighbors (i.e. other Individuals
+within <cite>Species.mating_radius</cite> distance of them) as their
+potential mates should vary inversely with the distances between
+the Individual and each of those neighbors. If False, any neighbor
+could be chosen with equal probability.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.gen_arch">
+<span class="sig-name descname"><span class="pre">gen_arch</span></span><a class="headerlink" href="#geonomics.structs.species.Species.gen_arch" title="Permalink to this definition"></a></dt>
+<dd><p>The Species’ genomic architecture (as a GenomicArchitecture object)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.K">
+<span class="sig-name descname"><span class="pre">K</span></span><a class="headerlink" href="#geonomics.structs.species.Species.K" title="Permalink to this definition"></a></dt>
+<dd><p>The Species’ current carrying-capacity raster. This is a numpy array
+of shape <cite>Landscape.dim</cite>, with each value
+indicating the carrying capacity of that cell in the Landscape.
+It is generated as the product of the Species’ K_factor
+and the raster array of the Layer provided as the basis
+of the Species’ carrying capacity
+(i.e. <cite>spp.K_factor * mod.land[spp.K_layer].rast</cite>).
+This array will change during a simulation if the corresponding
+Layer is parameterized to undergo environmental change.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.K_factor">
+<span class="sig-name descname"><span class="pre">K_factor</span></span><a class="headerlink" href="#geonomics.structs.species.Species.K_factor" title="Permalink to this definition"></a></dt>
+<dd><p>The factor by which to multiply the Species’ chosen
+carrying capacity Layer (mod.land[spp.K_layer]) in order to
+generate the Species’ carrying-capacity raster (spp.K).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.K_layer">
+<span class="sig-name descname"><span class="pre">K_layer</span></span><a class="headerlink" href="#geonomics.structs.species.Species.K_layer" title="Permalink to this definition"></a></dt>
+<dd><p>The index number of the Layer whose raster will be multiplied by
+spp.K_factor in order to generate the Species’ carrying-capacity
+raster (spp.K).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.mating_radius">
+<span class="sig-name descname"><span class="pre">mating_radius</span></span><a class="headerlink" href="#geonomics.structs.species.Species.mating_radius" title="Permalink to this definition"></a></dt>
+<dd><p>The mating radius, expressed in Landscape cell widths, from within
+which an Individual can choose a potential mate. This will only be
+used if <cite>Species.choose_nearest_mate</cite> is False.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.max_age">
+<span class="sig-name descname"><span class="pre">max_age</span></span><a class="headerlink" href="#geonomics.structs.species.Species.max_age" title="Permalink to this definition"></a></dt>
+<dd><p>The maximum age, in time steps, that any Individual of the Species
+may reach (after which point they will be culled from the
+population by imposed mortality)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.max_ind_idx">
+<span class="sig-name descname"><span class="pre">max_ind_idx</span></span><a class="headerlink" href="#geonomics.structs.species.Species.max_ind_idx" title="Permalink to this definition"></a></dt>
+<dd><p>The maximum Individual index number that has currently been used</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.move">
+<span class="sig-name descname"><span class="pre">move</span></span><a class="headerlink" href="#geonomics.structs.species.Species.move" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not Individuals of the Species
+can move after their initial dispersal as offspring.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.movement_distance_distr">
+<span class="sig-name descname"><span class="pre">movement_distance_distr</span></span><a class="headerlink" href="#geonomics.structs.species.Species.movement_distance_distr" title="Permalink to this definition"></a></dt>
+<dd><p>A string indicating which distribution to use as
+the Species’ movement-distance distribution (‘lognormal’,
+‘wald’, or ‘levy’)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">movement_distance_distr_param[1/2]</span></span></dt>
+<dd><p>The values of the first and second parameters of the Species’
+movement-distance distribution (named abstractly like this
+because they could parameterize a Lognormal, Wald,
+or Levy distribution, depending on the value of
+Species.movement_distance_distr)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.mutate">
+<span class="sig-name descname"><span class="pre">mutate</span></span><a class="headerlink" href="#geonomics.structs.species.Species.mutate" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not the Species’ simulation
+involves mutation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.mut_log">
+<span class="sig-name descname"><span class="pre">mut_log</span></span><a class="headerlink" href="#geonomics.structs.species.Species.mut_log" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not a mutation log should be
+written for the Species.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.N">
+<span class="sig-name descname"><span class="pre">N</span></span><a class="headerlink" href="#geonomics.structs.species.Species.N" title="Permalink to this definition"></a></dt>
+<dd><p>The Species’ current population-density raster.
+This is a numpy array of shape <cite>Landscape.dim</cite>, with each value
+indicating the population density of that cell in the Landscape,
+as estimated by the Species’ _DensityGridStack instance.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.Nt">
+<span class="sig-name descname"><span class="pre">Nt</span></span><a class="headerlink" href="#geonomics.structs.species.Species.Nt" title="Permalink to this definition"></a></dt>
+<dd><p>A chronologically ordered list, starting from the first time step of
+the burn-in, containing the Species’ total population size at each
+time step.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.n_births">
+<span class="sig-name descname"><span class="pre">n_births</span></span><a class="headerlink" href="#geonomics.structs.species.Species.n_births" title="Permalink to this definition"></a></dt>
+<dd><p>A chronologically ordered list, starting from the first time step of
+the burn-in, containing the Species’ number of births at each
+time step.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.n_births_distr_lambda">
+<span class="sig-name descname"><span class="pre">n_births_distr_lambda</span></span><a class="headerlink" href="#geonomics.structs.species.Species.n_births_distr_lambda" title="Permalink to this definition"></a></dt>
+<dd><p>If <cite>Species.n_births_fixed</cite> is False, then this value serves as the
+$lambda$ parameter of the Poisson distribution from which is drawn
+the number of offspring a mating pair will produce.
+If <cite>Species.n_births_fixed</cite> is True, then this is the fixed number
+of offspring that each successful mating pair will produce.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.n_births_fixed">
+<span class="sig-name descname"><span class="pre">n_births_fixed</span></span><a class="headerlink" href="#geonomics.structs.species.Species.n_births_fixed" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not the number of births should
+be fixed at <cite>Species.n_births_distr_lambda</cite></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.n_deaths">
+<span class="sig-name descname"><span class="pre">n_deaths</span></span><a class="headerlink" href="#geonomics.structs.species.Species.n_deaths" title="Permalink to this definition"></a></dt>
+<dd><p>A chronologically ordered list, starting from the first time step of
+the burn-in, containing the Species’ number of deaths at each
+time step.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#geonomics.structs.species.Species.name" title="Permalink to this definition"></a></dt>
+<dd><p>The string name of the Species</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.R">
+<span class="sig-name descname"><span class="pre">R</span></span><a class="headerlink" href="#geonomics.structs.species.Species.R" title="Permalink to this definition"></a></dt>
+<dd><p>The intrinsic growth rate of the Species, to be used as ‘R’ in the
+stochastic, spatialized logistic growth model that controls
+population dynamics</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.repro_age">
+<span class="sig-name descname"><span class="pre">repro_age</span></span><a class="headerlink" href="#geonomics.structs.species.Species.repro_age" title="Permalink to this definition"></a></dt>
+<dd><p>The age, in time steps, of first reproduction</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.selection">
+<span class="sig-name descname"><span class="pre">selection</span></span><a class="headerlink" href="#geonomics.structs.species.Species.selection" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not the Species’ simulation
+involves selection.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.sex">
+<span class="sig-name descname"><span class="pre">sex</span></span><a class="headerlink" href="#geonomics.structs.species.Species.sex" title="Permalink to this definition"></a></dt>
+<dd><p>A bool flag indicating whether or not this Species is sexed
+(i.e. whether or not the eligibility of potential mating pairs
+should be basd on whether or not the Individuals in the potential
+pair are of opposite sexes)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.sex_ratio">
+<span class="sig-name descname"><span class="pre">sex_ratio</span></span><a class="headerlink" href="#geonomics.structs.species.Species.sex_ratio" title="Permalink to this definition"></a></dt>
+<dd><p>The sex ratio of the Species. This value is expressed as
+the proportion of all offspring that are males, such that it can be
+easily used as the probability parameter for the Bernoulli draw
+of an offspring’s sex. (Note that this value is derived from
+the ‘sex_ratio’ parameter provided in the Model’s parameters file,
+but unlike in the parameters file this value is
+not expressed in as a ratio of males to females.)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.start_N">
+<span class="sig-name descname"><span class="pre">start_N</span></span><a class="headerlink" href="#geonomics.structs.species.Species.start_N" title="Permalink to this definition"></a></dt>
+<dd><p>The number of Individuals to be generated for the starting
+population of the Species (i.e. the population size at the
+beginning of the burn-in)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="geonomics.structs.species.Species.t">
+<span class="sig-name descname"><span class="pre">t</span></span><a class="headerlink" href="#geonomics.structs.species.Species.t" title="Permalink to this definition"></a></dt>
+<dd><p>The index of the last completed time step run for this Species.
+This attribute holds the value -1 until the Species has been burned
+in, at which point it begins incrementing, Pythonically, from 0
+(such that a Species with t == 999 has been run for 1000 time
+steps).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="geonomics.structs.species.read_pickled_spp">
+<span class="sig-prename descclassname"><span class="pre">geonomics.structs.species.</span></span><span class="sig-name descname"><span class="pre">read_pickled_spp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.structs.species.read_pickled_spp" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-geonomics.structs">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-geonomics.structs" title="Permalink to this headline"></a></h2>
+</section>
+</section>
 
 
            </div>

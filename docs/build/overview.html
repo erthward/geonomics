@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Overview &mdash; geonomics 1.3.9 documentation</title>
+  <title>Overview &mdash; geonomics 1.4.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -31,7 +32,7 @@
             <img src="_static/gnx_mini.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                1.3
+                1.4
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -118,19 +119,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="overview">
+  <section id="overview">
 <h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline"></a></h1>
 <p>As you’re reading, you may want to refer to the <a class="reference internal" href="conceptual_diagram.html#conceptual-diagram"><span class="std std-ref">Conceptual Diagram</span></a> as a useful reference.
 The primary data structures are depicted in the central image.
 Most of the key operations are depicted in the cycle of four corner boxes.</p>
 <img alt="_images/conceptual_diagram.png" src="_images/conceptual_diagram.png" />
-<div class="section" id="data-structures">
+<section id="data-structures">
 <h2>Data structures<a class="headerlink" href="#data-structures" title="Permalink to this headline"></a></h2>
 <p>The following sections discuss the structure and function of the key
 Geonomics classes. Users will interface with these classes more or less
 directly when running Geonomics models, so a fundamental understanding of how
 they’re organized and how they work will be useful.</p>
-<div class="section" id="landscape-and-layer-objects">
+<section id="landscape-and-layer-objects">
 <h3><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> objects<a class="headerlink" href="#landscape-and-layer-objects" title="Permalink to this headline"></a></h3>
 <p>One of the core components of a Geonomics model is the land. The land is
 modeled by the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> class. This class is an
@@ -154,9 +155,9 @@ the resolution (attribute ‘res’), upper-left corner (‘ulc’),
 and projection (‘prj’), which default to 1, (0,0), and None but
 will be set otherwise if some or all of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code> layers are read in from
 real-world GIS rasters.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="genomes-genomicarchitecture-and-trait-objects">
+<section id="genomes-genomicarchitecture-and-trait-objects">
 <h3>Genomes, <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitecture</span></span></code>, and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code> objects<a class="headerlink" href="#genomes-genomicarchitecture-and-trait-objects" title="Permalink to this headline"></a></h3>
 <p><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> objects
 (see <a class="reference internal" href="#individual-species-and-community-objects"><span class="std std-ref">Individual, Species, and Community objects</span></a>, below)
@@ -265,9 +266,9 @@ effects, traits, and inter-locus recombination rates (as columns) of
 all loci (rows) in the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitecture</span></span></code>;
 these values will override any other values provided in the ‘genome’
 subsection of the species’ parameters.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="individual-species-and-community-objects">
+<section id="individual-species-and-community-objects">
 <h3><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>, and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Community</span></span></code> objects<a class="headerlink" href="#individual-species-and-community-objects" title="Permalink to this headline"></a></h3>
 <p>Being that Geonomics is an individual-based model, individuals serve as
 the fundamental units (or agents) of all simulations. They are represented by
@@ -311,9 +312,9 @@ the same <code class="code py python docutils literal notranslate"><span class="
 of interest. However, its implementation will facilitate the potential
 future development of methods for interaction between <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>.
 (e.g. to simulate coevolutionary, speciation, or hybridization scenarios).</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="model-objects">
+<section id="model-objects">
 <h3><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> Objects<a class="headerlink" href="#model-objects" title="Permalink to this headline"></a></h3>
 <p>Objects of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> class serve as the main interface between the user
 and the Geonomics program. (While it is certainly possible for a user
@@ -359,9 +360,9 @@ primarily designed for passively running numerous iterations of a <code class="c
 to generate data for analysis, whereas <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">walk</span></span></code> is primarily designed
 for the purposes of learning, teaching, or debugging the package, or
 developing, exploring, introspecting, or visaulizing particular <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>s.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="secondary-i-e-private-classes">
+<section id="secondary-i-e-private-classes">
 <h3>Secondary (i.e. private) classes<a class="headerlink" href="#secondary-i-e-private-classes" title="Permalink to this headline"></a></h3>
 <p>The typical user will not need to access or interact with the following
 classes in any way. They will, however, parameterize them in the
@@ -371,7 +372,7 @@ but for some scenarios they may not be adequate, and for some parameters
 (e.g. the window-width used by the _DensityGridStack; see below), there is
 no “one-size-fits-most” option. Thus, it is important that the user
 have a basic acquaintance with the purpose and operation of these classes.</p>
-<div class="section" id="conductancesurface">
+<section id="conductancesurface">
 <h4><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code><a class="headerlink" href="#conductancesurface" title="Permalink to this headline"></a></h4>
 <p>The <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> class allows Geonomics
 to model a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’
@@ -405,8 +406,8 @@ principally of a 3d Numpy array (y by x by z, where y and x (a.k.a i and j,
 or latitude and longitude) are the dimensions of the
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> and z is the length of the vector of values
 used to approximate the distributions in each cell.</p>
-</div>
-<div class="section" id="densitygridstack">
+</section>
+<section id="densitygridstack">
 <h4><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_DensityGridStack</span></span></code><a class="headerlink" href="#densitygridstack" title="Permalink to this headline"></a></h4>
 <p>The <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_DensityGridStack</span></span></code> class implements an algorithm for rapid estimating
 an array of the local density of a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>. The resulting array has a
@@ -432,15 +433,15 @@ a population of 50,000 individuals, using various window widths:</p>
 (plot titled ‘making’) and runtime (plot titled ‘calc’)
 scale with window-width for that <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>:</p>
 <img alt="_images/densitygridstack_compute_times.png" class="align-center" src="_images/densitygridstack_compute_times.png" />
-</div>
-<div class="section" id="kdtree">
+</section>
+<section id="kdtree">
 <h4><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_KDTree</span></span></code><a class="headerlink" href="#kdtree" title="Permalink to this headline"></a></h4>
 <p>The <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_KDTree</span></span></code> class is just a wrapper around <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">scipy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">spatial</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">cKDTree</span></span></code>.
 It provides an optimized algorithm (the kd-tree) for finding
 neighboring points within a given search radius.
 This class is used for all neighbor-searching operations (e.g. mate-search).</p>
-</div>
-<div class="section" id="tskit-tables-tablecollection">
+</section>
+<section id="tskit-tables-tablecollection">
 <h4><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">tables</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">TableCollection</span></span></code><a class="headerlink" href="#tskit-tables-tablecollection" title="Permalink to this headline"></a></h4>
 <p>To enable easy recording of the pedigree of a simulated <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>,
 Geonomics depends on the Python package <a class="reference external" href="https://tskit.readthedocs.io/en/latest/index.html">tskit</a> (software
@@ -469,8 +470,8 @@ see the Python package
 <a class="reference external" href="https://tskit.readthedocs.io/en/latest/index.html">documentation</a>
 and the associated peer-reviewed
 <a class="reference external" href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006581">paper</a>.)</p>
-</div>
-<div class="section" id="recombinationpaths">
+</section>
+<section id="recombinationpaths">
 <h4><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_RecombinationPaths</span></span></code><a class="headerlink" href="#recombinationpaths" title="Permalink to this headline"></a></h4>
 <p>The <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_RecombinationPaths</span></span></code> class contains a large (and customizable)
 number of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">bitarray</span></span></code>s, each of which indicates the genome-length
@@ -482,16 +483,16 @@ the <code class="code py python docutils literal notranslate"><span class="name"
 construction of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code>, then drawn randomly as needed (i.e.
 each time an <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> produces a gamete). This provides a
 reasonable trade-off between realistic modelling of recombination and runtime.</p>
-</div>
-<div class="section" id="landscapechanger-and-specieschanger">
+</section>
+<section id="landscapechanger-and-specieschanger">
 <h4><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_LandscapeChanger</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_SpeciesChanger</span></span></code><a class="headerlink" href="#landscapechanger-and-specieschanger" title="Permalink to this headline"></a></h4>
 <p>These classes manage all of the landscape changes and demographic changes
 that were parameterized for the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> and
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> objects to which they inhere.
 The functions creating these changes are defined at the outset,
 then queued and called at their scheduled timesteps.</p>
-</div>
-<div class="section" id="datacollector-and-statscollector">
+</section>
+<section id="datacollector-and-statscollector">
 <h4><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_DataCollector</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_StatsCollector</span></span></code><a class="headerlink" href="#datacollector-and-statscollector" title="Permalink to this headline"></a></h4>
 <p>These classes manage all of the data and statistics that should be collected
 and written to file for the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> object to which they inhere
@@ -500,13 +501,13 @@ The types of data to be collected, or statistics to be calculated, as
 well as the timesteps at which and methods by which they’re
 collected/calculated and determined at the outset, then the
 appropriate functions called at the appropriate timesteps.</p>
-</div>
-</div>
-</div>
-<div class="section" id="operations">
+</section>
+</section>
+</section>
+<section id="operations">
 <h2>Operations<a class="headerlink" href="#operations" title="Permalink to this headline"></a></h2>
 <p>The following sections discuss the mechanics of core Geonomics operations.</p>
-<div class="section" id="movement-and-dispersal">
+<section id="movement-and-dispersal">
 <h3>Movement and Dispersal<a class="headerlink" href="#movement-and-dispersal" title="Permalink to this headline"></a></h3>
 <p>Movement is optional, such that turning off movement will allow the user
 to simulate sessile organisms (which will reproduce and disperse,
@@ -539,9 +540,9 @@ see section ‘<code class="code py python docutils literal notranslate"><span c
 (with the caveat that the an offspring’s new location is determined
 relative its parents’ midpoint). But the option to use a
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> for dispersal will be offered soon.</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="reproduction">
+<section id="reproduction">
 <h3>Reproduction<a class="headerlink" href="#reproduction" title="Permalink to this headline"></a></h3>
 <p>Each timestep, for each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>, potential mating pairs
 are chosen from among all pairs of individuals within
@@ -571,9 +572,9 @@ with <code class="code py python docutils literal notranslate"><span class="name
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitecture</span></span></code>s, offspring phenotypes are
 determined at birth. Mutations are also drawn and introduced at this
 point (see section ‘Mutation for details).</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="mortality">
+<section id="mortality">
 <h3>Mortality<a class="headerlink" href="#mortality" title="Permalink to this headline"></a></h3>
 <p>Mortality can occur as a combination of two factors: <strong>density dependence</strong>
 and <strong>natural selection</strong>. Each <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code> has a death decision drawn
@@ -593,7 +594,7 @@ Thus the equation for an <code class="code py python docutils literal notranslat
 \[P(d_{i}) = 1 - (1 - P(d_{x,y})) \prod_{p = 1}^{m}\omega_{i,p}\]</div>
 <p>The following two sections explain in detail the implementation and
 calculation of the two halves of the right side of this equation.</p>
-<div class="section" id="density-dependence">
+<section id="density-dependence">
 <h4>Density dependence<a class="headerlink" href="#density-dependence" title="Permalink to this headline"></a></h4>
 <p>Density dependence is implemented using a spatialized form of the class
 logistic growth equation (<span class="math notranslate nohighlight">\(\frac{\mathrm{d}
@@ -623,8 +624,8 @@ raster of the number of succesful mating pairs, multiplied by the expected
 number of births per pair (i.e. the expectation of the Poisson
 distribution of the number of offspring per mating pair, which
 is just the distribution’s paramater lambda).</p>
-</div>
-<div class="section" id="selection">
+</section>
+<section id="selection">
 <h4>Selection<a class="headerlink" href="#selection" title="Permalink to this headline"></a></h4>
 <p>Selection on a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Trait</span></span></code> can exhibit three regimes: <strong>spatially divergent</strong>,
 <strong>universal</strong>, and <strong>spatially contingent</strong>. <strong>Spatially divergent</strong> selection
@@ -685,10 +686,10 @@ or exceeding $phi_{p;x,y}$.
 Because of this, selection coefficients that would be considered ‘strong’
 in classical, aspatial population genetics models will tend to behave
 less strongly in Geonomics models.</p>
-</div>
-</div>
+</section>
+</section>
 <hr class="docutils" />
-<div class="section" id="mutation">
+<section id="mutation">
 <h3>Mutation<a class="headerlink" href="#mutation" title="Permalink to this headline"></a></h3>
 <p>Geonomics can model mutations of three different types: <strong>neutral</strong>,
 <strong>deleterious</strong>, and <strong>trait</strong> mutations. These terms don’t map
@@ -717,17 +718,17 @@ in different environmental contexts (i.e. it could behave as
 a beneficial mutation is one region of the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>
 but as a deleterious mutation in another).</p></li>
 </ul>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="species-interactions">
+<section id="species-interactions">
 <h3>Species interactions<a class="headerlink" href="#species-interactions" title="Permalink to this headline"></a></h3>
 <p>This functionality is not yet included available. But the Community class was
 created in advance recognition that this functionality could be desirable
 for future versions (e.g. to simulate coevolutionary, speciation, or
 hybridization scenarios).</p>
-</div>
+</section>
 <hr class="docutils" />
-<div class="section" id="landscape-and-species-change">
+<section id="landscape-and-species-change">
 <h3><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> change<a class="headerlink" href="#landscape-and-species-change" title="Permalink to this headline"></a></h3>
 <p>For a given <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Layer</span></span></code>, any number of change events
 can be planned.
@@ -755,9 +756,9 @@ to some of the life-history parameters of a <code class="code py python docutils
 the lambda parameter of the Poisson distribution determining the number of
 offspring of mating events). This functionality is currently minimalistic,
 but will be more facilitated in future versions.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>

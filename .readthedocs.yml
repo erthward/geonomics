@@ -1,12 +1,20 @@
+# .readthedocs.yaml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
 version: 2
 
-# Set the OS and Python version
+# Set OS and Python version
 build:
   os: ubuntu-22.04
   tools:
     python: "3"
 
-# declare the Python requirements required to build docco
- python:
-   install:
-     - requirements: requirements.txt
+# We recommend specifying your dependencies to enable reproducible builds:
+# https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
+python:
+  install:
+  - requirements: requirements.txt
+  - method: pip
+    path: .

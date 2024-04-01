@@ -24,6 +24,7 @@ from geonomics.utils.viz import _check_display
 import numpy as np
 import numpy.random as r
 import random
+import warnings
 from copy import deepcopy
 import sys, os, traceback, psutil
 import matplotlib as mpl
@@ -270,6 +271,9 @@ class Model:
     #method for getting a species' number, given a name (str) or number
     def _get_spp_num(self, spp_id):
         if isinstance(spp_id, int):
+            assert spp_id in self.comm.keys(), (f"A Species with numeric "
+                                                "spp_id {spp_id} does "
+                                                 "not exist.")
             return(spp_id)
         elif isinstance(spp_id, str):
             #get nums for all spps with  matching names
@@ -277,7 +281,7 @@ class Model:
                                                     ) if spp.name == spp_id]
             assert len(spp_nums) == 1, ("Expected to find a single Species "
                 "with a name matching the name provided (%s). Instead "
-                "found %i.") % (spp_id, len(nums))
+                "found %i.") % (spp_id, len(spp_nums))
             spp_num = spp_nums[0]
             return spp_num
         else:
@@ -481,6 +485,15 @@ class Model:
                                        'species "%s"...\n\n') % spp.name,
                                       flush=True)
                             spp._set_genomes_and_tables(self.burn_T, self.T)
+                            # replace gnx-simulated Individuals with
+                            # msprime-simulated Individuals, if required
+                            if ('msprime' in self.params['comm']['species'][
+                                                            spp.name]['init']):
+                                msp = self.params['comm']['species'][
+                                                spp.name]['init']['msprime']
+                                spp._init_msprime_pop(land=self.land,
+                                                      msprime_init_params=msp,
+                                                     )
 
         else:
             #verbose ouput
@@ -682,6 +695,15 @@ class Model:
                                        'species "%s"...\n\n') % spp.name,
                                       flush=True)
                             spp._set_genomes_and_tables(self.burn_T, self.T)
+                            # replace gnx-simulated Individuals with
+                            # msprime-simulated Individuals, if required
+                            if ('msprime' in self.params['comm']['species'][
+                                                            spp.name]['init']):
+                                msp = self.params['comm']['species'][
+                                                spp.name]['init']['msprime']
+                                spp._init_msprime_pop(land=self.land,
+                                                      msprime_init_params=msp,
+                                                     )
                     #and then set the reassign_genomes attribute to False, so
                     #that they won't get reassigned again during this iteration
                     self.reassign_genomes = False
@@ -720,7 +742,7 @@ class Model:
                                   self.comm[0]._tc.edges.num_rows)
                             print("\tNUMBER INDIVIDS BEFORE SIMPLIFICATION:",
                                   self.comm[0]._tc.individuals.num_rows)
-                        spp._sort_simplify_table_collection()
+                        spp._sort_and_simplify_table_collection()
                         if self._verbose:
                             print("\n\tNUMBER EDGES AFTER SIMPLIFICATION: ",
                                   self.comm[0]._tc.edges.num_rows)
@@ -1115,6 +1137,26 @@ class Model:
                 break
         # reset self._verbose to False
         self._verbose = old_verbose
+
+
+    # helper method to burn a model in if it hasn't been burned in already
+    # to succinctly differentiate it from 'run'
+    def burn(self):
+        """
+        Helper function to burn a model in, if it hasn't been burned in already.
+
+        Returns
+        -------
+        out : None
+            Returns no output. Alters Model in place by running burn-in phase.
+
+        """
+        if self.comm.burned:
+            print("\nModel has already been burned in.\n")
+        else:
+            while not self.comm.burned:
+                self.walk(10, 'burn')
+            print("\nModel has now been burned in.\n")
 
 
     # method to use the self._data_collector object to sample and write data
@@ -2543,7 +2585,7 @@ class Model:
             the x then y (i.e. lon then lat) coordinates.
 
         Note: Rows are sorted by index number of the Individuals,
-            regardless of input index order.
+              regardless of input index order.
         """
         spp = self.comm[self._get_spp_num(spp)]
         if individs is not None:
@@ -2901,9 +2943,168 @@ class Model:
                                           "have no tskit data structures "
                                           "to be returned.")
         # prep the TableCollection, then get its TreeSequence
-        spp._sort_simplify_table_collection()
+        spp._sort_and_simplify_table_collection()
         ts = spp._tc.tree_sequence()
         return ts
+
+
+    ###############
+    #altering data#
+    ###############
+
+    def remove_individuals(self,
+                           spp=0,
+                           n=None,
+                           n_left=None,
+                           individs=None,
+                          ):
+        """
+        Remove Individuals from a Species.
+
+        Parameters
+        ----------
+        spp : {int, str}, optional, default: 0
+            A reference to the Species for which values should be returned.
+            Can be either the Species' index number (i.e. its
+            integer key in the Community dict), or its name (as a character
+            string).
+
+        n: {int}, optional, default: None
+            The number of random Individuals to be removed.
+            If None then `n_out` or `individs` must be provided.
+
+        n_left: {int}, optional, default: None
+            The number of Individuals left in the Species
+            after a random selection of Individuals have been removed.
+            If None then `n` or `individs` must be provided.
+
+        individs: {list, tuple, numpy.ndarray}, optional, default: None
+            An iterable containing the integer IDs (i.e., the Species dict's keys)
+            of the Individuals to be removed. If None then `n` or `n_out` must be provided.
+
+        Returns
+        -------
+        None
+            Alters the specified Species in place by removing all specified
+            (if `individs` is not None) or randomly drawn (if `n` is not None)
+            Individuals.
+
+        """
+        # get the desired species
+        spp = self.comm[self._get_spp_num(spp)]
+
+        # call that species' corresponding method
+        spp._remove_individuals(individs=individs,
+                                n=n,
+                                n_left=n_left,
+                               )
+
+
+    def add_individuals(self,
+                        n,
+                        coords,
+                        recip_spp=0,
+                        source_spp=None,
+                        source_msprime_params=None,
+                        individs=None,
+                       ):
+        """
+        Add individuals to a recipient Species object, either using a second
+        Species object as the source population or feeding a dict of parameters
+        into msprime to simulate the source population.
+
+        Parameters
+        ----------
+        n: int
+            The number of Individuals to be added.
+
+        coords: {tuple, list, numpy.ndarray}
+            A tuple, list of numpy.ndarray indicating the x,y coordinates where the
+            new Individuals should be added to the recipient Species.
+            If `coords` contains 2 values then all added Individuals will be placed
+            at the x,y coordinate pair indicated by those 2 values.
+            Otherwise, `coords` may be of size `n` x 2, indicating the x,y
+            coordinate pair at which each of the `n` Individuals will be placed.
+
+        recip_spp: {gnx.structs.species.Species, int, str}, optional, default: None
+            An int or str referring to the Species in this Model to which
+            Individuals should be added.
+
+        source_spp: {gnx.structs.species.Species, int, str}, optional, default: None
+            A Geonomics.structs.species.Species object to act as the source
+            population from which individuals will be taken
+            (or an int or str referring to that Species within this Model).
+
+        source_msprime_params: dict, optional, default: None
+            A dict of keyword args to be fed to `gnx.sim_msprime_individs()`,
+            to parameterize the msprime source population model from which
+            new Individuals will be drawn. These include:
+                recomb_rate         (required)
+                mut_rate            (required)
+                demography          (optional; default: None)
+                population_size     (optional; default: None)
+                ancestry_model      (optional; default: None)
+                random_seed         (optional; default: None)
+            See `gnx.sim_msprime_individs` for details.
+
+        individs: {tuple, list, numpy.ndarray}, optional, default: None
+            A 1d numpy.ndarray or equivalent array-like containing the int indices
+            of the Individuals to be taken from `source_spp` and added to
+            `recip_spp`. If None
+
+        Returns
+        -------
+        None
+            Alters `recip_spp` in place by adding the provided
+            (if `source_spp` is not None) or simulated (if `source_msprime_params`
+            is not None) Individuals.
+
+        """
+        warnings.warn(("This function is new and has been checked but not "
+                       "extensively tested. User beware. Please immediately report "
+                       "any suspected bugs at "
+                       "https://github.com/erthward/geonomics/issues "
+                       "or by email to drew.terasaki.hart@gmail.com"))
+
+        # get the recipient species
+        if isinstance(recip_spp, int) or isinstance(recip_spp, str):
+            recip_spp = self.comm[self._get_spp_num(recip_spp)]
+
+        # and make sure it has already been burned in
+        assert recip_spp.burned, ("Individuals cannot be manually added to a "
+                                  "Species that hasn't been burned in yet.")
+
+        # make sure either a Species object is given or a set of valid msprime args
+        assert ((source_spp is not None and source_msprime_params is None) or
+                (source_spp is None and source_msprime_params is not None)), (
+                        "Source population must be provided either as "
+                        "a gnx Species object ('source_spp') "
+                        "or as a set of valid args for gnx.run_msprime_sim() "
+                        "('source_msprime_params'), but not both.")
+        if source_spp is not None:
+            assert (isinstance(source_spp, gnx.structs.species.Species) or
+                    isinstance(source_spp, int) or
+                    isinstnace(source_spp, str)), ("The "
+                        "value given to 'source_spp' identifies a gnx "
+                        "Species object that will serve as the source "
+                        "population, so must be either a gnx Species "
+                        "instance (i.e., an object of the class "
+                        "gnx.structs.species.Species) whose Individuals will "
+                        "be added to the recipient Species, or a valid int or str "
+                        "identifier of another Species in this model whose"
+                        "Individuals will be added to the recipeint Species.")
+            # get the source_spp from this Model, if necessary
+            if isinstance(source_spp, int) or isinstance(source_spp, str):
+                source_spp = self.comm[self._get_spp_num(source_spp)]
+
+        # call the Species method
+        recip_spp._add_individuals(n=n,
+                                   coords=coords,
+                                   land=self.land,
+                                   source_spp=source_spp,
+                                   source_msprime_params=source_msprime_params,
+                                   individs=individs,
+                                  )
 
 
     ##############
@@ -3059,5 +3260,6 @@ class Model:
         for k, table in tables.items():
             filepath = file_basename + '_' + k.upper() + '.csv'
             table.to_csv(filepath, index=False, sep=sep)
+
 
 

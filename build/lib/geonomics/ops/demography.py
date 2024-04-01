@@ -296,7 +296,7 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
         dp._next_plot('d', d)
 
     #Get death probabilities
-    death_probs = d[spp.cells[:,1], spp.cells[:,0]]
+    death_probs = d[spp._cells[:,1], spp._cells[:,0]]
     #If with_selection (i.e. if death probs should account for fitness),
     #then use the d raster and individuals' fitnesses to calculate
     #per-individual probabilities of death

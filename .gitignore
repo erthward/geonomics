@@ -22,3 +22,4 @@
 /GNX*
 /geonomics/TODO.md
 *svg
+__pycache__/

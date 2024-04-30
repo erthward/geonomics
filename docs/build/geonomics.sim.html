@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>geonomics.sim package &mdash; geonomics 1.4.0 documentation</title>
+  <title>geonomics.sim package &mdash; geonomics 1.4.1 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -187,19 +187,16 @@ Individuals should be added.</p></li>
 <li><p><strong>source_spp</strong> (<em>{gnx.structs.species.Species</em><em>, </em><em>int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A Geonomics.structs.species.Species object to act as the source
 population from which individuals will be taken
 (or an int or str referring to that Species within this Model).</p></li>
-<li><p><strong>source_msprime_params</strong> (<em>dict</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – <p>A dict of keyword args to be fed to <cite>gnx.sim_msprime_individs()</cite>,
+<li><p><strong>source_msprime_params</strong> (<em>dict</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A dict of keyword args to be fed to <cite>gnx.sim_msprime_individs()</cite>,
 to parameterize the msprime source population model from which
-new Individuals will be drawn. These include:</p>
-<blockquote>
-<div><p>recomb_rate         (required)
-mut_rate            (required)
-demography          (optional; default: None)
-population_size     (optional; default: None)
-ancestry_model      (optional; default: None)
-random_seed         (optional; default: None)</p>
-</div></blockquote>
-<p>See <cite>gnx.sim_msprime_individs</cite> for details.</p>
-</p></li>
+new Individuals will be drawn. These include:
+- recomb_rate         (required)
+- mut_rate            (required)
+- demography          (optional; default: None)
+- population_size     (optional; default: None)
+- ancestry_model      (optional; default: None)
+- random_seed         (optional; default: None)
+See <cite>gnx.sim_msprime_individs</cite> for details.</p></li>
 <li><p><strong>individs</strong> (<em>{tuple</em><em>, </em><em>list</em><em>, </em><em>numpy.ndarray}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A 1d numpy.ndarray or equivalent array-like containing the int indices
 of the Individuals to be taken from <cite>source_spp</cite> and added to
 <cite>recip_spp</cite>. If None</p></li>
@@ -1500,25 +1497,19 @@ mode, the Model will run for precisely this many timesteps. If in
 indicate that it has burned in, or for this many timesteps,
 whichever occurs first.) Defaults to a single timestep.
 single step.</p></li>
-<li><p><strong>mode</strong> (<em>{'burn'</em><em>, </em><em>'main'}</em><em>, </em><em>optional</em>) – <p>The mode in which to run the Model.
-If ‘burn’, it will run in burn-in mode. This entails the following:</p>
-<blockquote>
-<div><ul>
-<li><p>Genomes will not yet be assigned, so genomic phenomena such
-as crossing-over and natural selection will not occur;</p></li>
-<li><p>Any scheduled landscape and demographic changes will not
-occur;</p></li>
-<li><p>Statiionarity statistics will be checked at the end of each
+<li><p><strong>mode</strong> (<em>{'burn'</em><em>, </em><em>'main'}</em><em>, </em><em>optional</em>) – The mode in which to run the Model.
+If ‘main’, it will run in main mode (i.e. all functionalities will
+be used. (Note that for a Model to run in main mode it must first
+have been burned in.)
+If ‘burn’, it will run in burn-in mode. This entails the following:
+1. Genomes will not yet be assigned, so genomic phenomena such
+as crossing-over and natural selection will not occur;
+2. Any scheduled landscape and demographic changes will not occur;
+3. Stationarity statistics will be checked at the end of each
 timestep, to determine if the Model has burned in (in which
 case the model will stop running regardless of timestep,
 genomes will be randomly assigned to all individuals, and
-the Model will be deemed ready to run in main mode)</p></li>
-</ul>
-</div></blockquote>
-<p>If ‘main’, it will run in main mode (i.e. all functionalities will
-be used. (Note that for a Model to run in main mode it must first
-have been burned in.)</p>
-</p></li>
+the Model will be deemed ready to run in main mode).</p></li>
 <li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to run the Model should provide written output.
 If True, formatted messages will be printed to STDOUT at each
 timestep. Defaults to True for <cite>Model.walk</cite>.</p></li>

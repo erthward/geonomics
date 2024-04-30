@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parameters &mdash; geonomics 1.4.0 documentation</title>
+  <title>Parameters &mdash; geonomics 1.4.1 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -825,8 +825,20 @@ includes: 1.) the starting coordinates to be assigned to the <cite>Individuals</
 placed or an nx2 <cite>numpy.ndarray</cite> containing a coordinate pair for each
 <cite>Individual</cite>; and 2.) a series of parameters that can be fed
 as kwargs into the ‘source_msprime_params’ parameter of the
-<cite>Model.add_individuals</cite> method. See <cite>help(Model.add_individuals)</cite> for
-details on how those kwargs are specified and used.</p>
+<cite>Model.add_individuals</cite> method. The <cite>msprime</cite> functionality
+provided through the <cite>Model.add_individuals</cite> method is a wrapper
+around <cite>msprime.sim_ancestry</cite>, but it only allows a certain subset
+of parameters to be fed through to that <cite>msprime</cite> function (with the remaining
+parameters, e.g., <cite>sequence_length</cite>, being drawn directly from the Geonomics
+parameters file, to ensure compatibility);
+see <cite>help(Model.add_individuals)</cite> for
+details on which kwargs can be specified and used.
+Also, please note that <cite>msprime</cite> is highly
+flexible, allowing for many different combined choices of demography and ancestry models,
+so it is the user’s responsibility to ensure that they do not stipulate
+<cite>msprime</cite> parameters that lead to nonsensical scenarios
+(e.g., generating a number of <cite>msprime</cite>-derived Geonomics Individuals
+that is larger than the census size defined for <cite>msprime</cite> population).</p>
 </section>
 <hr class="docutils" />
 <section id="mating">
@@ -2055,7 +2067,7 @@ saved and reused for each subsequent iteration (and whether that
 the value provided to the <strong>repeat_burn</strong> parameter).</p>
 <p><strong>rand_genarch</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to randomize GenomicArchitectures each iteration</span>
-<span class="s1">&#39;rand_genarch&#39;</span><span class="p">:</span>    <span class="kc">False</span><span class="p">,</span>
+<span class="s1">&#39;rand_genarch&#39;</span><span class="p">:</span>    <span class="kc">True</span><span class="p">,</span>
 </pre></div>
 </div>
 <p><code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">bool</span></span></code></p>
@@ -2072,7 +2084,12 @@ distribution of starting individuals, thus obviating the need for the most
 computationally costly components of a Geonomics model prior to the main phase,
 but those individuals’ <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">GenomicArchitectures</span></span></code> and genomes
 will be drawn at random, providing independent instantiations
-of the landscape genomic scenario being simulated.</p>
+of the landscape genomic scenario being simulated.
+Note, however, that this parameter is inconsequential for any <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>
+with a custom genomic architecture file; if a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’ <strong>gen_arch_file</strong>
+parameter is not None then the custom genomic architecture file will be used
+to set the genomic architecture for that <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> on each iteration,
+regardless of whether <strong>rand_genarch</strong> is True or False.</p>
 <p><strong>repeat_burn</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#whether to burn in each iteration</span>
 <span class="s1">&#39;repeat_burn&#39;</span><span class="p">:</span>  <span class="kc">False</span><span class="p">,</span>

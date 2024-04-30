@@ -943,8 +943,20 @@ includes: 1.) the starting coordinates to be assigned to the `Individuals`
 placed or an nx2 `numpy.ndarray` containing a coordinate pair for each
 `Individual`; and 2.) a series of parameters that can be fed
 as kwargs into the 'source_msprime_params' parameter of the
-`Model.add_individuals` method. See `help(Model.add_individuals)` for
-details on how those kwargs are specified and used.
+`Model.add_individuals` method. The `msprime` functionality
+provided through the `Model.add_individuals` method is a wrapper
+around `msprime.sim_ancestry`, but it only allows a certain subset
+of parameters to be fed through to that `msprime` function (with the remaining
+parameters, e.g., `sequence_length`, being drawn directly from the Geonomics
+parameters file, to ensure compatibility);
+see `help(Model.add_individuals)` for
+details on which kwargs can be specified and used.
+Also, please note that `msprime` is highly
+flexible, allowing for many different combined choices of demography and ancestry models,
+so it is the user's responsibility to ensure that they do not stipulate
+`msprime` parameters that lead to nonsensical scenarios
+(e.g., generating a number of `msprime`-derived Geonomics Individuals
+that is larger than the census size defined for `msprime` population).
 
 
 
@@ -2807,7 +2819,7 @@ the value provided to the **repeat_burn** parameter).
 .. code-block:: python
 
               #whether to randomize GenomicArchitectures each iteration
-              'rand_genarch':    False,
+              'rand_genarch':    True,
 
 :py:`bool`
 
@@ -2827,6 +2839,11 @@ computationally costly components of a Geonomics model prior to the main phase,
 but those individuals' :py:`GenomicArchitectures` and genomes
 will be drawn at random, providing independent instantiations
 of the landscape genomic scenario being simulated.
+Note, however, that this parameter is inconsequential for any :py:`Species`
+with a custom genomic architecture file; if a :py:`Species`' **gen_arch_file**
+parameter is not None then the custom genomic architecture file will be used
+to set the genomic architecture for that :py:`Species` on each iteration,
+regardless of whether **rand_genarch** is True or False.
 
 
 **repeat_burn**

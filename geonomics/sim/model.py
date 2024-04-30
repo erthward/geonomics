@@ -397,7 +397,9 @@ class Model:
 
     #wrapper around Community._check_burned
     def _check_comm_burned(self):
-        self.comm._check_burned(burn_T = self.burn_T)
+        self.comm._check_burned(burn_T=self.burn_T,
+                                params=self.params,
+                               )
 
     ###################################################
 
@@ -961,19 +963,18 @@ class Model:
             single step.
         mode : {'burn', 'main'}, optional
             The mode in which to run the Model.
-            If 'burn', it will run in burn-in mode. This entails the following:
-                - Genomes will not yet be assigned, so genomic phenomena such
-                  as crossing-over and natural selection will not occur;
-                - Any scheduled landscape and demographic changes will not
-                  occur;
-                - Statiionarity statistics will be checked at the end of each
-                  timestep, to determine if the Model has burned in (in which
-                  case the model will stop running regardless of timestep,
-                  genomes will be randomly assigned to all individuals, and
-                  the Model will be deemed ready to run in main mode)
             If 'main', it will run in main mode (i.e. all functionalities will
             be used. (Note that for a Model to run in main mode it must first
             have been burned in.)
+            If 'burn', it will run in burn-in mode. This entails the following:
+            1. Genomes will not yet be assigned, so genomic phenomena such
+            as crossing-over and natural selection will not occur;
+            2. Any scheduled landscape and demographic changes will not occur;
+            3. Stationarity statistics will be checked at the end of each
+            timestep, to determine if the Model has burned in (in which
+            case the model will stop running regardless of timestep,
+            genomes will be randomly assigned to all individuals, and
+            the Model will be deemed ready to run in main mode).
         verbose : bool, optional
             Whether or not to run the Model should provide written output.
             If True, formatted messages will be printed to STDOUT at each
@@ -3039,12 +3040,12 @@ class Model:
             A dict of keyword args to be fed to `gnx.sim_msprime_individs()`,
             to parameterize the msprime source population model from which
             new Individuals will be drawn. These include:
-                recomb_rate         (required)
-                mut_rate            (required)
-                demography          (optional; default: None)
-                population_size     (optional; default: None)
-                ancestry_model      (optional; default: None)
-                random_seed         (optional; default: None)
+            - recomb_rate         (required)
+            - mut_rate            (required)
+            - demography          (optional; default: None)
+            - population_size     (optional; default: None)
+            - ancestry_model      (optional; default: None)
+            - random_seed         (optional; default: None)
             See `gnx.sim_msprime_individs` for details.
 
         individs: {tuple, list, numpy.ndarray}, optional, default: None

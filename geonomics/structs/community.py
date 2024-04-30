@@ -104,18 +104,27 @@ class Community(dict):
         self.t = -1
 
     #method to check if all species have burned in
-    def _check_burned(self, burn_T):
-        #check minimum burn-in time has passed
-        burnin_status= np.all([len(spp.Nt) >= burn_T for spp in self.values()])
-        #if so, then check all burn-in tests for all spps
-        if burnin_status:
-            adf_tests = np.all([burnin._test_adf_threshold(spp, burn_T) for
-                                spp in self.values()])
-            t_tests = np.all([burnin._test_t_threshold(spp, burn_T) for
-                                spp in self.values()])
-            spat_tests = np.all([spp._do_spatial_burnin_test(burn_T) for
-                                 spp in self.values()])
-            burnin_status = adf_tests and t_tests and spat_tests
+    def _check_burned(self,
+                      burn_T,
+                      params,
+                     ):
+        # if pop will be replaced by msprime individs then short-circuit burn-in
+        all_msprime = np.all(['msprime' in spp_params['init'] for
+                              spp_params in params['comm']['species'].values()])
+        if all_msprime:
+            burnin_status = True
+        else:
+            #check minimum burn-in time has passed
+            burnin_status= np.all([len(spp.Nt) >= burn_T for spp in self.values()])
+            #if so, then check all burn-in tests for all spps
+            if burnin_status:
+                adf_tests = np.all([burnin._test_adf_threshold(spp, burn_T) for
+                                    spp in self.values()])
+                t_tests = np.all([burnin._test_t_threshold(spp, burn_T) for
+                                    spp in self.values()])
+                spat_tests = np.all([spp._do_spatial_burnin_test(burn_T) for
+                                     spp in self.values()])
+                burnin_status = adf_tests and t_tests and spat_tests
         #set the community burn-in tracker
         self.burned = burnin_status
         #and set the spps' burn-in trackers

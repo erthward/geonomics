@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parameters &mdash; geonomics 1.4.1 documentation</title>
+  <title>Parameters &mdash; geonomics 1.4.2 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -796,7 +796,7 @@ excess of 1.</p>
     <span class="mi">0</span><span class="p">:</span> <span class="p">{</span>
        <span class="c1"># number of individs to sample from pop</span>
        <span class="mi">100</span><span class="p">:</span> <span class="p">{</span>
-            <span class="c1"># 1x2 coord pair of nx2 coord pairs of individs</span>
+            <span class="c1"># 1x2 coord pair or nx2 coord pairs of individs</span>
             <span class="s1">&#39;coords&#39;</span><span class="p">:</span>             <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
             <span class="c1"># valid kwargs dict for Model.add_individuals</span>
             <span class="c1"># &#39;source_msprime_params&#39; argument...</span>
@@ -823,7 +823,9 @@ from that population, and the value is a dict of parameters that
 includes: 1.) the starting coordinates to be assigned to the <cite>Individuals</cite>
 (either a single coordinate pair at which all <cite>Individuals</cite> should be
 placed or an nx2 <cite>numpy.ndarray</cite> containing a coordinate pair for each
-<cite>Individual</cite>; and 2.) a series of parameters that can be fed
+<cite>Individual</cite>; and note, these should be cell coordinates on the <cite>Landscape</cite>
+array, not projected coordinates in any input rasters that may have been used!);
+and 2.) a series of parameters that can be fed
 as kwargs into the ‘source_msprime_params’ parameter of the
 <cite>Model.add_individuals</cite> method. The <cite>msprime</cite> functionality
 provided through the <cite>Model.add_individuals</cite> method is a wrapper

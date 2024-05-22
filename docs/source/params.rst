@@ -932,32 +932,32 @@ default: values displayed above
 reset? Y
 
 This block of parameters can be used to set up one or more `msprime`-simulated
-populations from which all starting `Individuals`
-for a Geonomics `Model` are sourced (replacing the `Individuals` simulated
+populations from which all starting :py:`Individuals`
+for a Geonomics :py:`Model` are sourced (replacing the :py:`Individuals` simulated
 during a Geonomics burn-in).
-Each `dict` keyed to a serial integer defines a separate population.
-The only key in that `dict` is the number of `Individuals` to draw
+Each :py:`dict` keyed to a serial integer defines a separate population.
+The only key in that :py:`dict` is the number of :py:`Individuals` to draw
 from that population, and the value is a dict of parameters that
-includes: 1.) the starting coordinates to be assigned to the `Individuals`
-(either a single coordinate pair at which all `Individuals` should be
-placed or an nx2 `numpy.ndarray` containing a coordinate pair for each
-`Individual`; and note, these should be cell coordinates on the `Landscape`
+includes: 1.) the starting coordinates to be assigned to the :py:`Individuals`
+(either a single coordinate pair at which all :py:`Individuals` should be
+placed or an nx2 :py:`numpy.ndarray` containing a coordinate pair for each
+:py:`Individual`; and note, these should be cell coordinates on the :py:`Landscape`
 array, not projected coordinates in any input rasters that may have been used!);
 and 2.) a series of parameters that can be fed
 as kwargs into the 'source_msprime_params' parameter of the
-`Model.add_individuals` method. The `msprime` functionality
-provided through the `Model.add_individuals` method is a wrapper
-around `msprime.sim_ancestry`, but it only allows a certain subset
+:py:`Model.add_individuals` method. The `msprime` functionality
+provided through the :py:`Model.add_individuals` method is a wrapper
+around :py:`msprime.sim_ancestry`, but it only allows a certain subset
 of parameters to be fed through to that `msprime` function (with the remaining
-parameters, e.g., `sequence_length`, being drawn directly from the Geonomics
+parameters, e.g., :py:`sequence_length`, being drawn directly from the Geonomics
 parameters file, to ensure compatibility);
-see `help(Model.add_individuals)` for
+see :py:`help(Model.add_individuals)` for
 details on which kwargs can be specified and used.
 Also, please note that `msprime` is highly
 flexible, allowing for many different combined choices of demography and ancestry models,
 so it is the user's responsibility to ensure that they do not stipulate
 `msprime` parameters that lead to nonsensical scenarios
-(e.g., generating a number of `msprime`-derived Geonomics Individuals
+(e.g., generating a number of `msprime`-derived Geonomics :py:`Individuals`
 that is larger than the census size defined for `msprime` population).
 
 

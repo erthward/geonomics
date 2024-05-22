@@ -814,32 +814,32 @@ excess of 1.</p>
 <p>default: values displayed above</p>
 <p>reset? Y</p>
 <p>This block of parameters can be used to set up one or more <cite>msprime</cite>-simulated
-populations from which all starting <cite>Individuals</cite>
-for a Geonomics <cite>Model</cite> are sourced (replacing the <cite>Individuals</cite> simulated
+populations from which all starting <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code>
+for a Geonomics <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span></code> are sourced (replacing the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code> simulated
 during a Geonomics burn-in).
-Each <cite>dict</cite> keyed to a serial integer defines a separate population.
-The only key in that <cite>dict</cite> is the number of <cite>Individuals</cite> to draw
+Each <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">dict</span></span></code> keyed to a serial integer defines a separate population.
+The only key in that <code class="code py python docutils literal notranslate"><span class="name builtin"><span class="pre">dict</span></span></code> is the number of <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code> to draw
 from that population, and the value is a dict of parameters that
-includes: 1.) the starting coordinates to be assigned to the <cite>Individuals</cite>
-(either a single coordinate pair at which all <cite>Individuals</cite> should be
-placed or an nx2 <cite>numpy.ndarray</cite> containing a coordinate pair for each
-<cite>Individual</cite>; and note, these should be cell coordinates on the <cite>Landscape</cite>
+includes: 1.) the starting coordinates to be assigned to the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code>
+(either a single coordinate pair at which all <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code> should be
+placed or an nx2 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">numpy</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">ndarray</span></span></code> containing a coordinate pair for each
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>; and note, these should be cell coordinates on the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Landscape</span></span></code>
 array, not projected coordinates in any input rasters that may have been used!);
 and 2.) a series of parameters that can be fed
 as kwargs into the ‘source_msprime_params’ parameter of the
-<cite>Model.add_individuals</cite> method. The <cite>msprime</cite> functionality
-provided through the <cite>Model.add_individuals</cite> method is a wrapper
-around <cite>msprime.sim_ancestry</cite>, but it only allows a certain subset
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">add_individuals</span></span></code> method. The <cite>msprime</cite> functionality
+provided through the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Model</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">add_individuals</span></span></code> method is a wrapper
+around <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">msprime</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">sim_ancestry</span></span></code>, but it only allows a certain subset
 of parameters to be fed through to that <cite>msprime</cite> function (with the remaining
-parameters, e.g., <cite>sequence_length</cite>, being drawn directly from the Geonomics
+parameters, e.g., <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">sequence_length</span></span></code>, being drawn directly from the Geonomics
 parameters file, to ensure compatibility);
-see <cite>help(Model.add_individuals)</cite> for
+see <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">help</span></span><span class="punctuation"><span class="pre">(</span></span><span class="name"><span class="pre">Model</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">add_individuals</span></span><span class="punctuation"><span class="pre">)</span></span></code> for
 details on which kwargs can be specified and used.
 Also, please note that <cite>msprime</cite> is highly
 flexible, allowing for many different combined choices of demography and ancestry models,
 so it is the user’s responsibility to ensure that they do not stipulate
 <cite>msprime</cite> parameters that lead to nonsensical scenarios
-(e.g., generating a number of <cite>msprime</cite>-derived Geonomics Individuals
+(e.g., generating a number of <cite>msprime</cite>-derived Geonomics <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individuals</span></span></code>
 that is larger than the census size defined for <cite>msprime</cite> population).</p>
 </section>
 <hr class="docutils" />

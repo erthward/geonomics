@@ -938,7 +938,6 @@ def _make_species_params_str(species=1):
                                     "integer.") % (int_arg_str_fmt_dict[arg])
             # get the msprime source pops params, if required
             if 'msprime_source_pops' in [*spp_dict]:
-                print('making msprime params')
                 n_pops = spp_dict['msprime_source_pops']
                 msprime_params = params_str_dict['msprime'][n_pops>0]
                 if n_pops > 0:

@@ -217,6 +217,7 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
         assert not np.any(np.isinf(n_pairs))
     #add debug plot
     if debug:
+        print(f"n_pairs: {n_pairs.shape}")
         dp._next_plot('n_pairs', n_pairs)
 
     #Feed the land and mating pairs to spp.do_mating, to produce and
@@ -233,6 +234,7 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
         assert not np.any(np.isinf(N))
     #add debug plot
     if debug:
+        print(f"N: {N.shape}")
         dp._next_plot('N', N)
 
     #get K raster
@@ -244,6 +246,7 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
         assert not np.any(np.isinf(K))
     #add debug plot
     if debug:
+        print(f"K: {K.shape}")
         dp._next_plot('K', K)
 
     #calc dNdt
@@ -257,6 +260,7 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
                                         dNdt.ravel()) if np.isinf(n)])
     #add debug plot
     if debug:
+        print(f"dNdt: {dNdt.shape}")
         dp._next_plot('dNdt', dNdt)
 
     #calculate N_b (raster of estimated births)
@@ -269,6 +273,7 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
         assert not np.any(np.isinf(N_b))
     #add debug plot
     if debug:
+        print(f"N_b: {N_b.shape}")
         dp._next_plot('N_b', N_b)
 
     #calc N_d (raster of deaths)
@@ -279,6 +284,7 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
         assert not np.any(np.isinf(N_d))
     #add debug plot
     if debug:
+        print(f"N_d: {N_d.shape}")
         dp._next_plot('N_d', N_d)
 
     #calc d (raster of probabilities of density-dependent death)
@@ -293,6 +299,7 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
         assert not np.any(np.isinf(d))
     #add debug plot
     if debug:
+        print(f"d: {d.shape}")
         dp._next_plot('d', d)
 
     #Get death probabilities

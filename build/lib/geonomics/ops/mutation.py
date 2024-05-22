@@ -22,11 +22,21 @@ import re
 #--------------------------------------
 
 def _calc_estimated_total_mutations(spp, burn_T, T):
-    #NOTE: this would actually be a pretty poor estimate, because mutations
-    #will occur in new individuals, not some static population
-    mean_births = np.mean(spp.n_births[-burn_T:])
+    # NOTE: DETH 22-05-24: redoing this calculation, both because:
+    #       a.) previous approach would provide a pretty poor estimate
+    #       (as the previous comment recognized) but was based on gnx prior
+    #       to fixing the bug that prevented the sum of spp.K from providing a
+    #       good estimate of total population size), 
+    #       and b.) it relied on the n_births vector that filled up during the
+    #       burn-in, but that doesn't always exist now that msprime can be used
+    #       to circumvent the demographic burn-in and seed the population with
+    #       Individuals
+    mean_births = np.sum(spp.K) * spp.b * spp.n_births_distr_lambda
     est = mean_births * spp.gen_arch.L * T * spp.gen_arch._mu_tot
-    #give a decent overestimate
+    # that won't always give a great estimate if, for example, demographic
+    # changes will occur and/or mod.walk will be used to run the models for a
+    # an actual runtime that differs from mod.T;
+    # thus, give a decent overestimate and hope for the best!
     est = int(2.5 * est)
     return est
 

@@ -463,8 +463,9 @@ def _make_random_lyr(dim, n_pts, interp_method="cubic", num_hab_types=2,
                 0.01 * r.rand())
         I = I / (I.max() + (0.01 * r.rand()))
     #use the dim tuple to subset an approriate size if dim not equal
+    # NOTE: dim is ordered as [x,y], i.e., [j, i]
     if dim[0] != dim[1]:
-        I = I[:dim[0], :dim[1]]
+        I = I[:dim[1], :dim[0]]
     return I
 
 

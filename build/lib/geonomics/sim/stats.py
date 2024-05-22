@@ -208,7 +208,7 @@ class _StatsCollector:
                 #timestep it is collected, so write the data to disk
                 #intermittently and then delete the data from memory (if it was
                 #collected this timestep)
-                if "OTHER_STATS" not in filepath and stat in write_list:
+                if stat in write_list and "OTHER_STATS" not in filepath:
                     #get the correct write_fn for this stat
                     write_fn = self.write_fn_dict[stat]
                     #call the write_fn to write the data to disk

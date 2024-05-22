@@ -912,7 +912,7 @@ excess of 1.
                           0: {
                              # number of individs to sample from pop
                              100: {
-                                  # 1x2 coord pair of nx2 coord pairs of individs
+                                  # 1x2 coord pair or nx2 coord pairs of individs
                                   'coords':             [0, 0],
                                   # valid kwargs dict for Model.add_individuals
                                   # 'source_msprime_params' argument...
@@ -941,7 +941,9 @@ from that population, and the value is a dict of parameters that
 includes: 1.) the starting coordinates to be assigned to the `Individuals`
 (either a single coordinate pair at which all `Individuals` should be
 placed or an nx2 `numpy.ndarray` containing a coordinate pair for each
-`Individual`; and 2.) a series of parameters that can be fed
+`Individual`; and note, these should be cell coordinates on the `Landscape`
+array, not projected coordinates in any input rasters that may have been used!);
+and 2.) a series of parameters that can be fed
 as kwargs into the 'source_msprime_params' parameter of the
 `Model.add_individuals` method. The `msprime` functionality
 provided through the `Model.add_individuals` method is a wrapper

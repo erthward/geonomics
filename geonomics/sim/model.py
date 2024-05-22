@@ -290,6 +290,11 @@ class Model:
                 "its key in the Community dict). Instead, a %s was "
                 "provided.") % str(type(spp_id)))
 
+    def _get_spp_msprime_init_status(self, spp_id):
+        msprime_init_status = ('msprime' in
+                        self.params['comm']['species'][spp_id]['init'])
+        return msprime_init_status
+
     #method for getting a Trait's number, give a name (str) or number
     def _get_trt_num(self, spp, trt_id):
         if isinstance(trt_id, int) or trt_id is None:
@@ -596,7 +601,6 @@ class Model:
     #functions within the list as desired
     def _make_fn_queue(self, burn=False):
         queue = []
-
         #append the methods to increment the timestep
         #attributes (i.e. the timestep counters)
         if burn:
@@ -606,26 +610,31 @@ class Model:
             queue.append(self._set_comm_t)
             for spp in self.comm.values():
                 queue.append(lambda: self._set_spp_t(spp.idx))
-
         #append the set_age_stage methods to the queue
         for spp in self.comm.values():
-            queue.append(lambda: self._set_age_stage(spp.idx))
+            # NOTE: skip burn-in functions for msprime-init Species
+            if not burn or not self._get_spp_msprime_init_status(spp.name):
+                queue.append(lambda: self._set_age_stage(spp.idx))
         #append the do_movement_methods, if spp._move
         for spp in self.comm.values():
-            if spp._move:
-                queue.append(lambda: self._do_movement(spp.idx))
+            # NOTE: skip burn-in functions for msprime-init Species
+            if not burn or not self._get_spp_msprime_init_status(spp.name):
+                if spp._move:
+                    queue.append(lambda: self._do_movement(spp.idx))
         #append the do_pop_dynamics methods
         #FIXME: Consider whether the order of these needs to be specified, or
         #randomized, should people want to eventually simulate
         #multiple, interacting species
         for spp in self.comm.values():
-            queue.append(lambda: self._do_pop_dynamics(spp.idx))
-
+            # NOTE: skip burn-in functions for msprime-init Species
+            if not burn or not self._get_spp_msprime_init_status(spp.name):
+                queue.append(lambda: self._do_pop_dynamics(spp.idx))
         #append the set_Nt methods
         # (now that this time step's population sizes are set)
         for spp in self.comm.values():
-            queue.append(lambda: self._set_Nt(spp.idx))
-
+            # NOTE: skip burn-in functions for msprime-init Species
+            if not burn or not self._get_spp_msprime_init_status(spp.name):
+                queue.append(lambda: self._set_Nt(spp.idx))
         #add the Changer.make_change, data._DataCollector._write_data, and 
         #stats._StatsCollector._write_stats methods, if this is not the burn-in
         #and if spp and/or land have Changer objects, or if the model has 
@@ -661,12 +670,24 @@ class Model:
     def _print_timestep_info(self, mode):
         verbose_msg = '%s:\tit=%i:\tt=%i\n' % (mode, self.it,
                                 [self.burn_t if mode == 'burn' else self.t][0])
-        spps_submsgs = ''.join(['\tspecies: %s%sN=%i\t(births=%i\tdeaths=%i)\n' %
-                        (spp.name,
-                        ' ' * (30 - len(spp.name)),
-                        spp.Nt[:].pop(),
-                        spp.n_births[:].pop(),
-                        spp.n_deaths[:].pop()) for spp in self.comm.values()])
+        spps_submsgs = ''
+        for spp in self.comm.values():
+            if len(spp.Nt) > 0:
+                Nt_val = spp.Nt[:].pop()
+            else:
+                Nt_val = np.nan
+            if len(spp.n_births) > 0:
+                n_births_val = spp.n_births[:].pop()
+            else:
+                n_births_val = np.nan
+            if len(spp.n_deaths) > 0:
+                n_deaths_val = spp.n_deaths[:].pop()
+            else:
+                n_deaths_val = np.nan
+            spacer = ' ' * (30 - len(spp.name))
+            spp_submsg = (f"\tspecies: {spp.name}{spacer}N={Nt_val}"
+                          f"\t(births={n_births_val}\tdeaths={n_deaths_val})\n")
+            spps_submsgs += spp_submsg
         verbose_msg = verbose_msg + spps_submsgs
         print(verbose_msg)
         print('\t' + '.' * (self.__term_width__ - self.__tab_len__), flush=True)
@@ -699,8 +720,7 @@ class Model:
                             spp._set_genomes_and_tables(self.burn_T, self.T)
                             # replace gnx-simulated Individuals with
                             # msprime-simulated Individuals, if required
-                            if ('msprime' in self.params['comm']['species'][
-                                                            spp.name]['init']):
+                            if self._get_spp_msprime_init_status(spp.name):
                                 msp = self.params['comm']['species'][
                                                 spp.name]['init']['msprime']
                                 spp._init_msprime_pop(land=self.land,
@@ -2013,6 +2033,8 @@ class Model:
             speciome = spp._get_genotypes(biallelic=False)
         else:
             speciome = np.mean(np.stack([i.g for i in spp.values()]), axis=2)
+        assert (0 < n_pcs <= 3 and
+                isinstance(n_pcs, int)), "'n_pcs' must be an integer between 0 and 3"
         # run PCA on speciome
         pca = PCA(n_components=n_pcs)
         PCs = pca.fit_transform(speciome)

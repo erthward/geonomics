@@ -1639,6 +1639,7 @@ class Species(OD):
             # NOTE: subtracting 0.001 from dims, to match how dims are handled
             #       for starting coordinate assignment in
             #       individuals._make_individual
+            # NOTE: land dims are ordered as [x,y], i.e., [j,i]
             assert (0 <= coord[0] <= self._land_dim[0] - 0.001 and
                     0 <= coord[1] <= self._land_dim[1] - 0.001), (
                                                      "Coords must be "
@@ -1837,7 +1838,7 @@ class Species(OD):
 
             # make sure Species has no selection before allowing use of msprime
             assert not self.selection, ("msprime is a coalescent "
-                                         "simulator, so cannot be simulate "
+                                         "simulator, so cannot simulate "
                                          "selection. Consider using a second "
                                          "Geonomics model to simulate a source "
                                          "population with selection.")

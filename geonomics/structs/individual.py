@@ -217,7 +217,6 @@ def _make_individual(idx, offspring=True, dim=None, genomic_architecture=None,
         #the dimension itself if an extremely high value is drawn
         x = np.clip(x, 0, dim[0]-0.001)
         y = np.clip(y, 0, dim[1]-0.001)
-
     #set the sex, if necessary
     if sex is None:
         #NOTE: For now sex randomly chosen at 50/50. Change if

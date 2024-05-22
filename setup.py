@@ -52,9 +52,8 @@ setuptools.setup(
     project_urls={
         'Documentation': ('https://htmlpreview.github.io/?https://github.com/'
                           'drewhart/geonomics/blob/master/doc/built/doc.html'),
-        # 'Methods Paper': 'PAPER URL HERE!',
+        'Methods Paper': 'https://doi.org/10.1093/molbev/msab175',
         'Source': 'https://github.com/drewhart/geonomics',
-        # 'Tracker': 'BUGTRACKERSITHERE',
     },
 #    install_requires=['numpy', 'matplotlib>=3.0.0', 'pandas>=0.23.4', 'geopandas',
 #                      'scipy>=1.3.1', 'scikit-learn', 'statsmodels>=0.9.0',

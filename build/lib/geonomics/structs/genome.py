@@ -875,7 +875,11 @@ def _make_genomic_architecture(spp_params, land):
     if 'gen_arch_file' in g_params.keys():
         if g_params.gen_arch_file is not None:
             gen_arch_file = pd.read_csv(g_params.gen_arch_file)
-
+            # check that the genome length matches the params file
+            assert len(gen_arch_file) == g_params.L, ("The length of the "
+                        "custom genomic architecture file must match the "
+                        "genome length provided to the parameter 'L' in "
+                        "Geonomics parameters file.")
             # check that each trait is assigned an alpha value
             for trt_val, alpha_val in zip(gen_arch_file['trait'],
                                           gen_arch_file['alpha']):

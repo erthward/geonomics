@@ -1537,6 +1537,7 @@ class Species(OD):
                             n_left=None,
                             keep_sites_tab=False,
                             check_extinct=False,
+                            verbose=False,
                            ):
 
         # validate args
@@ -1597,7 +1598,8 @@ class Species(OD):
             self.extinct = self._check_extinct()
 
         # print informative output
-        print(f"\n{len(individs)} Individuals successfully removed.\n")
+        if verbose:
+            print(f"\n{len(individs)} Individuals successfully removed.\n")
         return
 
 
@@ -1804,7 +1806,9 @@ class Species(OD):
                                       source_spp_copy if ind not in individs]
             else:
                 individs_to_remove = [*source_spp_copy][n:]
-            source_spp_copy._remove_individuals(individs=individs_to_remove)
+            source_spp_copy._remove_individuals(individs=individs_to_remove,
+                                                verbose=False,
+                                               )
             if individs is not None:
                 assert len(source_spp_copy) == len(individs)
             else:
@@ -1905,6 +1909,12 @@ class Species(OD):
             ind._individuals_tab_id += self._tc.individuals.num_rows
         max_idx_af = self.max_ind_idx
         assert max_idx_af - max_idx_b4 == len(individs)
+        # compare the next idx values generated at top of this function with
+        # those returned by _prep_tskit_tabcoll_for_gnx_spp_union
+        assert set(next_n_idxs) == set(next_gnx_idxs), ("the next n idxs "
+                                "calculated by _add_individuals differ from "
+                                "those returned by "
+                                "_prep_tskit_tabcoll_for_gnx_spp_union")
         # compare the idx values that were set on the Individuals to those that
         # were set in the TableCollection.individuals table
         assert np.all(np.array(next_gnx_idxs) == np.array(new_idxs)), (
@@ -2048,6 +2058,7 @@ class Species(OD):
         # remove all current individs
         self._remove_individuals(n=len(self),
                                  keep_sites_tab=False,
+                                 verbose=True,
                                 )
         assert len(self) == 0
         # loop over source pops and add individuals from each one
@@ -2100,7 +2111,7 @@ class Species(OD):
                     assert len(coords) == 2, coords_struct_err_msg
             elif isinstance(coords, np.ndarray):
                 assert (coords.shape == (1, 2) or
-                        coords.shape == (n, 2)), coords_strust_err_msg
+                        coords.shape == (n, 2)), coords_struct_err_msg
             # simulate the individuals and add them to the Species
             self._add_individuals(n=n,
                                   coords=coords,
@@ -2175,7 +2186,7 @@ class Species(OD):
             # whether each pair can mate
             can_mate = np.bool8(np.random.binomial(n=1, p=self.b,
                                                    size=pairs.shape[0]))
-            pairs = pairs[can_mate, :]
+            pairs = np.atleast_2d(pairs)[can_mate, :]
         return pairs
 
 

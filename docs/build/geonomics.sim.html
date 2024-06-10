@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>geonomics.sim package &mdash; geonomics 1.4.2 documentation</title>
+  <title>geonomics.sim package &mdash; geonomics 1.4.4 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -169,43 +169,46 @@ during simulations. Defaults to False.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.add_individuals">
 <span class="sig-name descname"><span class="pre">add_individuals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recip_spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_msprime_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.add_individuals" title="Permalink to this definition"></a></dt>
-<dd><p>Add individuals to a recipient Species object, either using a second
-Species object as the source population or feeding a dict of parameters
+<dd><p>add individuals to a recipient species object, either using a second
+species object as the source population or feeding a dict of parameters
 into msprime to simulate the source population.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<em>int</em>) – The number of Individuals to be added.</p></li>
-<li><p><strong>coords</strong> (<em>{tuple</em><em>, </em><em>list</em><em>, </em><em>numpy.ndarray}</em>) – A tuple, list of numpy.ndarray indicating the x,y coordinates where the
-new Individuals should be added to the recipient Species.
-If <cite>coords</cite> contains 2 values then all added Individuals will be placed
+<li><p><strong>n</strong> (<em>int</em>) – the number of individuals to be added.</p></li>
+<li><p><strong>coords</strong> (<em>{tuple</em><em>, </em><em>list</em><em>, </em><em>numpy.ndarray}</em>) – a tuple, list of numpy.ndarray indicating the x,y coordinates where the
+new individuals should be added to the recipient species.
+if <cite>coords</cite> contains 2 values then all added individuals will be placed
 at the x,y coordinate pair indicated by those 2 values.
-Otherwise, <cite>coords</cite> may be of size <cite>n</cite> x 2, indicating the x,y
-coordinate pair at which each of the <cite>n</cite> Individuals will be placed.</p></li>
-<li><p><strong>recip_spp</strong> (<em>{gnx.structs.species.Species</em><em>, </em><em>int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – An int or str referring to the Species in this Model to which
-Individuals should be added.</p></li>
-<li><p><strong>source_spp</strong> (<em>{gnx.structs.species.Species</em><em>, </em><em>int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A Geonomics.structs.species.Species object to act as the source
+otherwise, <cite>coords</cite> may be of size <cite>n</cite> x 2, indicating the x,y
+coordinate pair at which each of the <cite>n</cite> individuals will be placed.</p></li>
+<li><p><strong>recip_spp</strong> (<em>{gnx.structs.species.species</em><em>, </em><em>int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default:</em>) – None
+an int or str referring to the species in this model to which
+individuals should be added.</p></li>
+<li><p><strong>source_spp</strong> (<em>{gnx.structs.species.species</em><em>, </em><em>int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default:</em>) – None
+a geonomics.structs.species.species object to act as the source
 population from which individuals will be taken
-(or an int or str referring to that Species within this Model).</p></li>
-<li><p><strong>source_msprime_params</strong> (<em>dict</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A dict of keyword args to be fed to <cite>gnx.sim_msprime_individs()</cite>,
+(or an int or str referring to that species within this model).</p></li>
+<li><p><strong>source_msprime_params</strong> (<em>dict</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – a dict of keyword args to be fed to <cite>gnx.sim_msprime_individs()</cite>,
 to parameterize the msprime source population model from which
-new Individuals will be drawn. These include:
+new individuals will be drawn. these include:
 - recomb_rate         (required)
 - mut_rate            (required)
 - demography          (optional; default: None)
 - population_size     (optional; default: None)
 - ancestry_model      (optional; default: None)
 - random_seed         (optional; default: None)
-See <cite>gnx.sim_msprime_individs</cite> for details.</p></li>
-<li><p><strong>individs</strong> (<em>{tuple</em><em>, </em><em>list</em><em>, </em><em>numpy.ndarray}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – A 1d numpy.ndarray or equivalent array-like containing the int indices
-of the Individuals to be taken from <cite>source_spp</cite> and added to
-<cite>recip_spp</cite>. If None</p></li>
+see <cite>gnx.sim_msprime_individs</cite> for details.</p></li>
+<li><p><strong>individs</strong> (<em>{tuple</em><em>, </em><em>list</em><em>, </em><em>numpy.ndarray}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – a 1d numpy.ndarray or equivalent array-like containing the int indices
+of the individuals to be taken from <cite>source_spp</cite> and added to
+<cite>recip_spp</cite>. If None, Indivduals from <cite>source_spp</cite> are randomly
+chosen.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Alters <cite>recip_spp</cite> in place by adding the provided
+<dd class="field-even"><p>alters <cite>recip_spp</cite> in place by adding the provided
 (if <cite>source_spp</cite> is not None) or simulated (if <cite>source_msprime_params</cite>
-is not None) Individuals.</p>
+is not None) individuals.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>None</p>
@@ -235,27 +238,27 @@ is not None) Individuals.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.get_cells">
 <span class="sig-name descname"><span class="pre">get_cells</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_cells" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the cell coordinates of any or all Individuals in a Species</p>
+<dd><p>returns the cell coordinates of any or all individuals in a species</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
-<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – if provided, indicates the integer indices of the individuals
 whose cell coordinates should be returned.
-If None, all Individuals’ cell coordinates will be returned.</p></li>
+if None, all individuals’ cell coordinates will be returned.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><p>Returns an nx2 numpy array, where n is the number of Individuals
+<dd class="field-even"><p><p>returns an nx2 numpy array, where n is the number of individuals
 whose coordinates were requested, and the 2 columns correspond to
 the i then j (i.e. lat then lon) array coordinates.</p>
-<p>Note: Ccolumns are in the reverse order of the columns
-of the array returned by <cite>Model.get_coords()</cite>, to facilitate
-array-subsetting of the Landscape Layer raster arrays.</p>
-<p>Note: Rows are sorted by index number of the Individuals,
+<p>note: ccolumns are in the reverse order of the columns
+of the array returned by <cite>model.get_coords()</cite>, to facilitate
+array-subsetting of the landscape layer raster arrays.</p>
+<p>note: rows are sorted by index number of the individuals,
 regardless of input index order.</p>
 </p>
 </dd>
@@ -268,25 +271,25 @@ regardless of input index order.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.get_coords">
 <span class="sig-name descname"><span class="pre">get_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_coords" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the x,y coordinates of any or all Individuals in a Species</p>
+<dd><p>returns the x,y coordinates of any or all individuals in a species</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
-<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – if provided, indicates the integer indices of the individuals
 whose coordinates should be returned.
-If None, all Individuals’ coordinates will be returned.</p></li>
+if None, all individuals’ coordinates will be returned.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><em>np.array</em> – Returns an nx2 numpy array, where n is the number of Individuals
+<li><p><em>np.array</em> – returns an nx2 numpy array, where n is the number of individuals
 whose coordinates were requested, and the 2 columns correspond to
 the x then y (i.e. lon then lat) coordinates.</p></li>
-<li><p><strong>Note</strong> (<em>Rows are sorted by index number of the Individuals,</em>) – regardless of input index order.</p></li>
+<li><p><strong>note</strong> (<em>rows are sorted by index number of the individuals,</em>) – regardless of input index order.</p></li>
 </ul>
 </p>
 </dd>
@@ -296,27 +299,27 @@ the x then y (i.e. lon then lat) coordinates.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.get_e">
 <span class="sig-name descname"><span class="pre">get_e</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyr_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_e" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the current environmental values of any or all
-Individuals in a Species, for one or all Landscape Layers</p>
+<dd><p>returns the current environmental values of any or all
+individuals in a species, for one or all landscape layers</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
-<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – if provided, indicates the integer indices of the individuals
 whose environmental values should be returned.
-If None, all Individuals’ environmental values  will be returned.</p></li>
-<li><p><strong>lyr_num</strong> (<em>int</em><em>, </em><em>default:None</em>) – If provided, indicates the Layer for which values should be
-returned. If None, values will be returned for all Layers.</p></li>
+if None, all individuals’ environmental values  will be returned.</p></li>
+<li><p><strong>lyr_num</strong> (<em>int</em><em>, </em><em>default:None</em>) – if provided, indicates the layer for which values should be
+returned. if None, values will be returned for all layers.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><p>Returns an nxl numpy array, where n is the number of Individuals
-whose coordinates were requested, and l is the number of Layers
-requested, ordered by increasing Layer number.</p>
-<p>Note: Rows are sorted by index number of the Individuals,
+<dd class="field-even"><p><p>returns an nxl numpy array, where n is the number of individuals
+whose coordinates were requested, and l is the number of layers
+requested, ordered by increasing layer number.</p>
+<p>note: rows are sorted by index number of the individuals,
 regardless of input index order.</p>
 </p>
 </dd>
@@ -329,29 +332,29 @@ regardless of input index order.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.get_fitness">
 <span class="sig-name descname"><span class="pre">get_fitness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_fitness" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the current fitness of any or all Individuals in a Species,
-for one or all Traits</p>
+<dd><p>returns the current fitness of any or all individuals in a species,
+for one or all traits</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
-<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – if provided, indicates the integer indices of the individuals
 whose fitness should be returned.
-If None, all Individuals’ fitness values will be returned.</p></li>
-<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Trait for which the GEA should be run.
-Can be either the Trait’s index number (i.e. its integer key in the
-GenomicArchitecture’s traits dict), or its name (as a character
+if None, all individuals’ fitness values will be returned.</p></li>
+<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the trait for which the gea should be run.
+can be either the trait’s index number (i.e. its integer key in the
+genomicarchitecture’s traits dict), or its name (as a character
 string).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><p>Returns an nxt numpy array, where n is the number of Individuals
-whose coordinates were requested, and t is the number of Traits
+<dd class="field-even"><p><p>returns an nxt numpy array, where n is the number of individuals
+whose coordinates were requested, and t is the number of traits
 requested.</p>
-<p>Note: Rows are sorted by index number of the Individuals,
+<p>note: rows are sorted by index number of the individuals,
 regardless of input index order.</p>
 </p>
 </dd>
@@ -364,39 +367,39 @@ regardless of input index order.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.get_genotypes">
 <span class="sig-name descname"><span class="pre">get_genotypes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loci</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">biallelic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_genotypes" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the genotypes of any or all Individuals in a Species
+<dd><p>returns the genotypes of any or all individuals in a species
 and for any or all loci</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
-<li><p><strong>loci</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the loci for which genotypes should be
-returned. If None, genotypes will be returned for all loci.</p></li>
-<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the only Individuals
+<li><p><strong>loci</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – if provided, indicates the loci for which genotypes should be
+returned. if None, genotypes will be returned for all loci.</p></li>
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – if provided, indicates the integer indices of the only individuals
 for whom genotypes should be returned.
-If None, all Individuals’ genotypes will be returned.</p></li>
-<li><p><strong>biallelic</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If False, results are returned as nxL numpy arrays, where n is the
-number of Individuals requested and L is the number of loci
+if None, all individuals’ genotypes will be returned.</p></li>
+<li><p><strong>biallelic</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – if False, results are returned as nxl numpy arrays, where n is the
+number of individuals requested and l is the number of loci
 requested.
-If True, results are returned as nxLx2 numpy arrays, where the 2
+if True, results are returned as nxlx2 numpy arrays, where the 2
 dimensions on the third axis represent the two haploid genotypes of
-each diploid Individual.</p></li>
+each diploid individual.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><p>Returns a numpy array containing the requested genotypes.
-The shape of the array depends on the number of Individuals and
+<dd class="field-even"><p><p>returns a numpy array containing the requested genotypes.
+the shape of the array depends on the number of individuals and
 loci and the return format requested.
-The first and second axes represent the Individuals and loci,
-returned in sorted numerical order. The optional third axis
+the first and second axes represent the individuals and loci,
+returned in sorted numerical order. the optional third axis
 represents ploidy, if biallelic genotypes are requested.
-(See explanation of the argument ‘biallelic’, above,
+(see explanation of the argument ‘biallelic’, above,
 for more detail.)</p>
-<p>Note: All axes are sorted by index number of the object they
-represent (Individuals, Loci), regardless of input index order.</p>
+<p>note: all axes are sorted by index number of the object they
+represent (individuals, loci), regardless of input index order.</p>
 </p>
 </dd>
 <dt class="field-odd">Return type</dt>
@@ -408,21 +411,21 @@ represent (Individuals, Loci), regardless of input index order.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.get_random_individs">
 <span class="sig-name descname"><span class="pre">get_random_individs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_random_individs" title="Permalink to this definition"></a></dt>
-<dd><p>Returns a size-n sample of index numbers
-for random individuals in a Species.</p>
+<dd><p>returns a size-n sample of index numbers
+for random individuals in a species.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<em>int</em>) – The number of random Individuals to sample</p></li>
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>n</strong> (<em>int</em>) – the number of random individuals to sample</p></li>
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Returns a length-n 1d numpy array containing the sorted index
-numbers of the sampled Individuals.</p>
+<dd class="field-even"><p>returns a length-n 1d numpy array containing the sorted index
+numbers of the sampled individuals.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>np.array</p>
@@ -433,12 +436,12 @@ numbers of the sampled Individuals.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.get_tree_sequence">
 <span class="sig-name descname"><span class="pre">get_tree_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_tree_sequence" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the tskit.TreeSequence object for the indicated Species</p>
+<dd><p>returns the tskit.treesequence object for the indicated species</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p>
 </dd>
 </dl>
@@ -447,24 +450,24 @@ string).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.get_x">
 <span class="sig-name descname"><span class="pre">get_x</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_x" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the x coordinates of any or all Individuals in a Species</p>
+<dd><p>returns the x coordinates of any or all individuals in a species</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
-<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – if provided, indicates the integer indices of the individuals
 whose coordinates should be returned.
-If None, all Individuals’ coordinates will be returned.</p></li>
+if None, all individuals’ coordinates will be returned.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><em>np.array</em> – Returns an nx1 numpy array, where n is the number of Individuals
+<li><p><em>np.array</em> – returns an nx1 numpy array, where n is the number of individuals
 whose coordinates were requested.</p></li>
-<li><p><strong>Note</strong> (<em>Rows are sorted by index number of the Individuals,</em>) – regardless of input index order.</p></li>
+<li><p><strong>note</strong> (<em>rows are sorted by index number of the individuals,</em>) – regardless of input index order.</p></li>
 </ul>
 </p>
 </dd>
@@ -474,24 +477,24 @@ whose coordinates were requested.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.get_y">
 <span class="sig-name descname"><span class="pre">get_y</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_y" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the y coordinates of any or all Individuals in a Species</p>
+<dd><p>returns the y coordinates of any or all individuals in a species</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
-<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – if provided, indicates the integer indices of the individuals
 whose coordinates should be returned.
-If None, all Individuals’ coordinates will be returned.</p></li>
+if None, all individuals’ coordinates will be returned.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><em>np.array</em> – Returns an nx1 numpy array, where n is the number of Individuals
+<li><p><em>np.array</em> – returns an nx1 numpy array, where n is the number of individuals
 whose coordinates were requested.</p></li>
-<li><p><strong>Note</strong> (<em>Rows are sorted by index number of the Individuals,</em>) – regardless of input index order.</p></li>
+<li><p><strong>note</strong> (<em>rows are sorted by index number of the individuals,</em>) – regardless of input index order.</p></li>
 </ul>
 </p>
 </dd>
@@ -501,29 +504,29 @@ whose coordinates were requested.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.get_z">
 <span class="sig-name descname"><span class="pre">get_z</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.get_z" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the phenotypic values of any or all Individuals in a Species,
-for one or all Traits</p>
+<dd><p>returns the phenotypic values of any or all individuals in a species,
+for one or all traits</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
-<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – If provided, indicates the integer indices of the Individuals
+<li><p><strong>individs</strong> (<em>iterable collection of ints</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – if provided, indicates the integer indices of the individuals
 whose phenotypes should be returned.
-If None, all Individuals’ phenotypes will be returned.</p></li>
-<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Trait for which the GEA should be run.
-Can be either the Trait’s index number (i.e. its integer key in the
-GenomicArchitecture’s traits dict), or its name (as a character
+if None, all individuals’ phenotypes will be returned.</p></li>
+<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the trait for which the gea should be run.
+can be either the trait’s index number (i.e. its integer key in the
+genomicarchitecture’s traits dict), or its name (as a character
 string).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><p>Returns an nxt numpy array, where n is the number of Individuals
-whose coordinates were requested, and t is the number of Traits
+<dd class="field-even"><p><p>returns an nxt numpy array, where n is the number of individuals
+whose coordinates were requested, and t is the number of traits
 requested.</p>
-<p>Note: Rows are sorted by index number of the Individuals,
+<p>note: rows are sorted by index number of the individuals,
 regardless of input index order.</p>
 </p>
 </dd>
@@ -659,26 +662,20 @@ string).</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="geonomics.sim.model.Model.plot_demographic_changes">
-<span class="sig-name descname"><span class="pre">plot_demographic_changes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_demographic_changes" title="Permalink to this definition"></a></dt>
-<dd><p>TEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.plot_demographic_pyramid">
 <span class="sig-name descname"><span class="pre">plot_demographic_pyramid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_demographic_pyramid" title="Permalink to this definition"></a></dt>
-<dd><p>Plot a demographic pyramid for the chosen Species</p>
-<p>Plot a paired, horizontal bar plot of the chosen Species’
-count of Individuals of each age.</p>
+<dd><p>plot a demographic pyramid for the chosen species</p>
+<p>plot a paired, horizontal bar plot of the chosen species’
+count of individuals of each age.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species whose demographic pyramid will be
-plotted. Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species whose demographic pyramid will be
+plotted. can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Returns no output</p>
+<dd class="field-even"><p>returns no output</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>None</p>
@@ -752,6 +749,78 @@ being plotted.</p></li>
 matplotlib, matplotlib.pyplot.pcolormesh, matplotlib.pyplot.scatter,
 and matplotlib.pyplot.text.</p></li>
 </ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="geonomics.sim.model.Model.plot_dispersal">
+<span class="sig-name descname"><span class="pre">plot_dispersal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_dispersals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_distr_param1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_distr_param2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_distr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lognormal'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">land_cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'plasma'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_by_individ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">increasing_linewidth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_start_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_dispersal" title="Permalink to this definition"></a></dt>
+<dd><blockquote>
+<div><p>plot example dispersal events for a number of
+individuals of the indicated species and using the indicated parameter
+values. note that directions will be drawn using whatever directional
+behavior is parameterized for the given species (i.e., from a surface,
+or simply from a universally parameterized von mises distribution).</p>
+<dl class="simple">
+<dt>spp<span class="classifier">{int, str}, optional, default: 0</span></dt><dd><p>a reference to the species for which dispersal should be plotted.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
+string). If None, the first species will be plotted to be plotted.</p>
+</dd>
+<dt>lyr<span class="classifier">{int, str}, optional, default: None</span></dt><dd><p>a reference to the layer whose raster should be plotted. can be
+either the layer’s index number (i.e. its integer key in the
+landscape dict), or its name (as a character string). defaults
+to None, in which case the first layer will be plotted.</p>
+</dd>
+<dt>n_dispersals<span class="classifier">int</span></dt><dd><p>the number of independent dispersals to plot for each individual.</p>
+</dd>
+<dt>n_individs<span class="classifier">{int, None}, default: None</span></dt><dd><p>the number of individuals whose dispersal should be
+plotted. defaults to None, in which case all individuals will be
+plotted.</p>
+</dd>
+</dl>
+<p>distance_distr_param1,
+distance_distr_param2 : float, optional default: None</p>
+<blockquote>
+<div><p>these are the parameters defining the distributions from which the
+direction and distance values for individual dispersals are drawn. if
+passed, their values will be used to determine the dispersal behavior
+that is plotted (even if a parametersdict was passed to <em>params</em>,
+because these values will override any values therein). for more
+details, see the ‘parameters’ section of the online documentation.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>distance_distr: str, optional default: ‘lognormal’</dt><dd><p>this indicates the distribution to use for drawing dispersal
+distancs. defaults to ‘lognormal’, but can also be set to ‘wald’ or
+‘levy’.</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl>
+<dt>color<span class="classifier">valid mpl.plt color value, optional, default: ‘black’</span></dt><dd><blockquote>
+<div><p>face color for the dipseral lines.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>alpha<span class="classifier">valid mpl.plt alpha value, optional, default: None</span></dt><dd><p>transparency value for the dispersal lines.</p>
+</dd>
+<dt>size<span class="classifier">scalar or array_like, optional, default: 10</span></dt><dd><p>size of the scatter points.</p>
+</dd>
+<dt>land_cmap<span class="classifier">{valid string, None}, optional, default: ‘plasma’</span></dt><dd><p>colormap to use for plotting layer rasters. If None, will default
+to the colormap automatically assigned to the layer by geonomics
+based on the layer’s index number in the landscape dict. can be
+passed any string that references a colormap in matplotlib.pyplot.cm.</p>
+</dd>
+<dt>ticks<span class="classifier">bool, optional, default: False</span></dt><dd><p>If True, x- and y-axis ticks will be added to the plot.</p>
+</dd>
+<dt>color_by_individ<span class="classifier">bool, optional, default: True</span></dt><dd><p>If True, each dispersal line for each plotted individual will have its own
+distinct color, making it easier to follow the track and distinguish it
+from others in the plot.</p>
+</dd>
+<dt>include_start_points<span class="classifier">bool, optional, default: False</span></dt><dd><p>If True, a scatter of points will be plotted to signify the starting
+points from which each individual is dispersing.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -837,25 +906,25 @@ and matplotlib.pyplot.text.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.plot_example_recombinant_genome">
 <span class="sig-name descname"><span class="pre">plot_example_recombinant_genome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_example_recombinant_genome" title="Permalink to this definition"></a></dt>
-<dd><p>Plot an example recombinant genome for the chosen Species</p>
-<p>Plot a vertical image depicting an example recombinant genome for the
-chosen Species. Each gamete (i.e. vertical half) is colored using a
+<dd><p>plot an example recombinant genome for the chosen species</p>
+<p>plot a vertical image depicting an example recombinant genome for the
+chosen species. each gamete (i.e. vertical half) is colored using a
 different colormap, and for each one alternating bands of color
 indicate breakpoints where recombination occurred between the two
 parental chromatids (or haploid chromatid sets, for multi-chromosome
-models). The resulting plot can be useful for introspecting or
+models). the resulting plot can be useful for introspecting or
 exploring a model, because each plot will be unique, and will be a
 result of the array of interlocus recombination rates defined in the
-Species’ GenomicArchitecture.</p>
+species’ genomicarchitecture.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which an example recombinant genome
-should be plotted. Can be either the Species’ index number
-(i.e. its integer key in the Community dict), or its name
+<dd class="field-odd"><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which an example recombinant genome
+should be plotted. can be either the species’ index number
+(i.e. its integer key in the community dict), or its name
 (as a character string).</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Returns no output</p>
+<dd class="field-even"><p>returns no output</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>None</p>
@@ -863,7 +932,7 @@ should be plotted. Can be either the Species’ index number
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>Not valid for Species without genomes.</p></li>
+<li><p>not valid for species without genomes.</p></li>
 </ul>
 </dd></dl>
 
@@ -1156,6 +1225,70 @@ string).</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="geonomics.sim.model.Model.plot_movement">
+<span class="sig-name descname"><span class="pre">plot_movement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_timesteps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_distr_param1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_distr_param2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_distr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lognormal'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">land_cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'plasma'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_by_individ</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">increasing_linewidth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_start_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_movement" title="Permalink to this definition"></a></dt>
+<dd><p>plot example movement tracks for a number of
+individuals of the indicated species and using the indicated parameter
+values. note that directions will be drawn using whatever directional
+behavior is parameterized for the given species (i.e., from a surface,
+or simply from a universally parameterized von mises distribution).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which movement should be plotted.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
+string). if None, the first species will be plotted to be plotted.</p></li>
+<li><p><strong>lyr</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – a reference to the layer whose raster should be plotted. can be
+either the layer’s index number (i.e. its integer key in the
+landscape dict), or its name (as a character string). defaults
+to None, in which case the first layer will be plotted.</p></li>
+<li><p><strong>n_timesteps</strong> (<em>int</em>) – a number of timesteps (i.e. individual movement steps) to be plotted
+in each individual’s movement track.</p></li>
+<li><p><strong>n_individs</strong> (<em>{int</em><em>, </em><em>None}</em><em>, </em><em>default: None</em>) – the number of individuals whose movement should be
+plotted. defaults to None, in which case all individuals will be
+plotted.</p></li>
+<li><p><strong>distance_distr_param1</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p>:param :
+:param distance_distr_param2: these are the parameters defining the distributions from which the</p>
+<blockquote>
+<div><p>direction and distance values for individual movements are drawn. if
+passed, their values will be used to determine the movement behavior
+that is plotted (even if a parametersdict was passed to <em>params</em>,
+because these values will override any values therein). for more
+details, see the ‘parameters’ section of the online documentation.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distance_distr</strong> (<em>str</em><em>, </em><em>optional default: 'lognormal'</em>) – this indicates the distribution to use for drawing movement
+distancs. defaults to ‘lognormal’, but can also be set to ‘wald’ or
+‘levy’.</p></li>
+<li><p><strong>color</strong> (<em>valid mpl.plt color value</em><em>, </em><em>optional</em><em>, </em><em>default: 'black'</em>) – face color for the lines in the movement-track plot.</p></li>
+<li><p><strong>alpha</strong> (<em>valid mpl.plt alpha value</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – transparency value for the lines in the movement-track plot.</p></li>
+<li><p><strong>size</strong> (<em>scalar</em><em> or </em><em>array_like</em><em>, </em><em>optional</em><em>, </em><em>default: 10</em>) – size of the scatter points.</p></li>
+<li><p><strong>land_cmap</strong> (<em>{valid string</em><em>, </em><em>None}</em><em>, </em><em>optional</em><em>, </em><em>default: 'plasma'</em>) – colormap to use for plotting layer rasters. If None, will default
+to the colormap automatically assigned to the layer by geonomics
+based on the layer’s index number in the landscape dict. can be
+passed any string that references a colormap in matplotlib.pyplot.cm.</p></li>
+<li><p><strong>ticks</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, x- and y-axis ticks will be added to the plot.</p></li>
+<li><p><strong>color_by_individ</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – If True, each plotted individual’s movement track will have its own
+distinct color, making it easier to follow the track and distinguish it
+from others in the plot.</p></li>
+<li><p><strong>increasing_linewidth</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – If True, each individual’s movement track will get wider with each
+successive movement step, making it easier to distinguish
+directionality in the movement track.</p></li>
+<li><p><strong>include_start_points</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: False</em>) – If True, a scatter of points will be plotted to signify the starting
+points of individuals’ movement tracks.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.plot_movement_surface">
 <span class="sig-name descname"><span class="pre">plot_movement_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hist'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'plasma'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_fact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_rast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_movement_surface" title="Permalink to this definition"></a></dt>
 <dd><p>Create any of 4 types of plots to summarize a Species’ MovementSurface</p>
@@ -1319,25 +1452,25 @@ and matplotlib.pyplot.text.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.plot_pop_growth">
 <span class="sig-name descname"><span class="pre">plot_pop_growth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actual_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_pop_growth" title="Permalink to this definition"></a></dt>
-<dd><p>Plot the chosen Species’ population over time</p>
-<p>Plot a line plot of the Species’ population over model time (in blue),
+<dd><p>plot the chosen species’ population over time</p>
+<p>plot a line plot of the species’ population over model time (in blue),
 as well as the expected population-size trend (based on summing the
-Species’ carrying-capacity raster and using that total expected
+species’ carrying-capacity raster and using that total expected
 population size to solve the the logistic growth equation; in red).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species whose population growth will be plotted.
-Can be either the Species’ index number (i.e. its integer key
-in the Community dict), or its name (as a character string).</p></li>
-<li><p><strong>expected</strong> (<em>bool</em><em>, </em><em>default: True</em>) – Whether or not to plot the line showing the expected (under
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species whose population growth will be plotted.
+can be either the species’ index number (i.e. its integer key
+in the community dict), or its name (as a character string).</p></li>
+<li><p><strong>expected</strong> (<em>bool</em><em>, </em><em>default: True</em>) – whether or not to plot the line showing the expected (under
 the logistic growth model) trajectory of populaion growth, in red.</p></li>
-<li><p><strong>actual</strong> (<em>bool</em><em>, </em><em>default: True</em>) – Whether or not to plot the line showing the actual
+<li><p><strong>actual</strong> (<em>bool</em><em>, </em><em>default: True</em>) – whether or not to plot the line showing the actual
 trajectory of population growth, in blue.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Returns no output</p>
+<dd class="field-even"><p>returns no output</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>None</p>
@@ -1346,35 +1479,29 @@ trajectory of population growth, in blue.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="geonomics.sim.model.Model.plot_stat">
-<span class="sig-name descname"><span class="pre">plot_stat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.plot_stat" title="Permalink to this definition"></a></dt>
-<dd><p>TEMPORARILY OUT OF ORDER. NEEDS TO BE DEBUGGED.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.remove_individuals">
 <span class="sig-name descname"><span class="pre">remove_individuals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_left</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">individs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.remove_individuals" title="Permalink to this definition"></a></dt>
-<dd><p>Remove Individuals from a Species.</p>
+<dd><p>remove individuals from a species.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which values should be returned.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which values should be returned.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
-<li><p><strong>n</strong> (<em>{int}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – The number of random Individuals to be removed.
+<li><p><strong>n</strong> (<em>{int}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – the number of random individuals to be removed.
 If None then <cite>n_out</cite> or <cite>individs</cite> must be provided.</p></li>
-<li><p><strong>n_left</strong> (<em>{int}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – The number of Individuals left in the Species
-after a random selection of Individuals have been removed.
-If None then <cite>n</cite> or <cite>individs</cite> must be provided.</p></li>
-<li><p><strong>individs</strong> (<em>{list</em><em>, </em><em>tuple</em><em>, </em><em>numpy.ndarray}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – An iterable containing the integer IDs (i.e., the Species dict’s keys)
-of the Individuals to be removed. If None then <cite>n</cite> or <cite>n_out</cite> must be provided.</p></li>
+<li><p><strong>n_left</strong> (<em>{int}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – the number of individuals left in the species
+after a random selection of individuals have been removed.
+if None then <cite>n</cite> or <cite>individs</cite> must be provided.</p></li>
+<li><p><strong>individs</strong> (<em>{list</em><em>, </em><em>tuple</em><em>, </em><em>numpy.ndarray}</em><em>, </em><em>optional</em><em>, </em><em>default: None</em>) – an iterable containing the integer ids (i.e., the species dict’s keys)
+of the individuals to be removed. if None then <cite>n</cite> or <cite>n_out</cite> must be provided.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Alters the specified Species in place by removing all specified
+<dd class="field-even"><p>alters the specified species in place by removing all specified
 (if <cite>individs</cite> is not None) or randomly drawn (if <cite>n</cite> is not None)
-Individuals.</p>
+individuals.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>None</p>
@@ -1443,35 +1570,35 @@ before <cite>gnx.make_parameters_file</cite> is called).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="geonomics.sim.model.Model.run_gea">
-<span class="sig-name descname"><span class="pre">run_gea</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CCA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_sd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.run_gea" title="Permalink to this definition"></a></dt>
-<dd><p>Runs one of a number of available GEA models, returning the results and
+<span class="sig-name descname"><span class="pre">run_gea</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cca'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_sd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#geonomics.sim.model.Model.run_gea" title="Permalink to this definition"></a></dt>
+<dd><p>runs one of a number of available gea models, returning the results and
 optionally plotting them.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em><em>, </em><em>default: &quot;CCA&quot;</em>) – A string indicating which type of GEA model to run.
-NOTE: Currently, only CCA (default) is available.</p></li>
-<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Species for which the GEA should be run.
-Can be either the Species’ index number (i.e. its
-integer key in the Community dict), or its name (as a character
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em><em>, </em><em>default: &quot;cca&quot;</em>) – a string indicating which type of gea model to run.
+note: currently, only cca (default) is available.</p></li>
+<li><p><strong>spp</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the species for which the gea should be run.
+can be either the species’ index number (i.e. its
+integer key in the community dict), or its name (as a character
 string).</p></li>
-<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – A reference to the Trait for which the GEA should be run.
-Can be either the Trait’s index number (i.e. its integer key in the
-GenomicArchitecture’s traits dict), or its name (as a character
+<li><p><strong>trt</strong> (<em>{int</em><em>, </em><em>str}</em><em>, </em><em>optional</em><em>, </em><em>default: 0</em>) – a reference to the trait for which the gea should be run.
+can be either the trait’s index number (i.e. its integer key in the
+genomicarchitecture’s traits dict), or its name (as a character
 string).</p></li>
-<li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – Whether or not the GEA model should be plotted.</p></li>
-<li><p><strong>plot_sd</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – Whether or not a standard-deviation ellipse should be added to the
-GEA’s plot. (Only used if plot==True and method==”CCA”.)</p></li>
-<li><p><strong>scale</strong> (<em>{int</em><em>, </em><em>float}</em><em>, </em><em>optional</em><em>, </em><em>default: 3</em>) – The scaling factor to use when plotting the GEA results. (Only used
+<li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – whether or not the gea model should be plotted.</p></li>
+<li><p><strong>plot_sd</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default: True</em>) – whether or not a standard-deviation ellipse should be added to the
+gea’s plot. (only used if plot==True and method==”cca”.)</p></li>
+<li><p><strong>scale</strong> (<em>{int</em><em>, </em><em>float}</em><em>, </em><em>optional</em><em>, </em><em>default: 3</em>) – the scaling factor to use when plotting the gea results. (only used
 if plot==True.)</p></li>
-<li><p><strong>sd</strong> (<em>{int</em><em>, </em><em>float}</em><em>, </em><em>optional</em><em>, </em><em>default: 3</em>) – The number of standard deviations to use when plotting the
-standard-deviation ellipse. (Only used if plot==True and
-method==”CCA”.)</p></li>
+<li><p><strong>sd</strong> (<em>{int</em><em>, </em><em>float}</em><em>, </em><em>optional</em><em>, </em><em>default: 3</em>) – the number of standard deviations to use when plotting the
+standard-deviation ellipse. (only used if plot==True and
+method==”cca”.)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Returns a dict containing the labeled (as keys) output data
-structures (as values) of the chosen method of GEA.</p>
+<dd class="field-even"><p>returns a dict containing the labeled (as keys) output data
+structures (as values) of the chosen method of gea.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>dict</p>

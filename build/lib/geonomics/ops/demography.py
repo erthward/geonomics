@@ -159,7 +159,7 @@ def _calc_d(N_d, N, d_min, d_max):
         d = N_d/N
     #fix infinties and NaNs and negatives if they arise
     #(they occur where N ==0 or where N_d == 0)
-    d[np.isnan(d)] = 0 
+    d[np.isnan(d)] = 0
     #constrain to the min and max d values
     d = np.clip(a = d, a_min = d_min, a_max = d_max)
 

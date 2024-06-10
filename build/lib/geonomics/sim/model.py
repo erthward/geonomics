@@ -10,6 +10,7 @@ Defines the core Model class, as well as its public and private methods
 #geonomics imports
 from geonomics.structs.landscape import _make_landscape
 from geonomics.structs.community import _make_community
+from geonomics.structs.species import Species
 from geonomics.structs.genome import _make_genomic_architecture
 from geonomics.sim.data import (_DataCollector, _tskit_table_to_pandas,
                                 _get_adhoc_sample, _format_vcf, _format_fasta)
@@ -3020,6 +3021,7 @@ class Model:
         spp._remove_individuals(individs=individs,
                                 n=n,
                                 n_left=n_left,
+                                verbose=True,
                                )
 
 
@@ -3105,7 +3107,7 @@ class Model:
                         "or as a set of valid args for gnx.run_msprime_sim() "
                         "('source_msprime_params'), but not both.")
         if source_spp is not None:
-            assert (isinstance(source_spp, gnx.structs.species.Species) or
+            assert (isinstance(source_spp, Species) or
                     isinstance(source_spp, int) or
                     isinstnace(source_spp, str)), ("The "
                         "value given to 'source_spp' identifies a gnx "

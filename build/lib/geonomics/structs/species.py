@@ -850,7 +850,7 @@ class Species(OD):
         Species._dens_grids attribute.
 
         If normalize is True, the density raster will vary between 0 and 1
-        (after being normalized by its own maximum value). If false, it will
+        (after being normalized by its own maximum value). If False, it will
         vary between 0 and its maximum estimated density value.
         '''
         #check validity of normalize argument
@@ -2947,6 +2947,118 @@ class Species(OD):
             # plot the root nodes' birth locations
             plt.scatter(x, y, c='white', s=size, alpha=alpha, marker='s')
         plt.show()
+
+
+    def _plot_movement_or_dispersal(self,
+                                    what,
+                                    land,
+                                    lyr=0,
+                                    n_timesteps=1,
+                                    n_individs=None,
+                                    distance_distr_param1=None,
+                                    distance_distr_param2=None,
+                                    distance_distr='lognormal',
+                                    color='black',
+                                    alpha=None,
+                                    land_cmap='plasma',
+                                    size=10,
+                                    ticks=False,
+                                    color_by_individ=True,
+                                    increasing_linewidth=True,
+                                    include_start_points=False,
+                                   ):
+        assert what in ['movement', 'dispersal']
+        # get a safe copy of the species
+        toy_spp = deepcopy(self)
+        # update params values as needed
+        if distance_distr is not None:
+            setattr(toy_spp,
+                    f"{what}_distance_distr",
+                    distance_distr,
+                   )
+        if distance_distr_param1 is not None:
+            setattr(toy_spp,
+                    f"{what}_distance_distr_param1",
+                    distance_distr_param1,
+                   )
+        if distance_distr_param2 is not None:
+            setattr(toy_spp,
+                    f"{what}_distance_distr_param2",
+                    distance_distr_param1,
+                   )
+        #subset individuals, if necessary
+        if n_individs is not None:
+            assert n_individs >0, "Must plot >0 Individuals."
+            assert n_individs <= len(toy_spp), ("Cannot plot more Individuals "
+                                "than currently exist in the given Species.")
+            cull_individs = np.random.choice([*toy_spp],
+                len(toy_spp) - n_individs, replace = False)
+            [toy_spp.pop(ind) for ind in cull_individs]
+            #reset the coords before plotting
+            toy_spp._set_coords_and_cells()
+
+        #set the plotting linewidths to increase over runtime
+        if increasing_linewidth:
+            linewidths = np.linspace(1, 5, num=n_timesteps)
+        else:
+            linewidths = np.array([1] * n_timesteps)
+
+        #Create a colors list, to plot different-colored paths for individuals
+        #colors = ['black', 'red', 'orange', 'yellow', 'green', 'blue', 'white']
+        #colors = [plt.cm.Greys_r(i) for i in np.linspace(0, 0.9, 9)]
+        colors = ['#000000', '#2F4F4F', '#778899', '#696969', '#A9A9A9', '#C0C0C0']
+
+        # get list of order in which to plot individuals
+        ind_idx_list = [i.idx for i in toy_spp.values()]
+        ind_idx_list = sorted(ind_idx_list)
+
+        #plot the species at its starting locations
+        ind_colors = [colors[i % len(colors)] for i in range(len(ind_idx_list))]
+        toy_spp._plot(lyr_num=lyr, land=land, color=ind_colors,
+                      size=25 * include_start_points, land_cmap=land_cmap,
+                      ticks=ticks)
+
+        #set the new_x and new_y objects to the current locations, before for loop
+        #that will iteratively update them to the newer locations after movement
+        new_x = [getattr(toy_spp[idx], 'x') for idx in ind_idx_list]
+        new_y = [getattr(toy_spp[idx], 'y') for idx in ind_idx_list]
+        start_x = new_x
+        start_y = new_y
+
+        #loop for the number of timesteps, iteratively moving individuals and
+        #plotting the vectors between their previous and new positions
+        for t in range(n_timesteps):
+            if what == 'movement':
+                old_x = [x for x in new_x]
+                old_y = [y for y in new_y]
+                toy_spp._do_movement(land)
+                new_x = [getattr(toy_spp[idx], 'x') for idx in ind_idx_list]
+                new_y = [getattr(toy_spp[idx], 'y') for idx in ind_idx_list]
+            elif what == 'dispersal':
+                old_x = [x for x in start_x]
+                old_y = [y for y in start_y]
+                new_x = []
+                new_y = []
+                for n, ind in toy_spp.items():
+                    new_coords = _do_dispersal(spp=toy_spp,
+                                               parent_midpoint_x=ind.x,
+                                               parent_midpoint_y=ind.y,
+                                               dispersal_distance_distr_param1=toy_spp.dispersal_distance_distr_param1,
+                                               dispersal_distance_distr_param2=toy_spp.dispersal_distance_distr_param2,
+                                              )
+                    new_x.append(new_coords[0])
+                    new_y.append(new_coords[1])
+            #plot with separate colors for each individual, if necessary
+            if color_by_individ:
+                [plt.plot((old_x[i], new_x[i]), (old_y[i], new_y[i]), '-',
+                    scalex = False, scaley = False, linewidth = linewidths[t],
+                    color = colors[i%len(colors)],
+                    alpha = 0.5) for i in range(len(old_x))];
+            #or else plot without individuals colored differently
+            else:
+                plt.plot((old_x, new_x), (old_y, new_y), '-',
+                    scalex = False, scaley = False, linewidth = linewidths[t],
+                    color = color, alpha = alpha)
 
 
     # method for plotting a species' population pyramid

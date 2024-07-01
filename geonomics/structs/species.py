@@ -2984,7 +2984,7 @@ class Species(OD):
         if distance_distr_param2 is not None:
             setattr(toy_spp,
                     f"{what}_distance_distr_param2",
-                    distance_distr_param1,
+                    distance_distr_param2,
                    )
         #subset individuals, if necessary
         if n_individs is not None:

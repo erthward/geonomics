@@ -2945,9 +2945,10 @@ default: :py:`None`
 
 reset? P
 
-This indicates the points around which to sample :py:`Individual`\s for data
-collection. This parameter will only be used if **scheme** is :py:`'point'`;
-otherwise it may be set to :py:`None`.
+This indicates the (x,y) points around which to sample :py:`Individual`\s for data
+collection (where x,y are continuous coordinates expressed in the dimensions of the :py:`Landscape` array,
+not any coordinate reference system associated with files used to the create the :py:`Landscape`).
+This parameter will only be used if **scheme** is :py:`'point'`; otherwise it may be set to :py:`None`.
 
 
 

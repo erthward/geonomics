@@ -467,6 +467,7 @@ def _make_nlmpy_raster(nlmpy_params):
     fn_name = nlmpy_params.pop('function')
     # try to create the nlmpy raster
     try:
+        from nlmpy import nlmpy
         # get the function to be called
         fn = getattr(nlmpy, fn_name)
         nlm = fn(**nlmpy_params)

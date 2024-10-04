@@ -70,7 +70,8 @@ Geonomics strictly models biallelic SNPs, i.e SNPs with '0'- and '1'-alleles).
 depends on the parameter `use_tskit`.
 If `use_tskit` is True, Geonomics stores genomes by combining 
 Numpy arrays for non-neutral genotypes with a `tskit`_ :py:`TableCollection`
-for neutral genotypes and for the current population's spatial pedigree.
+for neutral genotypes and for the current population's 
+full ancestral recombination graph (ARG) and spatial pedigree.
 Although this makes for more complicated data structures,
 it optimizes information retention while minimizing memory usage,
 keeping Geonomics fast yet nonetheless enabling powerful
@@ -352,7 +353,8 @@ This class is used for all neighbor-searching operations (e.g. mate-search).
 :py:`tskit.tables.TableCollection`
 ----------------------------------
 
-To enable easy recording of the pedigree of a simulated :py:`Species`,
+To enable easy recording of the ancestral recombination graph (ARG)
+and spatial pedigree of a simulated :py:`Species`,
 Geonomics depends on the Python package `tskit`_ (software
 that originated as improvements made to the data structures
 and algorithms used by the popular coalescent simulator `msprime`_).
@@ -369,7 +371,8 @@ using :py:`tskit`'s simplification algorithm.
 (The simplification interval can be parameterized by the user.)
 Because each individual is stored along with its x,y birth location,
 a :py:`TableCollection` thus
-contains the full spatial pedigree of a :py:`Species`' current population.
+contains the full spatial pedigree of a :py:`Species`' current population,
+as well as its ARG.
 Geonomics additionally provides some wrapper functions,
 implemented as :py:`Species` methods,
 for converting the :py:`TableCollection` to a :py:`TreeSequence`,
@@ -423,12 +426,12 @@ Operations
 The following sections discuss the mechanics of core Geonomics operations. 
 
 
-Movement and Dispersal
-======================
+Movement and Natal Dispersal
+============================
 
 Movement is optional, such that turning off movement will allow the user 
-to simulate sessile organisms (which will reproduce and disperse, 
-but not move after dispersal; this distinction is of course irrelevant 
+to simulate sessile organisms (which will reproduce and undergo natal dispersal, 
+but not move afterwards; this distinction is of course irrelevant 
 for a :py:`Species` with a maximum age of 1). For :py:`Species` 
 with movement, :py:`Individual`\s can
 move by two distinct mechanisms. **Spatially random movement**
@@ -455,10 +458,10 @@ at the  :py:`_ConductanceSurface` cell in which which the :py:`Individual`\s
 are currently located. For details about :py:`_ConductanceSurface` creation,
 see section ':py:`_ConductanceSurface`' above, or the class' docstring.
 
-Dispersal is currently implemeneted identically to spatially random movement 
+Natal dispersal is currently implemeneted identically to spatially random movement 
 (with the caveat that the an offspring's new location is determined 
 relative its parents' midpoint). But the option to use a 
-:py:`_ConductanceSurface` for dispersal will be offered soon.
+:py:`_ConductanceSurface` for dispersal may be offered soon.
 
 
 -------------------------------------------------------------------------------
@@ -485,8 +488,8 @@ Pairs that are chosen to mate will produce a number of new
 offspring drawn from a Poisson distribution (with lambda set in the 
 parameters file). For each offspring, sex is chosen probablistically 
 (a Bernoulli random draw with probability equal to the :py:`Species`' 
-sex ratio), age set to 0, and location chosen by dispersal from 
-the parents' midpoint (see section 'Movement and Dispersal'). For 
+sex ratio), age set to 0, and location chosen by natal dispersal from 
+the parents' midpoint (see section 'Movement and Natal Dispersal'). For 
 :py:`Species` that have genomes, offspring genomes will be a 
 fusion of two recombinant genomes from each of the two parents (where 
 each recombinant is indexed out a parent's genome using a recombination 

@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Overview &mdash; geonomics 1.4.4 documentation</title>
+  <title>Overview &mdash; geonomics 1.4.6 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -73,7 +73,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#operations">Operations</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#movement-and-dispersal">Movement and Dispersal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#movement-and-natal-dispersal">Movement and Natal Dispersal</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#reproduction">Reproduction</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#mortality">Mortality</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#density-dependence">Density dependence</a></li>
@@ -171,7 +171,8 @@ Geonomics strictly models biallelic SNPs, i.e SNPs with ‘0’- and ‘1’-all
 depends on the parameter <cite>use_tskit</cite>.
 If <cite>use_tskit</cite> is True, Geonomics stores genomes by combining
 Numpy arrays for non-neutral genotypes with a <a class="reference external" href="https://tskit.readthedocs.io/en/latest/index.html">tskit</a> <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TableCollection</span></span></code>
-for neutral genotypes and for the current population’s spatial pedigree.
+for neutral genotypes and for the current population’s
+full ancestral recombination graph (ARG) and spatial pedigree.
 Although this makes for more complicated data structures,
 it optimizes information retention while minimizing memory usage,
 keeping Geonomics fast yet nonetheless enabling powerful
@@ -443,7 +444,8 @@ This class is used for all neighbor-searching operations (e.g. mate-search).</p>
 </section>
 <section id="tskit-tables-tablecollection">
 <h4><code class="code py python docutils literal notranslate"><span class="name"><span class="pre">tskit</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">tables</span></span><span class="operator"><span class="pre">.</span></span><span class="name"><span class="pre">TableCollection</span></span></code><a class="headerlink" href="#tskit-tables-tablecollection" title="Permalink to this headline"></a></h4>
-<p>To enable easy recording of the pedigree of a simulated <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>,
+<p>To enable easy recording of the ancestral recombination graph (ARG)
+and spatial pedigree of a simulated <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>,
 Geonomics depends on the Python package <a class="reference external" href="https://tskit.readthedocs.io/en/latest/index.html">tskit</a> (software
 that originated as improvements made to the data structures
 and algorithms used by the popular coalescent simulator <a class="reference external" href="https://msprime.readthedocs.io/en/stable/">msprime</a>).
@@ -460,7 +462,8 @@ using <code class="code py python docutils literal notranslate"><span class="nam
 (The simplification interval can be parameterized by the user.)
 Because each individual is stored along with its x,y birth location,
 a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TableCollection</span></span></code> thus
-contains the full spatial pedigree of a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’ current population.
+contains the full spatial pedigree of a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’ current population,
+as well as its ARG.
 Geonomics additionally provides some wrapper functions,
 implemented as <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> methods,
 for converting the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TableCollection</span></span></code> to a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">TreeSequence</span></span></code>,
@@ -507,11 +510,11 @@ appropriate functions called at the appropriate timesteps.</p>
 <section id="operations">
 <h2>Operations<a class="headerlink" href="#operations" title="Permalink to this headline"></a></h2>
 <p>The following sections discuss the mechanics of core Geonomics operations.</p>
-<section id="movement-and-dispersal">
-<h3>Movement and Dispersal<a class="headerlink" href="#movement-and-dispersal" title="Permalink to this headline"></a></h3>
+<section id="movement-and-natal-dispersal">
+<h3>Movement and Natal Dispersal<a class="headerlink" href="#movement-and-natal-dispersal" title="Permalink to this headline"></a></h3>
 <p>Movement is optional, such that turning off movement will allow the user
-to simulate sessile organisms (which will reproduce and disperse,
-but not move after dispersal; this distinction is of course irrelevant
+to simulate sessile organisms (which will reproduce and undergo natal dispersal,
+but not move afterwards; this distinction is of course irrelevant
 for a <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> with a maximum age of 1). For <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>
 with movement, <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s can
 move by two distinct mechanisms. <strong>Spatially random movement</strong>
@@ -536,10 +539,10 @@ from a Wald distribution and a random direction drawn from the distribution
 at the  <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> cell in which which the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Individual</span></span></code>s
 are currently located. For details about <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> creation,
 see section ‘<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code>’ above, or the class’ docstring.</p>
-<p>Dispersal is currently implemeneted identically to spatially random movement
+<p>Natal dispersal is currently implemeneted identically to spatially random movement
 (with the caveat that the an offspring’s new location is determined
 relative its parents’ midpoint). But the option to use a
-<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> for dispersal will be offered soon.</p>
+<code class="code py python docutils literal notranslate"><span class="name"><span class="pre">_ConductanceSurface</span></span></code> for dispersal may be offered soon.</p>
 </section>
 <hr class="docutils" />
 <section id="reproduction">
@@ -562,8 +565,8 @@ rate, which is also set in the parameters file).</p>
 offspring drawn from a Poisson distribution (with lambda set in the
 parameters file). For each offspring, sex is chosen probablistically
 (a Bernoulli random draw with probability equal to the <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code>’
-sex ratio), age set to 0, and location chosen by dispersal from
-the parents’ midpoint (see section ‘Movement and Dispersal’). For
+sex ratio), age set to 0, and location chosen by natal dispersal from
+the parents’ midpoint (see section ‘Movement and Natal Dispersal’). For
 <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">Species</span></span></code> that have genomes, offspring genomes will be a
 fusion of two recombinant genomes from each of the two parents (where
 each recombinant is indexed out a parent’s genome using a recombination

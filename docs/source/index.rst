@@ -59,7 +59,7 @@ Key Features
 
 5. Ability to model complex spatial scenarios, including multi-layer simulated or real-world landscapes, resistance-based movement, and non-stationary environmental change
 
-6. Optional reportng of the ancestral recombination graph (ARG) and spatial pedigree using `tskit`
+6. Optional reportng of the ancestral recombination graph (ARG) and spatial pedigree using `tskit <https://tskit.dev/tskit/docs/stable/introduction.html>`
 
 7. Numerous visualization tools, to help the user design models and explore results
 

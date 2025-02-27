@@ -266,15 +266,15 @@ def _plot_points(points, lyr_num=None, color='black',
                 plot_text.append((x[n], y[n], t))
         [plt.text(*item, color=text_color, size=text_size,
                                         alpha=alpha) for item in plot_text];
-
     if (plt_lims is not None
         and len(plt_lims) == 2
         and [len(item) for item in plt_lims] == [2,2]):
         plt.xlim(plt_lims[0])
         plt.ylim(plt_lims[1])
     else:
-        print(("plt_lims appears not to be a valid argument "
-               "(i.e. a 2-tuple of 2-tuples)"))
+        if plt_lims is not None:
+            print(("plt_lims appears not to be a valid argument "
+                   "(i.e. a 2-tuple of 2-tuples)"))
 
     #overwrite points with None, unless animate == True
     if not animate:

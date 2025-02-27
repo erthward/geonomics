@@ -2469,7 +2469,10 @@ class Species(OD):
         else:
             text = None
         # set the plt_lims
-        plt_lims = viz._get_plt_lims(land, x, y, zoom_width)
+        if land is not None:
+            plt_lims = viz._get_plt_lims(land, x, y, zoom_width)
+        else:
+            plt_lims = None
         # plot the layer(s)
         if hide_land:
             pass
@@ -2521,8 +2524,14 @@ class Species(OD):
             viz._plot_rasters(dens, plt_lims = plt_lims, lyr_name = 'density',
                               ticks=ticks, mask_rast=mask_rast)
         else:
-            viz._plot_rasters(dens, plt_lims = plt_lims, vmax = dens.max(),
-                lyr_name = 'density', ticks=ticks, mask_rast=mask_rast)
+            viz._plot_rasters(dens,
+                              plt_lims=plt_lims,
+                              vmax=dens.max(),
+                              vmin=0,
+                              lyr_name='density',
+                              ticks=ticks,
+                              mask_rast=mask_rast,
+                             )
         self._plot(hide_land=True, individs = individs, text = text,
             color=color, edge_color = edge_color, text_color = text_color,
             size=size, text_size = text_size, alpha=alpha,

@@ -2140,7 +2140,8 @@ class Model:
     def _plot_direction_surface(self, surf_type, spp, style, x=None, y=None,
                                 zoom_width=None, scale_fact=4.5, color='black',
                                 cbar = True, ticks=None, cmap='plasma',
-                                mask_rast=None):
+                                mask_rast=None, head_width=0.24,
+                                head_length=0.32):
         '''
         wrapper around Species._plot_direction_surface
         '''
@@ -2150,13 +2151,15 @@ class Model:
         spp._plot_direction_surface(land=self.land, surf_type=surf_type,
             style=style, x=x, y=y, zoom_width=zoom_width,
             scale_fact=scale_fact, color=color, cbar=cbar, ticks=ticks,
-            cmap=cmap, mask_rast=mask_rast)
+            cmap=cmap, mask_rast=mask_rast, head_width=head_width,
+                                    head_length=head_length)
 
 
     #wrapper around Species._plot_direction_surface for _move_surf
     def plot_movement_surface(self, spp=0, style='hist',  color='black', cbar=True,
                               ticks=None, cmap='plasma', zoom_width=None,
-                              x=None, y=None, scale_fact=4.5, mask_rast=None):
+                              x=None, y=None, scale_fact=4.5, mask_rast=None,
+                              head_width=0.24, head_length=0.32):
         """
         Create any of 4 types of plots to summarize a Species' MovementSurface
 
@@ -2244,14 +2247,15 @@ class Model:
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, cbar=cbar, ticks=ticks, cmap=cmap,
-            mask_rast=mask_rast)
+            mask_rast=mask_rast, head_width=head_width, head_length=head_length)
 
 
     #wrapper around Species._plot_direciton_surface for _disp_surf
     def plot_dispersal_surface(self, spp=0, style='hist', x=None, y=None,
                                zoom_width=None, scale_fact=4.5, color='black',
                                cbar = True, ticks=None, cmap='plasma',
-                               mask_rast=None):
+                               mask_rast=None, head_width=0.24,
+                               head_length=0.32):
         """
         Create any of 4 types of plots to summarize a Species' DispersalSurface
 
@@ -2338,7 +2342,7 @@ class Model:
         self._plot_direction_surface(surf_type='move', spp=spp, style=style,
             x=x, y=y, zoom_width=zoom_width, scale_fact=scale_fact,
             color=color, cbar=cbar, ticks=ticks, cmap=cmap,
-            mask_rast=mask_rast)
+            mask_rast=mask_rast, head_width=head_width, head_length=head_length)
 
 
     def _plot_movement_or_dispersal(self,

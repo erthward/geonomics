@@ -1505,6 +1505,31 @@ class Species(OD):
             coords[:, 1] = coords[:, 1] * self._land_res[1] + self._land_ulc[1]
         return coords
 
+    def _prep_plot_coords(self, xs, ys):
+        '''
+        simple function to convert cellwise coordinates to plotting
+        coordinates (for landscapes read in from raster, which have non-(0,0)
+        ULC and non-(1,1) res), for coordinates prepped at locations that don't
+        inhere to individuals (e.g., movement-surface plotting)
+        '''
+        if type(xs) in [int, float]:
+            assert type(ys) in [int, float]
+            xs = [xs]
+            ys = [ys]
+        assert len(xs) == len(ys)
+        if self._land_res != (1,1) or self._land_ulc != (0, 0):
+            plot_xs = [x_val * self._land_res[0] +
+                       self._land_ulc[0] for x_val in xs]
+            plot_ys = [y_val * self._land_res[1] +
+                       self._land_ulc[1] for y_val in ys]
+        else:
+            plot_xs = xs
+            plot_ys = ys
+        if len(plot_xs) == 1:
+            return plot_xs[0], plot_ys[0]
+        else:
+            return plot_xs, plot_ys
+
     def _get_cells(self, individs=None):
         cells = self._get_coords(individs=individs, as_float=False)
         return cells
@@ -2520,15 +2545,22 @@ class Species(OD):
         self._set_coords_and_cells()
         dens = self._calc_density(normalize = normalize)
         plt_lims = viz._get_plt_lims(land, x, y, zoom_width)
+        # make dummy Layer object, overwrite first raster, then use that to
+        # plot density
+        dummy_lyr = deepcopy(land[0])
+        dummy_lyr.rast = dens
+        dummy_lyr.name = 'density'
         if normalize:
-            viz._plot_rasters(dens, plt_lims = plt_lims, lyr_name = 'density',
-                              ticks=ticks, mask_rast=mask_rast)
+            viz._plot_rasters(dummy_lyr,
+                              plt_lims=plt_lims,
+                              ticks=ticks,
+                              mask_rast=mask_rast,
+                             )
         else:
-            viz._plot_rasters(dens,
+            viz._plot_rasters(dummy_lyr,
                               plt_lims=plt_lims,
                               vmax=dens.max(),
                               vmin=0,
-                              lyr_name='density',
                               ticks=ticks,
                               mask_rast=mask_rast,
                              )
@@ -2732,7 +2764,9 @@ class Species(OD):
     def _plot_direction_surface(self, land, surf_type, style, x=None, y=None,
                                 zoom_width=None, scale_fact=4.5,
                                 color='black', cbar=True, ticks=None,
-                                cmap='plasma', mask_rast=None):
+                                cmap='plasma', mask_rast=None,
+                                head_width=0.24, head_length=0.32,
+                               ):
         # get the correct surface
         if surf_type == 'move':
             surf = self._move_surf
@@ -2744,8 +2778,11 @@ class Species(OD):
             x = [*range(land.dim[0])]
             y = [*range(land.dim[1])]
         else:
+            assert type(x) in [int, float]
+            assert type(y) in [int, float]
             x = [x]
             y = [y]
+
         #check if the surface is none
         if surf is None:
             print(('Function not valid for a Species with no '
@@ -2783,10 +2820,18 @@ class Species(OD):
                         ys = [np.sin(a[n]) * 0.75 for n in range(len(a))]
                         xs = np.array(xs) * v * scale_fact
                         ys = np.array(ys) * v * scale_fact
-                        [plt.plot((x_val + 0.5, (x_val + 0.5 + xs[n])),
-                                  (y_val + 0.5, (y_val + 0.5 + ys[n])),
-                                  linewidth=2,
-                                  color=color) for n in range(len(xs))]
+                        # plot it
+                        for n in range(len(xs)):
+                            # convert cellwise coords to plotting coords, if needed
+                            hist_xs = (x_val + 0.5, (x_val + 0.5 + xs[n]))
+                            hist_ys = (y_val + 0.5, (y_val + 0.5 + ys[n]))
+                            plot_xs, plot_ys = self._prep_plot_coords(hist_xs,
+                                                                      hist_ys)
+                            plt.plot(plot_xs,
+                                     plot_ys,
+                                     linewidth=2,
+                                     color=color,
+                                    )
 
             elif style == 'cdraws':
                 for x_val in x:
@@ -2794,9 +2839,15 @@ class Species(OD):
                         pts = [(np.cos(a), np.sin(a)) for a in r.choice(
                                 surf.surf[y_val, x_val, :], size=1000,
                                 replace=True)]
-                        plt.scatter([pt[0] * 0.5 + x_val + 0.5 for pt in pts],
-                                    [pt[1] * 0.5 + y_val + 0.5 for pt in pts],
-                                    color=color, alpha=0.1, marker='.')
+                        xs = [pt[0] * 0.5 + x_val + 0.5 for pt in pts]
+                        ys = [pt[1] * 0.5 + y_val + 0.5 for pt in pts]
+                        plot_xs, plot_ys = self._prep_plot_coords(xs, ys)
+                        plt.scatter(plot_xs,
+                                    plot_ys,
+                                    color=color,
+                                    alpha=0.1,
+                                    marker='.',
+                                   )
 
             elif style == 'vect':
                 def plot_one_cell(x, y):
@@ -2813,8 +2864,16 @@ class Species(OD):
                     dx = np.mean(x_vects) / np.sqrt(2)
                     dy = np.mean(y_vects) / np.sqrt(2)
                     # now plot the arrow
-                    plt.arrow(x + 0.5, y + 0.5, dx, dy, alpha=0.75,
-                              color=color, head_width=0.24, head_length=0.32)
+                    plot_x, plot_y = self._prep_plot_coords(x + 0.5, y + 0.5)
+                    plt.arrow(plot_x,
+                              plot_y,
+                              dx * self._land_res[0],
+                              dy * self._land_res[1],
+                              alpha=0.75,
+                              color=color,
+                              head_width=head_width,
+                              head_length=head_length,
+                             )
 
                 # call the internally defined function as a nested list
                 #comprehension for all raster cells, which I believe
@@ -2916,12 +2975,16 @@ class Species(OD):
                 # PLOTTING THE VECTOR BETWEEN THE OLDEST AND CURRENT POSITIONS
                 # (WHICH COULD EASILY MISREPRESENT THE OVERALL TREND BECAUSE 
                 # OF CHANCE ATYPICAL LOCATIONS FOR EITHER OF THOSE TWO POSITIONS
+                # NOTE: MAY NEED TO USE self._prep_plot_coords HERE TO
+                #       TRANSFORM COORDINATES TO MATCH THE LANDSCAPE?
                 ax.arrow(*beg_loc, dx, dy, color=start_col,
                          width=0.05, head_width=0.4, length_includes_head=True)
             # plot the nodes' current locations and their birth locations,
             # connected by a thin black line
             node_curr_loc = node_curr_locs[i]
             node_birth_loc = [*lin_dict[node].values()][0][1]
+            # NOTE: MAY NEED TO USE self._prep_plot_coords HERE TO
+            #       TRANSFORM COORDINATES TO MATCH THE LANDSCAPE?
             plt.plot([node_birth_loc[0], node_curr_loc[0]],
                      [node_birth_loc[1], node_curr_loc[1]],
                      color=start_col, linestyle=':', alpha=alpha,

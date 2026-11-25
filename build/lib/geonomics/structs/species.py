@@ -2209,7 +2209,7 @@ class Species(OD):
 
             # use the species' birth rate to decide (as bernoulli draws)
             # whether each pair can mate
-            can_mate = np.bool8(np.random.binomial(n=1, p=self.b,
+            can_mate = np.bool(np.random.binomial(n=1, p=self.b,
                                                    size=pairs.shape[0]))
             pairs = np.atleast_2d(pairs)[can_mate, :]
         return pairs

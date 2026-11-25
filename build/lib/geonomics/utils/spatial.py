@@ -431,7 +431,7 @@ def _make_von_mises_multimodal_sampler(neigh, dirs, vm_distr_kappa=12,
 # resulting lambda-function samplers
 def _make_conductance_surface(rast, mixture=True, approx_len=5000,
                               vm_distr_kappa=12):
-    queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.NaN, 0],
+    queen_dirs = np.array([[-3 * pi / 4, -pi / 2, -pi / 4], [pi, np.nan, 0],
                            [3 * pi / 4, pi / 2, pi / 4]])
 
     # copy the landscape raster

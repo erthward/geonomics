@@ -173,7 +173,7 @@ def _calc_d(N_d, N, d_min, d_max):
 
 
 def _do_mortality(spp, death_probs):
-    deaths = np.array([*spp])[np.bool8(r.binomial(n = 1, p = death_probs))]
+    deaths = np.array([*spp])[np.bool(r.binomial(n = 1, p = death_probs))]
     if len(deaths) > 0:
         ig = itemgetter(*deaths)
         [spp.pop(ind) for ind in deaths];
@@ -311,8 +311,8 @@ def _do_pop_dynamics(spp, land, with_selection = True, burn = False,
         death_probs = _calc_prob_death(spp, death_probs)
     #run checks on death_probs
     if asserts:
-        assert np.alltrue(death_probs >= 0)
-        assert np.alltrue(death_probs <= 1)
+        assert np.all(death_probs >= 0)
+        assert np.all(death_probs <= 1)
 
     #kill (and track kills) based on max_age
     num_killed_age = 0
